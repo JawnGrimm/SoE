@@ -6,6 +6,17 @@ const CASE_01_ID: StringName = &"case_01_sealed_vessel"
 const CASE_02_ID: StringName = &"case_02_brewers_reckoning"
 const ROSTER_ORDER: Array[StringName] = [&"player_apprentice", &"shuruppak_ilu", &"utu_mansum", &"enlil_kisu", &"ur_nanna", &"nin_kasi", &"geme_inana", &"lu_nanshe"]
 
+class CylinderSealProp extends Control:
+	func _draw() -> void:
+		# Small illustrated seal prop until a dedicated seal texture is added.
+		draw_rect(Rect2(9, 20, 42, 28), Color("#9a7747"))
+		draw_rect(Rect2(9, 20, 42, 6), Color("#c5a16a"))
+		draw_rect(Rect2(9, 42, 42, 6), Color("#6f512e"))
+		draw_circle(Vector2(9, 34), 7, Color("#b58c55"))
+		draw_circle(Vector2(51, 34), 7, Color("#6f512e"))
+		draw_line(Vector2(18, 27), Vector2(43, 27), Color("#e0c28a"), 2.0)
+		draw_line(Vector2(18, 40), Vector2(43, 40), Color("#5b4228"), 2.0)
+
 var runner: EventRunner
 var scheduler: EventScheduler
 var world: WorldState
@@ -31,6 +42,9 @@ var canal_label: Label
 var roster_box: VBoxContainer
 var status_label: Label
 var docket_overlay: PanelContainer
+var docket_motion_layer: Control
+var archive_prop: TextureRect
+var stylus_prop: TextureRect
 var heirloom_label: Label
 var secret_toggle: Button
 var secret_cavity: PanelContainer
@@ -43,8 +57,11 @@ func _ready() -> void:
 
 func _build_interface() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	var background := ColorRect.new()
-	background.color = Color("#1f1c18")
+	var background := TextureRect.new()
+	background.texture = load("res://assets/desk/desk_tabletop.png")
+	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(background)
 	var margin := MarginContainer.new()
@@ -82,7 +99,7 @@ func _build_interface() -> void:
 	mat.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	mat.size_flags_stretch_ratio = 2.2
 	mat.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	mat.add_theme_stylebox_override("panel", _panel_style("#2a2520", "#514333"))
+	mat.add_theme_stylebox_override("panel", _panel_style("#00000000", "#00000000"))
 	body.add_child(mat)
 	var desk_box := VBoxContainer.new()
 	desk_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -93,11 +110,25 @@ func _build_interface() -> void:
 	desk_caption.add_theme_font_size_override("font_size", 11)
 	desk_caption.add_theme_color_override("font_color", Color("#a99570"))
 	desk_box.add_child(desk_caption)
+	docket_motion_layer = Control.new()
+	docket_motion_layer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	docket_motion_layer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	docket_motion_layer.custom_minimum_size.y = 430
+	desk_box.add_child(docket_motion_layer)
 	docket_overlay = PanelContainer.new()
-	docket_overlay.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	docket_overlay.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	docket_overlay.add_theme_stylebox_override("panel", _panel_style("#382f25", "#94764b"))
-	desk_box.add_child(docket_overlay)
+	docket_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var tablet_style := StyleBoxTexture.new()
+	tablet_style.texture = load("res://assets/desk/clay_docket.png")
+	tablet_style.texture_margin_left = 96.0
+	tablet_style.texture_margin_right = 96.0
+	tablet_style.texture_margin_top = 82.0
+	tablet_style.texture_margin_bottom = 82.0
+	tablet_style.content_margin_left = 78.0
+	tablet_style.content_margin_right = 78.0
+	tablet_style.content_margin_top = 66.0
+	tablet_style.content_margin_bottom = 66.0
+	docket_overlay.add_theme_stylebox_override("panel", tablet_style)
+	docket_motion_layer.add_child(docket_overlay)
 	var mat_box := VBoxContainer.new()
 	mat_box.add_theme_constant_override("separation", 10)
 	docket_overlay.add_child(mat_box)
@@ -131,6 +162,30 @@ func _build_interface() -> void:
 	choices = VBoxContainer.new()
 	choices.add_theme_constant_override("separation", 7)
 	mat_box.add_child(choices)
+
+	var desk_props := HBoxContainer.new()
+	desk_props.custom_minimum_size.y = 82
+	desk_props.add_theme_constant_override("separation", 14)
+	desk_props.alignment = BoxContainer.ALIGNMENT_BEGIN
+	mat_box.add_child(desk_props)
+	archive_prop = TextureRect.new()
+	archive_prop.texture = load("res://assets/desk/archive_stack.png")
+	archive_prop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	archive_prop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	archive_prop.custom_minimum_size = Vector2(136, 76)
+	archive_prop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	desk_props.add_child(archive_prop)
+	stylus_prop = TextureRect.new()
+	stylus_prop.texture = load("res://assets/desk/stylus.png")
+	stylus_prop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	stylus_prop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	stylus_prop.custom_minimum_size = Vector2(190, 76)
+	stylus_prop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	desk_props.add_child(stylus_prop)
+	var seal_prop := CylinderSealProp.new()
+	seal_prop.custom_minimum_size = Vector2(62, 66)
+	seal_prop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	desk_props.add_child(seal_prop)
 
 	var compound := PanelContainer.new()
 	compound.custom_minimum_size.x = 265
@@ -174,7 +229,7 @@ func _build_interface() -> void:
 	compound_box.add_child(status_label)
 
 	var rim := PanelContainer.new()
-	rim.add_theme_stylebox_override("panel", _panel_style("#24201b", "#514333"))
+	rim.add_theme_stylebox_override("panel", _panel_style("#3a2b1d", "#9a7545"))
 	root.add_child(rim)
 	var rim_box := VBoxContainer.new()
 	rim_box.add_theme_constant_override("separation", 5)
@@ -187,12 +242,16 @@ func _build_interface() -> void:
 	heirloom_label.add_theme_color_override("font_color", Color("#d6bd8b"))
 	rim_row.add_child(heirloom_label)
 	secret_toggle = Button.new()
-	secret_toggle.text = "SECRET CAVITY  ▾"
+	secret_toggle.text = "FALSE BOTTOM  ▾"
 	secret_toggle.add_theme_font_size_override("font_size", 11)
+	secret_toggle.add_theme_stylebox_override("normal", _panel_style("#604326", "#b18a52"))
+	secret_toggle.add_theme_stylebox_override("hover", _panel_style("#795633", "#d0ad70"))
 	secret_toggle.pressed.connect(_toggle_secret_cavity)
 	rim_row.add_child(secret_toggle)
 	secret_cavity = PanelContainer.new()
 	secret_cavity.visible = false
+	secret_cavity.scale = Vector2(1.0, 0.05)
+	secret_cavity.pivot_offset = Vector2(0.0, 0.0)
 	secret_cavity.add_theme_stylebox_override("panel", _panel_style("#171512", "#80653b"))
 	rim_box.add_child(secret_cavity)
 	var cavity_label := Label.new()
@@ -201,20 +260,37 @@ func _build_interface() -> void:
 	secret_cavity.add_child(cavity_label)
 
 func _toggle_secret_cavity() -> void:
-	secret_cavity.visible = not secret_cavity.visible
-	secret_toggle.text = "SECRET CAVITY  ▴" if secret_cavity.visible else "SECRET CAVITY  ▾"
+	var opening := not secret_cavity.visible
+	secret_toggle.text = "FALSE BOTTOM  ▴" if opening else "FALSE BOTTOM  ▾"
+	if opening:
+		secret_cavity.visible = true
+		secret_cavity.modulate.a = 0.0
+		secret_cavity.scale.y = 0.05
+		AudioManager.play_docket_slide()
+		var tween := create_tween().set_parallel(true)
+		tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		tween.tween_property(secret_cavity, "scale:y", 1.0, 0.22)
+		tween.tween_property(secret_cavity, "modulate:a", 1.0, 0.22)
+	else:
+		AudioManager.play_docket_slide()
+		var tween := create_tween().set_parallel(true)
+		tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+		tween.tween_property(secret_cavity, "scale:y", 0.05, 0.16)
+		tween.tween_property(secret_cavity, "modulate:a", 0.0, 0.16)
+		tween.finished.connect(func() -> void: secret_cavity.visible = false)
 
 func _animate_docket_in() -> void:
 	if docket_overlay == null:
 		return
 	if not docket_home_set:
-		docket_home_position = docket_overlay.position
+		docket_home_position = Vector2.ZERO
 		docket_home_set = true
 	docket_overlay.position = docket_home_position
 	docket_overlay.pivot_offset = docket_overlay.size * 0.5
+	docket_overlay.scale = Vector2.ONE
 	docket_overlay.rotation_degrees = randf_range(-0.8, 0.8)
 	docket_overlay.modulate.a = 0.0
-	var target_position := docket_overlay.position
+	var target_position := docket_home_position
 	docket_overlay.position = target_position + Vector2(-24.0, 5.0)
 	AudioManager.play_docket_slide()
 	var tween := create_tween().set_parallel(true)
@@ -227,13 +303,20 @@ func _archive_docket() -> void:
 	if docket_overlay == null:
 		return
 	AudioManager.play_docket_slide()
+	var archive_target := Vector2(34.0, -8.0)
+	if archive_prop != null:
+		archive_target = archive_prop.global_position + archive_prop.size * 0.5
+		archive_target -= docket_motion_layer.global_position + docket_overlay.size * 0.5
 	var tween := create_tween().set_parallel(true)
 	tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
-	tween.tween_property(docket_overlay, "position", docket_overlay.position + Vector2(34.0, -8.0), 0.2)
-	tween.tween_property(docket_overlay, "modulate:a", 0.0, 0.2)
-	tween.tween_property(docket_overlay, "rotation_degrees", -1.2, 0.2)
+	tween.tween_property(docket_overlay, "position", archive_target, 0.24)
+	tween.tween_property(docket_overlay, "scale", Vector2(0.18, 0.18), 0.24)
+	tween.tween_property(docket_overlay, "modulate:a", 0.0, 0.24)
+	tween.tween_property(docket_overlay, "rotation_degrees", -2.0, 0.24)
 	await tween.finished
 	docket_overlay.position = docket_home_position
+	docket_overlay.scale = Vector2.ONE
+	docket_overlay.rotation_degrees = 0.0
 
 func _panel_style(fill: String, border: String) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
