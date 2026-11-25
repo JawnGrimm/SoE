@@ -4,6 +4,7 @@ extends RefCounted
 var actor: PersonEntity
 var target: PersonEntity
 var world: WorldState
+var era: EraDef
 var year: int = 0
 
 func resolve_subject(role: String) -> PersonEntity:
