@@ -162,6 +162,20 @@ func _run() -> void:
 	_check(sealed_world.get_resource(&"clay_reeds") >= 49, "Case 1 should consume one clay and reed unit")
 	_check(sealed_world.resolved_forms.back()["disposition"] == "quarantine_cracked_vessel", "Case 1 should resolve the receipt with its authored disposition")
 
+	var bce_clock := WorldState.new()
+	bce_clock.year = -3200
+	bce_clock.set_flag(&"seasonal_test", bce_clock.current_period_index() + 12)
+	var bce_person := PersonEntity.new()
+	bce_person.id = &"bce_person"
+	bce_person.flags[&"seasonal_person_test"] = bce_clock.current_period_index() + 12
+	bce_clock.people[bce_person.id] = bce_person
+	_check(bce_clock.has_flag(&"seasonal_test", bce_clock.current_period_index()), "Timed world flags should work in BCE years")
+	_check(bce_person.has_flag(&"seasonal_person_test", bce_clock.current_period_index()), "Timed person flags should work in BCE years")
+	for period_step in range(12):
+		bce_clock.advance_period()
+	_check(not bce_clock.has_flag(&"seasonal_test", bce_clock.current_period_index()), "BCE world flag should expire after twelve periods")
+	_check(not bce_person.has_flag(&"seasonal_person_test", bce_clock.current_period_index()), "BCE person flag should expire after twelve periods")
+
 	var complicity_world := _make_world()
 	var complicity_ctx := _make_context(complicity_world)
 	var complicity_form_id: StringName = complicity_world.pending_forms[0]["id"]
