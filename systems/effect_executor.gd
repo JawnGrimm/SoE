@@ -12,6 +12,7 @@ func _init() -> void:
     _handlers[&"set_flag"] = _set_flag
     _handlers[&"clear_flag"] = _clear_flag
     _handlers[&"modify_resource"] = _modify_resource
+    _handlers[&"resolve_form"] = _resolve_form
     _handlers[&"add_memory"] = _add_memory
 
 func execute_all(effects: Array[EventEffect], ctx: EventContext) -> void:
@@ -42,7 +43,13 @@ func _change_opinion(subject: PersonEntity, p: Dictionary, ctx: EventContext) ->
         return
     var delta := int(p.get("amount", 0))
     subject.opinions[other.id] = int(subject.opinions.get(other.id, 0)) + delta
-    # A dedicated relationship reason log can be added when relationship state is split out.
+    var reasons: Array = subject.opinion_reasons.get(other.id, [])
+    reasons.append({
+        "year": ctx.year,
+        "amount": delta,
+        "reason": String(p.get("reason", "")),
+    })
+    subject.opinion_reasons[other.id] = reasons
 
 func _gain_skill_xp(subject: PersonEntity, p: Dictionary, _ctx: EventContext) -> void:
     if subject != null:
@@ -88,12 +95,17 @@ func _modify_resource(_subject: PersonEntity, p: Dictionary, ctx: EventContext) 
             String(p.get("scope", "world"))
         )
 
+func _resolve_form(_subject: PersonEntity, p: Dictionary, ctx: EventContext) -> void:
+    if ctx.world != null:
+        ctx.world.resolve_form(p, ctx.year)
+
 func _add_memory(subject: PersonEntity, p: Dictionary, ctx: EventContext) -> void:
     if subject == null:
         return
+    var involved: Array = p.get("involved", [])
     subject.memory.append({
-        "year": ctx.year,
         "memory_id": StringName(p.get("memory_id", "")),
         "text": String(p.get("text", "")),
-        "involved": p.get("involved", []).duplicate(true),
+        "year": ctx.year,
+        "involved": involved.duplicate(true),
     })

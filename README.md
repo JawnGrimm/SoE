@@ -1,31 +1,60 @@
-# Scribe of Eras — First Event Engine Slice
+# Scribe of Eras — Second Workday Milestone
 
-A deliberately narrow Godot 4.7.x foundation: a data-driven event template, runtime person/world state, condition and effect handler maps, and a headless assertion test for the corrupt grain official.
+A Godot 4.7 GDScript prototype for a data-driven historical scribal career simulation.
 
-## Run the test
+## Run it
 
-From this directory, with Godot 4.7.x installed:
+Open the repository root in Godot **4.7.x stable** and press **F5**. The root project launches the case-file interface.
+
+## Headless event test
+
+From the repository root:
 
 ```sh
 godot --headless --path . --script res://tests/test_event_slice.gd
 ```
 
-The test exits non-zero on an assertion failure and prints a success line only after both player choices have been checked against independent fresh state.
+On Windows, if `godot` is not on PATH, run the executable by its full path, for example:
 
-## Scope
+```powershell
+& "C:\Godot\Godot_v4.7.2-stable_win64.exe" --headless --path . --script res://tests/test_event_slice.gd
+```
 
-Included:
+The test covers both first-case outcomes, archived assessments, persistence across period advances, both condition-driven follow-up branches, and the empty-queue result.
+
+## Current desk loop
+
+1. Examine the surviving dispatch copy, receiving tally, and missing loading observation.
+2. Enter one assessment:
+   - No individual responsibility assigned
+   - Origin-side dispatch count or handling requires verification
+3. Choose whether to certify the tally or open a formal inquiry.
+4. Select **End Period** to advance the monthly desk turn.
+5. The EventScheduler evaluates the available `.tres` cases against the current actor and world state.
+   - The `complicit` trait makes **A Routine Adjustment** eligible.
+   - The `grain_scandal` flag plus a pending `inquiry` form makes **The Origin-Side Reply** eligible. Its case text quotes the assessment stored on the archived grain levy.
+6. When no event is eligible, the desk displays **END OF QUEUE / All cases filed for now**. The player may continue advancing periods; the scheduler checks again each time.
+
+The clock uses 12 periods per year. `WorldState.advance_period()` changes only the clock; it does not recreate world state or discard stockpiles, flags, people, traits, memories, pending forms, resolved forms, or event history.
+
+## Included
+
 - Event condition/effect/outcome/template Resources
 - Skills and person runtime state
-- WorldState with stockpiles, flags, pending forms, and event history
-- EventContext, ConditionEvaluator, EffectExecutor, EventRunner
-- Corrupt grain official test fixture
+- WorldState, EventContext, ConditionEvaluator, EffectExecutor, EventRunner, EventScheduler
+- Persistent 12-period clock
+- Pending and archived form records, including assessment and disposition
+- Three data-driven case definitions: the missing measures, routine tally adjustment, and origin-side reply
+- Case-file UI with an explicit end-of-queue state
 
-Not included yet:
-- UI, scheduler, save format, era registry, office roster, relationship component extraction
-- production-grade flag expiry/history pruning
-- seven-era content or simulation systems
+## Not included yet
 
-## Design guardrails
+- Registry autoload and versioned save format
+- Office roster and extracted relationship component
+- Flag expiry/history pruning
+- Full calendar presentation and production UI polish
+- Seven-era content or simulation systems
 
-Definitions are immutable at runtime; mutate only runtime entities/world state. Unknown condition/effect types fail closed with warnings. Keep the first vertical slice small enough to understand in one sitting.
+## Guardrails
+
+Definitions are Resources; runtime changes affect only world/person state. Unknown condition/effect types fail closed with warnings. Unsupported resource scopes warn and do not mutate state. The scheduler selects only templates whose existing conditions and eligibility gates pass; story branches are data, not day-number script branches.
