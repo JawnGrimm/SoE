@@ -98,3 +98,14 @@ func _modify_resource(_subject: PersonEntity, p: Dictionary, ctx: EventContext) 
 func _resolve_form(_subject: PersonEntity, p: Dictionary, ctx: EventContext) -> void:
     if ctx.world != null:
         ctx.world.resolve_form(p, ctx.year)
+
+func _add_memory(subject: PersonEntity, p: Dictionary, ctx: EventContext) -> void:
+    if subject == null:
+        return
+    var involved: Array = p.get("involved", [])
+    subject.memory.append({
+        "memory_id": StringName(p.get("memory_id", "")),
+        "text": String(p.get("text", "")),
+        "year": ctx.year,
+        "involved": involved.duplicate(true),
+    })
