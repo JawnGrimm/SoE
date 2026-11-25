@@ -98,6 +98,7 @@ func _run() -> void:
 	runner.resolve_outcome(follow_up_event, follow_up_event.outcomes[0], follow_up_ctx, true)
 	_check(&"complicit" in follow_up_ctx.actor.traits, "Explicit follow-up bypass should skip ordinary eligibility conditions")
 
+	_check(false, "CI exit-code probe (temporary)")
 	_finish()
 
 func _check(cond: bool, msg: String) -> bool:
