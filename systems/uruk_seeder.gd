@@ -8,7 +8,7 @@ static func seed_campaign(world: WorldState, seed: int) -> PersonEntity:
 	world.year = -3200
 	world.period = 0
 	world.people.clear()
-	var player := _person(&"player_apprentice", "Enlil-barni", &"apprentice_scribe", {}, [])
+	var player := _person(&"player_apprentice", "Enlil-barni", &"apprentice_scribe", {"literacy": 1, "arithmetic": 1, "law": 1}, [])
 	world.people[player.id] = player
 	var senior := _person(&"shuruppak_ilu", "Shuruppak-ilu", &"archive_keeper", {"literacy": 4, "arithmetic": 4, "law": 3, "rhetoric": 2, "intrigue": 2, "stewardship": 3}, [&"patient", &"exacting"])
 	senior.opinions[PLAYER_ID] = 5
