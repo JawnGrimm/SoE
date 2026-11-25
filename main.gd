@@ -2,7 +2,8 @@ extends Control
 
 const CAMPAIGN_SEED: int = 32003200
 const CASE_15_ID: StringName = &"case_15_south_court"
-const URUK_EVENT_IDS: Array[StringName] = [&"case_15_south_court", &"case_01_sealed_vessel"]
+const CASE_01_ID: StringName = &"case_01_sealed_vessel"
+const CASE_02_ID: StringName = &"case_02_brewers_reckoning"
 const ROSTER_ORDER: Array[StringName] = [&"player_apprentice", &"shuruppak_ilu", &"utu_mansum", &"enlil_kisu", &"ur_nanna", &"nin_kasi", &"geme_inana", &"lu_nanshe"]
 
 var runner: EventRunner
@@ -13,6 +14,9 @@ var active_event: EventTemplate
 var context: EventContext
 var current_era: EraDef
 var first_case_pending := true
+var turn_two_pending := false
+var arc_complete := false
+var selected_path: StringName = &""
 var phase := "case"
 var last_opinion_deltas: Dictionary[StringName, int] = {}
 
@@ -23,6 +27,7 @@ var record_grid: GridContainer
 var prompt_label: Label
 var choices: VBoxContainer
 var stores_label: Label
+var canal_label: Label
 var roster_box: VBoxContainer
 var status_label: Label
 
@@ -127,6 +132,11 @@ func _build_interface() -> void:
 	stores_label.add_theme_font_size_override("font_size", 14)
 	stores_label.add_theme_color_override("font_color", Color("#e5d2a8"))
 	compound_box.add_child(stores_label)
+	canal_label = Label.new()
+	canal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	canal_label.add_theme_font_size_override("font_size", 13)
+	canal_label.add_theme_color_override("font_color", Color("#d6bd8b"))
+	compound_box.add_child(canal_label)
 	var roster_title := Label.new()
 	roster_title.text = "LIVING ROSTER  /  OPINION OF YOU"
 	roster_title.add_theme_font_size_override("font_size", 11)
@@ -189,7 +199,7 @@ func _start_world() -> void:
 	context.actor = actor
 	context.era = current_era
 	context.year = world.year
-	_schedule_next_case()
+	_show_path_catechism()
 
 func _schedule_next_case() -> void:
 	context.year = world.year
@@ -199,17 +209,71 @@ func _schedule_next_case() -> void:
 		active_event = Registry.get_event(CASE_15_ID)
 		first_case_pending = false
 	else:
-		var pool: Array[EventTemplate] = []
-		for event_id in URUK_EVENT_IDS:
-			var event := Registry.get_event(event_id)
-			if event != null:
-				pool.append(event)
-		active_event = scheduler.pick_next_event(world, actor, pool, current_era, world.rng_narrative)
+		active_event = null
 	_refresh_compound()
 	if active_event == null:
 		_show_end_of_queue()
 	else:
 		_show_case()
+
+
+func _show_path_catechism() -> void:
+	_clear_choices()
+	phase = "catechism_path"
+	case_heading.text = "THE APPRENTICE IS QUESTIONED"
+	dossier.text = "[color=#e0d4bd]Before the first tablet is set before you, the senior hands ask where you learned to read the city's marks.[/color]"
+	_clear_records()
+	prompt_label.text = "Where were your eyes opened to the marks of the city?"
+	_add_choice("The Granary Terraces — Temple Path", _choose_path.bind(&"path_temple"))
+	_add_choice("The River Quays — Landing Path", _choose_path.bind(&"path_landing"))
+	status_label.text = "TWO QUESTIONS BEFORE THE FIRST CLAY"
+
+func _choose_path(path: StringName) -> void:
+	if phase != "catechism_path":
+		return
+	selected_path = path
+	actor.flags[path] = -1
+	if path == &"path_temple":
+		world.get_person(&"ur_nanna").opinions[actor.id] += 5
+		world.get_person(&"nin_kasi").opinions[actor.id] += 3
+		world.enqueue_form({"form_type": &"pension_roll", "subject_id": &"brewing_house_account", "urgency": 1, "year": world.year})
+	else:
+		world.get_person(&"enlil_kisu").opinions[actor.id] += 5
+		world.get_person(&"geme_inana").opinions[actor.id] += 3
+		world.enqueue_form({"form_type": &"consignment_receipt", "subject_id": &"temple_consignment", "urgency": 1, "year": world.year})
+	_show_mentor_catechism()
+
+func _show_mentor_catechism() -> void:
+	_clear_choices()
+	phase = "catechism_mentor"
+	case_heading.text = "THE SECOND QUESTION"
+	dossier.text = "[color=#e0d4bd]A mentor's mark is entered beside your name. Choose the hand whose habits you will learn.[/color]"
+	_clear_records()
+	prompt_label.text = "Whose instruction will you carry?"
+	_add_choice("Shuruppak-ilu — +1 Arithmetic; exacting", _choose_mentor.bind(&"shuruppak_ilu"))
+	_add_choice("Utu-mansum — +1 Law; stubborn", _choose_mentor.bind(&"utu_mansum"))
+	_add_choice("Enlil-kisu — +1 Stewardship; protective", _choose_mentor.bind(&"enlil_kisu"))
+	_add_choice("Nin-kasi — +1 Rhetoric; diplomatic", _choose_mentor.bind(&"nin_kasi"))
+
+func _choose_mentor(mentor_id: StringName) -> void:
+	if phase != "catechism_mentor":
+		return
+	var skill_by_mentor := {
+		&"shuruppak_ilu": [&"arithmetic", &"exacting"],
+		&"utu_mansum": [&"law", &"stubborn"],
+		&"enlil_kisu": [&"stewardship", &"protective"],
+		&"nin_kasi": [&"rhetoric", &"diplomatic"]
+	}
+	var selected: Array = skill_by_mentor[mentor_id]
+	var skill: StringName = selected[0]
+	var trait_id: StringName = selected[1]
+	actor.skills.levels[skill] = actor.skills.get_level(skill) + 1
+	if trait_id not in actor.traits:
+		actor.traits.append(trait_id)
+	var mentor: PersonEntity = world.get_person(mentor_id)
+	mentor.opinions[actor.id] = int(mentor.opinions.get(actor.id, 0)) + 5
+	_refresh_compound()
+	_schedule_next_case()
 
 func _show_case() -> void:
 	_clear_choices()
@@ -221,10 +285,14 @@ func _show_case() -> void:
 		_add_record("DISPATCH TABLET", "24 measures barley", "Sealed by Enlil-kisu at the river.")
 		_add_record("THRESHOLD TALLY", "23 measures barley", "Marked by Utu-mansum at the gate.")
 		_add_record("CUSTODY NOTE", "No witness", "Loading unwitnessed. Unloading unwitnessed. River transit unobserved.")
-	elif active_event.id == &"case_01_sealed_vessel":
+	elif active_event.id == CASE_01_ID:
 		_add_record("PIERCED TAG", "4 jars oil", "6 linen bundles. Sender's seal intact on tag.")
 		_add_record("COURT MAT", "4 jars present", "6 bundles present. Smallest oil jar seal cracked.")
 		_add_record("CARRIER TESTIMONY", "Road was rough", "Enlil-kisu says the jar was never unstoppered.")
+	elif active_event.id == CASE_02_ID:
+		_add_record("GRAIN ENTRIES", "6 + 8 + 4 = 18", "Subtotal written: 17.")
+		_add_record("MALT ENTRY", "3 baskets malt", "Malted spelt, recorded below the dividing line.")
+		_add_record("BLURRED SIGN", "Moisture-damaged", "Allocation between libation and worker bread cannot be established.")
 	prompt_label.text = "What mark will you leave?"
 	for index in range(active_event.outcomes.size()):
 		var outcome: EventOutcome = active_event.outcomes[index]
@@ -244,6 +312,10 @@ func _resolve_choice(index: int) -> void:
 	context.year = world.year
 	context.era = Registry.get_era_for_year(world.year)
 	runner.resolve_outcome(active_event, active_event.outcomes[index], context)
+	if active_event.id == CASE_15_ID:
+		turn_two_pending = true
+	else:
+		arc_complete = true
 	last_opinion_deltas.clear()
 	for person_id in before:
 		var person := world.get_person(person_id)
@@ -266,9 +338,16 @@ func _advance_period() -> void:
 	if phase != "result" and phase != "end_of_queue":
 		return
 	world.advance_period()
-	_prepare_seasonal_forms()
 	last_opinion_deltas.clear()
-	_schedule_next_case()
+	if turn_two_pending:
+		turn_two_pending = false
+		active_event = Registry.get_event(CASE_02_ID if selected_path == &"path_temple" else CASE_01_ID)
+		_refresh_compound()
+		_show_case()
+	elif arc_complete:
+		_show_end_of_queue()
+	else:
+		_schedule_next_case()
 
 func _prepare_seasonal_forms() -> void:
 	# Harvest opens the South Court barley docket and the oil/textile receiving docket.
@@ -314,7 +393,10 @@ func _clear_records() -> void:
 func _refresh_compound() -> void:
 	if world == null:
 		return
-	stores_label.text = "Barley     %d jars\nSilver     %d shekels\nClay/Reeds %d\nLabor      %d" % [world.get_resource(&"barley"), world.get_resource(&"silver"), world.get_resource(&"clay_reeds"), world.get_resource(&"labor")]
+	stores_label.text = "Barley     %d measures\nSilver     %d shekels\nClay/Reeds %d\nLabor      %d" % [world.get_resource(&"barley"), world.get_resource(&"silver"), world.get_resource(&"clay_reeds"), world.get_resource(&"labor")]
+	var canal := world.get_resource(&"canal_progress")
+	var filled := int(round(float(canal) / 10.0))
+	canal_label.text = "THE GREAT CANAL CUT\n[%s%s] %d / 100\nTarget before Inundation" % ["=".repeat(filled), "-".repeat(10 - filled), canal]
 	for child in roster_box.get_children():
 		roster_box.remove_child(child)
 		child.queue_free()
