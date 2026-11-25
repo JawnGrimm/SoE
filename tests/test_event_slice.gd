@@ -426,10 +426,10 @@ func _run() -> void:
 
 	# The four mentor records each add exactly one skill level, the named trait, and five standing.
 	var mentor_cases: Array = [
-		[&"shuruppak_ilu", &"arithmetic", &"exacting", 1],
-		[&"utu_mansum", &"law", &"stubborn", 1],
-		[&"enlil_kisu", &"stewardship", &"protective", 0],
-		[&"nin_kasi", &"rhetoric", &"diplomatic", 0]
+		[&"shuruppak_ilu", &"arithmetic", &"exacting", 1, 5],
+		[&"utu_mansum", &"law", &"stubborn", 1, 0],
+		[&"enlil_kisu", &"stewardship", &"protective", 0, 0],
+		[&"nin_kasi", &"rhetoric", &"diplomatic", 0, 0]
 	]
 	for mentor_case in mentor_cases:
 		var mentor_world := WorldState.new()
@@ -438,10 +438,11 @@ func _run() -> void:
 		var mentor_skill: StringName = mentor_case[1]
 		var mentor_trait: StringName = mentor_case[2]
 		var starting_level: int = mentor_case[3]
+		var starting_opinion: int = mentor_case[4]
 		_check(UrukCatechism.choose_mentor(mentor_world, mentor_actor, mentor_id), "Each authored mentor should be selectable")
 		_check(mentor_actor.skills.get_level(mentor_skill) == starting_level + 1, "Each mentor should add exactly one level in the named skill")
 		_check(mentor_trait in mentor_actor.traits, "Each mentor should grant the named trait")
-		_check(mentor_world.get_person(mentor_id).opinions[mentor_actor.id] == 5, "Each mentor should gain five opinion of the apprentice")
+		_check(mentor_world.get_person(mentor_id).opinions[mentor_actor.id] == starting_opinion + 5, "Each mentor should gain five opinion of the apprentice")
 
 	_finish()
 
