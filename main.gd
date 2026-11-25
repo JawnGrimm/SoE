@@ -37,8 +37,7 @@ var dossier: RichTextLabel
 var record_grid: GridContainer
 var prompt_label: Label
 var choices: VBoxContainer
-var stamp_history_row: HBoxContainer
-var stamp_history_scroll: ScrollContainer
+var stamp_history_row: HFlowContainer
 var stores_label: Label
 var canal_label: Label
 var roster_box: VBoxContainer
@@ -141,17 +140,11 @@ func _build_interface() -> void:
 	tablet_content.add_theme_constant_override("margin_top", 50)
 	tablet_content.add_theme_constant_override("margin_bottom", 50)
 	docket_overlay.add_child(tablet_content)
-	var tablet_scroll := ScrollContainer.new()
-	tablet_scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	tablet_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	tablet_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	tablet_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	tablet_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	tablet_content.add_child(tablet_scroll)
 	var mat_box := VBoxContainer.new()
 	mat_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	mat_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	mat_box.add_theme_constant_override("separation", 10)
-	tablet_scroll.add_child(mat_box)
+	tablet_content.add_child(mat_box)
 	case_heading = Label.new()
 	var title_font := FontVariation.new()
 	title_font.base_font = ThemeDB.fallback_font
@@ -162,9 +155,10 @@ func _build_interface() -> void:
 	mat_box.add_child(case_heading)
 	dossier = RichTextLabel.new()
 	dossier.bbcode_enabled = true
-	dossier.fit_content = true
-	dossier.scroll_active = true
+	dossier.fit_content = false
+	dossier.scroll_active = false
 	dossier.custom_minimum_size.y = 105
+	dossier.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	dossier.add_theme_font_size_override("normal_font_size", 15)
 	_apply_incised_text(dossier)
 	mat_box.add_child(dossier)
@@ -185,16 +179,12 @@ func _build_interface() -> void:
 	prompt_label.custom_minimum_size.y = 28
 	_apply_incised_text(prompt_label)
 	mat_box.add_child(prompt_label)
-	stamp_history_scroll = ScrollContainer.new()
-	stamp_history_scroll.custom_minimum_size.y = 34
-	stamp_history_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	stamp_history_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	stamp_history_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	mat_box.add_child(stamp_history_scroll)
-	stamp_history_row = HBoxContainer.new()
-	stamp_history_row.custom_minimum_size.y = 30
-	stamp_history_row.add_theme_constant_override("separation", 8)
-	stamp_history_scroll.add_child(stamp_history_row)
+	stamp_history_row = HFlowContainer.new()
+	stamp_history_row.custom_minimum_size.y = 44
+	stamp_history_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stamp_history_row.add_theme_constant_override("h_separation", 8)
+	stamp_history_row.add_theme_constant_override("v_separation", 4)
+	mat_box.add_child(stamp_history_row)
 	choices = VBoxContainer.new()
 	choices.add_theme_constant_override("separation", 11)
 	mat_box.add_child(choices)
@@ -458,7 +448,6 @@ func _choose_path(path: StringName) -> void:
 
 func _show_mentor_catechism() -> void:
 	_clear_choices()
-	_animate_docket_in()
 	phase = "catechism_mentor"
 	case_heading.text = "𒂍  THE MENTOR'S MARK"
 	case_heading.add_theme_font_size_override("font_size", 24)
@@ -481,7 +470,6 @@ func _choose_mentor(mentor_id: StringName) -> void:
 
 func _show_case() -> void:
 	_clear_choices()
-	_animate_docket_in()
 	phase = "case"
 	case_heading.add_theme_font_size_override("font_size", 24)
 	case_heading.text = "𒂍  " + active_event.title.to_upper()
@@ -503,7 +491,7 @@ func _show_case() -> void:
 	prompt_label.text = "What mark will you leave?"
 	for index in range(active_event.outcomes.size()):
 		var outcome: EventOutcome = active_event.outcomes[index]
-		_add_choice(outcome.label, _resolve_choice.bind(index), false)
+		_add_choice(outcome.label, _resolve_choice.bind(index))
 	status_label.text = "THE CLERK'S MARK WILL OUTLIVE THE CLERK"
 
 func _resolve_choice(index: int) -> void:
@@ -562,7 +550,7 @@ func _show_result(outcome: EventOutcome) -> void:
 	dossier.text = "[color=#231a12]" + outcome.title_override + "[/color]\n\n[color=#231a12]" + outcome.description_override + "[/color]"
 	_clear_records()
 	prompt_label.text = "The clay is wet. The record is not."
-	_add_choice("End Period", _advance_period, false)
+	_add_choice("End Period", _advance_period)
 	_refresh_compound()
 
 func _advance_period() -> void:
@@ -570,6 +558,7 @@ func _advance_period() -> void:
 		return
 	if phase == "result":
 		await _archive_docket()
+		_clear_stamp_history()
 	world.advance_period()
 	last_opinion_deltas.clear()
 	if turn_two_pending:
@@ -581,6 +570,7 @@ func _advance_period() -> void:
 		_show_end_of_queue()
 	else:
 		_schedule_next_case()
+	_animate_docket_in()
 
 func _prepare_seasonal_forms() -> void:
 	# Harvest opens the South Court barley docket and the oil/textile receiving docket.
@@ -599,10 +589,10 @@ func _show_end_of_queue() -> void:
 	dossier.text = "[color=#231a12]All cases filed for now. The record is not.[/color]"
 	_clear_records()
 	prompt_label.text = "No case is set before you."
-	_add_choice("End Period", _advance_period, false)
+	_add_choice("End Period", _advance_period)
 	status_label.text = "THE WATER RISES. THE STORES CHANGE. THE CLAY WAITS."
 
-func _add_choice(label_text: String, callback: Callable, archive_after_stamp: bool = true) -> void:
+func _add_choice(label_text: String, callback: Callable) -> void:
 	var row := HBoxContainer.new()
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_theme_constant_override("separation", 10)
@@ -645,10 +635,10 @@ func _add_choice(label_text: String, callback: Callable, archive_after_stamp: bo
 	button.add_child(stamp)
 	choice_buttons.append(button)
 	choice_stamp_labels[button] = stamp
-	button.pressed.connect(_handle_choice.bind(button, callback, archive_after_stamp))
+	button.pressed.connect(_handle_choice.bind(button, callback))
 	row.add_child(button)
 
-func _handle_choice(button: Button, callback: Callable, archive_after_stamp: bool) -> void:
+func _handle_choice(button: Button, callback: Callable) -> void:
 	if choice_locked:
 		return
 	choice_locked = true
@@ -666,21 +656,27 @@ func _handle_choice(button: Button, callback: Callable, archive_after_stamp: boo
 		await punch.finished
 		await get_tree().create_timer(0.35).timeout
 		_record_choice_stamp(button, stamp)
-	if archive_after_stamp:
-		await _archive_docket()
 	callback.call()
 
 func _record_choice_stamp(button: Button, stamp: Label) -> void:
 	if stamp_history_row == null or button == null or stamp == null:
 		return
 	var entry := Label.new()
-	entry.text = "%s  %s" % [stamp.text, button.text]
-	entry.custom_minimum_size.y = 30
-	entry.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	entry.add_theme_font_size_override("font_size", 14)
+	entry.text = stamp.text
+	entry.custom_minimum_size = Vector2(32, 34)
+	entry.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	entry.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	entry.add_theme_font_size_override("font_size", 25)
 	entry.tooltip_text = "Recorded choice: " + button.text
 	_apply_incised_text(entry)
 	stamp_history_row.add_child(entry)
+
+func _clear_stamp_history() -> void:
+	if stamp_history_row == null:
+		return
+	for child in stamp_history_row.get_children():
+		stamp_history_row.remove_child(child)
+		child.queue_free()
 
 func _clear_choices() -> void:
 	choice_locked = false
