@@ -266,8 +266,17 @@ func _advance_period() -> void:
 	if phase != "result" and phase != "end_of_queue":
 		return
 	world.advance_period()
+	_prepare_seasonal_forms()
 	last_opinion_deltas.clear()
 	_schedule_next_case()
+
+func _prepare_seasonal_forms() -> void:
+	# Harvest opens the South Court barley docket and the oil/textile receiving docket.
+	if world.period == 6 and not world.has_pending_form(&"grain_levy"):
+		world.enqueue_form({"form_type": &"grain_levy", "subject_id": &"south_court_storehouse", "urgency": 1, "year": world.year})
+	if world.period == 6 or world.period == 9:
+		if not world.has_pending_form(&"consignment_receipt"):
+			world.enqueue_form({"form_type": &"consignment_receipt", "subject_id": &"temple_consignment", "urgency": 1, "year": world.year})
 
 func _show_end_of_queue() -> void:
 	_clear_choices()
