@@ -174,14 +174,10 @@ func _add_evidence_card(heading: String, value: String, detail: String) -> void:
 func _start_world() -> void:
 	runner = EventRunner.new()
 	scheduler = EventScheduler.new(runner)
-	event_templates.clear()
-	for definition in Registry.get_definitions("events"):
-		if definition is EventTemplate:
-			event_templates.append(definition)
-	event_templates.sort_custom(func(a: EventTemplate, b: EventTemplate) -> bool: return String(a.id) < String(b.id))
+	event_templates = Registry.all_events()
 	world = WorldState.new()
-	current_era = _find_era_for_year(world.year)
 	world.year = INITIAL_YEAR
+	current_era = Registry.get_era_for_year(world.year)
 	world.period = 0
 	world.stockpiles[&"grain"] = 10
 
@@ -364,14 +360,8 @@ func _refresh_stats() -> void:
 		trait_text,
 		actor.memory.size(),
 	]
-	current_era = _find_era_for_year(world.year)
+	current_era = Registry.get_era_for_year(world.year)
 	year_label.text = CalendarFormatter.format_date(current_era, world.year, world.period)
-
-func _find_era_for_year(year: int) -> EraDef:
-	for definition in Registry.get_definitions("eras"):
-		if definition is EraDef and year >= definition.start_year and year <= definition.end_year:
-			return definition
-	return null
 
 func _show_error(message: String) -> void:
 	_clear_choices()
