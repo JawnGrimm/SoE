@@ -23,6 +23,10 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 Registry="*res://autoloads/registry.gd"
 AudioManager="*res://autoloads/audio_manager.gd"
 
+[display]
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
+
 [rendering]
 
 renderer/rendering_method="gl_compatibility"
