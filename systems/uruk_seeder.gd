@@ -37,6 +37,8 @@ static func _person(id: StringName, display_name: String, office: StringName, va
 	person.id = id
 	person.display_name = display_name
 	person.office_id = office
+	if id != PLAYER_ID:
+		person.opinions[PLAYER_ID] = 0
 	person.traits.assign(person_traits)
 	for skill in person.skills.levels.keys():
 		person.skills.levels[skill] = int(values.get(String(skill), 0))
