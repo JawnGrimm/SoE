@@ -295,7 +295,7 @@ func _show_result(outcome: EventOutcome) -> void:
 	if not selected_assessment.is_empty():
 		result_text += "\n\n[color=#aab2bb]Assessment entered: " + selected_assessment + ".[/color]"
 	narrative.text = result_text
-	_add_choice("End Period", "Advance the monthly desk turn and receive the next eligible case, if one exists.", _advance_period)
+	_add_choice("End Period", "Advance one period. Flags may expire; unanswered forms may become overdue.", _advance_period)
 	footer_label.text = "THE WORLD REMEMBERS WHAT YOU STAMPED — AND WHAT YOU LEFT UNRESOLVED"
 	_refresh_stats()
 
@@ -315,7 +315,7 @@ func _show_end_of_queue() -> void:
 	evidence_grid.visible = false
 	prompt_label.text = "All cases filed for now."
 	narrative.text = "[color=#d5d8dc]There are no currently eligible assignments. The desk is clear; the record is not.[/color]\n\n[color=#aab2bb]The period clock continues. New business may arrive when the world state makes another case eligible.[/color]"
-	_add_choice("Advance Period", "Move to the next month and check the case register again.", _advance_period)
+	_add_choice("Advance Period", "Advance one period. Deadlines pass whether or not the desk is clear.", _advance_period)
 	footer_label.text = "NO ELIGIBLE CASES REMAIN IN THE CURRENT REGISTER"
 	_refresh_stats()
 
@@ -357,9 +357,10 @@ func _refresh_stats() -> void:
 	if stats_label == null or world == null:
 		return
 	var trait_text := "none" if actor.traits.is_empty() else str(actor.traits)
-	stats_label.text = "GRAIN  %d    |    PENDING FORMS  %d    |    ARCHIVED  %d    |    TRAITS  %s    |    CHRONICLE  %d ENTRIES" % [
+	stats_label.text = "GRAIN  %d    |    PENDING  %d (%d OVERDUE)    |    ARCHIVED  %d    |    TRAITS  %s    |    CHRONICLE  %d ENTRIES" % [
 		world.get_resource(&"grain"),
 		world.pending_forms.size(),
+		world.get_overdue_form_count(),
 		world.resolved_forms.size(),
 		trait_text,
 		actor.memory.size(),

@@ -175,6 +175,35 @@ func _run() -> void:
 	complicity_world.event_history.append({"event_id": &"future_event", "year": 1205})
 	_check(not complicity_world.was_event_recent(&"future_event", 1200, 10), "Future-dated events must not count as recent")
 
+	# Period expiry and form deadlines use one absolute, zero-based period clock.
+	var deadline_world := _make_world()
+	var deadline_actor: PersonEntity = deadline_world.get_person(&"clerk")
+	var start_period := deadline_world.current_period_index()
+	deadline_world.set_flag(&"temporary_world", start_period + 2)
+	deadline_actor.flags[&"temporary_person"] = start_period + 2
+	deadline_world.enqueue_form({
+		"form_type": &"deadline_test",
+		"due_period": start_period + 1,
+	})
+	deadline_world.enqueue_form({"form_type": &"no_deadline"})
+	_check(deadline_world.has_flag(&"temporary_world", start_period), "Timed world flag should be active before expiry")
+	_check(deadline_actor.has_flag(&"temporary_person", start_period), "Timed person flag should be active before expiry")
+	deadline_world.advance_period()
+	_check(deadline_world.has_flag(&"temporary_world", deadline_world.current_period_index()), "Timed world flag should remain active before its expiry period")
+	_check(deadline_actor.has_flag(&"temporary_person", deadline_world.current_period_index()), "Timed person flag should remain active before its expiry period")
+	_check(deadline_world.get_overdue_form_count() == 0, "A form should not be overdue during its due period")
+	deadline_world.advance_period()
+	_check(not deadline_world.has_flag(&"temporary_world", deadline_world.current_period_index()), "World flag should expire at its expiry period")
+	_check(not deadline_actor.has_flag(&"temporary_person", deadline_world.current_period_index()), "Person flag should expire at its expiry period")
+	_check(not deadline_world.world_flags.has(&"temporary_world"), "Expired world flags should be removed during period processing")
+	_check(not deadline_actor.flags.has(&"temporary_person"), "Expired person flags should be removed during period processing")
+	_check(deadline_world.get_overdue_form_count() == 1, "A form should become overdue after its due period passes")
+	_check(deadline_world.has_pending_form(&"deadline_test"), "Overdue forms must remain pending")
+	_check(deadline_world.has_pending_form(&"no_deadline"), "Forms without deadlines must remain unaffected")
+	_check(deadline_world.resolve_form({"form_type": &"deadline_test"}, deadline_world.year), "An overdue form should remain resolvable")
+	_check(deadline_world.resolved_forms.back().get("was_overdue", false), "Resolved archive should preserve whether the form was overdue")
+	_check(deadline_world.resolved_forms.back().get("status", "") == "resolved", "Resolved form should receive resolved status")
+
 	var follow_up_event := _make_event()
 	follow_up_event.once_per_world = false
 	follow_up_event.conditions = [_condition(&"year_in_range", {"min": 5000, "max": 6000})]
