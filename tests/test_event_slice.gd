@@ -35,6 +35,17 @@ func _run() -> void:
 	_check(era_definition.start_year <= era_definition.end_year, "EraDef should hold an inclusive chronology range")
 	_check(era_definition.period_names.size() == 2, "EraDef should hold optional era-specific period names")
 
+	era_definition.era_tags.append(&"bronze_age")
+	_check(era_definition.era_tags.has(&"bronze_age"), "EraDef should expose era tags for event matching")
+	_check(Registry.get_definition(&"prototype_era") is EraDef, "Registry should index the prototype era definition")
+	var prototype_era := Registry.get_definition(&"prototype_era") as EraDef
+	_check(prototype_era.start_year <= 1200 and prototype_era.end_year >= 1200, "Prototype era should cover the current 1200 test slice")
+	_check(CalendarFormatter.format_year(1200) == "1200 CE", "Calendar formatter should label positive years CE")
+	_check(CalendarFormatter.format_year(0) == "1 BCE", "Calendar formatter should convert year zero to 1 BCE")
+	_check(CalendarFormatter.format_year(-2107) == "2108 BCE", "Calendar formatter should convert negative simulation years to BCE")
+	_check(CalendarFormatter.format_date(prototype_era, 1200, 0).contains("Period 01"), "Calendar formatter should use era period labels")
+	_check(CalendarFormatter.format_date(era_definition, 1200, 1).contains("Second"), "Calendar formatter should use custom period names when supplied")
+
 	var complicity_world := _make_world()
 	var complicity_ctx := _make_context(complicity_world)
 	var complicity_form_id: StringName = complicity_world.pending_forms[0]["id"]
