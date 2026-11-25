@@ -34,6 +34,9 @@ func resolve_outcome(
 	if not template.outcomes.has(outcome):
 		push_warning("EventRunner: outcome does not belong to event '%s'" % template.id)
 		return &""
+	if not _matches_era(template, ctx.era):
+		push_warning("EventRunner: active era rejected event '%s'" % template.id)
+		return &""
 	if not _passes_once_gates(template, ctx):
 		push_warning("EventRunner: once-only gate rejected event '%s'" % template.id)
 		return &""
