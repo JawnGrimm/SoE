@@ -31,7 +31,7 @@ func _run() -> void:
 	_check(registry.has_definition(&"routine_tally_adjustment"), "Registry should index the routine tally event")
 	_check(registry.has_definition(&"origin_side_reply"), "Registry should index the origin reply event")
 	_check(registry.get_definition(&"corrupt_grain_official") is EventTemplate, "Registry lookup should return the loaded event Resource")
-	_check(registry.get_definitions("events").size() == 5, "Registry should expose all six event definitions by category")
+	_check(registry.get_definitions("events").size() == 6, "Registry should expose all six event definitions by category")
 	var prototype_events_are_era_independent := true
 	for prototype_id in [&"corrupt_grain_official", &"routine_tally_adjustment", &"origin_side_reply"]:
 		var prototype_event := registry.get_event(prototype_id)
@@ -42,7 +42,7 @@ func _run() -> void:
 	_check(registry.get_event(&"case_01_sealed_vessel") != null, "Registry should load Case 1")
 	_check(registry.get_era(&"uruk_storehouse") != null, "Registry should load the Uruk era")
 	_check(registry.get_definition(&"missing_definition") == null, "Unknown definition IDs should return null")
-	_check(registry.get_definition_ids("events").size() == 5, "Registry should list all six event IDs")
+	_check(registry.get_definition_ids("events").size() == 6, "Registry should list all six event IDs")
 	_check(registry.get_event(&"corrupt_grain_official") != null, "Typed event lookup should return an event")
 	_check(registry.get_era_for_year(1200) == registry.get_era(&"prototype_era"), "Registry should resolve the era covering a year")
 	_check(registry.get_era_for_year(99999) == null, "Unknown years should resolve to no era")
