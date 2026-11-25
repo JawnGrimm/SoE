@@ -44,7 +44,7 @@ func _run() -> void:
 	era_definition.era_tags.append(&"bronze_age")
 	_check(era_definition.era_tags.has(&"bronze_age"), "EraDef should expose era tags for event matching")
 	_check(registry.get_definition(&"prototype_era") is EraDef, "Registry should index the prototype era definition")
-	var prototype_era := Registry.get_definition(&"prototype_era") as EraDef
+	var prototype_era := registry.get_definition(&"prototype_era") as EraDef
 	_check(prototype_era.start_year <= 1200 and prototype_era.end_year >= 1200, "Prototype era should cover the current 1200 test slice")
 	_check(CalendarFormatter.format_year(1200) == "1200 CE", "Calendar formatter should label positive years CE")
 	_check(CalendarFormatter.format_year(0) == "1 BCE", "Calendar formatter should convert year zero to 1 BCE")
