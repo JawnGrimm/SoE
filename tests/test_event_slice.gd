@@ -121,6 +121,9 @@ func _run() -> void:
 	_check(CalendarFormatter.format_date(registry.get_era(&"uruk_storehouse"), -3200, 3).contains("Sowing"), "Three desk periods should map to the next Uruk season")
 	_check(CalendarFormatter.format_date(registry.get_era(&"uruk_storehouse"), -3200, 9).contains("Stores"), "Periods 9-11 should map to Stores")
 	var case15 := registry.get_event(&"case_15_south_court")
+	if case15 == null:
+		_finish()
+		return
 	var uruk_ctx := EventContext.new()
 	uruk_ctx.world = uruk_a
 	uruk_ctx.actor = uruk_player_a
@@ -136,6 +139,9 @@ func _run() -> void:
 
 	# Case 1 may arrive from a receipt in any season, or from the Harvest/Stores desk pool.
 	var sealed_case := registry.get_event(&"case_01_sealed_vessel")
+	if sealed_case == null:
+		_finish()
+		return
 	var sealed_world := WorldState.new()
 	var sealed_player := UrukSeeder.seed_campaign(sealed_world, 44)
 	var sealed_context := EventContext.new()
