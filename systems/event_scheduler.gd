@@ -36,6 +36,10 @@ func pick_next_event(
 			if not has_receipt and not is_harvest_or_stores:
 				continue
 		var weight := maxf(template.weight, 0.0)
+		if template.id == &"case_15_south_court":
+			if int(world.period / 3) != 2 or not world.has_pending_form(&"grain_levy"):
+				continue
+			weight *= 3.0
 		if template.id == &"case_01_sealed_vessel":
 			var season := int(world.period / 3)
 			if world.has_flag(&"carrier_distrust", world.current_period_index()):
