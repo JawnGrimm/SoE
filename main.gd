@@ -191,7 +191,7 @@ func _build_interface() -> void:
 	archive_prop.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	desk_props.add_child(archive_prop)
 	stylus_prop = TextureRect.new()
-	stylus_prop.texture = load("res://assets/desk/stylus.png")
+	stylus_prop.texture = load("res://assets/desk/Ancient Wrapped Wooden Stylus.png")
 	stylus_prop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	stylus_prop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	stylus_prop.custom_minimum_size = Vector2(110, 48)
