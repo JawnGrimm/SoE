@@ -25,7 +25,14 @@ func pick_next_event(
 	ctx.actor = actor
 	ctx.year = world.year
 	for template in templates:
-		if template == null or not runner.is_eligible(template, ctx):
+		if template == null:
+			continue
+		var eligible_now := runner.is_eligible(template, ctx)
+		if not eligible_now and template.id == &"case_01_sealed_vessel" and int(world.period / 3) >= 2:
+			var seasonal_copy := template.duplicate(true) as EventTemplate
+			seasonal_copy.conditions.clear()
+			eligible_now = runner.is_eligible(seasonal_copy, ctx)
+		if not eligible_now:
 			continue
 		var weight := maxf(template.weight, 0.0)
 		if template.id == &"case_01_sealed_vessel":
