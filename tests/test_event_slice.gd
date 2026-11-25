@@ -316,6 +316,87 @@ func _run() -> void:
 	runner.resolve_outcome(follow_up_event, follow_up_event.outcomes[0], follow_up_ctx, true)
 	_check(&"complicit" in follow_up_ctx.actor.traits, "Explicit follow-up bypass should skip ordinary eligibility conditions")
 
+
+	# First Season at Uruk: both catechism answers, mentor bonuses, gated cases, and canal accounting.
+	var temple_world := WorldState.new()
+	var temple_actor := UrukSeeder.seed_campaign(temple_world, 32003200)
+	_check(UrukCatechism.choose_path(temple_world, temple_actor, &"path_temple"), "Temple path should be accepted")
+	_check(temple_actor.has_flag(&"path_temple", temple_world.current_period_index()), "Temple path flag should be permanent on the apprentice")
+	_check(temple_world.get_person(&"ur_nanna").opinions[temple_actor.id] == 5, "Temple path should grant Ur-Nanna +5")
+	_check(temple_world.get_person(&"nin_kasi").opinions[temple_actor.id] == 3, "Temple path should grant Nin-kasi +3")
+	_check(temple_world.has_pending_form(&"pension_roll"), "Temple path should open the brewery account docket")
+	_check(UrukCatechism.choose_mentor(temple_world, temple_actor, &"nin_kasi"), "Nin-kasi should be a valid mentor")
+	_check(temple_actor.skills.get_level(&"rhetoric") == 2, "Nin-kasi mentorship should add one Rhetoric")
+	_check(&"diplomatic" in temple_actor.traits, "Nin-kasi mentorship should add diplomatic")
+	_check(temple_world.get_person(&"nin_kasi").opinions[temple_actor.id] == 8, "Mentor choice should add +5 opinion on top of path standing")
+
+	var brewer_case: EventTemplate = registry.get_event(&"case_02_brewers_reckoning")
+	_check(brewer_case != null, "Registry should load Case 2")
+	var temple_ctx := _make_context(temple_world)
+	temple_ctx.actor = temple_actor
+	temple_ctx.year = temple_world.year
+	temple_ctx.era = registry.get_era(&"uruk_storehouse")
+	_check(runner.is_eligible(brewer_case, temple_ctx), "Case 2 should pass Temple path, office, and docket conditions")
+	runner.resolve_outcome(brewer_case, brewer_case.outcomes[0], temple_ctx)
+	_check(temple_world.get_resource(&"canal_progress") == 5, "Honest brewery arithmetic should advance Canal Cut by five")
+	_check(temple_world.get_person(&"nin_kasi").opinions[temple_actor.id] == 14, "Honest brewery arithmetic should improve Nin-kasi by six")
+	_check(temple_world.resolved_forms.back().get("disposition", "") == "rectified_subtotal_allocation_pending", "Honest brewery arithmetic should resolve the pension docket")
+
+	var commingled_world := WorldState.new()
+	var commingled_actor := UrukSeeder.seed_campaign(commingled_world, 32003200)
+	UrukCatechism.choose_path(commingled_world, commingled_actor, &"path_temple")
+	UrukCatechism.choose_mentor(commingled_world, commingled_actor, &"shuruppak_ilu")
+	var commingled_ctx := _make_context(commingled_world)
+	commingled_ctx.actor = commingled_actor
+	commingled_ctx.era = registry.get_era(&"uruk_storehouse")
+	runner.resolve_outcome(brewer_case, brewer_case.outcomes[1], commingled_ctx)
+	_check(commingled_world.get_resource(&"canal_progress") == 0, "Commingled malt should leave Canal Cut progress unchanged")
+	_check(&"complicit" in commingled_actor.traits, "Commingled malt should mark the apprentice complicit")
+	_check(commingled_world.has_flag(&"entangled_brewery_accounts", commingled_world.current_period_index()), "Commingled malt should set the four-period account flag")
+
+	var harsh_world := WorldState.new()
+	var harsh_actor := UrukSeeder.seed_campaign(harsh_world, 32003200)
+	UrukCatechism.choose_path(harsh_world, harsh_actor, &"path_temple")
+	UrukCatechism.choose_mentor(harsh_world, harsh_actor, &"utu_mansum")
+	var harsh_ctx := _make_context(harsh_world)
+	harsh_ctx.actor = harsh_actor
+	harsh_ctx.era = registry.get_era(&"uruk_storehouse")
+	runner.resolve_outcome(brewer_case, brewer_case.outcomes[2], harsh_ctx)
+	_check(harsh_world.get_resource(&"canal_progress") == 0, "Harsh brewery closure should not advance Canal Cut")
+	_check(harsh_world.has_flag(&"thirsty_diggers", harsh_world.current_period_index()), "Harsh brewery closure should set thirsty diggers for two periods")
+	_check(&"callous" in harsh_actor.traits, "Harsh brewery closure should add callous")
+
+	var landing_world := WorldState.new()
+	var landing_actor := UrukSeeder.seed_campaign(landing_world, 32003200)
+	UrukCatechism.choose_path(landing_world, landing_actor, &"path_landing")
+	_check(landing_actor.has_flag(&"path_landing", landing_world.current_period_index()), "Landing path flag should be permanent on the apprentice")
+	_check(landing_world.get_person(&"enlil_kisu").opinions[landing_actor.id] == 5, "Landing path should grant Enlil-kisu +5")
+	_check(landing_world.get_person(&"geme_inana").opinions[landing_actor.id] == 3, "Landing path should grant Geme-Inana +3")
+	_check(landing_world.has_pending_form(&"consignment_receipt"), "Landing path should open the receiving docket")
+	var sealed_context := _make_context(landing_world)
+	sealed_context.actor = landing_actor
+	sealed_context.era = registry.get_era(&"uruk_storehouse")
+	var sealed_event: EventTemplate = registry.get_event(&"case_01_sealed_vessel")
+	_check(sealed_event != null, "Registry should load Case 1")
+	runner.resolve_outcome(sealed_event, sealed_event.outcomes[0], sealed_context)
+	_check(landing_world.get_resource(&"canal_progress") == 5, "Accepted cracked vessel should advance Canal Cut by five")
+	_check(landing_world.resolved_forms.back().get("disposition", "") == "quarantine_cracked_vessel", "Accepted vessel should resolve the receiving docket")
+	var rejected_world := WorldState.new()
+	var rejected_actor := UrukSeeder.seed_campaign(rejected_world, 32003200)
+	UrukCatechism.choose_path(rejected_world, rejected_actor, &"path_landing")
+	rejected_world.modify_resource(&"canal_progress", 5)
+	var rejected_context := _make_context(rejected_world)
+	rejected_context.actor = rejected_actor
+	rejected_context.era = registry.get_era(&"uruk_storehouse")
+	runner.resolve_outcome(sealed_event, sealed_event.outcomes[1], rejected_context)
+	_check(rejected_world.get_resource(&"canal_progress") == 0, "Rejected consignment should subtract five Canal Cut progress")
+
+	var canal_bounds := WorldState.new()
+	canal_bounds.modify_resource(&"canal_progress", 150)
+	_check(canal_bounds.get_resource(&"canal_progress") == 100, "Canal Cut progress should cap at 100")
+	canal_bounds.modify_resource(&"canal_progress", -150)
+	_check(canal_bounds.get_resource(&"canal_progress") == 0, "Canal Cut progress should not fall below zero")
+
 	_finish()
 
 func _check(cond: bool, msg: String) -> bool:
