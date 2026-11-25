@@ -58,14 +58,16 @@ func _gain_skill_xp(subject: PersonEntity, p: Dictionary, _ctx: EventContext) ->
 func _create_form(_subject: PersonEntity, p: Dictionary, ctx: EventContext) -> void:
     if ctx.world == null:
         return
-    ctx.world.enqueue_form({
+    var form := {
         "form_type": StringName(p.get("form_type", "")),
         "subject_id": StringName(p.get("subject_id", "")),
         "urgency": int(p.get("urgency", 1)),
         "year": ctx.year,
         "created_period": ctx.world.current_period_index(),
-        "due_period": int(p.get("due_period", -1)),
-    })
+    }
+    if p.has("due_period"):
+        form["due_period"] = int(p["due_period"])
+    ctx.world.enqueue_form(form)
 
 func _set_flag(subject: PersonEntity, p: Dictionary, ctx: EventContext) -> void:
     var flag := StringName(p.get("flag", ""))
