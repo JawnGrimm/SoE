@@ -19,4 +19,4 @@ func has_flag(flag: StringName, current_period: int) -> bool:
 	if not flags.has(flag):
 		return false
 	var expiry: int = flags[flag]
-	return expiry < 0 or current_period < expiry
+	return expiry == -1 or current_period < expiry
