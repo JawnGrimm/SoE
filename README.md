@@ -20,7 +20,7 @@ On Windows, if `godot` is not on PATH, run the executable by its full path, for 
 & "C:\Godot\Godot_v4.7.2-stable_win64.exe" --headless --path . --script res://tests/test_event_slice.gd
 ```
 
-The test covers both first-case outcomes, archived assessments, persistence across period advances, both condition-driven follow-up branches, and the empty-queue result.
+The test covers both first-case outcomes, archived assessments, persistence across period advances, era-aware eligibility, flag expiry, form deadlines, both condition-driven follow-up branches, and the empty-queue result.
 
 ## Current desk loop
 
@@ -35,7 +35,7 @@ The test covers both first-case outcomes, archived assessments, persistence acro
    - The `grain_scandal` flag plus a pending `inquiry` form makes **The Origin-Side Reply** eligible. Its case text quotes the assessment stored on the archived grain levy.
 6. When no event is eligible, the desk displays **END OF QUEUE / All cases filed for now**. The player may continue advancing periods; the scheduler checks again each time.
 
-The clock uses 12 periods per year. `WorldState.advance_period()` changes only the clock; it does not recreate world state or discard stockpiles, flags, people, traits, memories, pending forms, resolved forms, or event history.
+The clock uses 12 periods per year. `WorldState.current_period_index()` provides an absolute period index (`year * 12 + period`) for durations and deadlines. Flag effects accept `periods` (or legacy `years`, converted to 12 periods per year); flags expire automatically when their expiry period begins. Forms may include an absolute `due_period`; they become overdue after that period passes, remain pending until resolved, and retain an overdue record in the archive. Forms without a deadline are unaffected. `WorldState.advance_period()` processes expiry and deadlines without recreating world state or discarding stockpiles, people, traits, memories, forms, or event history.
 
 ## Included
 
@@ -51,7 +51,7 @@ The clock uses 12 periods per year. `WorldState.advance_period()` changes only t
 
 - Versioned save format
 - Office roster and extracted relationship component
-- Flag expiry/history pruning
+- Historical flag expiry and deadline processing (implemented in the current milestone)
 - Full calendar presentation and production UI polish
 - Seven-era content or simulation systems
 
