@@ -39,5 +39,6 @@ func get_definitions(category: String) -> Array[Resource]:
 func get_definition_ids(category: String = "") -> Array[StringName]:
 	return defs.get_definition_ids(category)
 
-func get warnings() -> Array[String]:
-	return defs.warnings if defs != null else []
+var warnings: Array[String]:
+	get:
+		return defs.warnings if defs != null else []
