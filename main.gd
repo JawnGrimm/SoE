@@ -285,7 +285,6 @@ func _add_choice(label_text: String, callback: Callable) -> void:
 	button.custom_minimum_size = Vector2(0, 48)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	button.add_theme_font_size_override("font_size", 14)
 	button.add_theme_color_override("font_color", Color("#f0dfbd"))
 	button.add_theme_stylebox_override("normal", _panel_style("#40321f", "#8b7045"))
