@@ -50,6 +50,9 @@ var secret_toggle: Button
 var secret_cavity: PanelContainer
 var docket_home_position := Vector2.ZERO
 var docket_home_set := false
+var choice_buttons: Array[Button] = []
+var choice_stamp_labels: Dictionary = {}
+var choice_locked := false
 
 func _ready() -> void:
 	_build_interface()
@@ -113,7 +116,7 @@ func _build_interface() -> void:
 	docket_motion_layer = Control.new()
 	docket_motion_layer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	docket_motion_layer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	docket_motion_layer.custom_minimum_size.y = 430
+	docket_motion_layer.custom_minimum_size.y = 400
 	desk_box.add_child(docket_motion_layer)
 	docket_overlay = PanelContainer.new()
 	docket_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -140,7 +143,11 @@ func _build_interface() -> void:
 	mat_box.add_theme_constant_override("separation", 10)
 	tablet_content.add_child(mat_box)
 	case_heading = Label.new()
-	case_heading.add_theme_font_size_override("font_size", 18)
+	var title_font := FontVariation.new()
+	title_font.base_font = ThemeDB.fallback_font
+	title_font.variation_embolden = 0.65
+	case_heading.add_theme_font_override("font", title_font)
+	case_heading.add_theme_font_size_override("font_size", 24)
 	_apply_incised_text(case_heading)
 	mat_box.add_child(case_heading)
 	dossier = RichTextLabel.new()
@@ -152,9 +159,10 @@ func _build_interface() -> void:
 	_apply_incised_text(dossier)
 	mat_box.add_child(dossier)
 	var records_title := Label.new()
-	records_title.text = "𒂍  THE MAT  /  SURVIVING RECORDS"
+	records_title.text = "𒂍  SURVIVING RECORDS"
 	records_title.add_theme_font_size_override("font_size", 12)
 	_apply_incised_text(records_title)
+	records_title.visible = false
 	mat_box.add_child(records_title)
 	record_grid = GridContainer.new()
 	record_grid.columns = 3
@@ -163,7 +171,7 @@ func _build_interface() -> void:
 	mat_box.add_child(record_grid)
 	prompt_label = Label.new()
 	prompt_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	prompt_label.add_theme_font_size_override("font_size", 16)
+	prompt_label.add_theme_font_size_override("font_size", 20)
 	_apply_incised_text(prompt_label)
 	mat_box.add_child(prompt_label)
 	choices = VBoxContainer.new()
@@ -171,28 +179,28 @@ func _build_interface() -> void:
 	mat_box.add_child(choices)
 
 	var desk_props := HBoxContainer.new()
-	desk_props.custom_minimum_size.y = 82
+	desk_props.custom_minimum_size.y = 72
 	desk_props.add_theme_constant_override("separation", 14)
-	desk_props.alignment = BoxContainer.ALIGNMENT_BEGIN
-	mat_box.add_child(desk_props)
+	desk_props.alignment = BoxContainer.ALIGNMENT_CENTER
+	desk_box.add_child(desk_props)
 	archive_prop = TextureRect.new()
 	archive_prop.texture = load("res://assets/desk/archive_stack.png")
 	archive_prop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	archive_prop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	archive_prop.custom_minimum_size = Vector2(136, 76)
+	archive_prop.custom_minimum_size = Vector2(110, 60)
 	archive_prop.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	desk_props.add_child(archive_prop)
 	stylus_prop = TextureRect.new()
-	stylus_prop.texture = load("res://assets/desk/stylus.png")
+	stylus_prop.texture = load("res://assets/desk/Ancient Wrapped Wooden Stylus.png")
 	stylus_prop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	stylus_prop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	stylus_prop.custom_minimum_size = Vector2(132, 64)
+	stylus_prop.custom_minimum_size = Vector2(110, 48)
 	stylus_prop.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	stylus_prop.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	stylus_prop.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	desk_props.add_child(stylus_prop)
 	var seal_prop := CylinderSealProp.new()
-	seal_prop.custom_minimum_size = Vector2(62, 66)
+	seal_prop.custom_minimum_size = Vector2(52, 52)
 	seal_prop.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	desk_props.add_child(seal_prop)
 
@@ -406,10 +414,12 @@ func _schedule_next_case() -> void:
 func _show_path_catechism() -> void:
 	_clear_choices()
 	phase = "catechism_path"
-	case_heading.text = "𒂍  THE APPRENTICE IS QUESTIONED"
-	dossier.text = "[color=#231a12]Before the first tablet is set before you, the senior hands ask where you learned to read the city's marks.[/color]"
+	case_heading.text = "𒂍  THE FIRST CLAY"
+	case_heading.add_theme_font_size_override("font_size", 24)
+	dossier.text = ""
+	dossier.visible = false
 	_clear_records()
-	prompt_label.text = "Where were your eyes opened to the marks of the city?"
+	prompt_label.text = "Where were you taught the city's marks?"
 	_add_choice("The Granary Terraces — Temple Path", _choose_path.bind(&"path_temple"))
 	_add_choice("The River Quays — Landing Path", _choose_path.bind(&"path_landing"))
 	status_label.text = "TWO QUESTIONS BEFORE THE FIRST CLAY"
@@ -425,9 +435,12 @@ func _choose_path(path: StringName) -> void:
 
 func _show_mentor_catechism() -> void:
 	_clear_choices()
+	_animate_docket_in()
 	phase = "catechism_mentor"
-	case_heading.text = "𒂍  THE SECOND QUESTION"
-	dossier.text = "[color=#231a12]A mentor's mark is entered beside your name. Choose the hand whose habits you will learn.[/color]"
+	case_heading.text = "𒂍  THE MENTOR'S MARK"
+	case_heading.add_theme_font_size_override("font_size", 24)
+	dossier.text = ""
+	dossier.visible = false
 	_clear_records()
 	prompt_label.text = "Whose instruction will you carry?"
 	_add_choice("Shuruppak-ilu — +1 Arithmetic; exacting", _choose_mentor.bind(&"shuruppak_ilu"))
@@ -447,7 +460,9 @@ func _show_case() -> void:
 	_clear_choices()
 	_animate_docket_in()
 	phase = "case"
-	case_heading.text = "𒂍  CASE  /  " + active_event.title.to_upper()
+	case_heading.add_theme_font_size_override("font_size", 24)
+	case_heading.text = "𒂍  " + active_event.title.to_upper()
+	dossier.visible = true
 	dossier.text = "[color=#231a12]" + active_event.description + "[/color]"
 	_clear_records()
 	if active_event.id == CASE_15_ID:
@@ -465,7 +480,7 @@ func _show_case() -> void:
 	prompt_label.text = "What mark will you leave?"
 	for index in range(active_event.outcomes.size()):
 		var outcome: EventOutcome = active_event.outcomes[index]
-		_add_choice(outcome.label, _resolve_choice.bind(index))
+		_add_choice(outcome.label, _resolve_choice.bind(index), false)
 	status_label.text = "THE CLERK'S MARK WILL OUTLIVE THE CLERK"
 
 func _resolve_choice(index: int) -> void:
@@ -480,7 +495,6 @@ func _resolve_choice(index: int) -> void:
 			before[person_id] = int(person.opinions.get(actor.id, 0))
 	context.year = world.year
 	context.era = Registry.get_era_for_year(world.year)
-	_play_outcome_foley(index)
 	runner.resolve_outcome(active_event, active_event.outcomes[index], context)
 	if active_event.id == CASE_15_ID:
 		turn_two_pending = true
@@ -519,11 +533,13 @@ func _play_outcome_foley(index: int) -> void:
 func _show_result(outcome: EventOutcome) -> void:
 	_clear_choices()
 	phase = "result"
-	case_heading.text = "𒂍  MARK MADE  /  " + active_event.title.to_upper()
+	case_heading.add_theme_font_size_override("font_size", 24)
+	case_heading.text = "𒂍  MARK MADE"
+	dossier.visible = true
 	dossier.text = "[color=#231a12]" + outcome.title_override + "[/color]\n\n[color=#231a12]" + outcome.description_override + "[/color]"
 	_clear_records()
 	prompt_label.text = "The clay is wet. The record is not."
-	_add_choice("End Period", _advance_period)
+	_add_choice("End Period", _advance_period, false)
 	_refresh_compound()
 
 func _advance_period() -> void:
@@ -554,27 +570,82 @@ func _prepare_seasonal_forms() -> void:
 func _show_end_of_queue() -> void:
 	_clear_choices()
 	phase = "end_of_queue"
-	case_heading.text = "𒂍  END OF QUEUE"
-	dossier.text = "[color=#231a12]All cases filed for now. The desk is clear; the record is not.[/color]"
+	case_heading.add_theme_font_size_override("font_size", 24)
+	case_heading.text = "𒂍  THE DESK IS CLEAR"
+	dossier.visible = true
+	dossier.text = "[color=#231a12]All cases filed for now. The record is not.[/color]"
 	_clear_records()
 	prompt_label.text = "No case is set before you."
-	_add_choice("End Period", _advance_period)
+	_add_choice("End Period", _advance_period, false)
 	status_label.text = "THE WATER RISES. THE STORES CHANGE. THE CLAY WAITS."
 
-func _add_choice(label_text: String, callback: Callable) -> void:
+func _add_choice(label_text: String, callback: Callable, archive_after_stamp: bool = true) -> void:
+	var row := HBoxContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_theme_constant_override("separation", 10)
+	row.custom_minimum_size.y = 56
+	choices.add_child(row)
+	var wedge := Label.new()
+	wedge.text = "𒁹"
+	wedge.custom_minimum_size.x = 34
+	wedge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	wedge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	wedge.add_theme_font_size_override("font_size", 22)
+	_apply_incised_text(wedge)
+	row.add_child(wedge)
 	var button := Button.new()
-	button.text = "𒁹  " + label_text
-	button.custom_minimum_size = Vector2(0, 48)
+	button.text = label_text
+	button.custom_minimum_size = Vector2(0, 56)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	button.add_theme_font_size_override("font_size", 14)
+	button.add_theme_font_size_override("font_size", 18)
 	_apply_incised_text(button)
 	button.add_theme_stylebox_override("normal", _panel_style("#00000000", "#8b7045"))
 	button.add_theme_stylebox_override("hover", _panel_style("#00000000", "#c7a96b"))
-	button.pressed.connect(callback)
-	choices.add_child(button)
+	button.add_theme_stylebox_override("pressed", _panel_style("#00000000", "#c7a96b"))
+	var stamp := Label.new()
+	stamp.text = "𒂍" if label_text.contains("Temple") else "𒁹"
+	stamp.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	stamp.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stamp.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	stamp.add_theme_font_size_override("font_size", 38)
+	stamp.add_theme_color_override("font_color", Color("#231a12", 0.96))
+	stamp.add_theme_color_override("font_shadow_color", Color("#f5e6d0", 0.25))
+	stamp.add_theme_constant_override("shadow_offset_x", 0)
+	stamp.add_theme_constant_override("shadow_offset_y", 1)
+	stamp.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stamp.visible = false
+	button.add_child(stamp)
+	choice_buttons.append(button)
+	choice_stamp_labels[button] = stamp
+	button.pressed.connect(_handle_choice.bind(button, callback, archive_after_stamp))
+	row.add_child(button)
+
+func _handle_choice(button: Button, callback: Callable, archive_after_stamp: bool) -> void:
+	if choice_locked:
+		return
+	choice_locked = true
+	for choice_button in choice_buttons:
+		choice_button.disabled = true
+	var stamp: Label = choice_stamp_labels.get(button)
+	if stamp != null:
+		stamp.visible = true
+		stamp.scale = Vector2(1.25, 1.25)
+		stamp.pivot_offset = stamp.size * 0.5
+		var punch := create_tween()
+		punch.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		punch.tween_property(stamp, "scale", Vector2.ONE, 0.1)
+		AudioManager.play_seal_press()
+		await punch.finished
+		await get_tree().create_timer(0.35).timeout
+	if archive_after_stamp:
+		await _archive_docket()
+	callback.call()
 
 func _clear_choices() -> void:
+	choice_locked = false
+	choice_buttons.clear()
+	choice_stamp_labels.clear()
 	for child in choices.get_children():
 		choices.remove_child(child)
 		child.queue_free()
