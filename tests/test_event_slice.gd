@@ -23,6 +23,18 @@ func _run() -> void:
 	_check(Registry.get_definition(&"missing_definition") == null, "Unknown definition IDs should return null")
 	_check(Registry.get_definition_ids("events").size() == 3, "Registry should list event IDs")
 
+	var era_definition := EraDef.new()
+	era_definition.id = &"test_era"
+	era_definition.display_name = "Test Era"
+	era_definition.start_year = 100
+	era_definition.end_year = 199
+	era_definition.calendar_name = "Test calendar"
+	era_definition.period_label = "Month"
+	era_definition.period_names = ["First", "Second"]
+	_check(era_definition.id == &"test_era", "EraDef should expose a stable definition ID")
+	_check(era_definition.start_year <= era_definition.end_year, "EraDef should hold an inclusive chronology range")
+	_check(era_definition.period_names.size() == 2, "EraDef should hold optional era-specific period names")
+
 	var complicity_world := _make_world()
 	var complicity_ctx := _make_context(complicity_world)
 	var complicity_form_id: StringName = complicity_world.pending_forms[0]["id"]
