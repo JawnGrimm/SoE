@@ -30,6 +30,12 @@ var stores_label: Label
 var canal_label: Label
 var roster_box: VBoxContainer
 var status_label: Label
+var docket_overlay: PanelContainer
+var heirloom_label: Label
+var secret_toggle: Button
+var secret_cavity: PanelContainer
+var docket_home_position := Vector2.ZERO
+var docket_home_set := false
 
 func _ready() -> void:
 	_build_interface()
@@ -38,7 +44,7 @@ func _ready() -> void:
 func _build_interface() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var background := ColorRect.new()
-	background.color = Color("#17130f")
+	background.color = Color("#1f1c18")
 	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(background)
 	var margin := MarginContainer.new()
@@ -46,10 +52,10 @@ func _build_interface() -> void:
 	margin.add_theme_constant_override("margin_left", 22)
 	margin.add_theme_constant_override("margin_right", 22)
 	margin.add_theme_constant_override("margin_top", 18)
-	margin.add_theme_constant_override("margin_bottom", 18)
+	margin.add_theme_constant_override("margin_bottom", 14)
 	add_child(margin)
 	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 12)
+	root.add_theme_constant_override("separation", 10)
 	margin.add_child(root)
 	var header := HBoxContainer.new()
 	root.add_child(header)
@@ -71,15 +77,30 @@ func _build_interface() -> void:
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", 14)
 	root.add_child(body)
+
 	var mat := PanelContainer.new()
 	mat.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	mat.size_flags_stretch_ratio = 2.2
 	mat.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	mat.add_theme_stylebox_override("panel", _panel_style("#292117", "#80653b"))
+	mat.add_theme_stylebox_override("panel", _panel_style("#2a2520", "#514333"))
 	body.add_child(mat)
+	var desk_box := VBoxContainer.new()
+	desk_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	desk_box.add_theme_constant_override("separation", 8)
+	mat.add_child(desk_box)
+	var desk_caption := Label.new()
+	desk_caption.text = "THE DESK  /  CEDAR AND REED"
+	desk_caption.add_theme_font_size_override("font_size", 11)
+	desk_caption.add_theme_color_override("font_color", Color("#a99570"))
+	desk_box.add_child(desk_caption)
+	docket_overlay = PanelContainer.new()
+	docket_overlay.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	docket_overlay.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	docket_overlay.add_theme_stylebox_override("panel", _panel_style("#382f25", "#94764b"))
+	desk_box.add_child(docket_overlay)
 	var mat_box := VBoxContainer.new()
 	mat_box.add_theme_constant_override("separation", 10)
-	mat.add_child(mat_box)
+	docket_overlay.add_child(mat_box)
 	case_heading = Label.new()
 	case_heading.add_theme_font_size_override("font_size", 18)
 	case_heading.add_theme_color_override("font_color", Color("#e5d2a8"))
@@ -93,7 +114,7 @@ func _build_interface() -> void:
 	dossier.add_theme_color_override("default_color", Color("#e0d4bd"))
 	mat_box.add_child(dossier)
 	var records_title := Label.new()
-	records_title.text = "THE MAT  /  PHYSICAL RECORDS"
+	records_title.text = "THE MAT  /  SURVIVING RECORDS"
 	records_title.add_theme_color_override("font_color", Color("#c7a96b"))
 	records_title.add_theme_font_size_override("font_size", 12)
 	mat_box.add_child(records_title)
@@ -110,6 +131,7 @@ func _build_interface() -> void:
 	choices = VBoxContainer.new()
 	choices.add_theme_constant_override("separation", 7)
 	mat_box.add_child(choices)
+
 	var compound := PanelContainer.new()
 	compound.custom_minimum_size.x = 265
 	compound.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -150,6 +172,68 @@ func _build_interface() -> void:
 	status_label.add_theme_font_size_override("font_size", 11)
 	status_label.add_theme_color_override("font_color", Color("#a99570"))
 	compound_box.add_child(status_label)
+
+	var rim := PanelContainer.new()
+	rim.add_theme_stylebox_override("panel", _panel_style("#24201b", "#514333"))
+	root.add_child(rim)
+	var rim_box := VBoxContainer.new()
+	rim_box.add_theme_constant_override("separation", 5)
+	rim.add_child(rim_box)
+	var rim_row := HBoxContainer.new()
+	rim_box.add_child(rim_row)
+	heirloom_label = Label.new()
+	heirloom_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	heirloom_label.add_theme_font_size_override("font_size", 12)
+	heirloom_label.add_theme_color_override("font_color", Color("#d6bd8b"))
+	rim_row.add_child(heirloom_label)
+	secret_toggle = Button.new()
+	secret_toggle.text = "SECRET CAVITY  ▾"
+	secret_toggle.add_theme_font_size_override("font_size", 11)
+	secret_toggle.pressed.connect(_toggle_secret_cavity)
+	rim_row.add_child(secret_toggle)
+	secret_cavity = PanelContainer.new()
+	secret_cavity.visible = false
+	secret_cavity.add_theme_stylebox_override("panel", _panel_style("#171512", "#80653b"))
+	rim_box.add_child(secret_cavity)
+	var cavity_label := Label.new()
+	cavity_label.text = "FALSE BOTTOM  /  No private reserve has been issued."
+	cavity_label.add_theme_color_override("font_color", Color("#c6b99f"))
+	secret_cavity.add_child(cavity_label)
+
+func _toggle_secret_cavity() -> void:
+	secret_cavity.visible = not secret_cavity.visible
+	secret_toggle.text = "SECRET CAVITY  ▴" if secret_cavity.visible else "SECRET CAVITY  ▾"
+
+func _animate_docket_in() -> void:
+	if docket_overlay == null:
+		return
+	if not docket_home_set:
+		docket_home_position = docket_overlay.position
+		docket_home_set = true
+	docket_overlay.position = docket_home_position
+	docket_overlay.pivot_offset = docket_overlay.size * 0.5
+	docket_overlay.rotation_degrees = randf_range(-0.8, 0.8)
+	docket_overlay.modulate.a = 0.0
+	var target_position := docket_overlay.position
+	docket_overlay.position = target_position + Vector2(-24.0, 5.0)
+	AudioManager.play_docket_slide()
+	var tween := create_tween().set_parallel(true)
+	tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_property(docket_overlay, "position", target_position, 0.2)
+	tween.tween_property(docket_overlay, "modulate:a", 1.0, 0.2)
+	tween.tween_property(docket_overlay, "rotation_degrees", 0.0, 0.2)
+
+func _archive_docket() -> void:
+	if docket_overlay == null:
+		return
+	AudioManager.play_docket_slide()
+	var tween := create_tween().set_parallel(true)
+	tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	tween.tween_property(docket_overlay, "position", docket_overlay.position + Vector2(34.0, -8.0), 0.2)
+	tween.tween_property(docket_overlay, "modulate:a", 0.0, 0.2)
+	tween.tween_property(docket_overlay, "rotation_degrees", -1.2, 0.2)
+	await tween.finished
+	docket_overlay.position = docket_home_position
 
 func _panel_style(fill: String, border: String) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
@@ -260,6 +344,7 @@ func _choose_mentor(mentor_id: StringName) -> void:
 
 func _show_case() -> void:
 	_clear_choices()
+	_animate_docket_in()
 	phase = "case"
 	case_heading.text = "CASE  /  " + active_event.title.to_upper()
 	dossier.text = "[color=#e0d4bd]" + active_event.description + "[/color]"
@@ -294,6 +379,7 @@ func _resolve_choice(index: int) -> void:
 			before[person_id] = int(person.opinions.get(actor.id, 0))
 	context.year = world.year
 	context.era = Registry.get_era_for_year(world.year)
+	_play_outcome_foley(index)
 	runner.resolve_outcome(active_event, active_event.outcomes[index], context)
 	if active_event.id == CASE_15_ID:
 		turn_two_pending = true
@@ -306,6 +392,28 @@ func _resolve_choice(index: int) -> void:
 		if delta != 0:
 			last_opinion_deltas[person_id] = delta
 	_show_result(active_event.outcomes[index])
+
+func _play_outcome_foley(index: int) -> void:
+	match active_event.id:
+		CASE_15_ID:
+			if index == 0:
+				AudioManager.play_stylus_mark()
+			elif index == 1:
+				AudioManager.play_seal_press()
+			else:
+				AudioManager.play_tablet_snap()
+		CASE_01_ID:
+			if index == 0:
+				AudioManager.play_stylus_mark()
+			else:
+				AudioManager.play_tablet_snap()
+		CASE_02_ID:
+			if index == 0:
+				AudioManager.play_stylus_mark()
+			elif index == 1:
+				AudioManager.play_seal_press()
+			else:
+				AudioManager.play_tablet_snap()
 
 func _show_result(outcome: EventOutcome) -> void:
 	_clear_choices()
@@ -320,6 +428,8 @@ func _show_result(outcome: EventOutcome) -> void:
 func _advance_period() -> void:
 	if phase != "result" and phase != "end_of_queue":
 		return
+	if phase == "result":
+		await _archive_docket()
 	world.advance_period()
 	last_opinion_deltas.clear()
 	if turn_two_pending:
@@ -376,6 +486,11 @@ func _clear_records() -> void:
 func _refresh_compound() -> void:
 	if world == null:
 		return
+	var mentor_trait := "unmarked"
+	for trait_id in actor.traits:
+		if trait_id in [&"exacting", &"stubborn", &"protective", &"diplomatic"]:
+			mentor_trait = String(trait_id)
+	heirloom_label.text = "HEIRLOOM RIM  /  APPRENTICE SCRIBE  /  MENTOR MARK: %s  /  SILVER AT DESK: %d SHEKELS" % [mentor_trait.to_upper(), world.get_resource(&"silver")]
 	stores_label.text = "Barley     %d measures\nSilver     %d shekels\nClay/Reeds %d\nLabor      %d" % [world.get_resource(&"barley"), world.get_resource(&"silver"), world.get_resource(&"clay_reeds"), world.get_resource(&"labor")]
 	var canal := world.get_resource(&"canal_progress")
 	var filled := int(round(float(canal) / 10.0))
