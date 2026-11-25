@@ -1,6 +1,6 @@
 # Scribe of Eras — First Event Engine Slice
 
-A deliberately narrow Godot 4..x foundation: a data-driven event template, runtime person/world state, condition and effect handler maps, and a headless assertion test for the corrupt grain official.
+A deliberately narrow Godot 4.7.x foundation: a data-driven event template, runtime person/world state, condition and effect handler maps, and a headless assertion test for the corrupt grain official.
 
 ## Run the test
 
