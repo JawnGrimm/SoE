@@ -329,6 +329,8 @@ func _apply_incised_text(control: Control) -> void:
 	var lip_highlight := Color("#f5e6d0")
 	lip_highlight.a = 0.45
 	control.add_theme_color_override("font_color", Color("#231a12"))
+	if control is RichTextLabel:
+		control.add_theme_color_override("default_color", Color("#231a12"))
 	control.add_theme_color_override("font_shadow_color", lip_highlight)
 	control.add_theme_constant_override("shadow_offset_x", 0)
 	control.add_theme_constant_override("shadow_offset_y", 1)
@@ -354,7 +356,7 @@ func _add_record(heading: String, value: String, detail: String) -> void:
 	box.add_theme_constant_override("separation", 5)
 	panel.add_child(box)
 	var head := Label.new()
-	head.text = heading
+	head.text = "𒂍  " + heading
 	head.add_theme_font_size_override("font_size", 11)
 	_apply_incised_text(head)
 	box.add_child(head)
