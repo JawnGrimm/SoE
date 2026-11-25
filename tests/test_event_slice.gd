@@ -31,7 +31,7 @@ func _run() -> void:
 	_check(registry.has_definition(&"routine_tally_adjustment"), "Registry should index the routine tally event")
 	_check(registry.has_definition(&"origin_side_reply"), "Registry should index the origin reply event")
 	_check(registry.get_definition(&"corrupt_grain_official") is EventTemplate, "Registry lookup should return the loaded event Resource")
-	_check(registry.get_definitions("events").size() == 5, "Registry should expose all five event definitions by category")
+	_check(registry.get_definitions("events").size() == 6, "Registry should expose all six event definitions by category")
 	var prototype_events_are_era_independent := true
 	for prototype_id in [&"corrupt_grain_official", &"routine_tally_adjustment", &"origin_side_reply"]:
 		var prototype_event := registry.get_event(prototype_id)
@@ -42,7 +42,7 @@ func _run() -> void:
 	_check(registry.get_event(&"case_01_sealed_vessel") != null, "Registry should load Case 1")
 	_check(registry.get_era(&"uruk_storehouse") != null, "Registry should load the Uruk era")
 	_check(registry.get_definition(&"missing_definition") == null, "Unknown definition IDs should return null")
-	_check(registry.get_definition_ids("events").size() == 5, "Registry should list all five event IDs")
+	_check(registry.get_definition_ids("events").size() == 6, "Registry should list all six event IDs")
 	_check(registry.get_event(&"corrupt_grain_official") != null, "Typed event lookup should return an event")
 	_check(registry.get_era_for_year(1200) == registry.get_era(&"prototype_era"), "Registry should resolve the era covering a year")
 	_check(registry.get_era_for_year(99999) == null, "Unknown years should resolve to no era")
@@ -315,6 +315,134 @@ func _run() -> void:
 	var follow_up_ctx := _make_context(follow_up_world)
 	runner.resolve_outcome(follow_up_event, follow_up_event.outcomes[0], follow_up_ctx, true)
 	_check(&"complicit" in follow_up_ctx.actor.traits, "Explicit follow-up bypass should skip ordinary eligibility conditions")
+
+
+	# First Season at Uruk: both catechism answers, mentor bonuses, gated cases, and canal accounting.
+	var temple_world := WorldState.new()
+	var temple_actor := UrukSeeder.seed_campaign(temple_world, 32003200)
+	_check(UrukCatechism.choose_path(temple_world, temple_actor, &"path_temple"), "Temple path should be accepted")
+	_check(temple_actor.has_flag(&"path_temple", temple_world.current_period_index()), "Temple path flag should be permanent on the apprentice")
+	_check(temple_world.get_person(&"ur_nanna").opinions[temple_actor.id] == 5, "Temple path should grant Ur-Nanna +5")
+	_check(temple_world.get_person(&"nin_kasi").opinions[temple_actor.id] == 3, "Temple path should grant Nin-kasi +3")
+	_check(temple_world.has_pending_form(&"pension_roll"), "Temple path should open the brewery account docket")
+	_check(UrukCatechism.choose_mentor(temple_world, temple_actor, &"nin_kasi"), "Nin-kasi should be a valid mentor")
+	_check(temple_actor.skills.get_level(&"rhetoric") == 1, "Nin-kasi mentorship should add one Rhetoric")
+	_check(&"diplomatic" in temple_actor.traits, "Nin-kasi mentorship should add diplomatic")
+	_check(temple_world.get_person(&"nin_kasi").opinions[temple_actor.id] == 8, "Mentor choice should add +5 opinion on top of path standing")
+
+	var brewer_case: EventTemplate = registry.get_event(&"case_02_brewers_reckoning")
+	_check(brewer_case != null, "Registry should load Case 2")
+	var temple_ctx := _make_context(temple_world)
+	temple_ctx.actor = temple_actor
+	temple_ctx.year = temple_world.year
+	temple_ctx.era = registry.get_era(&"uruk_storehouse")
+	_check(runner.is_eligible(brewer_case, temple_ctx), "Case 2 should pass Temple path, office, and docket conditions")
+	runner.resolve_outcome(brewer_case, brewer_case.outcomes[0], temple_ctx)
+	_check(temple_world.get_resource(&"canal_progress") == 5, "Honest brewery arithmetic should advance Canal Cut by five")
+	_check(temple_world.get_person(&"nin_kasi").opinions[temple_actor.id] == 14, "Honest brewery arithmetic should improve Nin-kasi by six")
+	_check(temple_world.resolved_forms.back().get("disposition", "") == "rectified_subtotal_allocation_pending", "Honest brewery arithmetic should resolve the pension docket")
+
+	var commingled_world := WorldState.new()
+	var commingled_actor := UrukSeeder.seed_campaign(commingled_world, 32003200)
+	UrukCatechism.choose_path(commingled_world, commingled_actor, &"path_temple")
+	UrukCatechism.choose_mentor(commingled_world, commingled_actor, &"shuruppak_ilu")
+	var commingled_ctx := _make_context(commingled_world)
+	commingled_ctx.actor = commingled_actor
+	commingled_ctx.era = registry.get_era(&"uruk_storehouse")
+	runner.resolve_outcome(brewer_case, brewer_case.outcomes[1], commingled_ctx)
+	_check(commingled_world.get_resource(&"canal_progress") == 0, "Commingled malt should leave Canal Cut progress unchanged")
+	_check(&"complicit" in commingled_actor.traits, "Commingled malt should mark the apprentice complicit")
+	_check(commingled_world.has_flag(&"entangled_brewery_accounts", commingled_world.current_period_index()), "Commingled malt should set the four-period account flag")
+
+	var harsh_world := WorldState.new()
+	var harsh_actor := UrukSeeder.seed_campaign(harsh_world, 32003200)
+	UrukCatechism.choose_path(harsh_world, harsh_actor, &"path_temple")
+	UrukCatechism.choose_mentor(harsh_world, harsh_actor, &"utu_mansum")
+	var harsh_ctx := _make_context(harsh_world)
+	harsh_ctx.actor = harsh_actor
+	harsh_ctx.era = registry.get_era(&"uruk_storehouse")
+	runner.resolve_outcome(brewer_case, brewer_case.outcomes[2], harsh_ctx)
+	_check(harsh_world.get_resource(&"canal_progress") == 0, "Harsh brewery closure should not advance Canal Cut")
+	_check(harsh_world.has_flag(&"thirsty_diggers", harsh_world.current_period_index()), "Harsh brewery closure should set thirsty diggers for two periods")
+	_check(&"callous" in harsh_actor.traits, "Harsh brewery closure should add callous")
+
+	var landing_world := WorldState.new()
+	var landing_actor := UrukSeeder.seed_campaign(landing_world, 32003200)
+	UrukCatechism.choose_path(landing_world, landing_actor, &"path_landing")
+	_check(landing_actor.has_flag(&"path_landing", landing_world.current_period_index()), "Landing path flag should be permanent on the apprentice")
+	_check(landing_world.get_person(&"enlil_kisu").opinions[landing_actor.id] == 5, "Landing path should grant Enlil-kisu +5")
+	_check(landing_world.get_person(&"geme_inana").opinions[landing_actor.id] == 3, "Landing path should grant Geme-Inana +3")
+	_check(landing_world.has_pending_form(&"consignment_receipt"), "Landing path should open the receiving docket")
+	var landing_case_context := _make_context(landing_world)
+	landing_case_context.actor = landing_actor
+	landing_case_context.era = registry.get_era(&"uruk_storehouse")
+	var sealed_event: EventTemplate = registry.get_event(&"case_01_sealed_vessel")
+	_check(sealed_event != null, "Registry should load Case 1")
+	runner.resolve_outcome(sealed_event, sealed_event.outcomes[0], landing_case_context)
+	_check(landing_world.get_resource(&"canal_progress") == 5, "Accepted cracked vessel should advance Canal Cut by five")
+	_check(landing_world.resolved_forms.back().get("disposition", "") == "quarantine_cracked_vessel", "Accepted vessel should resolve the receiving docket")
+	var rejected_world := WorldState.new()
+	var rejected_actor := UrukSeeder.seed_campaign(rejected_world, 32003200)
+	UrukCatechism.choose_path(rejected_world, rejected_actor, &"path_landing")
+	rejected_world.modify_resource(&"canal_progress", 5)
+	var rejected_context := _make_context(rejected_world)
+	rejected_context.actor = rejected_actor
+	rejected_context.era = registry.get_era(&"uruk_storehouse")
+	runner.resolve_outcome(sealed_event, sealed_event.outcomes[1], rejected_context)
+	_check(rejected_world.get_resource(&"canal_progress") == 0, "Rejected consignment should subtract five Canal Cut progress")
+
+	var canal_bounds := WorldState.new()
+	canal_bounds.modify_resource(&"canal_progress", 150)
+	_check(canal_bounds.get_resource(&"canal_progress") == 100, "Canal Cut progress should cap at 100")
+	canal_bounds.modify_resource(&"canal_progress", -150)
+	_check(canal_bounds.get_resource(&"canal_progress") == 0, "Canal Cut progress should not fall below zero")
+
+
+	var south_case: EventTemplate = registry.get_event(&"case_15_south_court")
+	var south_honest_world := WorldState.new()
+	var south_honest_actor := UrukSeeder.seed_campaign(south_honest_world, 71)
+	var south_honest_ctx := _make_context(south_honest_world)
+	south_honest_ctx.actor = south_honest_actor
+	south_honest_ctx.era = registry.get_era(&"uruk_storehouse")
+	runner.resolve_outcome(south_case, south_case.outcomes[0], south_honest_ctx)
+	_check(south_honest_world.get_resource(&"canal_progress") == 5, "Honest South Court discrepancy should add five Canal Cut progress")
+
+	var south_forged_world := WorldState.new()
+	var south_forged_actor := UrukSeeder.seed_campaign(south_forged_world, 72)
+	var south_forged_ctx := _make_context(south_forged_world)
+	south_forged_ctx.actor = south_forged_actor
+	south_forged_ctx.era = registry.get_era(&"uruk_storehouse")
+	runner.resolve_outcome(south_case, south_case.outcomes[1], south_forged_ctx)
+	_check(south_forged_world.get_resource(&"canal_progress") == 0, "Overwriting the threshold tally should leave Canal Cut progress unchanged")
+
+	var south_penalty_world := WorldState.new()
+	var south_penalty_actor := UrukSeeder.seed_campaign(south_penalty_world, 73)
+	var south_penalty_ctx := _make_context(south_penalty_world)
+	south_penalty_ctx.actor = south_penalty_actor
+	south_penalty_ctx.era = registry.get_era(&"uruk_storehouse")
+	runner.resolve_outcome(south_case, south_case.outcomes[2], south_penalty_ctx)
+	_check(south_penalty_world.get_resource(&"canal_progress") == 0, "Docking the carrier crew should leave Canal Cut progress unchanged")
+	_check(south_penalty_world.has_flag(&"canal_crew_slowdown", south_penalty_world.current_period_index()), "Docking the carrier crew should slow canal stone transport for two periods")
+
+	# The four mentor records each add exactly one skill level, the named trait, and five standing.
+	var mentor_cases: Array = [
+		[&"shuruppak_ilu", &"arithmetic", &"exacting", 1, 5],
+		[&"utu_mansum", &"law", &"stubborn", 1, 0],
+		[&"enlil_kisu", &"stewardship", &"protective", 0, 0],
+		[&"nin_kasi", &"rhetoric", &"diplomatic", 0, 0]
+	]
+	for mentor_case in mentor_cases:
+		var mentor_world := WorldState.new()
+		var mentor_actor := UrukSeeder.seed_campaign(mentor_world, 88)
+		var mentor_id: StringName = mentor_case[0]
+		var mentor_skill: StringName = mentor_case[1]
+		var mentor_trait: StringName = mentor_case[2]
+		var starting_level: int = mentor_case[3]
+		var starting_opinion: int = mentor_case[4]
+		_check(UrukCatechism.choose_mentor(mentor_world, mentor_actor, mentor_id), "Each authored mentor should be selectable")
+		_check(mentor_actor.skills.get_level(mentor_skill) == starting_level + 1, "Each mentor should add exactly one level in the named skill")
+		_check(mentor_trait in mentor_actor.traits, "Each mentor should grant the named trait")
+		_check(mentor_world.get_person(mentor_id).opinions[mentor_actor.id] == starting_opinion + 5, "Each mentor should gain five opinion of the apprentice")
 
 	_finish()
 

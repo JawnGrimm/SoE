@@ -136,7 +136,10 @@ func modify_resource(resource_id: StringName, amount: int, scope: String = "worl
 	if resource_id == &"":
 		push_warning("WorldState: refusing resource change with empty id")
 		return
-	stockpiles[resource_id] = get_resource(resource_id) + amount
+	var next_value := get_resource(resource_id) + amount
+	if resource_id == &"canal_progress":
+		next_value = clampi(next_value, 0, 100)
+	stockpiles[resource_id] = next_value
 
 func set_flag(flag: StringName, expiry_period: int) -> void:
 	if flag != &"":

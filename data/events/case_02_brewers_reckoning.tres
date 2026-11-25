@@ -1,0 +1,141 @@
+[gd_resource type="Resource" script_class="EventTemplate" load_steps=28 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/event_template.gd" id="1"]
+[ext_resource type="Script" path="res://data/definitions/event_outcome.gd" id="2"]
+[ext_resource type="Script" path="res://data/definitions/event_effect.gd" id="3"]
+[ext_resource type="Script" path="res://data/definitions/event_condition.gd" id="4"]
+
+[sub_resource type="Resource" id="condition_1"]
+script = ExtResource("4")
+condition_type = &"in_office"
+target = "actor"
+parameters = {"office_id": &"apprentice_scribe"}
+
+[sub_resource type="Resource" id="condition_2"]
+script = ExtResource("4")
+condition_type = &"flag_set"
+target = "actor"
+parameters = {"flag": &"path_temple", "scope": "actor"}
+
+[sub_resource type="Resource" id="condition_3"]
+script = ExtResource("4")
+condition_type = &"has_pending_form"
+target = "actor"
+parameters = {"form_type": &"pension_roll"}
+
+[sub_resource type="Resource" id="fx_1"]
+script = ExtResource("3")
+effect_type = &"change_opinion"
+parameters = {"subject": &"nin_kasi", "amount": 6, "reason": "Restored legitimate brewing credit"}
+
+[sub_resource type="Resource" id="fx_2"]
+script = ExtResource("3")
+effect_type = &"change_opinion"
+parameters = {"subject": &"shuruppak_ilu", "amount": 4, "reason": "Checked arithmetic; respected copy limits"}
+
+[sub_resource type="Resource" id="fx_3"]
+script = ExtResource("3")
+effect_type = &"gain_skill_xp"
+parameters = {"skill": &"arithmetic", "amount": 20}
+
+[sub_resource type="Resource" id="fx_4"]
+script = ExtResource("3")
+effect_type = &"modify_resource"
+parameters = {"resource": &"canal_progress", "amount": 5, "scope": "world"}
+
+[sub_resource type="Resource" id="fx_5"]
+script = ExtResource("3")
+effect_type = &"add_memory"
+parameters = {"memory_id": &"corrected_brewery_subtotal", "text": "Corrected Nin-kasi's subtotal to 18; left moisture-damaged sign open."}
+
+[sub_resource type="Resource" id="fx_6"]
+script = ExtResource("3")
+effect_type = &"resolve_form"
+parameters = {"form_type": &"pension_roll", "disposition": "rectified_subtotal_allocation_pending"}
+
+[sub_resource type="Resource" id="fx_7"]
+script = ExtResource("3")
+effect_type = &"change_opinion"
+parameters = {"subject": &"nin_kasi", "amount": 10, "reason": "Granted generous ration credit"}
+
+[sub_resource type="Resource" id="fx_8"]
+script = ExtResource("3")
+effect_type = &"change_opinion"
+parameters = {"subject": &"shuruppak_ilu", "amount": -8, "reason": "Commingled malt and grain signs"}
+
+[sub_resource type="Resource" id="fx_9"]
+script = ExtResource("3")
+effect_type = &"add_trait"
+parameters = {"trait_id": &"complicit"}
+
+[sub_resource type="Resource" id="fx_10"]
+script = ExtResource("3")
+effect_type = &"set_flag"
+parameters = {"flag": &"entangled_brewery_accounts", "scope": "world", "periods": 4}
+
+[sub_resource type="Resource" id="fx_11"]
+script = ExtResource("3")
+effect_type = &"resolve_form"
+parameters = {"form_type": &"pension_roll", "disposition": "falsified_composite_credit"}
+
+[sub_resource type="Resource" id="fx_12"]
+script = ExtResource("3")
+effect_type = &"change_opinion"
+parameters = {"subject": &"nin_kasi", "amount": -12, "reason": "Refused to correct demonstrable sum error"}
+
+[sub_resource type="Resource" id="fx_13"]
+script = ExtResource("3")
+effect_type = &"change_opinion"
+parameters = {"subject": &"shuruppak_ilu", "amount": -3, "reason": "Ignored plain arithmetic"}
+
+[sub_resource type="Resource" id="fx_14"]
+script = ExtResource("3")
+effect_type = &"add_trait"
+parameters = {"trait_id": &"callous"}
+
+[sub_resource type="Resource" id="fx_15"]
+script = ExtResource("3")
+effect_type = &"set_flag"
+parameters = {"flag": &"thirsty_diggers", "scope": "world", "periods": 2}
+
+[sub_resource type="Resource" id="fx_16"]
+script = ExtResource("3")
+effect_type = &"modify_resource"
+parameters = {"resource": &"canal_progress", "amount": 0, "scope": "world"}
+
+[sub_resource type="Resource" id="fx_17"]
+script = ExtResource("3")
+effect_type = &"resolve_form"
+parameters = {"form_type": &"pension_roll", "disposition": "upheld_defective_subtotal"}
+
+[sub_resource type="Resource" id="outcome_1"]
+script = ExtResource("2")
+label = "Correct subtotal to 18; request tag for blurred sign"
+title_override = "THE SUBTOTAL IS CORRECTED"
+description_override = "You point out the missing measure to Nin-kasi. Her credit is protected. You refuse to guess at the blurred allocation sign, entering an open check for the brewer's tag."
+effects = Array[ExtResource("3")]([SubResource("fx_1"), SubResource("fx_2"), SubResource("fx_3"), SubResource("fx_4"), SubResource("fx_5"), SubResource("fx_6")])
+
+[sub_resource type="Resource" id="outcome_2"]
+script = ExtResource("2")
+label = "Fold malt into grain subtotal; certify 20 measures"
+title_override = "MALT AND GRAIN ARE COMMINGLED"
+description_override = "To appease Nin-kasi, you fold the 3 baskets of malt into the bread-corn tally and round the figure. Her credit swells on paper, but temple barley and secular malt are now hopelessly commingled."
+effects = Array[ExtResource("3")]([SubResource("fx_7"), SubResource("fx_8"), SubResource("fx_9"), SubResource("fx_10"), SubResource("fx_11"), SubResource("fx_16")])
+
+[sub_resource type="Resource" id="outcome_3"]
+script = ExtResource("2")
+label = "Refuse amendment; uphold written 17"
+title_override = "THE ACCOUNT IS CLOSED AT SEVENTEEN"
+description_override = "You refuse to re-score the dried clay. The subtotal stands at 17. Nin-kasi leaves the courtyard in silence; her brewers will go without small beer this season."
+effects = Array[ExtResource("3")]([SubResource("fx_12"), SubResource("fx_13"), SubResource("fx_14"), SubResource("fx_15"), SubResource("fx_16"), SubResource("fx_17")])
+
+[resource]
+script = ExtResource("1")
+id = &"case_02_brewers_reckoning"
+title = "The Brewer's Reckoning"
+description = "Nin-kasi sits beside three dried clay copies of the brewing-house account. She is weary, smells of sour mash, and fears that an unspotted shortfall will shrink the barley credited to her workers. Three grain entries sit on the account, but the subtotal written beneath them is one measure too small. The malt is recorded separately in its own signs and must not be mixed into the bread-corn. One sign on the lower corner is blurred with moisture."
+era_tags = Array[StringName]([&"uruk"])
+weight = 1.0
+once_per_world = true
+conditions = Array[ExtResource("4")]([SubResource("condition_1"), SubResource("condition_2"), SubResource("condition_3")])
+outcomes = Array[ExtResource("2")]([SubResource("outcome_1"), SubResource("outcome_2"), SubResource("outcome_3")])

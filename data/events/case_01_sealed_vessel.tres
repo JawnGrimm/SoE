@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="EventTemplate" load_steps=15 format=3]
+[gd_resource type="Resource" script_class="EventTemplate" load_steps=17 format=3]
 
 [ext_resource type="Script" path="res://data/definitions/event_template.gd" id="1"]
 [ext_resource type="Script" path="res://data/definitions/event_outcome.gd" id="2"]
@@ -49,19 +49,29 @@ script = ExtResource("3")
 effect_type = &"resolve_form"
 parameters = {"form_type": &"consignment_receipt", "disposition": "rejected_at_threshold"}
 
+[sub_resource type="Resource" id="fx_10"]
+script = ExtResource("3")
+effect_type = &"modify_resource"
+parameters = {"resource": &"canal_progress", "amount": 5, "scope": "world"}
+
+[sub_resource type="Resource" id="fx_11"]
+script = ExtResource("3")
+effect_type = &"modify_resource"
+parameters = {"resource": &"canal_progress", "amount": -5, "scope": "world"}
+
 [sub_resource type="Resource" id="outcome_1"]
 script = ExtResource("2")
 label = "Mark vessel received damaged; record seal broken prior to entry"
 title_override = "THE CRACK IS ENTERED"
 description_override = "You note the crack in the clay collar and accept the custody of four vessels, isolating the damaged jar for temple inspection. Utu-mansum records the receipt. Enlil-kisu's crew is cleared to disperse."
-effects = Array[ExtResource("3")]([SubResource("fx_1"), SubResource("fx_2"), SubResource("fx_3"), SubResource("fx_4"), SubResource("fx_5")])
+effects = Array[ExtResource("3")]([SubResource("fx_1"), SubResource("fx_2"), SubResource("fx_3"), SubResource("fx_4"), SubResource("fx_5"), SubResource("fx_10")])
 
 [sub_resource type="Resource" id="outcome_2"]
 script = ExtResource("2")
 label = "Reject the cracked vessel; turn the load away at the gate"
 title_override = "THE LOAD IS TURNED AWAY"
 description_override = "You refuse the cracked jar. The entire consignment is halted at the threshold. Enlil-kisu's men must guard the goods in the dusty yard overnight without beer or bread rations."
-effects = Array[ExtResource("3")]([SubResource("fx_6"), SubResource("fx_7"), SubResource("fx_8"), SubResource("fx_9")])
+effects = Array[ExtResource("3")]([SubResource("fx_6"), SubResource("fx_7"), SubResource("fx_8"), SubResource("fx_9"), SubResource("fx_11")])
 
 [resource]
 script = ExtResource("1")
