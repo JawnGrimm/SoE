@@ -2,11 +2,8 @@ extends Control
 
 const INITIAL_YEAR := 1200
 const INITIAL_EVENT_ID: StringName = &"corrupt_grain_official"
-const EVENT_TEMPLATES: Array[EventTemplate] = [
-	preload("res://data/events/corrupt_grain_official.tres"),
-	preload("res://data/events/routine_tally_adjustment.tres"),
-	preload("res://data/events/origin_side_reply.tres"),
-]
+var event_templates: Array[EventTemplate] = []
+var current_era: EraDef
 
 var runner: EventRunner
 var scheduler: EventScheduler
@@ -177,7 +174,13 @@ func _add_evidence_card(heading: String, value: String, detail: String) -> void:
 func _start_world() -> void:
 	runner = EventRunner.new()
 	scheduler = EventScheduler.new(runner)
+	event_templates.clear()
+	for definition in Registry.get_definitions("events"):
+		if definition is EventTemplate:
+			event_templates.append(definition)
+	event_templates.sort_custom(func(a: EventTemplate, b: EventTemplate) -> bool: return String(a.id) < String(b.id))
 	world = WorldState.new()
+	current_era = _find_era_for_year(world.year)
 	world.year = INITIAL_YEAR
 	world.period = 0
 	world.stockpiles[&"grain"] = 10
@@ -203,7 +206,7 @@ func _start_world() -> void:
 
 func _schedule_next_case() -> void:
 	context.year = world.year
-	active_event = scheduler.pick_next_event(world, actor, EVENT_TEMPLATES)
+	active_event = scheduler.pick_next_event(world, actor, event_templates)
 	_refresh_stats()
 	if active_event == null:
 		_show_end_of_queue()
@@ -361,7 +364,14 @@ func _refresh_stats() -> void:
 		trait_text,
 		actor.memory.size(),
 	]
-	year_label.text = "PERIOD %02d  •  YEAR %d  •  ARCHIVE 07" % [world.period + 1, world.year]
+	current_era = _find_era_for_year(world.year)
+	year_label.text = CalendarFormatter.format_date(current_era, world.year, world.period)
+
+func _find_era_for_year(year: int) -> EraDef:
+	for definition in Registry.get_definitions("eras"):
+		if definition is EraDef and year >= definition.start_year and year <= definition.end_year:
+			return definition
+	return null
 
 func _show_error(message: String) -> void:
 	_clear_choices()
