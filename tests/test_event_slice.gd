@@ -24,6 +24,11 @@ func _run() -> void:
 	_check(registry.has_definition(&"origin_side_reply"), "Registry should index the origin reply event")
 	_check(registry.get_definition(&"corrupt_grain_official") is EventTemplate, "Registry lookup should return the loaded event Resource")
 	_check(registry.get_definitions("events").size() == 3, "Registry should expose all three event definitions by category")
+	var prototype_events_are_era_independent := true
+	for prototype_event in registry.all_events():
+		if not prototype_event.era_tags.is_empty():
+			prototype_events_are_era_independent = false
+	_check(prototype_events_are_era_independent, "All three prototype events should remain era-independent")
 	_check(registry.get_definition(&"missing_definition") == null, "Unknown definition IDs should return null")
 	_check(registry.get_definition_ids("events").size() == 3, "Registry should list event IDs")
 	_check(registry.get_event(&"corrupt_grain_official") != null, "Typed event lookup should return an event")
@@ -56,6 +61,30 @@ func _run() -> void:
 
 	era_definition.era_tags.append(&"bronze_age")
 	_check(era_definition.era_tags.has(&"bronze_age"), "EraDef should expose era tags for event matching")
+
+	# Era eligibility: exact era ID and shared era tags match; unknown eras fail closed.
+	var era_context := _make_context(_make_world())
+	era_context.era = era_definition
+	var era_test_event := EventTemplate.new()
+	era_test_event.id = &"era_tag_test"
+	_check(runner.is_eligible(era_test_event, era_context), "Untagged events should remain eligible in a known era")
+	era_test_event.era_tags = [&"test_era"]
+	_check(runner.is_eligible(era_test_event, era_context), "Event tag matching the era ID should be eligible")
+	era_test_event.era_tags = [&"bronze_age"]
+	_check(runner.is_eligible(era_test_event, era_context), "Event tag matching an era tag should be eligible")
+	_check(scheduler.pick_next_event(era_context.world, era_context.actor, [era_test_event], era_definition) == era_test_event, "Scheduler should pass the active era into its event context")
+	era_test_event.era_tags = [&"medieval"]
+	_check(not runner.is_eligible(era_test_event, era_context), "Event with an unrelated era tag should be ineligible")
+	_check(scheduler.pick_next_event(era_context.world, era_context.actor, [era_test_event], era_definition) == null, "Scheduler should exclude events tagged for another era")
+	era_context.era = null
+	era_test_event.era_tags.clear()
+	_check(runner.is_eligible(era_test_event, era_context), "Untagged events should remain eligible when no era covers the year")
+	era_test_event.era_tags = [&"roman_republic"]
+	_check(not runner.is_eligible(era_test_event, era_context), "Tagged events must fail closed when no active era covers the year")
+	var era_blocked_outcome := EventOutcome.new()
+	era_test_event.outcomes = [era_blocked_outcome]
+	_check(runner.resolve_outcome(era_test_event, era_blocked_outcome, era_context).is_empty(), "Outcome resolution must also fail closed when a tagged event has no active era")
+	_check(not era_context.world.has_event_fired(era_test_event.id), "Era-rejected outcomes must not be recorded as fired")
 	_check(registry.get_definition(&"prototype_era") is EraDef, "Registry should index the prototype era definition")
 	var prototype_era := registry.get_definition(&"prototype_era") as EraDef
 	_check(prototype_era.start_year <= 1200 and prototype_era.end_year >= 1200, "Prototype era should cover the current 1200 test slice")
@@ -96,7 +125,7 @@ func _run() -> void:
 	_check(complicity_world.get_resource(&"grain") == 12, "Period advance must preserve stockpiles")
 	_check(complicity_world.resolved_forms.size() == 1, "Period advance must preserve the archive")
 	_check(&"complicit" in clerk_a.traits, "Period advance must preserve traits")
-	var routine_case := scheduler.pick_next_event(complicity_world, clerk_a, follow_up_catalog)
+	var routine_case := scheduler.pick_next_event(complicity_world, clerk_a, follow_up_catalog, registry.get_era_for_year(complicity_world.year))
 	if not _check(routine_case != null, "Complicit trait should schedule the routine tally case"):
 		_finish()
 		return
@@ -104,7 +133,7 @@ func _run() -> void:
 	var routine_ctx := _make_context(complicity_world)
 	_check(runner.is_eligible(routine_case, routine_ctx), "Routine tally should still pass normal conditions")
 	runner.resolve_outcome(routine_case, routine_case.outcomes[0], routine_ctx)
-	_check(scheduler.pick_next_event(complicity_world, clerk_a, follow_up_catalog) == null, "No follow-up should remain after the routine tally is filed")
+	_check(scheduler.pick_next_event(complicity_world, clerk_a, follow_up_catalog, registry.get_era_for_year(complicity_world.year)) == null, "No follow-up should remain after the routine tally is filed")
 
 	var exposure_world := _make_world()
 	var exposure_ctx := _make_context(exposure_world)
@@ -120,7 +149,7 @@ func _run() -> void:
 	_check(exposure_world.has_flag(&"grain_scandal", 1200), "Expose should set scandal flag")
 
 	exposure_world.advance_period()
-	var origin_case := scheduler.pick_next_event(exposure_world, clerk_b, follow_up_catalog)
+	var origin_case := scheduler.pick_next_event(exposure_world, clerk_b, follow_up_catalog, registry.get_era_for_year(exposure_world.year))
 	if not _check(origin_case != null, "Scandal flag plus pending inquiry should schedule the origin reply"):
 		_finish()
 		return
@@ -133,7 +162,7 @@ func _run() -> void:
 	var origin_ctx := _make_context(exposure_world)
 	runner.resolve_outcome(origin_case, origin_case.outcomes[0], origin_ctx)
 	_check(not exposure_world.has_pending_form(&"inquiry"), "Origin reply should close the inquiry form")
-	_check(scheduler.pick_next_event(exposure_world, clerk_b, follow_up_catalog) == null, "Queue should be empty after the origin reply is filed")
+	_check(scheduler.pick_next_event(exposure_world, clerk_b, follow_up_catalog, registry.get_era_for_year(exposure_world.year)) == null, "Queue should be empty after the origin reply is filed")
 
 	var year_rollover := WorldState.new()
 	year_rollover.year = 1200
@@ -190,6 +219,7 @@ func _make_context(world: WorldState) -> EventContext:
 	ctx.world = world
 	ctx.actor = world.get_person(&"clerk")
 	ctx.year = world.year
+	ctx.era = registry.get_era_for_year(world.year)
 	return ctx
 
 func _make_event() -> EventTemplate:

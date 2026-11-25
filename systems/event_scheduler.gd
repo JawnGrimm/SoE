@@ -11,7 +11,8 @@ func _init(event_runner: EventRunner = null) -> void:
 func pick_next_event(
 	world: WorldState,
 	actor: PersonEntity,
-	templates: Array[EventTemplate]
+	templates: Array[EventTemplate],
+	active_era: EraDef = null
 ) -> EventTemplate:
 	if world == null or actor == null:
 		return null
@@ -20,6 +21,7 @@ func pick_next_event(
 	var total_weight := 0.0
 	var ctx := EventContext.new()
 	ctx.world = world
+	ctx.era = active_era
 	ctx.actor = actor
 	ctx.year = world.year
 

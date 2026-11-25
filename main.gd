@@ -198,11 +198,14 @@ func _start_world() -> void:
 	context.world = world
 	context.actor = actor
 	context.year = world.year
+	context.era = current_era
 	_schedule_next_case()
 
 func _schedule_next_case() -> void:
 	context.year = world.year
-	active_event = scheduler.pick_next_event(world, actor, event_templates)
+	current_era = Registry.get_era_for_year(world.year)
+	context.era = current_era
+	active_event = scheduler.pick_next_event(world, actor, event_templates, current_era)
 	_refresh_stats()
 	if active_event == null:
 		_show_end_of_queue()
@@ -270,6 +273,7 @@ func _resolve_choice(index: int) -> void:
 	if phase != "response" and phase != "scheduled_choice":
 		return
 	context.year = world.year
+	context.era = Registry.get_era_for_year(world.year)
 	if not runner.is_eligible(active_event, context):
 		_show_error("This event is no longer eligible in the current world state.")
 		return
