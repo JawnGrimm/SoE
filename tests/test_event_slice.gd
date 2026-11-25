@@ -1,11 +1,16 @@
 extends SceneTree
 
+const ROUTINE_CASE: EventTemplate = preload("res://data/events/routine_tally_adjustment.tres")
+const ORIGIN_REPLY_CASE: EventTemplate = preload("res://data/events/origin_side_reply.tres")
+
 func _initialize() -> void:
 	call_deferred("_run")
 
 func _run() -> void:
 	var runner := EventRunner.new()
 	var template := _make_event()
+	var scheduler := EventScheduler.new(runner)
+	var follow_up_catalog: Array[EventTemplate] = [ROUTINE_CASE, ORIGIN_REPLY_CASE]
 
 	var complicity_world := _make_world()
 	var complicity_ctx := _make_context(complicity_world)
@@ -27,6 +32,18 @@ func _run() -> void:
 	runner.resolve_outcome(template, template.outcomes[0], complicity_ctx)
 	assert(complicity_world.get_resource(&"grain") == grain_after_resolution, "Once-only gate must prevent duplicate effects")
 
+	complicity_world.advance_period()
+	assert(complicity_world.period == 1 and complicity_world.year == 1200, "First period advance should remain in year 1200")
+	assert(complicity_world.get_resource(&"grain") == 12, "Period advance must preserve stockpiles")
+	assert(complicity_world.resolved_forms.size() == 1, "Period advance must preserve the archive")
+	assert(&"complicit" in clerk_a.traits, "Period advance must preserve traits")
+	var routine_case := scheduler.pick_next_event(complicity_world, clerk_a, follow_up_catalog)
+	assert(routine_case != null and routine_case.id == &"routine_tally_adjustment", "Complicit trait should schedule the routine tally case")
+	var routine_ctx := _make_context(complicity_world)
+	assert(runner.is_eligible(routine_case, routine_ctx), "Routine tally should still pass normal conditions")
+	runner.resolve_outcome(routine_case, routine_case.outcomes[0], routine_ctx)
+	assert(scheduler.pick_next_event(complicity_world, clerk_a, follow_up_catalog) == null, "No follow-up should remain after the routine tally is filed")
+
 	var exposure_world := _make_world()
 	var exposure_ctx := _make_context(exposure_world)
 	var exposure_form_id: StringName = exposure_world.pending_forms[0]["id"]
@@ -40,6 +57,24 @@ func _run() -> void:
 	assert(exposure_world.resolved_forms[0]["disposition"] == "referred_for_inquiry", "Inquiry archive should preserve disposition")
 	assert(exposure_world.has_flag(&"grain_scandal", 1200), "Expose should set scandal flag")
 
+	exposure_world.advance_period()
+	var origin_case := scheduler.pick_next_event(exposure_world, clerk_b, follow_up_catalog)
+	assert(origin_case != null and origin_case.id == &"origin_side_reply", "Scandal flag plus pending inquiry should schedule the origin reply")
+	var archived_levy := exposure_world.get_latest_resolved_form(&"grain_levy")
+	assert(archived_levy.get("assessment", "") == "Origin-side dispatch count or handling requires verification", "Origin reply must be able to read the archived assessment")
+	var origin_ctx := _make_context(exposure_world)
+	runner.resolve_outcome(origin_case, origin_case.outcomes[0], origin_ctx)
+	assert(not exposure_world.has_pending_form(&"inquiry"), "Origin reply should close the inquiry form")
+	assert(scheduler.pick_next_event(exposure_world, clerk_b, follow_up_catalog) == null, "Queue should be empty after the origin reply is filed")
+
+	var year_rollover := WorldState.new()
+	year_rollover.year = 1200
+	year_rollover.period = 11
+	year_rollover.stockpiles[&"grain"] = 17
+	year_rollover.advance_period()
+	assert(year_rollover.year == 1201 and year_rollover.period == 0, "Period 12 should roll into the next year")
+	assert(year_rollover.get_resource(&"grain") == 17, "Year rollover must preserve stockpiles")
+
 	complicity_world.event_history.append({"event_id": &"future_event", "year": 1205})
 	assert(not complicity_world.was_event_recent(&"future_event", 1200, 10), "Future-dated events must not count as recent")
 
@@ -51,7 +86,7 @@ func _run() -> void:
 	runner.resolve_outcome(follow_up_event, follow_up_event.outcomes[0], follow_up_ctx, true)
 	assert(&"complicit" in follow_up_ctx.actor.traits, "Explicit follow-up bypass should skip ordinary eligibility conditions")
 
-	print("PASS: playable grain event, archived assessments, eligibility gates, and future-date handling")
+	print("PASS: event outcomes, persistent period clock, reactive scheduler branches, and empty queue")
 	quit(0)
 
 func _make_world() -> WorldState:
