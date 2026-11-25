@@ -15,13 +15,13 @@ script = ExtResource("2")
 label = "Mark vessel received damaged; record seal broken prior to entry"
 title_override = "THE CRACK IS ENTERED"
 description_override = "You note the crack in the clay collar and accept the custody of four vessels, isolating the damaged jar for temple inspection. Utu-mansum records the receipt. Enlil-kisu's crew is cleared to disperse."
-effects = Array[Resource]([SubResource("fx_1"), SubResource("fx_2"), SubResource("fx_3"), SubResource("fx_4"), SubResource("fx_5")])
+effects = Array[ExtResource("3")]([SubResource("fx_1"), SubResource("fx_2"), SubResource("fx_3"), SubResource("fx_4"), SubResource("fx_5")])
 [sub_resource type="Resource" id="outcome_2"]
 script = ExtResource("2")
 label = "Reject the cracked vessel; turn the load away at the gate"
 title_override = "THE LOAD IS TURNED AWAY"
 description_override = "You refuse the cracked jar. The entire consignment is halted at the threshold. Enlil-kisu's men must guard the goods in the dusty yard overnight without beer or bread rations."
-effects = Array[Resource]([SubResource("fx_6"), SubResource("fx_7"), SubResource("fx_8"), SubResource("fx_9")])
+effects = Array[ExtResource("3")]([SubResource("fx_6"), SubResource("fx_7"), SubResource("fx_8"), SubResource("fx_9")])
 [sub_resource type="Resource" id="fx_1"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
@@ -65,5 +65,5 @@ title = "The Sealed Vessel and the Textile Bundles"
 description = "A consignment of oil jars and linen bundles sits on the reed mat as the receiving court prepares to close. The carriers are gray with dust. On the clay tag pierced to the bundle, four jars and six cloths are marked. On the mat sit four jars, but the seal on the smallest vessel is cracked and smeared with dry mud. Utu-mansum will not touch the cracked jar without an apprentice's mark."
 era_tags = Array[StringName]([&"uruk"])
 weight = 1.0
-conditions = Array[Resource]([SubResource("condition_1")])
-outcomes = Array[Resource]([SubResource("outcome_1"), SubResource("outcome_2")])
+conditions = Array[ExtResource("4")]([SubResource("condition_1")])
+outcomes = Array[ExtResource("2")]([SubResource("outcome_1"), SubResource("outcome_2")])
