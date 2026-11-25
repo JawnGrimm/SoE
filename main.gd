@@ -120,13 +120,18 @@ func _build_interface() -> void:
 	desk_caption.add_theme_font_size_override("font_size", 11)
 	desk_caption.add_theme_color_override("font_color", Color("#a99570"))
 	desk_box.add_child(desk_caption)
-	var upper_workspace := HBoxContainer.new()
+	var upper_workspace := VBoxContainer.new()
 	upper_workspace.custom_minimum_size.y = 250
 	upper_workspace.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	upper_workspace.add_theme_constant_override("separation", 12)
+	upper_workspace.add_theme_constant_override("separation", 8)
 	desk_box.add_child(upper_workspace)
-	evidence_left = _make_evidence_panel(upper_workspace, "GRANARY TERRACES  /  TEMPLE", "Ur-Nanna", "The temple cellars are cold, dry, and exact. The gods demand honest measures.")
-	evidence_right = _make_evidence_panel(upper_workspace, "RIVER QUAYS  /  LANDING", "Enlil-kisu", "The river road is dangerous and hungry. We respect the scribe who knows what a boatman endures.")
+	var evidence_row := HBoxContainer.new()
+	evidence_row.custom_minimum_size.y = 145
+	evidence_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	evidence_row.add_theme_constant_override("separation", 12)
+	upper_workspace.add_child(evidence_row)
+	evidence_left = _make_evidence_panel(evidence_row, "GRANARY TERRACES  /  TEMPLE", "Ur-Nanna", "The temple cellars are cold, dry, and exact. The gods demand honest measures.")
+	evidence_right = _make_evidence_panel(evidence_row, "RIVER QUAYS  /  LANDING", "Enlil-kisu", "The river road is dangerous and hungry. We respect the scribe who knows what a boatman endures.")
 	docket_motion_layer = Control.new()
 	docket_motion_layer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	docket_motion_layer.size_flags_vertical = Control.SIZE_EXPAND_FILL
