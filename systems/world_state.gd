@@ -149,7 +149,7 @@ func has_flag(flag: StringName, current_period: int) -> bool:
 	if not world_flags.has(flag):
 		return false
 	var expiry: int = world_flags[flag]
-	return expiry < 0 or current_period < expiry
+	return expiry == -1 or current_period < expiry
 
 func record_event(event_id: StringName, actor_id: StringName, current_year: int) -> void:
 	event_history.append({"event_id": event_id, "actor_id": actor_id, "year": current_year})
