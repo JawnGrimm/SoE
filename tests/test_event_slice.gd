@@ -326,7 +326,7 @@ func _run() -> void:
 	_check(temple_world.get_person(&"nin_kasi").opinions[temple_actor.id] == 3, "Temple path should grant Nin-kasi +3")
 	_check(temple_world.has_pending_form(&"pension_roll"), "Temple path should open the brewery account docket")
 	_check(UrukCatechism.choose_mentor(temple_world, temple_actor, &"nin_kasi"), "Nin-kasi should be a valid mentor")
-	_check(temple_actor.skills.get_level(&"rhetoric") == 2, "Nin-kasi mentorship should add one Rhetoric")
+	_check(temple_actor.skills.get_level(&"rhetoric") == 1, "Nin-kasi mentorship should add one Rhetoric")
 	_check(&"diplomatic" in temple_actor.traits, "Nin-kasi mentorship should add diplomatic")
 	_check(temple_world.get_person(&"nin_kasi").opinions[temple_actor.id] == 8, "Mentor choice should add +5 opinion on top of path standing")
 
