@@ -2,6 +2,7 @@ extends SceneTree
 
 var _checks: int = 0
 var _failures: Array[String] = []
+var registry: Node
 
 const ROUTINE_CASE: EventTemplate = preload("res://data/events/routine_tally_adjustment.tres")
 const ORIGIN_REPLY_CASE: EventTemplate = preload("res://data/events/origin_side_reply.tres")
@@ -15,13 +16,18 @@ func _run() -> void:
 	var scheduler := EventScheduler.new(runner)
 	var follow_up_catalog: Array[EventTemplate] = [ROUTINE_CASE, ORIGIN_REPLY_CASE]
 
-	_check(Registry.has_definition(&"corrupt_grain_official"), "Registry should index the initial grain event")
-	_check(Registry.has_definition(&"routine_tally_adjustment"), "Registry should index the routine tally event")
-	_check(Registry.has_definition(&"origin_side_reply"), "Registry should index the origin reply event")
-	_check(Registry.get_definition(&"corrupt_grain_official") is EventTemplate, "Registry lookup should return the loaded event Resource")
-	_check(Registry.get_definitions("events").size() == 3, "Registry should expose all three event definitions by category")
-	_check(Registry.get_definition(&"missing_definition") == null, "Unknown definition IDs should return null")
-	_check(Registry.get_definition_ids("events").size() == 3, "Registry should list event IDs")
+	# --script runs as a standalone SceneTree, where project autoload names are not injected
+	# into the test script at parse time. Instantiate the same Registry script explicitly.
+	registry = preload("res://systems/registry.gd").new()
+	root.add_child(registry)
+	registry.rebuild()
+	_check(registry.has_definition(&"corrupt_grain_official"), "Registry should index the initial grain event")
+	_check(registry.has_definition(&"routine_tally_adjustment"), "Registry should index the routine tally event")
+	_check(registry.has_definition(&"origin_side_reply"), "Registry should index the origin reply event")
+	_check(registry.get_definition(&"corrupt_grain_official") is EventTemplate, "Registry lookup should return the loaded event Resource")
+	_check(registry.get_definitions("events").size() == 3, "Registry should expose all three event definitions by category")
+	_check(registry.get_definition(&"missing_definition") == null, "Unknown definition IDs should return null")
+	_check(registry.get_definition_ids("events").size() == 3, "Registry should list event IDs")
 
 	var era_definition := EraDef.new()
 	era_definition.id = &"test_era"
@@ -37,7 +43,7 @@ func _run() -> void:
 
 	era_definition.era_tags.append(&"bronze_age")
 	_check(era_definition.era_tags.has(&"bronze_age"), "EraDef should expose era tags for event matching")
-	_check(Registry.get_definition(&"prototype_era") is EraDef, "Registry should index the prototype era definition")
+	_check(registry.get_definition(&"prototype_era") is EraDef, "Registry should index the prototype era definition")
 	var prototype_era := Registry.get_definition(&"prototype_era") as EraDef
 	_check(prototype_era.start_year <= 1200 and prototype_era.end_year >= 1200, "Prototype era should cover the current 1200 test slice")
 	_check(CalendarFormatter.format_year(1200) == "1200 CE", "Calendar formatter should label positive years CE")
