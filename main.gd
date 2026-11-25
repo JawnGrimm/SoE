@@ -155,9 +155,10 @@ func _build_interface() -> void:
 	mat_box.add_child(case_heading)
 	dossier = RichTextLabel.new()
 	dossier.bbcode_enabled = true
-	dossier.fit_content = true
-	dossier.scroll_active = true
+	dossier.fit_content = false
+	dossier.scroll_active = false
 	dossier.custom_minimum_size.y = 105
+	dossier.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	dossier.add_theme_font_size_override("normal_font_size", 15)
 	_apply_incised_text(dossier)
 	mat_box.add_child(dossier)
