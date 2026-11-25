@@ -116,7 +116,7 @@ func _build_interface() -> void:
 	docket_motion_layer = Control.new()
 	docket_motion_layer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	docket_motion_layer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	docket_motion_layer.custom_minimum_size.y = 360
+	docket_motion_layer.custom_minimum_size.y = 400
 	desk_box.add_child(docket_motion_layer)
 	docket_overlay = PanelContainer.new()
 	docket_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -143,6 +143,10 @@ func _build_interface() -> void:
 	mat_box.add_theme_constant_override("separation", 10)
 	tablet_content.add_child(mat_box)
 	case_heading = Label.new()
+	var title_font := FontVariation.new()
+	title_font.base_font = ThemeDB.fallback_font
+	title_font.variation_embolden = 0.65
+	case_heading.add_theme_font_override("font", title_font)
 	case_heading.add_theme_font_size_override("font_size", 24)
 	_apply_incised_text(case_heading)
 	mat_box.add_child(case_heading)
@@ -576,6 +580,7 @@ func _show_end_of_queue() -> void:
 
 func _add_choice(label_text: String, callback: Callable, archive_after_stamp: bool = true) -> void:
 	var row := HBoxContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_theme_constant_override("separation", 10)
 	row.custom_minimum_size.y = 56
 	choices.add_child(row)
