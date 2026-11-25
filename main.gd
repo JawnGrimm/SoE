@@ -104,6 +104,7 @@ func _build_interface() -> void:
 	root.add_child(rule)
 	var body := HBoxContainer.new()
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", 14)
 	root.add_child(body)
 
@@ -114,6 +115,7 @@ func _build_interface() -> void:
 	mat.add_theme_stylebox_override("panel", _panel_style("#00000000", "#00000000"))
 	body.add_child(mat)
 	var desk_box := VBoxContainer.new()
+	desk_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	desk_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	desk_box.add_theme_constant_override("separation", 8)
 	mat.add_child(desk_box)
@@ -123,8 +125,9 @@ func _build_interface() -> void:
 	desk_caption.add_theme_color_override("font_color", Color("#a99570"))
 	desk_box.add_child(desk_caption)
 	var upper_workspace := VBoxContainer.new()
-	upper_workspace.custom_minimum_size.y = 250
+	upper_workspace.custom_minimum_size.y = 0
 	upper_workspace.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	upper_workspace.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	upper_workspace.add_theme_constant_override("separation", 8)
 	desk_box.add_child(upper_workspace)
 	var evidence_row := HBoxContainer.new()
@@ -135,9 +138,10 @@ func _build_interface() -> void:
 	evidence_left = _make_evidence_panel(evidence_row, "GRANARY TERRACES  /  TEMPLE", "Ur-Nanna", "The temple cellars are cold, dry, and exact. The gods demand honest measures.")
 	evidence_right = _make_evidence_panel(evidence_row, "RIVER QUAYS  /  LANDING", "Enlil-kisu", "The river road is dangerous and hungry. We respect the scribe who knows what a boatman endures.")
 	docket_motion_layer = Control.new()
+	docket_motion_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	docket_motion_layer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	docket_motion_layer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	docket_motion_layer.custom_minimum_size.y = 330
+	docket_motion_layer.custom_minimum_size.y = 280
 	desk_box.add_child(docket_motion_layer)
 	docket_overlay = PanelContainer.new()
 	docket_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -163,7 +167,7 @@ func _build_interface() -> void:
 	var mat_box := VBoxContainer.new()
 	mat_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	mat_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	mat_box.add_theme_constant_override("separation", 10)
+	mat_box.add_theme_constant_override("separation", 14)
 	tablet_content.add_child(mat_box)
 	case_heading = Label.new()
 	var title_font := FontVariation.new()
@@ -197,8 +201,9 @@ func _build_interface() -> void:
 	_apply_incised_text(prompt_label)
 	mat_box.add_child(prompt_label)
 	stamp_history_row = HFlowContainer.new()
-	stamp_history_row.custom_minimum_size.y = 34
+	stamp_history_row.custom_minimum_size.y = 0
 	stamp_history_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stamp_history_row.visible = false
 	stamp_history_row.add_theme_constant_override("h_separation", 8)
 	stamp_history_row.add_theme_constant_override("v_separation", 4)
 	mat_box.add_child(stamp_history_row)
@@ -207,7 +212,8 @@ func _build_interface() -> void:
 	mat_box.add_child(choices)
 
 	var desk_props := HBoxContainer.new()
-	desk_props.custom_minimum_size.y = 72
+	desk_props.custom_minimum_size.y = 52
+	desk_props.size_flags_vertical = Control.SIZE_SHRINK_END
 	desk_props.add_theme_constant_override("separation", 14)
 	desk_props.alignment = BoxContainer.ALIGNMENT_CENTER
 	root.add_child(desk_props)
@@ -215,14 +221,14 @@ func _build_interface() -> void:
 	archive_prop.texture = load("res://assets/desk/archive_stack.png")
 	archive_prop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	archive_prop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	archive_prop.custom_minimum_size = Vector2(110, 60)
+	archive_prop.custom_minimum_size = Vector2(82, 44)
 	archive_prop.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	desk_props.add_child(archive_prop)
 	stylus_prop = TextureRect.new()
 	stylus_prop.texture = load("res://assets/desk/Ancient Wrapped Wooden Stylus.png")
 	stylus_prop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	stylus_prop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	stylus_prop.custom_minimum_size = Vector2(110, 48)
+	stylus_prop.custom_minimum_size = Vector2(100, 40)
 	stylus_prop.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	stylus_prop.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	stylus_prop.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -275,7 +281,7 @@ func _build_interface() -> void:
 	compound_box.add_child(status_label)
 
 	var rim := PanelContainer.new()
-	rim.custom_minimum_size.y = 74
+	rim.custom_minimum_size.y = 52
 	rim.size_flags_vertical = Control.SIZE_SHRINK_END
 	rim.add_theme_stylebox_override("panel", _panel_style("#3a2b1d", "#9a7545"))
 	root.add_child(rim)
@@ -684,7 +690,7 @@ func _show_end_of_queue() -> void:
 	dossier.text = ""
 	_clear_records()
 	_set_evidence_tension(0, 0)
-	prompt_label.text = "All cases filed for now. The record is not. No case is set before you."
+	prompt_label.text = "The desk is clear. No case is set before you."
 	_add_choice("End Period", _advance_period)
 	status_label.text = "THE WATER RISES. THE STORES CHANGE. THE CLAY WAITS."
 
@@ -704,7 +710,7 @@ func _add_choice(label_text: String, callback: Callable) -> void:
 	row.add_child(wedge)
 	var button := Button.new()
 	button.text = label_text
-	button.custom_minimum_size = Vector2(0, 56)
+	button.custom_minimum_size = Vector2(220, 56)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.add_theme_font_size_override("font_size", 18)
@@ -713,9 +719,18 @@ func _add_choice(label_text: String, callback: Callable) -> void:
 	button.add_theme_color_override("font_hover_color", Color("#2b1d12"))
 	button.add_theme_color_override("font_pressed_color", Color("#21170f"))
 	button.add_theme_color_override("font_disabled_color", Color("#5a4632", 0.8))
-	button.add_theme_stylebox_override("normal", _panel_style("#00000000", "#6f512e"))
-	button.add_theme_stylebox_override("hover", _panel_style("#120b0520", "#a9854e"))
-	button.add_theme_stylebox_override("pressed", _panel_style("#24180e35", "#5b4228"))
+	var button_normal := _panel_style("#00000000", "#6f512e")
+	button_normal.content_margin_left = 18
+	button_normal.content_margin_right = 18
+	var button_hover := _panel_style("#120b0520", "#a9854e")
+	button_hover.content_margin_left = 18
+	button_hover.content_margin_right = 18
+	var button_pressed := _panel_style("#24180e35", "#5b4228")
+	button_pressed.content_margin_left = 18
+	button_pressed.content_margin_right = 18
+	button.add_theme_stylebox_override("normal", button_normal)
+	button.add_theme_stylebox_override("hover", button_hover)
+	button.add_theme_stylebox_override("pressed", button_pressed)
 	var stamp := Label.new()
 	stamp.text = "𒂍" if label_text.contains("Temple") else "𒁹"
 	stamp.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -785,6 +800,7 @@ func _handle_choice(button: Button, callback: Callable) -> void:
 func _record_choice_stamp(button: Button, stamp: Label) -> void:
 	if stamp_history_row == null or button == null or stamp == null:
 		return
+	stamp_history_row.visible = true
 	var entry := Label.new()
 	entry.text = stamp.text
 	entry.custom_minimum_size = Vector2(32, 34)
@@ -794,10 +810,12 @@ func _record_choice_stamp(button: Button, stamp: Label) -> void:
 	entry.tooltip_text = "Recorded choice: " + button.text
 	_apply_incised_text(entry)
 	stamp_history_row.add_child(entry)
+	stamp_history_row.visible = stamp_history_row.get_child_count() > 0
 
 func _clear_stamp_history() -> void:
 	if stamp_history_row == null:
 		return
+	stamp_history_row.visible = false
 	for child in stamp_history_row.get_children():
 		stamp_history_row.remove_child(child)
 		child.queue_free()
