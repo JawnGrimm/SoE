@@ -134,6 +134,34 @@ func _run() -> void:
 	_check(uruk_a.get_resource(&"barley") >= 443, "Case 15 should enter 23 measures of barley")
 	_check(uruk_a.resolved_forms.size() == 1, "Case 15 should resolve the opening grain levy")
 
+	# Case 1 may arrive from a receipt in any season, or from the Harvest/Stores desk pool.
+	var sealed_case := registry.get_event(&"case_01_sealed_vessel")
+	var sealed_world := WorldState.new()
+	var sealed_player := UrukSeeder.seed_campaign(sealed_world, 44)
+	var sealed_context := EventContext.new()
+	sealed_context.world = sealed_world
+	sealed_context.actor = sealed_player
+	sealed_context.year = sealed_world.year
+	sealed_context.era = registry.get_era(&"uruk_storehouse")
+	var sealed_pool: Array[EventTemplate] = [sealed_case]
+	_check(scheduler.pick_next_event(sealed_world, sealed_player, sealed_pool, sealed_context.era, sealed_world.rng_narrative) == null, "Case 1 should not arrive in Flood without a receipt")
+	sealed_world.enqueue_form({"form_type": &"consignment_receipt"})
+	_check(scheduler.pick_next_event(sealed_world, sealed_player, sealed_pool, sealed_context.era, sealed_world.rng_narrative) == sealed_case, "Case 1 should be eligible when a consignment receipt is pending")
+	sealed_world.pending_forms.clear()
+	sealed_world.period = 6
+	_check(scheduler.pick_next_event(sealed_world, sealed_player, sealed_pool, sealed_context.era, sealed_world.rng_narrative) == sealed_case, "Case 1 should enter the Harvest seasonal pool")
+	sealed_world.enqueue_form({"form_type": &"consignment_receipt"})
+	var sealed_form_context := EventContext.new()
+	sealed_form_context.world = sealed_world
+	sealed_form_context.actor = sealed_player
+	sealed_form_context.year = sealed_world.year
+	sealed_form_context.era = sealed_context.era
+	runner.resolve_outcome(sealed_case, sealed_case.outcomes[0], sealed_form_context)
+	_check(sealed_world.get_person(&"utu_mansum").opinions[sealed_player.id] == 3, "Case 1 should record Utu-mansum's opinion of the apprentice")
+	_check(sealed_world.get_person(&"enlil_kisu").opinions[sealed_player.id] == 1, "Case 1 should record Enlil-kisu's opinion of the apprentice")
+	_check(sealed_world.get_resource(&"clay_reeds") >= 49, "Case 1 should consume one clay and reed unit")
+	_check(sealed_world.resolved_forms.back()["disposition"] == "quarantine_cracked_vessel", "Case 1 should resolve the receipt with its authored disposition")
+
 	var complicity_world := _make_world()
 	var complicity_ctx := _make_context(complicity_world)
 	var complicity_form_id: StringName = complicity_world.pending_forms[0]["id"]
