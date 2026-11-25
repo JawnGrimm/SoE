@@ -2,7 +2,7 @@ extends SceneTree
 
 var _checks: int = 0
 var _failures: Array[String] = []
-var registry: Variant
+var registry: DefinitionRegistry
 
 const ROUTINE_CASE: EventTemplate = preload("res://data/events/routine_tally_adjustment.tres")
 const ORIGIN_REPLY_CASE: EventTemplate = preload("res://data/events/origin_side_reply.tres")
@@ -16,11 +16,9 @@ func _run() -> void:
 	var scheduler := EventScheduler.new(runner)
 	var follow_up_catalog: Array[EventTemplate] = [ROUTINE_CASE, ORIGIN_REPLY_CASE]
 
-	# --script runs as a standalone SceneTree, where project autoload names are not injected
-	# into the test script at parse time. Instantiate the same Registry script explicitly.
-	registry = preload("res://systems/registry.gd").new()
-	root.add_child(registry)
-	registry.rebuild()
+	# --script does not inject project autoloads. Exercise the standalone registry directly.
+	registry = DefinitionRegistry.new()
+	registry.load_defaults()
 	_check(registry.has_definition(&"corrupt_grain_official"), "Registry should index the initial grain event")
 	_check(registry.has_definition(&"routine_tally_adjustment"), "Registry should index the routine tally event")
 	_check(registry.has_definition(&"origin_side_reply"), "Registry should index the origin reply event")
@@ -28,6 +26,21 @@ func _run() -> void:
 	_check(registry.get_definitions("events").size() == 3, "Registry should expose all three event definitions by category")
 	_check(registry.get_definition(&"missing_definition") == null, "Unknown definition IDs should return null")
 	_check(registry.get_definition_ids("events").size() == 3, "Registry should list event IDs")
+	_check(registry.get_event(&"corrupt_grain_official") != null, "Typed event lookup should return an event")
+	_check(registry.get_era_for_year(1200) == registry.get_era(&"prototype_era"), "Registry should resolve the era covering a year")
+	_check(registry.get_era_for_year(99999) == null, "Unknown years should resolve to no era")
+	var missing_folder_count := registry.load_folder("res://data/does_not_exist")
+	_check(missing_folder_count == 0, "Missing definition folders should load zero resources")
+	_check(not registry.warnings.is_empty(), "Registry should retain warnings for missing folders")
+
+	var duplicate_first := EventTemplate.new()
+	duplicate_first.id = &"dup_test"
+	var duplicate_second := EventTemplate.new()
+	duplicate_second.id = &"dup_test"
+	_check(registry.register_event(duplicate_first), "Registry should accept the first registration for an ID")
+	_check(not registry.register_event(duplicate_second), "Registry should reject a duplicate ID")
+	_check(registry.get_event(&"dup_test") == duplicate_first, "Duplicate registration should preserve the first definition")
+	_check(registry.warnings.back().contains("duplicate definition id"), "Duplicate registration should record a warning")
 
 	var era_definition := EraDef.new()
 	era_definition.id = &"test_era"
@@ -51,6 +64,12 @@ func _run() -> void:
 	_check(CalendarFormatter.format_year(-2107) == "2108 BCE", "Calendar formatter should convert negative simulation years to BCE")
 	_check(CalendarFormatter.format_date(prototype_era, 1200, 0).contains("Period 01"), "Calendar formatter should use era period labels")
 	_check(CalendarFormatter.format_date(era_definition, 1200, 1).contains("Second"), "Calendar formatter should use custom period names when supplied")
+	era_definition.period_names = ["Spring", "Summer", "Autumn", "Winter"]
+	_check(CalendarFormatter.format_date(era_definition, 1200, 3).contains("Winter"), "Calendar formatter should support four custom seasons")
+	era_definition.period_names.clear()
+	_check(CalendarFormatter.format_date(era_definition, 1200, 0).contains("Month 01"), "Empty custom periods should fall back to the era period label")
+	_check(CalendarFormatter.format_date(null, 1200, 0) == "Period 01 • 1200 CE", "Null era should use the generic calendar fallback")
+	_check(CalendarFormatter.format_year(-2108) == "2109 BCE", "Calendar formatter should convert -2108 to 2109 BCE")
 
 	var complicity_world := _make_world()
 	var complicity_ctx := _make_context(complicity_world)
