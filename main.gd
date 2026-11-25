@@ -1,9 +1,9 @@
 extends Control
 
-const INITIAL_YEAR := 1200
-const INITIAL_EVENT_ID: StringName = &"corrupt_grain_official"
-var event_templates: Array[EventTemplate] = []
-var current_era: EraDef
+const CAMPAIGN_SEED: int = 32003200
+const CASE_15_ID: StringName = &"case_15_south_court"
+const URUK_EVENT_IDS: Array[StringName] = [&"case_15_south_court", &"case_01_sealed_vessel"]
+const ROSTER_ORDER: Array[StringName] = [&"shuruppak_ilu", &"utu_mansum", &"enlil_kisu", &"ur_nanna", &"nin_kasi", &"geme_inana", &"lu_nanshe"]
 
 var runner: EventRunner
 var scheduler: EventScheduler
@@ -11,22 +11,20 @@ var world: WorldState
 var actor: PersonEntity
 var active_event: EventTemplate
 var context: EventContext
-var grain_levy_form_id: StringName = &""
+var current_era: EraDef
+var first_case_pending := true
+var phase := "case"
+var last_opinion_deltas: Dictionary[StringName, int] = {}
 
-var phase := "assessment"
-var selected_assessment := ""
-
-var page: VBoxContainer
-var title_label: Label
 var year_label: Label
-var section_label: Label
-var evidence_heading: Label
-var stats_label: Label
-var narrative: RichTextLabel
-var evidence_grid: GridContainer
+var case_heading: Label
+var dossier: RichTextLabel
+var record_grid: GridContainer
 var prompt_label: Label
 var choices: VBoxContainer
-var footer_label: Label
+var stores_label: Label
+var roster_box: VBoxContainer
+var status_label: Label
 
 func _ready() -> void:
 	_build_interface()
@@ -34,342 +32,302 @@ func _ready() -> void:
 
 func _build_interface() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-
 	var background := ColorRect.new()
-	background.color = Color("#11151b")
+	background.color = Color("#17130f")
 	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(background)
-
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 34)
-	margin.add_theme_constant_override("margin_right", 34)
-	margin.add_theme_constant_override("margin_top", 26)
-	margin.add_theme_constant_override("margin_bottom", 26)
+	margin.add_theme_constant_override("margin_left", 22)
+	margin.add_theme_constant_override("margin_right", 22)
+	margin.add_theme_constant_override("margin_top", 18)
+	margin.add_theme_constant_override("margin_bottom", 18)
 	add_child(margin)
-
-	page = VBoxContainer.new()
-	page.add_theme_constant_override("separation", 14)
-	margin.add_child(page)
-
+	var root := VBoxContainer.new()
+	root.add_theme_constant_override("separation", 12)
+	margin.add_child(root)
 	var header := HBoxContainer.new()
-	header.add_theme_constant_override("separation", 12)
-	page.add_child(header)
-
-	title_label = Label.new()
-	title_label.text = "SCRIBE OF ERAS"
-	title_label.add_theme_font_size_override("font_size", 28)
-	title_label.add_theme_color_override("font_color", Color("#e8dfcc"))
-	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	header.add_child(title_label)
-
+	root.add_child(header)
+	var title := Label.new()
+	title.text = "SCRIBE OF ERAS  /  EANNA STOREHOUSE"
+	title.add_theme_font_size_override("font_size", 23)
+	title.add_theme_color_override("font_color", Color("#e5d2a8"))
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(title)
 	year_label = Label.new()
 	year_label.add_theme_font_size_override("font_size", 14)
-	year_label.add_theme_color_override("font_color", Color("#b5a98e"))
+	year_label.add_theme_color_override("font_color", Color("#c4ad7c"))
 	header.add_child(year_label)
-
 	var rule := ColorRect.new()
 	rule.custom_minimum_size.y = 2
-	rule.color = Color("#66583f")
-	page.add_child(rule)
-
-	section_label = Label.new()
-	section_label.add_theme_font_size_override("font_size", 16)
-	section_label.add_theme_color_override("font_color", Color("#c7a96b"))
-	page.add_child(section_label)
-
-	narrative = RichTextLabel.new()
-	narrative.bbcode_enabled = true
-	narrative.fit_content = true
-	narrative.scroll_active = false
-	narrative.add_theme_font_size_override("normal_font_size", 17)
-	narrative.add_theme_color_override("default_color", Color("#d5d8dc"))
-	narrative.add_theme_color_override("font_color", Color("#d5d8dc"))
-	narrative.custom_minimum_size.y = 105
-	page.add_child(narrative)
-
-	evidence_heading = Label.new()
-	evidence_heading.text = "SURVIVING RECORDS"
-	evidence_heading.add_theme_font_size_override("font_size", 13)
-	evidence_heading.add_theme_color_override("font_color", Color("#8f9aa8"))
-	page.add_child(evidence_heading)
-
-	evidence_grid = GridContainer.new()
-	evidence_grid.columns = 3
-	evidence_grid.add_theme_constant_override("h_separation", 12)
-	evidence_grid.add_theme_constant_override("v_separation", 8)
-	page.add_child(evidence_grid)
-
-	_add_evidence_card("DISPATCH COPY", "24 measures", "A surviving copy records the amount dispatched.")
-	_add_evidence_card("RECEIVING TALLY", "21 measures", "The storehouse clerk recorded three fewer.")
-	_add_evidence_card("LOADING OBSERVATION", "Not present", "No independent witness account of loading survives.")
-
-	var stats_panel := PanelContainer.new()
-	var stats_style := StyleBoxFlat.new()
-	stats_style.bg_color = Color("#1b222b")
-	stats_style.border_color = Color("#343d49")
-	stats_style.set_border_width_all(1)
-	stats_style.set_corner_radius_all(5)
-	stats_panel.add_theme_stylebox_override("panel", stats_style)
-	page.add_child(stats_panel)
-
-	stats_label = Label.new()
-	stats_label.add_theme_font_size_override("font_size", 14)
-	stats_label.add_theme_color_override("font_color", Color("#c9cdd2"))
-	stats_panel.add_child(stats_label)
-
+	rule.color = Color("#80653b")
+	root.add_child(rule)
+	var body := HBoxContainer.new()
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 14)
+	root.add_child(body)
+	var mat := PanelContainer.new()
+	mat.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	mat.size_flags_stretch_ratio = 2.2
+	mat.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	mat.add_theme_stylebox_override("panel", _panel_style("#292117", "#80653b"))
+	body.add_child(mat)
+	var mat_box := VBoxContainer.new()
+	mat_box.add_theme_constant_override("separation", 10)
+	mat.add_child(mat_box)
+	case_heading = Label.new()
+	case_heading.add_theme_font_size_override("font_size", 18)
+	case_heading.add_theme_color_override("font_color", Color("#e5d2a8"))
+	mat_box.add_child(case_heading)
+	dossier = RichTextLabel.new()
+	dossier.bbcode_enabled = true
+	dossier.fit_content = true
+	dossier.scroll_active = true
+	dossier.custom_minimum_size.y = 105
+	dossier.add_theme_font_size_override("normal_font_size", 15)
+	dossier.add_theme_color_override("default_color", Color("#e0d4bd"))
+	mat_box.add_child(dossier)
+	var records_title := Label.new()
+	records_title.text = "THE MAT  /  PHYSICAL RECORDS"
+	records_title.add_theme_color_override("font_color", Color("#c7a96b"))
+	records_title.add_theme_font_size_override("font_size", 12)
+	mat_box.add_child(records_title)
+	record_grid = GridContainer.new()
+	record_grid.columns = 3
+	record_grid.add_theme_constant_override("h_separation", 8)
+	record_grid.add_theme_constant_override("v_separation", 8)
+	mat_box.add_child(record_grid)
 	prompt_label = Label.new()
 	prompt_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	prompt_label.add_theme_font_size_override("font_size", 18)
-	prompt_label.add_theme_color_override("font_color", Color("#e8dfcc"))
-	page.add_child(prompt_label)
-
+	prompt_label.add_theme_font_size_override("font_size", 16)
+	prompt_label.add_theme_color_override("font_color", Color("#f0dfbd"))
+	mat_box.add_child(prompt_label)
 	choices = VBoxContainer.new()
-	choices.add_theme_constant_override("separation", 8)
-	page.add_child(choices)
+	choices.add_theme_constant_override("separation", 7)
+	mat_box.add_child(choices)
+	var compound := PanelContainer.new()
+	compound.custom_minimum_size.x = 265
+	compound.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	compound.add_theme_stylebox_override("panel", _panel_style("#211d17", "#665238"))
+	body.add_child(compound)
+	var compound_box := VBoxContainer.new()
+	compound_box.add_theme_constant_override("separation", 10)
+	compound.add_child(compound_box)
+	var compound_title := Label.new()
+	compound_title.text = "THE COMPOUND"
+	compound_title.add_theme_font_size_override("font_size", 17)
+	compound_title.add_theme_color_override("font_color", Color("#d6bd8b"))
+	compound_box.add_child(compound_title)
+	var stores_title := Label.new()
+	stores_title.text = "SETTLEMENT STORES"
+	stores_title.add_theme_font_size_override("font_size", 11)
+	stores_title.add_theme_color_override("font_color", Color("#a99570"))
+	compound_box.add_child(stores_title)
+	stores_label = Label.new()
+	stores_label.add_theme_font_size_override("font_size", 14)
+	stores_label.add_theme_color_override("font_color", Color("#e5d2a8"))
+	compound_box.add_child(stores_label)
+	var roster_title := Label.new()
+	roster_title.text = "LIVING ROSTER  /  OPINION OF YOU"
+	roster_title.add_theme_font_size_override("font_size", 11)
+	roster_title.add_theme_color_override("font_color", Color("#a99570"))
+	compound_box.add_child(roster_title)
+	roster_box = VBoxContainer.new()
+	roster_box.add_theme_constant_override("separation", 5)
+	compound_box.add_child(roster_box)
+	status_label = Label.new()
+	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	status_label.add_theme_font_size_override("font_size", 11)
+	status_label.add_theme_color_override("font_color", Color("#a99570"))
+	compound_box.add_child(status_label)
 
-	footer_label = Label.new()
-	footer_label.add_theme_font_size_override("font_size", 12)
-	footer_label.add_theme_color_override("font_color", Color("#7e8792"))
-	page.add_child(footer_label)
-
-func _add_evidence_card(heading: String, value: String, detail: String) -> void:
-	var card := PanelContainer.new()
-	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+func _panel_style(fill: String, border: String) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color("#202832")
-	style.border_color = Color("#3a4654")
+	style.bg_color = Color(fill)
+	style.border_color = Color(border)
 	style.set_border_width_all(1)
-	style.set_corner_radius_all(5)
-	card.add_theme_stylebox_override("panel", style)
-	evidence_grid.add_child(card)
+	style.set_corner_radius_all(3)
+	style.content_margin_left = 12
+	style.content_margin_right = 12
+	style.content_margin_top = 12
+	style.content_margin_bottom = 12
+	return style
 
+func _add_record(heading: String, value: String, detail: String) -> void:
+	var panel := PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", _panel_style("#342a1d", "#705b3a"))
+	record_grid.add_child(panel)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 5)
-	box.add_theme_constant_override("margin_left", 12)
-	box.add_theme_constant_override("margin_right", 12)
-	box.add_theme_constant_override("margin_top", 10)
-	box.add_theme_constant_override("margin_bottom", 10)
-	card.add_child(box)
-
-	var heading_label := Label.new()
-	heading_label.text = heading
-	heading_label.add_theme_font_size_override("font_size", 11)
-	heading_label.add_theme_color_override("font_color", Color("#9ca8b5"))
-	box.add_child(heading_label)
-
-	var value_label := Label.new()
-	value_label.text = value
-	value_label.add_theme_font_size_override("font_size", 20)
-	value_label.add_theme_color_override("font_color", Color("#e8dfcc"))
-	box.add_child(value_label)
-
-	var detail_label := Label.new()
-	detail_label.text = detail
-	detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	detail_label.add_theme_font_size_override("font_size", 12)
-	detail_label.add_theme_color_override("font_color", Color("#aab2bb"))
-	box.add_child(detail_label)
+	panel.add_child(box)
+	var head := Label.new()
+	head.text = heading
+	head.add_theme_font_size_override("font_size", 11)
+	head.add_theme_color_override("font_color", Color("#c7a96b"))
+	box.add_child(head)
+	var val := Label.new()
+	val.text = value
+	val.add_theme_font_size_override("font_size", 19)
+	val.add_theme_color_override("font_color", Color("#f0dfbd"))
+	box.add_child(val)
+	var note := Label.new()
+	note.text = detail
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	note.add_theme_font_size_override("font_size", 11)
+	note.add_theme_color_override("font_color", Color("#c6b99f"))
+	box.add_child(note)
 
 func _start_world() -> void:
 	runner = EventRunner.new()
 	scheduler = EventScheduler.new(runner)
-	event_templates = Registry.all_events()
 	world = WorldState.new()
-	world.year = INITIAL_YEAR
-	current_era = Registry.get_era_for_year(world.year)
-	world.period = 0
-	world.stockpiles[&"grain"] = 10
-
-	actor = PersonEntity.new()
-	actor.id = &"player_scribe"
-	actor.office_id = &"grain_clerk"
-	actor.skills.levels[&"arithmetic"] = 2
-	world.people[actor.id] = actor
-
-	grain_levy_form_id = world.enqueue_form({
-		"form_type": &"grain_levy",
-		"subject_id": &"south_court_storehouse",
-		"urgency": 1,
-		"year": world.year,
-	})
-
+	actor = UrukSeeder.seed_campaign(world, CAMPAIGN_SEED)
+	current_era = Registry.get_era(&"uruk_storehouse")
 	context = EventContext.new()
 	context.world = world
 	context.actor = actor
-	context.year = world.year
 	context.era = current_era
+	context.year = world.year
 	_schedule_next_case()
 
 func _schedule_next_case() -> void:
 	context.year = world.year
 	current_era = Registry.get_era_for_year(world.year)
 	context.era = current_era
-	active_event = scheduler.pick_next_event(world, actor, event_templates, current_era)
-	_refresh_stats()
+	if first_case_pending:
+		active_event = Registry.get_event(CASE_15_ID)
+		first_case_pending = false
+	else:
+		var pool: Array[EventTemplate] = []
+		for event_id in URUK_EVENT_IDS:
+			var event := Registry.get_event(event_id)
+			if event != null:
+				pool.append(event)
+		active_event = scheduler.pick_next_event(world, actor, pool, current_era, world.rng_narrative)
+	_refresh_compound()
 	if active_event == null:
 		_show_end_of_queue()
-	elif active_event.id == INITIAL_EVENT_ID:
-		_show_assessment()
 	else:
-		_show_scheduled_case()
+		_show_case()
 
-func _show_assessment() -> void:
+func _show_case() -> void:
 	_clear_choices()
-	phase = "assessment"
-	selected_assessment = ""
-	section_label.text = "CASE FILE  /  " + active_event.title.to_upper()
-	evidence_heading.visible = true
-	evidence_grid.visible = true
-	prompt_label.text = "What can you responsibly enter in the assessment?"
-	narrative.text = "[color=#d5d8dc]" + active_event.description + "[/color]"
-	_add_choice("No individual responsibility assigned", "The evidence does not identify who caused the difference.", _choose_assessment.bind("No individual responsibility assigned"))
-	_add_choice("Origin-side dispatch count or handling requires verification", "Request verification of the dispatch count and handling at origin.", _choose_assessment.bind("Origin-side dispatch count or handling requires verification"))
-	footer_label.text = "EVIDENCE ≠ INTERPRETATION ≠ JUDGMENT"
-
-func _choose_assessment(claim: String) -> void:
-	if phase != "assessment":
-		return
-	selected_assessment = claim
-	if not world.record_form_assessment(grain_levy_form_id, claim):
-		_show_error("The assessment could not be attached to the pending form.")
-		return
-	actor.memory.append({
-		"year": world.year,
-		"memory_id": &"grain_assessment",
-		"text": "Assessment entered: " + claim + ".",
-		"involved": [],
-	})
-	phase = "response"
-	_show_response()
-
-func _show_response() -> void:
-	_clear_choices()
-	prompt_label.text = "The assessment is entered. What do you do with the form?"
-	narrative.text = "[color=#c7a96b]ASSESSMENT RECORDED[/color]\n[color=#d5d8dc]" + selected_assessment + ".[/color]\n\n[color=#aab2bb]The clerk's stamp is the next piece of evidence history will inherit.[/color]"
-	_add_choice("Certify the receiving tally", "Close the form without further inquiry. The unresolved difference stays in the account.", _resolve_choice.bind(0))
-	_add_choice("Open a formal inquiry", "Refer the discrepancy for origin-side dispatch and handling verification.", _resolve_choice.bind(1))
-	footer_label.text = "YOUR ASSESSMENT IS RECORDED; THE RESPONSE IS STILL YOURS TO CHOOSE"
-
-func _show_scheduled_case() -> void:
-	_clear_choices()
-	phase = "scheduled_choice"
-	section_label.text = "CASE FILE  /  " + active_event.title.to_upper()
-	evidence_heading.visible = false
-	evidence_grid.visible = false
-	var body := active_event.description
-	if active_event.id == &"origin_side_reply":
-		var archived := world.get_latest_resolved_form(&"grain_levy")
-		var assessment := String(archived.get("assessment", "No assessment was preserved."))
-		body += "\n\n[color=#c7a96b]YOUR EARLIER ASSESSMENT[/color]\n[color=#d5d8dc]" + assessment + "[/color]"
-	narrative.text = "[color=#d5d8dc]" + body + "[/color]"
-	prompt_label.text = "What do you enter in the docket?"
+	phase = "case"
+	case_heading.text = "CASE  /  " + active_event.title.to_upper()
+	dossier.text = "[color=#e0d4bd]" + active_event.description + "[/color]"
+	_clear_records()
+	if active_event.id == CASE_15_ID:
+		_add_record("DISPATCH TABLET", "24 measures barley", "Sealed by Enlil-kisu at the river.")
+		_add_record("THRESHOLD TALLY", "23 measures barley", "Marked by Utu-mansum at the gate.")
+		_add_record("CUSTODY NOTE", "No witness", "Loading unwitnessed. Unloading unwitnessed. River transit unobserved.")
+	elif active_event.id == &"case_01_sealed_vessel":
+		_add_record("PIERCED TAG", "4 jars oil", "6 linen bundles. Sender's seal intact on tag.")
+		_add_record("COURT MAT", "4 jars present", "6 bundles present. Smallest oil jar seal cracked.")
+		_add_record("CARRIER TESTIMONY", "Road was rough", "Enlil-kisu says the jar was never unstoppered.")
+	prompt_label.text = "What mark will you leave?"
 	for index in range(active_event.outcomes.size()):
 		var outcome: EventOutcome = active_event.outcomes[index]
-		_add_choice(outcome.label, outcome.description_override, _resolve_choice.bind(index))
-	footer_label.text = "THE NEXT CASE HAS ARRIVED BECAUSE OF WHAT THE RECORD ALREADY CONTAINS"
+		_add_choice(outcome.label, _resolve_choice.bind(index))
+	status_label.text = "THE CLERK'S MARK WILL OUTLIVE THE CLERK"
 
 func _resolve_choice(index: int) -> void:
-	if phase != "response" and phase != "scheduled_choice":
-		return
-	context.year = world.year
-	context.era = Registry.get_era_for_year(world.year)
-	if not runner.is_eligible(active_event, context):
-		_show_error("This event is no longer eligible in the current world state.")
+	if phase != "case":
 		return
 	if index < 0 or index >= active_event.outcomes.size():
-		_show_error("The selected outcome does not exist.")
 		return
-	var outcome: EventOutcome = active_event.outcomes[index]
-	runner.resolve_outcome(active_event, outcome, context)
-	phase = "result"
-	_show_result(outcome)
+	var before: Dictionary[StringName, int] = {}
+	for person_id in ROSTER_ORDER:
+		var person := world.get_person(person_id)
+		if person != null:
+			before[person_id] = int(person.opinions.get(actor.id, 0))
+	context.year = world.year
+	context.era = Registry.get_era_for_year(world.year)
+	runner.resolve_outcome(active_event, active_event.outcomes[index], context)
+	last_opinion_deltas.clear()
+	for person_id in before:
+		var person := world.get_person(person_id)
+		var delta := int(person.opinions.get(actor.id, 0)) - before[person_id]
+		if delta != 0:
+			last_opinion_deltas[person_id] = delta
+	_show_result(active_event.outcomes[index])
 
 func _show_result(outcome: EventOutcome) -> void:
 	_clear_choices()
-	section_label.text = "FILED  /  " + active_event.title.to_upper()
-	evidence_heading.visible = false
-	evidence_grid.visible = false
-	prompt_label.text = "Docket closed"
-	var result_text := "[color=#c7a96b]" + outcome.title_override + "[/color]\n\n[color=#d5d8dc]" + outcome.description_override + "[/color]"
-	if not selected_assessment.is_empty():
-		result_text += "\n\n[color=#aab2bb]Assessment entered: " + selected_assessment + ".[/color]"
-	narrative.text = result_text
-	_add_choice("End Period", "Advance one period. Flags may expire; unanswered forms may become overdue.", _advance_period)
-	footer_label.text = "THE WORLD REMEMBERS WHAT YOU STAMPED — AND WHAT YOU LEFT UNRESOLVED"
-	_refresh_stats()
+	phase = "result"
+	case_heading.text = "MARK MADE  /  " + active_event.title.to_upper()
+	dossier.text = "[color=#c7a96b]" + outcome.title_override + "[/color]\n\n[color=#e0d4bd]" + outcome.description_override + "[/color]"
+	_clear_records()
+	prompt_label.text = "The clay is wet. The record is not."
+	_add_choice("End Period", _advance_period)
+	_refresh_compound()
 
 func _advance_period() -> void:
 	if phase != "result" and phase != "end_of_queue":
 		return
 	world.advance_period()
-	context.year = world.year
-	selected_assessment = ""
+	last_opinion_deltas.clear()
 	_schedule_next_case()
 
 func _show_end_of_queue() -> void:
 	_clear_choices()
 	phase = "end_of_queue"
-	section_label.text = "END OF QUEUE"
-	evidence_heading.visible = false
-	evidence_grid.visible = false
-	prompt_label.text = "All cases filed for now."
-	narrative.text = "[color=#d5d8dc]There are no currently eligible assignments. The desk is clear; the record is not.[/color]\n\n[color=#aab2bb]The period clock continues. New business may arrive when the world state makes another case eligible.[/color]"
-	_add_choice("Advance Period", "Advance one period. Deadlines pass whether or not the desk is clear.", _advance_period)
-	footer_label.text = "NO ELIGIBLE CASES REMAIN IN THE CURRENT REGISTER"
-	_refresh_stats()
+	case_heading.text = "END OF QUEUE"
+	dossier.text = "[color=#e0d4bd]All cases filed for now. The desk is clear; the record is not.[/color]"
+	_clear_records()
+	prompt_label.text = "No case is set before you."
+	_add_choice("End Period", _advance_period)
+	status_label.text = "THE WATER RISES. THE STORES CHANGE. THE CLAY WAITS."
 
-func _add_choice(label_text: String, description: String, callback: Callable) -> void:
+func _add_choice(label_text: String, callback: Callable) -> void:
 	var button := Button.new()
-	button.text = label_text + "\n" + description
-	button.custom_minimum_size = Vector2(0, 62)
+	button.text = label_text
+	button.custom_minimum_size = Vector2(0, 48)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	button.add_theme_font_size_override("font_size", 15)
-	button.add_theme_color_override("font_color", Color("#e8dfcc"))
-	button.add_theme_color_override("font_hover_color", Color("#ffffff"))
-	button.add_theme_color_override("font_pressed_color", Color("#c7a96b"))
-	button.add_theme_stylebox_override("normal", _button_style(Color("#242d38"), Color("#3d4b5c")))
-	button.add_theme_stylebox_override("hover", _button_style(Color("#303c49"), Color("#c7a96b")))
-	button.add_theme_stylebox_override("pressed", _button_style(Color("#18202a"), Color("#c7a96b")))
-	button.add_theme_stylebox_override("focus", _button_style(Color("#242d38"), Color("#c7a96b")))
+	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	button.add_theme_font_size_override("font_size", 14)
+	button.add_theme_color_override("font_color", Color("#f0dfbd"))
+	button.add_theme_stylebox_override("normal", _panel_style("#40321f", "#8b7045"))
+	button.add_theme_stylebox_override("hover", _panel_style("#57452a", "#c7a96b"))
 	button.pressed.connect(callback)
 	choices.add_child(button)
-
-func _button_style(fill: Color, border: Color) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = fill
-	style.border_color = border
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(5)
-	style.content_margin_left = 14
-	style.content_margin_right = 14
-	style.content_margin_top = 10
-	style.content_margin_bottom = 10
-	return style
 
 func _clear_choices() -> void:
 	for child in choices.get_children():
 		choices.remove_child(child)
 		child.queue_free()
 
-func _refresh_stats() -> void:
-	if stats_label == null or world == null:
-		return
-	var trait_text := "none" if actor.traits.is_empty() else str(actor.traits)
-	stats_label.text = "GRAIN  %d    |    PENDING  %d (%d OVERDUE)    |    ARCHIVED  %d    |    TRAITS  %s    |    CHRONICLE  %d ENTRIES" % [
-		world.get_resource(&"grain"),
-		world.pending_forms.size(),
-		world.get_overdue_form_count(),
-		world.resolved_forms.size(),
-		trait_text,
-		actor.memory.size(),
-	]
-	current_era = Registry.get_era_for_year(world.year)
-	year_label.text = CalendarFormatter.format_date(current_era, world.year, world.period)
+func _clear_records() -> void:
+	for child in record_grid.get_children():
+		record_grid.remove_child(child)
+		child.queue_free()
 
-func _show_error(message: String) -> void:
-	_clear_choices()
-	prompt_label.text = "The docket cannot proceed."
-	narrative.text = "[color=#e59a8b]" + message + "[/color]"
-	_add_choice("Return to the case register", "Check which assignments remain eligible.", _schedule_next_case)
+func _refresh_compound() -> void:
+	if world == null:
+		return
+	stores_label.text = "Barley     %d jars\nSilver     %d shekels\nClay/Reeds %d\nLabor      %d" % [world.get_resource(&"barley"), world.get_resource(&"silver"), world.get_resource(&"clay_reeds"), world.get_resource(&"labor")]
+	for child in roster_box.get_children():
+		roster_box.remove_child(child)
+		child.queue_free()
+	for person_id in ROSTER_ORDER:
+		var person := world.get_person(person_id)
+		if person == null:
+			continue
+		var opinion := int(person.opinions.get(actor.id, 0))
+		var line := RichTextLabel.new()
+		line.bbcode_enabled = true
+		line.fit_content = true
+		line.scroll_active = false
+		line.custom_minimum_size.y = 22
+		line.add_theme_font_size_override("normal_font_size", 13)
+		var change := int(last_opinion_deltas.get(person_id, 0))
+		var flash := ""
+		if change > 0:
+			flash = " [color=#8bc78b](+%d)[/color]" % change
+		elif change < 0:
+			flash = " [color=#d77c70](%d)[/color]" % change
+		line.text = "[color=#e0d4bd]%s[/color]  [color=#c7a96b]%+d[/color]%s" % [person.display_name, opinion, flash]
+		roster_box.add_child(line)
+	year_label.text = CalendarFormatter.format_date(current_era, world.year, world.period)
+	status_label.text = "SEED %d  /  PERIOD %02d OF 12" % [world.master_seed, world.period + 1]
