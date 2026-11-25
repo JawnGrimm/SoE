@@ -34,6 +34,8 @@ var docket_overlay: PanelContainer
 var heirloom_label: Label
 var secret_toggle: Button
 var secret_cavity: PanelContainer
+var docket_home_position := Vector2.ZERO
+var docket_home_set := false
 
 func _ready() -> void:
 	_build_interface()
@@ -205,6 +207,10 @@ func _toggle_secret_cavity() -> void:
 func _animate_docket_in() -> void:
 	if docket_overlay == null:
 		return
+	if not docket_home_set:
+		docket_home_position = docket_overlay.position
+		docket_home_set = true
+	docket_overlay.position = docket_home_position
 	docket_overlay.pivot_offset = docket_overlay.size * 0.5
 	docket_overlay.rotation_degrees = randf_range(-0.8, 0.8)
 	docket_overlay.modulate.a = 0.0
@@ -227,6 +233,7 @@ func _archive_docket() -> void:
 	tween.tween_property(docket_overlay, "modulate:a", 0.0, 0.2)
 	tween.tween_property(docket_overlay, "rotation_degrees", -1.2, 0.2)
 	await tween.finished
+	docket_overlay.position = docket_home_position
 
 func _panel_style(fill: String, border: String) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
@@ -372,6 +379,7 @@ func _resolve_choice(index: int) -> void:
 			before[person_id] = int(person.opinions.get(actor.id, 0))
 	context.year = world.year
 	context.era = Registry.get_era_for_year(world.year)
+	_play_outcome_foley(index)
 	runner.resolve_outcome(active_event, active_event.outcomes[index], context)
 	if active_event.id == CASE_15_ID:
 		turn_two_pending = true
@@ -384,6 +392,28 @@ func _resolve_choice(index: int) -> void:
 		if delta != 0:
 			last_opinion_deltas[person_id] = delta
 	_show_result(active_event.outcomes[index])
+
+func _play_outcome_foley(index: int) -> void:
+	match active_event.id:
+		CASE_15_ID:
+			if index == 0:
+				AudioManager.play_stylus_mark()
+			elif index == 1:
+				AudioManager.play_seal_press()
+			else:
+				AudioManager.play_tablet_snap()
+		CASE_01_ID:
+			if index == 0:
+				AudioManager.play_stylus_mark()
+			else:
+				AudioManager.play_tablet_snap()
+		CASE_02_ID:
+			if index == 0:
+				AudioManager.play_stylus_mark()
+			elif index == 1:
+				AudioManager.play_seal_press()
+			else:
+				AudioManager.play_tablet_snap()
 
 func _show_result(outcome: EventOutcome) -> void:
 	_clear_choices()
