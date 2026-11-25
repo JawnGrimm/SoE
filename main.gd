@@ -351,7 +351,7 @@ func _panel_style(fill: String, border: String) -> StyleBoxFlat:
 func _add_record(heading: String, value: String, detail: String) -> void:
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.add_theme_stylebox_override("panel", _panel_style("#342a1d", "#705b3a"))
+	panel.add_theme_stylebox_override("panel", _panel_style("#00000000", "#705b3a"))
 	record_grid.add_child(panel)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 5)
@@ -364,13 +364,13 @@ func _add_record(heading: String, value: String, detail: String) -> void:
 	var val := Label.new()
 	val.text = value
 	val.add_theme_font_size_override("font_size", 19)
-	val.add_theme_color_override("font_color", Color("#f0dfbd"))
+	_apply_incised_text(val)
 	box.add_child(val)
 	var note := Label.new()
 	note.text = detail
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	note.add_theme_font_size_override("font_size", 11)
-	note.add_theme_color_override("font_color", Color("#c6b99f"))
+	_apply_incised_text(note)
 	box.add_child(note)
 
 func _start_world() -> void:
@@ -407,7 +407,7 @@ func _show_path_catechism() -> void:
 	_clear_choices()
 	phase = "catechism_path"
 	case_heading.text = "𒂍  THE APPRENTICE IS QUESTIONED"
-	dossier.text = "[color=#e0d4bd]Before the first tablet is set before you, the senior hands ask where you learned to read the city's marks.[/color]"
+	dossier.text = "[color=#231a12]Before the first tablet is set before you, the senior hands ask where you learned to read the city's marks.[/color]"
 	_clear_records()
 	prompt_label.text = "Where were your eyes opened to the marks of the city?"
 	_add_choice("The Granary Terraces — Temple Path", _choose_path.bind(&"path_temple"))
@@ -427,7 +427,7 @@ func _show_mentor_catechism() -> void:
 	_clear_choices()
 	phase = "catechism_mentor"
 	case_heading.text = "𒂍  THE SECOND QUESTION"
-	dossier.text = "[color=#e0d4bd]A mentor's mark is entered beside your name. Choose the hand whose habits you will learn.[/color]"
+	dossier.text = "[color=#231a12]A mentor's mark is entered beside your name. Choose the hand whose habits you will learn.[/color]"
 	_clear_records()
 	prompt_label.text = "Whose instruction will you carry?"
 	_add_choice("Shuruppak-ilu — +1 Arithmetic; exacting", _choose_mentor.bind(&"shuruppak_ilu"))
@@ -448,7 +448,7 @@ func _show_case() -> void:
 	_animate_docket_in()
 	phase = "case"
 	case_heading.text = "𒂍  CASE  /  " + active_event.title.to_upper()
-	dossier.text = "[color=#e0d4bd]" + active_event.description + "[/color]"
+	dossier.text = "[color=#231a12]" + active_event.description + "[/color]"
 	_clear_records()
 	if active_event.id == CASE_15_ID:
 		_add_record("DISPATCH TABLET", "24 measures barley", "Sealed by Enlil-kisu at the river.")
@@ -520,7 +520,7 @@ func _show_result(outcome: EventOutcome) -> void:
 	_clear_choices()
 	phase = "result"
 	case_heading.text = "𒂍  MARK MADE  /  " + active_event.title.to_upper()
-	dossier.text = "[color=#c7a96b]" + outcome.title_override + "[/color]\n\n[color=#e0d4bd]" + outcome.description_override + "[/color]"
+	dossier.text = "[color=#231a12]" + outcome.title_override + "[/color]\n\n[color=#231a12]" + outcome.description_override + "[/color]"
 	_clear_records()
 	prompt_label.text = "The clay is wet. The record is not."
 	_add_choice("End Period", _advance_period)
@@ -555,7 +555,7 @@ func _show_end_of_queue() -> void:
 	_clear_choices()
 	phase = "end_of_queue"
 	case_heading.text = "𒂍  END OF QUEUE"
-	dossier.text = "[color=#e0d4bd]All cases filed for now. The desk is clear; the record is not.[/color]"
+	dossier.text = "[color=#231a12]All cases filed for now. The desk is clear; the record is not.[/color]"
 	_clear_records()
 	prompt_label.text = "No case is set before you."
 	_add_choice("End Period", _advance_period)
@@ -570,7 +570,7 @@ func _add_choice(label_text: String, callback: Callable) -> void:
 	button.add_theme_font_size_override("font_size", 14)
 	_apply_incised_text(button)
 	button.add_theme_stylebox_override("normal", _panel_style("#00000000", "#8b7045"))
-	button.add_theme_stylebox_override("hover", _panel_style("#00000000", "#c7a96b"))
+	button.add_theme_stylebox_override("hover", _panel_style("#00000000", "#231a12"))
 	button.pressed.connect(callback)
 	choices.add_child(button)
 
@@ -617,9 +617,9 @@ func _refresh_compound() -> void:
 		elif change < 0:
 			flash = " [color=#d77c70](%d)[/color]" % change
 		if person.id == actor.id:
-			line.text = "[color=#e0d4bd]%s[/color]  [color=#a99570]APPRENTICE[/color]" % person.display_name
+			line.text = "[color=#231a12]%s[/color]  [color=#a99570]APPRENTICE[/color]" % person.display_name
 		else:
-			line.text = "[color=#e0d4bd]%s[/color]  [color=#c7a96b]%+d[/color]%s" % [person.display_name, opinion, flash]
+			line.text = "[color=#231a12]%s[/color]  [color=#231a12]%+d[/color]%s" % [person.display_name, opinion, flash]
 		roster_box.add_child(line)
 	year_label.text = CalendarFormatter.format_date(current_era, world.year, world.period)
 	status_label.text = "SEED %d  /  PERIOD %02d OF 12" % [world.master_seed, world.period + 1]
