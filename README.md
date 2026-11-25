@@ -49,7 +49,7 @@ The clock uses 12 periods per year. `WorldState.advance_period()` changes only t
 
 ## Not included yet
 
-- Registry autoload and versioned save format
+- Versioned save format
 - Office roster and extracted relationship component
 - Flag expiry/history pruning
 - Full calendar presentation and production UI polish
