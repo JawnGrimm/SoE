@@ -123,18 +123,25 @@ func _build_interface() -> void:
 	tablet_style.texture_margin_right = 96.0
 	tablet_style.texture_margin_top = 82.0
 	tablet_style.texture_margin_bottom = 82.0
-	tablet_style.content_margin_left = 78.0
-	tablet_style.content_margin_right = 78.0
-	tablet_style.content_margin_top = 66.0
-	tablet_style.content_margin_bottom = 66.0
+	tablet_style.content_margin_left = 0.0
+	tablet_style.content_margin_right = 0.0
+	tablet_style.content_margin_top = 0.0
+	tablet_style.content_margin_bottom = 0.0
 	docket_overlay.add_theme_stylebox_override("panel", tablet_style)
 	docket_motion_layer.add_child(docket_overlay)
+	var tablet_margin := MarginContainer.new()
+	tablet_margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	tablet_margin.add_theme_constant_override("margin_left", 50)
+	tablet_margin.add_theme_constant_override("margin_right", 50)
+	tablet_margin.add_theme_constant_override("margin_top", 50)
+	tablet_margin.add_theme_constant_override("margin_bottom", 50)
+	docket_overlay.add_child(tablet_margin)
 	var mat_box := VBoxContainer.new()
 	mat_box.add_theme_constant_override("separation", 10)
-	docket_overlay.add_child(mat_box)
+	tablet_margin.add_child(mat_box)
 	case_heading = Label.new()
 	case_heading.add_theme_font_size_override("font_size", 18)
-	case_heading.add_theme_color_override("font_color", Color("#e5d2a8"))
+	_apply_incised_text(case_heading)
 	mat_box.add_child(case_heading)
 	dossier = RichTextLabel.new()
 	dossier.bbcode_enabled = true
@@ -142,11 +149,11 @@ func _build_interface() -> void:
 	dossier.scroll_active = true
 	dossier.custom_minimum_size.y = 105
 	dossier.add_theme_font_size_override("normal_font_size", 15)
-	dossier.add_theme_color_override("default_color", Color("#e0d4bd"))
+	_apply_incised_text(dossier)
 	mat_box.add_child(dossier)
 	var records_title := Label.new()
 	records_title.text = "THE MAT  /  SURVIVING RECORDS"
-	records_title.add_theme_color_override("font_color", Color("#c7a96b"))
+	_apply_incised_text(records_title)
 	records_title.add_theme_font_size_override("font_size", 12)
 	mat_box.add_child(records_title)
 	record_grid = GridContainer.new()
@@ -157,7 +164,7 @@ func _build_interface() -> void:
 	prompt_label = Label.new()
 	prompt_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	prompt_label.add_theme_font_size_override("font_size", 16)
-	prompt_label.add_theme_color_override("font_color", Color("#f0dfbd"))
+	_apply_incised_text(prompt_label)
 	mat_box.add_child(prompt_label)
 	choices = VBoxContainer.new()
 	choices.add_theme_constant_override("separation", 7)
@@ -318,6 +325,14 @@ func _archive_docket() -> void:
 	docket_overlay.scale = Vector2.ONE
 	docket_overlay.rotation_degrees = 0.0
 
+func _apply_incised_text(control: Control) -> void:
+	var lip_highlight := Color("#f5e6d0")
+	lip_highlight.a = 0.45
+	control.add_theme_color_override("font_color", Color("#231a12"))
+	control.add_theme_color_override("font_shadow_color", lip_highlight)
+	control.add_theme_constant_override("shadow_offset_x", 0)
+	control.add_theme_constant_override("shadow_offset_y", 1)
+
 func _panel_style(fill: String, border: String) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(fill)
@@ -341,18 +356,18 @@ func _add_record(heading: String, value: String, detail: String) -> void:
 	var head := Label.new()
 	head.text = heading
 	head.add_theme_font_size_override("font_size", 11)
-	head.add_theme_color_override("font_color", Color("#c7a96b"))
+	_apply_incised_text(head)
 	box.add_child(head)
 	var val := Label.new()
 	val.text = value
 	val.add_theme_font_size_override("font_size", 19)
-	val.add_theme_color_override("font_color", Color("#f0dfbd"))
+	_apply_incised_text(val)
 	box.add_child(val)
 	var note := Label.new()
 	note.text = detail
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	note.add_theme_font_size_override("font_size", 11)
-	note.add_theme_color_override("font_color", Color("#c6b99f"))
+	_apply_incised_text(note)
 	box.add_child(note)
 
 func _start_world() -> void:
@@ -388,8 +403,8 @@ func _schedule_next_case() -> void:
 func _show_path_catechism() -> void:
 	_clear_choices()
 	phase = "catechism_path"
-	case_heading.text = "THE APPRENTICE IS QUESTIONED"
-	dossier.text = "[color=#e0d4bd]Before the first tablet is set before you, the senior hands ask where you learned to read the city's marks.[/color]"
+	case_heading.text = "𒂍  THE APPRENTICE IS QUESTIONED"
+	dossier.text = "[color=#231a12]Before the first tablet is set before you, the senior hands ask where you learned to read the city's marks.[/color]"
 	_clear_records()
 	prompt_label.text = "Where were your eyes opened to the marks of the city?"
 	_add_choice("The Granary Terraces — Temple Path", _choose_path.bind(&"path_temple"))
@@ -408,7 +423,7 @@ func _choose_path(path: StringName) -> void:
 func _show_mentor_catechism() -> void:
 	_clear_choices()
 	phase = "catechism_mentor"
-	case_heading.text = "THE SECOND QUESTION"
+	case_heading.text = "𒂍  THE SECOND QUESTION"
 	dossier.text = "[color=#e0d4bd]A mentor's mark is entered beside your name. Choose the hand whose habits you will learn.[/color]"
 	_clear_records()
 	prompt_label.text = "Whose instruction will you carry?"
@@ -429,7 +444,7 @@ func _show_case() -> void:
 	_clear_choices()
 	_animate_docket_in()
 	phase = "case"
-	case_heading.text = "CASE  /  " + active_event.title.to_upper()
+	case_heading.text = "𒂍  CASE  /  " + active_event.title.to_upper()
 	dossier.text = "[color=#e0d4bd]" + active_event.description + "[/color]"
 	_clear_records()
 	if active_event.id == CASE_15_ID:
@@ -501,8 +516,8 @@ func _play_outcome_foley(index: int) -> void:
 func _show_result(outcome: EventOutcome) -> void:
 	_clear_choices()
 	phase = "result"
-	case_heading.text = "MARK MADE  /  " + active_event.title.to_upper()
-	dossier.text = "[color=#c7a96b]" + outcome.title_override + "[/color]\n\n[color=#e0d4bd]" + outcome.description_override + "[/color]"
+	case_heading.text = "𒂍  MARK MADE  /  " + active_event.title.to_upper()
+	dossier.text = "[color=#231a12]" + outcome.title_override + "[/color]\n\n[color=#e0d4bd]" + outcome.description_override + "[/color]"
 	_clear_records()
 	prompt_label.text = "The clay is wet. The record is not."
 	_add_choice("End Period", _advance_period)
@@ -536,7 +551,7 @@ func _prepare_seasonal_forms() -> void:
 func _show_end_of_queue() -> void:
 	_clear_choices()
 	phase = "end_of_queue"
-	case_heading.text = "END OF QUEUE"
+	case_heading.text = "𒂍  END OF QUEUE"
 	dossier.text = "[color=#e0d4bd]All cases filed for now. The desk is clear; the record is not.[/color]"
 	_clear_records()
 	prompt_label.text = "No case is set before you."
@@ -545,12 +560,12 @@ func _show_end_of_queue() -> void:
 
 func _add_choice(label_text: String, callback: Callable) -> void:
 	var button := Button.new()
-	button.text = label_text
+	button.text = "𒁹  " + label_text
 	button.custom_minimum_size = Vector2(0, 48)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.add_theme_font_size_override("font_size", 14)
-	button.add_theme_color_override("font_color", Color("#f0dfbd"))
+	_apply_incised_text(button)
 	button.add_theme_stylebox_override("normal", _panel_style("#40321f", "#8b7045"))
 	button.add_theme_stylebox_override("hover", _panel_style("#57452a", "#c7a96b"))
 	button.pressed.connect(callback)
