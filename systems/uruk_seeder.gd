@@ -25,6 +25,7 @@ static func seed_campaign(world: WorldState, seed: int) -> PersonEntity:
 	world.people[&"nin_kasi"] = _person(&"nin_kasi", "Nin-kasi", &"brewer", {}, [&"harried", &"devout"])
 	world.people[&"geme_inana"] = _person(&"geme_inana", "Geme-Inana", &"trader", {}, [&"patient", &"calculating"])
 	world.stockpiles.clear()
+	world.stockpiles[&"canal_progress"] = 0
 	world.stockpiles[&"barley"] = 450 + world.rng_sim.randi_range(-30, 50)
 	world.stockpiles[&"silver"] = 8 + world.rng_sim.randi_range(0, 4)
 	world.stockpiles[&"clay_reeds"] = 60 + world.rng_sim.randi_range(-10, 10)
