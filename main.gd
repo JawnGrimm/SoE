@@ -199,6 +199,7 @@ func _start_world() -> void:
 	context.actor = actor
 	context.era = current_era
 	context.year = world.year
+	_refresh_compound()
 	_show_path_catechism()
 
 func _schedule_next_case() -> void:
@@ -232,15 +233,9 @@ func _choose_path(path: StringName) -> void:
 	if phase != "catechism_path":
 		return
 	selected_path = path
-	actor.flags[path] = -1
-	if path == &"path_temple":
-		world.get_person(&"ur_nanna").opinions[actor.id] += 5
-		world.get_person(&"nin_kasi").opinions[actor.id] += 3
-		world.enqueue_form({"form_type": &"pension_roll", "subject_id": &"brewing_house_account", "urgency": 1, "year": world.year})
-	else:
-		world.get_person(&"enlil_kisu").opinions[actor.id] += 5
-		world.get_person(&"geme_inana").opinions[actor.id] += 3
-		world.enqueue_form({"form_type": &"consignment_receipt", "subject_id": &"temple_consignment", "urgency": 1, "year": world.year})
+	if not UrukCatechism.choose_path(world, actor, path):
+		return
+	_refresh_compound()
 	_show_mentor_catechism()
 
 func _show_mentor_catechism() -> void:
@@ -258,20 +253,8 @@ func _show_mentor_catechism() -> void:
 func _choose_mentor(mentor_id: StringName) -> void:
 	if phase != "catechism_mentor":
 		return
-	var skill_by_mentor := {
-		&"shuruppak_ilu": [&"arithmetic", &"exacting"],
-		&"utu_mansum": [&"law", &"stubborn"],
-		&"enlil_kisu": [&"stewardship", &"protective"],
-		&"nin_kasi": [&"rhetoric", &"diplomatic"]
-	}
-	var selected: Array = skill_by_mentor[mentor_id]
-	var skill: StringName = selected[0]
-	var trait_id: StringName = selected[1]
-	actor.skills.levels[skill] = actor.skills.get_level(skill) + 1
-	if trait_id not in actor.traits:
-		actor.traits.append(trait_id)
-	var mentor: PersonEntity = world.get_person(mentor_id)
-	mentor.opinions[actor.id] = int(mentor.opinions.get(actor.id, 0)) + 5
+	if not UrukCatechism.choose_mentor(world, actor, mentor_id):
+		return
 	_refresh_compound()
 	_schedule_next_case()
 
