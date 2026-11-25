@@ -122,6 +122,8 @@ func _run() -> void:
 	_check(uruk_a.people.size() == 8, "Uruk seeder should create the eight-person roster")
 	_check(uruk_player_a.id == &"player_apprentice", "Uruk seeder should return the apprentice")
 	_check(uruk_a.get_person(&"shuruppak_ilu").opinions[uruk_player_a.id] == 5, "Senior scribe should begin at +5 opinion")
+	for resident_id in [&"ur_nanna", &"utu_mansum", &"enlil_kisu", &"lu_nanshe", &"nin_kasi", &"geme_inana"]:
+		_check(uruk_a.get_person(resident_id).opinions.has(uruk_player_a.id) and uruk_a.get_person(resident_id).opinions[uruk_player_a.id] == 0, "Every other resident should store an explicit zero opinion")
 	_check(uruk_a.get_person(&"shuruppak_ilu").vulnerabilities[&"patience_remaining"] == uruk_b.get_person(&"shuruppak_ilu").vulnerabilities[&"patience_remaining"], "People jitter should reproduce from the same seed")
 	_check(uruk_a.stockpiles == uruk_b.stockpiles, "Simulation stockpiles should reproduce from the same seed")
 	_check(uruk_a.get_person(&"ur_nanna").vulnerabilities[&"granary_roof_integrity"] >= 40, "Roof integrity should use the specified jitter range")
