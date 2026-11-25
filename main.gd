@@ -435,6 +435,7 @@ func _choose_path(path: StringName) -> void:
 
 func _show_mentor_catechism() -> void:
 	_clear_choices()
+	_animate_docket_in()
 	phase = "catechism_mentor"
 	case_heading.text = "𒂍  THE MENTOR'S MARK"
 	case_heading.add_theme_font_size_override("font_size", 24)
@@ -479,7 +480,7 @@ func _show_case() -> void:
 	prompt_label.text = "What mark will you leave?"
 	for index in range(active_event.outcomes.size()):
 		var outcome: EventOutcome = active_event.outcomes[index]
-		_add_choice(outcome.label, _resolve_choice.bind(index))
+		_add_choice(outcome.label, _resolve_choice.bind(index), false)
 	status_label.text = "THE CLERK'S MARK WILL OUTLIVE THE CLERK"
 
 func _resolve_choice(index: int) -> void:
