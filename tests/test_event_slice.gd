@@ -2,7 +2,7 @@ extends SceneTree
 
 var _checks: int = 0
 var _failures: Array[String] = []
-var registry: Node
+var registry: Variant
 
 const ROUTINE_CASE: EventTemplate = preload("res://data/events/routine_tally_adjustment.tres")
 const ORIGIN_REPLY_CASE: EventTemplate = preload("res://data/events/origin_side_reply.tres")
