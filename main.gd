@@ -3,7 +3,7 @@ extends Control
 const CAMPAIGN_SEED: int = 32003200
 const CASE_15_ID: StringName = &"case_15_south_court"
 const URUK_EVENT_IDS: Array[StringName] = [&"case_15_south_court", &"case_01_sealed_vessel"]
-const ROSTER_ORDER: Array[StringName] = [&"shuruppak_ilu", &"utu_mansum", &"enlil_kisu", &"ur_nanna", &"nin_kasi", &"geme_inana", &"lu_nanshe"]
+const ROSTER_ORDER: Array[StringName] = [&"player_apprentice", &"shuruppak_ilu", &"utu_mansum", &"enlil_kisu", &"ur_nanna", &"nin_kasi", &"geme_inana", &"lu_nanshe"]
 
 var runner: EventRunner
 var scheduler: EventScheduler
@@ -327,7 +327,10 @@ func _refresh_compound() -> void:
 			flash = " [color=#8bc78b](+%d)[/color]" % change
 		elif change < 0:
 			flash = " [color=#d77c70](%d)[/color]" % change
-		line.text = "[color=#e0d4bd]%s[/color]  [color=#c7a96b]%+d[/color]%s" % [person.display_name, opinion, flash]
+		if person.id == actor.id:
+			line.text = "[color=#e0d4bd]%s[/color]  [color=#a99570]APPRENTICE[/color]" % person.display_name
+		else:
+			line.text = "[color=#e0d4bd]%s[/color]  [color=#c7a96b]%+d[/color]%s" % [person.display_name, opinion, flash]
 		roster_box.add_child(line)
 	year_label.text = CalendarFormatter.format_date(current_era, world.year, world.period)
 	status_label.text = "SEED %d  /  PERIOD %02d OF 12" % [world.master_seed, world.period + 1]
