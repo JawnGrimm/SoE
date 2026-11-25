@@ -72,8 +72,10 @@ func _run() -> void:
 	_check(runner.is_eligible(era_test_event, era_context), "Event tag matching the era ID should be eligible")
 	era_test_event.era_tags = [&"bronze_age"]
 	_check(runner.is_eligible(era_test_event, era_context), "Event tag matching an era tag should be eligible")
+	_check(scheduler.pick_next_event(era_context.world, era_context.actor, [era_test_event], era_definition) == era_test_event, "Scheduler should pass the active era into its event context")
 	era_test_event.era_tags = [&"medieval"]
 	_check(not runner.is_eligible(era_test_event, era_context), "Event with an unrelated era tag should be ineligible")
+	_check(scheduler.pick_next_event(era_context.world, era_context.actor, [era_test_event], era_definition) == null, "Scheduler should exclude events tagged for another era")
 	era_context.era = null
 	era_test_event.era_tags.clear()
 	_check(runner.is_eligible(era_test_event, era_context), "Untagged events should remain eligible when no era covers the year")
@@ -131,7 +133,7 @@ func _run() -> void:
 	var routine_ctx := _make_context(complicity_world)
 	_check(runner.is_eligible(routine_case, routine_ctx), "Routine tally should still pass normal conditions")
 	runner.resolve_outcome(routine_case, routine_case.outcomes[0], routine_ctx)
-	_check(scheduler.pick_next_event(complicity_world, clerk_a, follow_up_catalog) == null, "No follow-up should remain after the routine tally is filed")
+	_check(scheduler.pick_next_event(complicity_world, clerk_a, follow_up_catalog, registry.get_era_for_year(complicity_world.year)) == null, "No follow-up should remain after the routine tally is filed")
 
 	var exposure_world := _make_world()
 	var exposure_ctx := _make_context(exposure_world)
@@ -160,7 +162,7 @@ func _run() -> void:
 	var origin_ctx := _make_context(exposure_world)
 	runner.resolve_outcome(origin_case, origin_case.outcomes[0], origin_ctx)
 	_check(not exposure_world.has_pending_form(&"inquiry"), "Origin reply should close the inquiry form")
-	_check(scheduler.pick_next_event(exposure_world, clerk_b, follow_up_catalog) == null, "Queue should be empty after the origin reply is filed")
+	_check(scheduler.pick_next_event(exposure_world, clerk_b, follow_up_catalog, registry.get_era_for_year(exposure_world.year)) == null, "Queue should be empty after the origin reply is filed")
 
 	var year_rollover := WorldState.new()
 	year_rollover.year = 1200
