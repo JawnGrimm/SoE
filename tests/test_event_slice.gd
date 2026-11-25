@@ -25,6 +25,7 @@ func _run() -> void:
 	_check(ResourceLoader.exists("res://assets/desk/stylus.png"), "Stylus prop texture should be present")
 	_check(load("res://assets/desk/desk_tabletop.png") is Texture2D, "Cedar tabletop should import as a texture")
 	_check(load("res://assets/desk/clay_docket.png") is Texture2D, "Clay docket should import as a texture")
+	_check(load("res://assets/desk/stylus.png") is Texture2D, "Stylus prop should import as a texture")
 	var runner := EventRunner.new()
 	var template := _make_event()
 	var scheduler := EventScheduler.new(runner)
