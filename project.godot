@@ -20,7 +20,7 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 
 [autoload]
 
-Registry="*res://systems/registry.gd"
+Registry="*res://autoloads/registry.gd"
 
 [rendering]
 
