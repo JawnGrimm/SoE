@@ -37,6 +37,8 @@ var dossier: RichTextLabel
 var record_grid: GridContainer
 var prompt_label: Label
 var choices: VBoxContainer
+var stamp_history_row: HBoxContainer
+var stamp_history_scroll: ScrollContainer
 var stores_label: Label
 var canal_label: Label
 var roster_box: VBoxContainer
@@ -139,9 +141,17 @@ func _build_interface() -> void:
 	tablet_content.add_theme_constant_override("margin_top", 50)
 	tablet_content.add_theme_constant_override("margin_bottom", 50)
 	docket_overlay.add_child(tablet_content)
+	var tablet_scroll := ScrollContainer.new()
+	tablet_scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	tablet_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tablet_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	tablet_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	tablet_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	tablet_content.add_child(tablet_scroll)
 	var mat_box := VBoxContainer.new()
+	mat_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	mat_box.add_theme_constant_override("separation", 10)
-	tablet_content.add_child(mat_box)
+	tablet_scroll.add_child(mat_box)
 	case_heading = Label.new()
 	var title_font := FontVariation.new()
 	title_font.base_font = ThemeDB.fallback_font
@@ -172,10 +182,21 @@ func _build_interface() -> void:
 	prompt_label = Label.new()
 	prompt_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	prompt_label.add_theme_font_size_override("font_size", 20)
+	prompt_label.custom_minimum_size.y = 28
 	_apply_incised_text(prompt_label)
 	mat_box.add_child(prompt_label)
+	stamp_history_scroll = ScrollContainer.new()
+	stamp_history_scroll.custom_minimum_size.y = 34
+	stamp_history_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stamp_history_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	stamp_history_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	mat_box.add_child(stamp_history_scroll)
+	stamp_history_row = HBoxContainer.new()
+	stamp_history_row.custom_minimum_size.y = 30
+	stamp_history_row.add_theme_constant_override("separation", 8)
+	stamp_history_scroll.add_child(stamp_history_row)
 	choices = VBoxContainer.new()
-	choices.add_theme_constant_override("separation", 7)
+	choices.add_theme_constant_override("separation", 11)
 	mat_box.add_child(choices)
 
 	var desk_props := HBoxContainer.new()
@@ -336,11 +357,13 @@ func _archive_docket() -> void:
 	docket_overlay.rotation_degrees = 0.0
 
 func _apply_incised_text(control: Control) -> void:
-	var silt := Color("#231a12")
-	var lip_highlight := Color("#f5e6d0", 0.45)
+	var silt := Color("#392719")
+	var recessed_shadow := Color("#1b120b", 0.62)
 	control.add_theme_color_override("font_color", silt)
 	control.add_theme_color_override("default_color", silt)
-	control.add_theme_color_override("font_shadow_color", lip_highlight)
+	control.add_theme_color_override("font_shadow_color", recessed_shadow)
+	control.add_theme_color_override("font_outline_color", Color("#6f512e", 0.42))
+	control.add_theme_constant_override("outline_size", 1)
 	control.add_theme_constant_override("shadow_offset_x", 0)
 	control.add_theme_constant_override("shadow_offset_y", 1)
 
@@ -600,9 +623,13 @@ func _add_choice(label_text: String, callback: Callable, archive_after_stamp: bo
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.add_theme_font_size_override("font_size", 18)
 	_apply_incised_text(button)
-	button.add_theme_stylebox_override("normal", _panel_style("#00000000", "#8b7045"))
-	button.add_theme_stylebox_override("hover", _panel_style("#00000000", "#c7a96b"))
-	button.add_theme_stylebox_override("pressed", _panel_style("#00000000", "#c7a96b"))
+	button.add_theme_color_override("font_color", Color("#3b2819"))
+	button.add_theme_color_override("font_hover_color", Color("#2b1d12"))
+	button.add_theme_color_override("font_pressed_color", Color("#21170f"))
+	button.add_theme_color_override("font_disabled_color", Color("#5a4632", 0.8))
+	button.add_theme_stylebox_override("normal", _panel_style("#00000000", "#6f512e"))
+	button.add_theme_stylebox_override("hover", _panel_style("#120b0520", "#a9854e"))
+	button.add_theme_stylebox_override("pressed", _panel_style("#24180e35", "#5b4228"))
 	var stamp := Label.new()
 	stamp.text = "𒂍" if label_text.contains("Temple") else "𒁹"
 	stamp.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -638,9 +665,22 @@ func _handle_choice(button: Button, callback: Callable, archive_after_stamp: boo
 		AudioManager.play_seal_press()
 		await punch.finished
 		await get_tree().create_timer(0.35).timeout
+		_record_choice_stamp(button, stamp)
 	if archive_after_stamp:
 		await _archive_docket()
 	callback.call()
+
+func _record_choice_stamp(button: Button, stamp: Label) -> void:
+	if stamp_history_row == null or button == null or stamp == null:
+		return
+	var entry := Label.new()
+	entry.text = "%s  %s" % [stamp.text, button.text]
+	entry.custom_minimum_size.y = 30
+	entry.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	entry.add_theme_font_size_override("font_size", 14)
+	entry.tooltip_text = "Recorded choice: " + button.text
+	_apply_incised_text(entry)
+	stamp_history_row.add_child(entry)
 
 func _clear_choices() -> void:
 	choice_locked = false
