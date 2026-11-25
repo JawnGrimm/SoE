@@ -37,6 +37,7 @@ var dossier: RichTextLabel
 var record_grid: GridContainer
 var prompt_label: Label
 var choices: VBoxContainer
+var stamp_history_row: HBoxContainer
 var stores_label: Label
 var canal_label: Label
 var roster_box: VBoxContainer
@@ -139,9 +140,17 @@ func _build_interface() -> void:
 	tablet_content.add_theme_constant_override("margin_top", 50)
 	tablet_content.add_theme_constant_override("margin_bottom", 50)
 	docket_overlay.add_child(tablet_content)
+	var tablet_scroll := ScrollContainer.new()
+	tablet_scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	tablet_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tablet_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	tablet_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	tablet_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	tablet_content.add_child(tablet_scroll)
 	var mat_box := VBoxContainer.new()
+	mat_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	mat_box.add_theme_constant_override("separation", 10)
-	tablet_content.add_child(mat_box)
+	tablet_scroll.add_child(mat_box)
 	case_heading = Label.new()
 	var title_font := FontVariation.new()
 	title_font.base_font = ThemeDB.fallback_font
@@ -172,8 +181,13 @@ func _build_interface() -> void:
 	prompt_label = Label.new()
 	prompt_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	prompt_label.add_theme_font_size_override("font_size", 20)
+	prompt_label.custom_minimum_size.y = 28
 	_apply_incised_text(prompt_label)
 	mat_box.add_child(prompt_label)
+	stamp_history_row = HBoxContainer.new()
+	stamp_history_row.custom_minimum_size.y = 34
+	stamp_history_row.add_theme_constant_override("separation", 8)
+	mat_box.add_child(stamp_history_row)
 	choices = VBoxContainer.new()
 	choices.add_theme_constant_override("separation", 11)
 	mat_box.add_child(choices)
@@ -644,9 +658,22 @@ func _handle_choice(button: Button, callback: Callable, archive_after_stamp: boo
 		AudioManager.play_seal_press()
 		await punch.finished
 		await get_tree().create_timer(0.35).timeout
+		_record_choice_stamp(button, stamp)
 	if archive_after_stamp:
 		await _archive_docket()
 	callback.call()
+
+func _record_choice_stamp(button: Button, stamp: Label) -> void:
+	if stamp_history_row == null or button == null or stamp == null:
+		return
+	var entry := Label.new()
+	entry.text = "%s  %s" % [stamp.text, button.text]
+	entry.custom_minimum_size.y = 30
+	entry.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	entry.add_theme_font_size_override("font_size", 14)
+	entry.tooltip_text = "Recorded choice: " + button.text
+	_apply_incised_text(entry)
+	stamp_history_row.add_child(entry)
 
 func _clear_choices() -> void:
 	choice_locked = false
