@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="EventTemplate" load_steps=28 format=3]
+[gd_resource type="Resource" script_class="EventTemplate" load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://data/definitions/event_template.gd" id="1"]
 [ext_resource type="Script" path="res://data/definitions/event_outcome.gd" id="2"]
@@ -109,12 +109,32 @@ effect_type = &"resolve_form"
 parameters = {"form_type": &"grain_levy", "disposition": "accepted_with_carrier_penalty"}
 
 
+[sub_resource type="Resource" id="fx_20"]
+script = ExtResource("3")
+effect_type = &"modify_resource"
+parameters = {"resource": &"canal_progress", "amount": 5, "scope": "world"}
+
+[sub_resource type="Resource" id="fx_21"]
+script = ExtResource("3")
+effect_type = &"modify_resource"
+parameters = {"resource": &"canal_progress", "amount": 0, "scope": "world"}
+
+[sub_resource type="Resource" id="fx_22"]
+script = ExtResource("3")
+effect_type = &"modify_resource"
+parameters = {"resource": &"canal_progress", "amount": 0, "scope": "world"}
+
+[sub_resource type="Resource" id="fx_23"]
+script = ExtResource("3")
+effect_type = &"set_flag"
+parameters = {"flag": &"canal_crew_slowdown", "scope": "world", "periods": 2}
+
 [sub_resource type="Resource" id="outcome_1"]
 script = ExtResource("2")
 label = "Score Tally as 23 (Discrepancy Unassigned)"
 title_override = "THE COUNT IS SET DOWN"
 description_override = "Neither man blamed. The single missing measure is noted as unassigned transit loss. Utu-mansum grunts and accepts custody of 23. Enlil-kisu sighs and releases his crew to the bread-line."
-effects = Array[ExtResource("3")]([SubResource("fx_1"), SubResource("fx_2"), SubResource("fx_3"), SubResource("fx_4"), SubResource("fx_5"), SubResource("fx_6"), SubResource("fx_7")])
+effects = Array[ExtResource("3")]([SubResource("fx_1"), SubResource("fx_2"), SubResource("fx_3"), SubResource("fx_4"), SubResource("fx_5"), SubResource("fx_6"), SubResource("fx_7"), SubResource("fx_20")])
 
 
 [sub_resource type="Resource" id="outcome_2"]
@@ -122,7 +142,7 @@ script = ExtResource("2")
 label = "Press Seal as 24"
 title_override = "THE TABLET SAYS TWENTY-FOUR"
 description_override = "You smooth wet mud over Utu-mansum's mark and press the storehouse seal for 24. The books balance with the boatmen's dispatch. The granary holds one measure less than the clay claims."
-effects = Array[ExtResource("3")]([SubResource("fx_8"), SubResource("fx_9"), SubResource("fx_10"), SubResource("fx_11"), SubResource("fx_12"), SubResource("fx_13")])
+effects = Array[ExtResource("3")]([SubResource("fx_8"), SubResource("fx_9"), SubResource("fx_10"), SubResource("fx_11"), SubResource("fx_12"), SubResource("fx_13"), SubResource("fx_21")])
 
 
 [sub_resource type="Resource" id="outcome_3"]
@@ -130,7 +150,7 @@ script = ExtResource("2")
 label = "Break Tablet; Re-mark Shortage"
 title_override = "THE CREW BEARS THE SHORT COUNT"
 description_override = "You mark the 23 measures and score a debt mark against Enlil-kisu's crew. Utu-mansum nods and affixes his seal. Enlil-kisu spits in the dust and turns to tell his crew their barley ration is docked."
-effects = Array[ExtResource("3")]([SubResource("fx_14"), SubResource("fx_15"), SubResource("fx_16"), SubResource("fx_17"), SubResource("fx_18"), SubResource("fx_19")])
+effects = Array[ExtResource("3")]([SubResource("fx_14"), SubResource("fx_15"), SubResource("fx_16"), SubResource("fx_17"), SubResource("fx_18"), SubResource("fx_19"), SubResource("fx_22"), SubResource("fx_23")])
 
 
 [resource]
