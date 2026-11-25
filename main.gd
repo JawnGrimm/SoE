@@ -38,6 +38,7 @@ var record_grid: GridContainer
 var prompt_label: Label
 var choices: VBoxContainer
 var stamp_history_row: HBoxContainer
+var stamp_history_scroll: ScrollContainer
 var stores_label: Label
 var canal_label: Label
 var roster_box: VBoxContainer
@@ -184,10 +185,16 @@ func _build_interface() -> void:
 	prompt_label.custom_minimum_size.y = 28
 	_apply_incised_text(prompt_label)
 	mat_box.add_child(prompt_label)
+	stamp_history_scroll = ScrollContainer.new()
+	stamp_history_scroll.custom_minimum_size.y = 34
+	stamp_history_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stamp_history_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	stamp_history_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	mat_box.add_child(stamp_history_scroll)
 	stamp_history_row = HBoxContainer.new()
-	stamp_history_row.custom_minimum_size.y = 34
+	stamp_history_row.custom_minimum_size.y = 30
 	stamp_history_row.add_theme_constant_override("separation", 8)
-	mat_box.add_child(stamp_history_row)
+	stamp_history_scroll.add_child(stamp_history_row)
 	choices = VBoxContainer.new()
 	choices.add_theme_constant_override("separation", 11)
 	mat_box.add_child(choices)
