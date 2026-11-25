@@ -3,12 +3,20 @@ extends SceneTree
 var _checks: int = 0
 var _failures: Array[String] = []
 var registry: DefinitionRegistry
+var _finished := false
 
 const ROUTINE_CASE: EventTemplate = preload("res://data/events/routine_tally_adjustment.tres")
 const ORIGIN_REPLY_CASE: EventTemplate = preload("res://data/events/origin_side_reply.tres")
 
 func _initialize() -> void:
 	call_deferred("_run")
+	call_deferred("_watchdog")
+
+func _watchdog() -> void:
+	await create_timer(45.0).timeout
+	if not _finished:
+		printerr("TEST WATCHDOG: integration test did not reach _finish()")
+		quit(2)
 
 func _run() -> void:
 	var runner := EventRunner.new()
@@ -304,6 +312,7 @@ func _check(cond: bool, msg: String) -> bool:
 	return cond
 
 func _finish() -> void:
+	_finished = true
 	if _failures.is_empty():
 		print("PASS: %d/%d checks passed" % [_checks, _checks])
 		quit(0)
