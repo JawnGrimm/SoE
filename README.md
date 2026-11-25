@@ -1,31 +1,55 @@
-# Scribe of Eras — First Event Engine Slice
+# Scribe of Eras — First Playable
 
-A deliberately narrow Godot 4.7.x foundation: a data-driven event template, runtime person/world state, condition and effect handler maps, and a headless assertion test for the corrupt grain official.
+A Godot 4.7 GDScript prototype for the first small playable case in **Scribe of Eras**.
 
-## Run the test
+## Run it
 
-From this directory, with Godot 4.7.x installed:
+Open the repository root in Godot **4.7.x stable** and press **F5**. The root project launches the case-file interface for *The Missing Measures*.
+
+## Headless event test
+
+From the repository root:
 
 ```sh
 godot --headless --path . --script res://tests/test_event_slice.gd
 ```
 
-The test exits non-zero on an assertion failure and prints a success line only after both player choices have been checked against independent fresh state.
+On Windows, if `godot` is not on PATH, run the executable by its full path, for example:
 
-## Scope
+```powershell
+& "C:\Godot\Godot_v4.7.2-stable_win64.exe" --headless --path . --script res://tests/test_event_slice.gd
+```
 
-Included:
+The test checks both player choices against isolated world state, including the preservation and archival of the entered assessment.
+
+## Play loop
+
+1. Examine the surviving dispatch copy, receiving tally, and missing loading observation.
+2. Enter one assessment:
+   - No individual responsibility assigned
+   - Origin-side dispatch count or handling requires verification
+3. Choose whether to certify the tally or open a formal inquiry.
+4. See the resulting world state and chronicle entry.
+
+The evidence does not identify who caused the discrepancy. The player can record uncertainty or request verification without converting a missing record into an accusation.
+
+## Included
+
 - Event condition/effect/outcome/template Resources
 - Skills and person runtime state
-- WorldState with stockpiles, flags, pending forms, and event history
-- EventContext, ConditionEvaluator, EffectExecutor, EventRunner
-- Corrupt grain official test fixture
+- WorldState, EventContext, ConditionEvaluator, EffectExecutor, EventRunner
+- Pending and archived form records, including assessment and disposition
+- Corrupt grain official event definition
+- First playable case-file UI and choice loop
 
-Not included yet:
-- UI, scheduler, save format, era registry, office roster, relationship component extraction
-- production-grade flag expiry/history pruning
-- seven-era content or simulation systems
+## Not included yet
 
-## Design guardrails
+- Event scheduler, registry autoload, save format, era selection
+- Office roster and extracted relationship component
+- Flag expiry/history pruning
+- Multiple cases, calendar loop, production UI polish
+- Seven-era content or simulation systems
 
-Definitions are immutable at runtime; mutate only runtime entities/world state. Unknown condition/effect types fail closed with warnings. Keep the first vertical slice small enough to understand in one sitting.
+## Guardrails
+
+Definitions are Resources; runtime changes affect only world/person state. Unknown condition/effect types fail closed with warnings. Unsupported resource scopes warn and do not mutate state. Event definitions remain data-driven; this slice is deliberately one case, not the seven-era simulation.

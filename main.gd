@@ -9,10 +9,10 @@ var world: WorldState
 var actor: PersonEntity
 var event_template: EventTemplate
 var context: EventContext
+var grain_levy_form_id: StringName = &""
 
 var phase := "assessment"
 var selected_assessment := ""
-var selected_outcome := -1
 
 var page: VBoxContainer
 var title_label: Label
@@ -187,7 +187,7 @@ func _start_case() -> void:
     actor.office_id = &"grain_clerk"
     actor.skills.levels[&"arithmetic"] = 2
     world.people[actor.id] = actor
-    world.enqueue_form({
+    grain_levy_form_id = world.enqueue_form({
         "form_type": &"grain_levy",
         "subject_id": &"south_court_storehouse",
         "urgency": 1,
@@ -202,7 +202,6 @@ func _start_case() -> void:
 
     phase = "assessment"
     selected_assessment = ""
-    selected_outcome = -1
     _refresh_stats()
     _show_assessment()
 
@@ -218,6 +217,9 @@ func _choose_assessment(claim: String) -> void:
     if phase != "assessment":
         return
     selected_assessment = claim
+    if not world.record_form_assessment(grain_levy_form_id, claim):
+        _show_error("The assessment could not be attached to the pending form.")
+        return
     actor.memory.append({
         "year": CASE_YEAR,
         "memory_id": &"grain_assessment",
@@ -241,7 +243,6 @@ func _resolve_choice(index: int) -> void:
     if not runner.is_eligible(event_template, context):
         _show_error("This event is no longer eligible in the current world state.")
         return
-    selected_outcome = index
     var outcome: EventOutcome = event_template.outcomes[index]
     runner.resolve_outcome(event_template, outcome, context)
     phase = "result"
@@ -293,9 +294,10 @@ func _refresh_stats() -> void:
     if stats_label == null or world == null:
         return
     var trait_text := "none" if actor.traits.is_empty() else str(actor.traits)
-    stats_label.text = "GRAIN  %d    |    PENDING FORMS  %d    |    TRAITS  %s    |    CHRONICLE  %d ENTRIES" % [
+    stats_label.text = "GRAIN  %d    |    PENDING FORMS  %d    |    ARCHIVED  %d    |    TRAITS  %s    |    CHRONICLE  %d ENTRIES" % [
         world.get_resource(&"grain"),
         world.pending_forms.size(),
+        world.resolved_forms.size(),
         trait_text,
         actor.memory.size(),
     ]
