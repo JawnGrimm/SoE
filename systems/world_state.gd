@@ -37,11 +37,11 @@ func advance_period() -> void:
 func _process_period_deadlines() -> void:
 	var now := current_period_index()
 	for flag in world_flags.keys():
-		if int(world_flags[flag]) >= 0 and now >= int(world_flags[flag]):
+		if int(world_flags[flag]) != -1 and now >= int(world_flags[flag]):
 			world_flags.erase(flag)
 	for person in people.values():
 		for flag in person.flags.keys():
-			if int(person.flags[flag]) >= 0 and now >= int(person.flags[flag]):
+			if int(person.flags[flag]) != -1 and now >= int(person.flags[flag]):
 				person.flags.erase(flag)
 	for form in pending_forms:
 		if form.has("due_period") and int(form["due_period"]) < now:
