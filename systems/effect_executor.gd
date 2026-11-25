@@ -63,12 +63,14 @@ func _create_form(_subject: PersonEntity, p: Dictionary, ctx: EventContext) -> v
         "subject_id": StringName(p.get("subject_id", "")),
         "urgency": int(p.get("urgency", 1)),
         "year": ctx.year,
+        "created_period": ctx.world.current_period_index(),
+        "due_period": int(p.get("due_period", -1)),
     })
 
 func _set_flag(subject: PersonEntity, p: Dictionary, ctx: EventContext) -> void:
     var flag := StringName(p.get("flag", ""))
-    var years := int(p.get("years", 0))
-    var expiry := ctx.year + years if years > 0 else -1
+    var periods := int(p.get("periods", int(p.get("years", 0)) * 12))
+    var expiry := ctx.world.current_period_index() + periods if periods > 0 and ctx.world != null else -1
     match String(p.get("scope", "world")):
         "world":
             if ctx.world != null: ctx.world.set_flag(flag, expiry)
