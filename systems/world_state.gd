@@ -103,6 +103,8 @@ func resolve_form(parameters: Dictionary, current_year: int) -> bool:
 		return false
 
 	var archived: Dictionary = pending_forms[match_index].duplicate(true)
+	archived["was_overdue"] = String(archived.get("status", "pending")) == "overdue"
+	archived["status"] = "resolved"
 	if parameters.has("assessment"):
 		archived["assessment"] = String(parameters["assessment"])
 		archived["assessed_year"] = current_year
