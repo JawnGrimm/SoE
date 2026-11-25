@@ -9,6 +9,9 @@ extends Resource
 @export var start_year: int = 0
 @export var end_year: int = 0
 
+## Stable tags for event/content matching, independent of this definition's ID.
+@export var era_tags: Array[StringName] = []
+
 ## Optional calendar metadata used by CalendarFormatter.
 @export var calendar_name: String = ""
 @export var period_label: String = "Period"
