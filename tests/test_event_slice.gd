@@ -79,6 +79,10 @@ func _run() -> void:
 	_check(runner.is_eligible(era_test_event, era_context), "Untagged events should remain eligible when no era covers the year")
 	era_test_event.era_tags = [&"roman_republic"]
 	_check(not runner.is_eligible(era_test_event, era_context), "Tagged events must fail closed when no active era covers the year")
+	var era_blocked_outcome := EventOutcome.new()
+	era_test_event.outcomes = [era_blocked_outcome]
+	_check(runner.resolve_outcome(era_test_event, era_blocked_outcome, era_context).is_empty(), "Outcome resolution must also fail closed when a tagged event has no active era")
+	_check(not era_context.world.has_event_fired(era_test_event.id), "Era-rejected outcomes must not be recorded as fired")
 	_check(registry.get_definition(&"prototype_era") is EraDef, "Registry should index the prototype era definition")
 	var prototype_era := registry.get_definition(&"prototype_era") as EraDef
 	_check(prototype_era.start_year <= 1200 and prototype_era.end_year >= 1200, "Prototype era should cover the current 1200 test slice")
