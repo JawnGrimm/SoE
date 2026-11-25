@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EraDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/era_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"prototype_era"
+display_name = "Prototype Era"
+description = "A deliberately provisional era definition for the first playable slice. Its chronology exists to exercise data-driven era and calendar selection, not to claim a complete historical periodization."
+start_year = 1100
+end_year = 1300
+era_tags = Array[StringName]([&"prototype", &"medieval"])
+calendar_name = "Prototype civil calendar"
+period_label = "Period"
