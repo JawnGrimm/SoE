@@ -9,21 +9,21 @@ script = ExtResource("2")
 label = "Mark discrepancy of one; record origin recount requested"
 title_override = "THE COUNT IS SET DOWN"
 description_override = "Neither man blamed. The single missing measure is noted as unassigned transit loss. Utu-mansum grunts and accepts custody of 23. Enlil-kisu sighs and releases his crew to the bread-line."
-effects = Array[Resource]([SubResource("fx_1"), SubResource("fx_2"), SubResource("fx_3"), SubResource("fx_4"), SubResource("fx_5"), SubResource("fx_6"), SubResource("fx_7")])
+effects = Array[ExtResource("3")]([SubResource("fx_1"), SubResource("fx_2"), SubResource("fx_3"), SubResource("fx_4"), SubResource("fx_5"), SubResource("fx_6"), SubResource("fx_7")])
 
 [sub_resource type="Resource" id="outcome_2"]
 script = ExtResource("2")
 label = "Break Utu-mansum's tally; press seal as 24"
 title_override = "THE TABLET SAYS TWENTY-FOUR"
 description_override = "You smooth wet mud over Utu-mansum's mark and press the storehouse seal for 24. The books balance with the boatmen's dispatch. The granary holds one measure less than the clay claims."
-effects = Array[Resource]([SubResource("fx_8"), SubResource("fx_9"), SubResource("fx_10"), SubResource("fx_11"), SubResource("fx_12"), SubResource("fx_13")])
+effects = Array[ExtResource("3")]([SubResource("fx_8"), SubResource("fx_9"), SubResource("fx_10"), SubResource("fx_11"), SubResource("fx_12"), SubResource("fx_13")])
 
 [sub_resource type="Resource" id="outcome_3"]
 script = ExtResource("2")
 label = "Affix shortage to the carrier; mark 23 as final"
 title_override = "THE CREW BEARS THE SHORT COUNT"
 description_override = "You mark the 23 measures and score a debt mark against Enlil-kisu's crew. Utu-mansum nods and affixes his seal. Enlil-kisu spits in the dust and turns to tell his crew their barley ration is docked."
-effects = Array[Resource]([SubResource("fx_14"), SubResource("fx_15"), SubResource("fx_16"), SubResource("fx_17"), SubResource("fx_18"), SubResource("fx_19")])
+effects = Array[ExtResource("3")]([SubResource("fx_14"), SubResource("fx_15"), SubResource("fx_16"), SubResource("fx_17"), SubResource("fx_18"), SubResource("fx_19")])
 
 [sub_resource type="Resource" id="fx_1"]
 script = ExtResource("3")
@@ -110,4 +110,4 @@ description = "The dispatch tablet in Enlil-kisu's name says twenty-four measure
 era_tags = Array[StringName]([&"uruk"])
 weight = 1.0
 once_per_world = true
-outcomes = Array[Resource]([SubResource("outcome_1"), SubResource("outcome_2"), SubResource("outcome_3")])
+outcomes = Array[ExtResource("2")]([SubResource("outcome_1"), SubResource("outcome_2"), SubResource("outcome_3")])
