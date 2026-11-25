@@ -116,7 +116,7 @@ func _build_interface() -> void:
 	docket_motion_layer = Control.new()
 	docket_motion_layer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	docket_motion_layer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	docket_motion_layer.custom_minimum_size.y = 430
+	docket_motion_layer.custom_minimum_size.y = 360
 	desk_box.add_child(docket_motion_layer)
 	docket_overlay = PanelContainer.new()
 	docket_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -175,7 +175,7 @@ func _build_interface() -> void:
 	mat_box.add_child(choices)
 
 	var desk_props := HBoxContainer.new()
-	desk_props.custom_minimum_size.y = 82
+	desk_props.custom_minimum_size.y = 72
 	desk_props.add_theme_constant_override("separation", 14)
 	desk_props.alignment = BoxContainer.ALIGNMENT_CENTER
 	desk_box.add_child(desk_props)
@@ -183,20 +183,20 @@ func _build_interface() -> void:
 	archive_prop.texture = load("res://assets/desk/archive_stack.png")
 	archive_prop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	archive_prop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	archive_prop.custom_minimum_size = Vector2(136, 76)
+	archive_prop.custom_minimum_size = Vector2(110, 60)
 	archive_prop.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	desk_props.add_child(archive_prop)
 	stylus_prop = TextureRect.new()
 	stylus_prop.texture = load("res://assets/desk/stylus.png")
 	stylus_prop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	stylus_prop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	stylus_prop.custom_minimum_size = Vector2(132, 64)
+	stylus_prop.custom_minimum_size = Vector2(110, 48)
 	stylus_prop.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	stylus_prop.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	stylus_prop.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	desk_props.add_child(stylus_prop)
 	var seal_prop := CylinderSealProp.new()
-	seal_prop.custom_minimum_size = Vector2(62, 66)
+	seal_prop.custom_minimum_size = Vector2(52, 52)
 	seal_prop.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	desk_props.add_child(seal_prop)
 
