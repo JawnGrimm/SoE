@@ -43,7 +43,7 @@ func _change_opinion(relative_subject: PersonEntity, p: Dictionary, ctx: EventCo
 	var other_id := StringName(p.get("other", ""))
 	var other := ctx.world.get_person(other_id) if other_id != &"" else null
 	if other == null:
-		other = ctx.resolve_subject(String(p.get("other", "target")))
+		other = ctx.actor if not p.has("other") else ctx.resolve_subject(String(p.get("other", "target")))
 	if subject == null or other == null:
 		push_warning("EffectExecutor: change_opinion could not resolve both people")
 		return
