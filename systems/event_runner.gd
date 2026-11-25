@@ -16,6 +16,8 @@ func is_eligible(template: EventTemplate, ctx: EventContext) -> bool:
 		return false
 	if not _passes_once_gates(template, ctx):
 		return false
+	if not _matches_era(template, ctx.era):
+		return false
 	if template.cooldown_years > 0 and ctx.world.was_event_recent(template.id, ctx.year, template.cooldown_years):
 		return false
 	return conditions.evaluate_all(template.conditions, ctx)
@@ -63,3 +65,17 @@ func pick_weighted_outcome(template: EventTemplate, rng: RandomNumberGenerator) 
 		if roll < accumulated:
 			return outcome
 	return template.outcomes.back()
+
+## Untagged events are era-independent. Tagged events require a known matching era.
+func _matches_era(template: EventTemplate, era: EraDef) -> bool:
+	if template.era_tags.is_empty():
+		return true
+	if era == null:
+		return false
+
+	if template.era_tags.has(era.id):
+		return true
+	for era_tag in era.era_tags:
+		if template.era_tags.has(era_tag):
+			return true
+	return false
