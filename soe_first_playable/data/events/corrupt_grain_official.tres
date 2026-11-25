@@ -1,0 +1,86 @@
+[gd_resource type="Resource" script_class="EventTemplate" load_steps=18 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/event_template.gd" id="1"]
+[ext_resource type="Script" path="res://data/definitions/event_condition.gd" id="2"]
+[ext_resource type="Script" path="res://data/definitions/event_effect.gd" id="3"]
+[ext_resource type="Script" path="res://data/definitions/event_outcome.gd" id="4"]
+
+[sub_resource type="Resource" id="ConditionOffice"]
+script = ExtResource("2")
+condition_type = &"in_office"
+parameters = {"office_id": &"grain_clerk"}
+
+[sub_resource type="Resource" id="ConditionArithmetic"]
+script = ExtResource("2")
+condition_type = &"skill_at_least"
+parameters = {"skill": &"arithmetic", "level": 2}
+
+[sub_resource type="Resource" id="ConditionForm"]
+script = ExtResource("2")
+condition_type = &"has_pending_form"
+parameters = {"form_type": &"grain_levy"}
+
+[sub_resource type="Resource" id="ConditionYear"]
+script = ExtResource("2")
+condition_type = &"year_in_range"
+parameters = {"min": 1100, "max": 1300}
+
+[sub_resource type="Resource" id="EffectComplicit"]
+script = ExtResource("3")
+effect_type = &"add_trait"
+parameters = {"trait_id": &"complicit"}
+
+[sub_resource type="Resource" id="EffectGrain"]
+script = ExtResource("3")
+effect_type = &"modify_resource"
+parameters = {"resource": &"grain", "amount": 2, "scope": "world"}
+
+[sub_resource type="Resource" id="EffectLookAwayMemory"]
+script = ExtResource("3")
+effect_type = &"add_memory"
+parameters = {"memory_id": &"grain_complicity", "text": "I certified the tally while the dispatch difference remained unresolved.", "involved": []}
+
+[sub_resource type="Resource" id="EffectWhistleblower"]
+script = ExtResource("3")
+effect_type = &"add_trait"
+parameters = {"trait_id": &"whistleblower"}
+
+[sub_resource type="Resource" id="EffectInquiry"]
+script = ExtResource("3")
+effect_type = &"create_form"
+parameters = {"form_type": &"inquiry", "subject_id": &"south_court_storehouse", "urgency": 2}
+
+[sub_resource type="Resource" id="EffectScandalFlag"]
+script = ExtResource("3")
+effect_type = &"set_flag"
+parameters = {"flag": &"grain_scandal", "scope": "world"}
+
+[sub_resource type="Resource" id="EffectInquiryMemory"]
+script = ExtResource("3")
+effect_type = &"add_memory"
+parameters = {"memory_id": &"grain_inquiry", "text": "I referred the dispatch difference for origin-side verification; no individual responsibility was assigned.", "involved": []}
+
+[sub_resource type="Resource" id="OutcomeCertify"]
+script = ExtResource("4")
+label = "Certify the tally"
+weight = 1.0
+title_override = "The figures are accepted."
+description_override = "You certify the receiving tally without resolving the difference. The storehouse account improves; the discrepancy remains buried in the record."
+effects = Array[ExtResource("3")]([SubResource("EffectComplicit"), SubResource("EffectGrain"), SubResource("EffectLookAwayMemory")])
+
+[sub_resource type="Resource" id="OutcomeInquiry"]
+script = ExtResource("4")
+label = "Open an inquiry"
+weight = 1.0
+title_override = "The discrepancy is referred."
+description_override = "You refuse to turn a difference into an accusation. An inquiry is opened to establish what was dispatched and how it was handled at origin."
+effects = Array[ExtResource("3")]([SubResource("EffectWhistleblower"), SubResource("EffectInquiry"), SubResource("EffectScandalFlag"), SubResource("EffectInquiryMemory")])
+
+[resource]
+script = ExtResource("1")
+id = &"corrupt_grain_official"
+title = "The Missing Measures"
+description = "A dispatch copy and receiving tally disagree. The origin-side loading record is absent."
+once_per_world = true
+conditions = Array[ExtResource("2")]([SubResource("ConditionOffice"), SubResource("ConditionArithmetic"), SubResource("ConditionForm"), SubResource("ConditionYear")])
+outcomes = Array[ExtResource("4")]([SubResource("OutcomeCertify"), SubResource("OutcomeInquiry")])
