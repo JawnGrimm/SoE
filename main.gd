@@ -342,7 +342,7 @@ func _apply_incised_text(control: Control) -> void:
 	control.add_theme_color_override("default_color", silt)
 	control.add_theme_color_override("font_shadow_color", recessed_shadow)
 	control.add_theme_color_override("font_outline_color", Color("#6f512e", 0.42))
-	control.add_theme_constant_override("font_outline_size", 1)
+	control.add_theme_constant_override("outline_size", 1)
 	control.add_theme_constant_override("shadow_offset_x", 0)
 	control.add_theme_constant_override("shadow_offset_y", 1)
 
@@ -607,8 +607,8 @@ func _add_choice(label_text: String, callback: Callable, archive_after_stamp: bo
 	button.add_theme_color_override("font_pressed_color", Color("#21170f"))
 	button.add_theme_color_override("font_disabled_color", Color("#5a4632", 0.8))
 	button.add_theme_stylebox_override("normal", _panel_style("#00000000", "#6f512e"))
-	button.add_theme_stylebox_override("hover", _panel_style("#120b05", "#a9854e"))
-	button.add_theme_stylebox_override("pressed", _panel_style("#24180e", "#5b4228"))
+	button.add_theme_stylebox_override("hover", _panel_style("#120b0520", "#a9854e"))
+	button.add_theme_stylebox_override("pressed", _panel_style("#24180e35", "#5b4228"))
 	var stamp := Label.new()
 	stamp.text = "𒂍" if label_text.contains("Temple") else "𒁹"
 	stamp.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
