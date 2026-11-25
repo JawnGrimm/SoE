@@ -570,7 +570,7 @@ func _add_choice(label_text: String, callback: Callable) -> void:
 	button.add_theme_font_size_override("font_size", 14)
 	_apply_incised_text(button)
 	button.add_theme_stylebox_override("normal", _panel_style("#00000000", "#8b7045"))
-	button.add_theme_stylebox_override("hover", _panel_style("#00000000", "#231a12"))
+	button.add_theme_stylebox_override("hover", _panel_style("#00000000", "#c7a96b"))
 	button.pressed.connect(callback)
 	choices.add_child(button)
 
@@ -617,9 +617,9 @@ func _refresh_compound() -> void:
 		elif change < 0:
 			flash = " [color=#d77c70](%d)[/color]" % change
 		if person.id == actor.id:
-			line.text = "[color=#231a12]%s[/color]  [color=#a99570]APPRENTICE[/color]" % person.display_name
+			line.text = "[color=#e0d4bd]%s[/color]  [color=#a99570]APPRENTICE[/color]" % person.display_name
 		else:
-			line.text = "[color=#231a12]%s[/color]  [color=#231a12]%+d[/color]%s" % [person.display_name, opinion, flash]
+			line.text = "[color=#e0d4bd]%s[/color]  [color=#c7a96b]%+d[/color]%s" % [person.display_name, opinion, flash]
 		roster_box.add_child(line)
 	year_label.text = CalendarFormatter.format_date(current_era, world.year, world.period)
 	status_label.text = "SEED %d  /  PERIOD %02d OF 12" % [world.master_seed, world.period + 1]
