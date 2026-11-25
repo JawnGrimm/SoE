@@ -57,6 +57,8 @@ var evidence_left_title: Label
 var evidence_right_title: Label
 var evidence_left_quote: Label
 var evidence_right_quote: Label
+var evidence_left_speaker: Label
+var evidence_right_speaker: Label
 var choice_buttons: Array[Button] = []
 var choice_stamp_labels: Dictionary = {}
 var choice_locked := false
@@ -346,9 +348,11 @@ func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: Strin
 	if heading.begins_with("GRANARY"):
 		evidence_left_title = title
 		evidence_left_quote = quote_label
+		evidence_left_speaker = speaker_label
 	else:
 		evidence_right_title = title
 		evidence_right_quote = quote_label
+		evidence_right_speaker = speaker_label
 	return panel
 
 func _set_evidence_tension(left_delta: int, right_delta: int) -> void:
@@ -556,6 +560,13 @@ func _show_case() -> void:
 	phase = "case"
 	case_heading.add_theme_font_size_override("font_size", 24)
 	case_heading.text = "𒂍  " + active_event.title.to_upper()
+	if active_event.id == CASE_15_ID:
+		evidence_left_title.text = "SOUTH COURT  /  DISPATCH"
+		evidence_left_speaker.text = "ENLIL-KISU"
+		evidence_left_quote.text = "“The river road is dangerous and hungry. I know what a boatman endures.”"
+		evidence_right_title.text = "SOUTH COURT  /  GATE TALLY"
+		evidence_right_speaker.text = "UTU-MANSUM"
+		evidence_right_quote.text = "“The gate tally reads twenty-three. I will answer for the count I witnessed.”"
 	dossier.visible = false
 	dossier.text = ""
 	_set_evidence_tension(0, 0)
