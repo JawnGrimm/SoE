@@ -373,12 +373,12 @@ func _run() -> void:
 	_check(landing_world.get_person(&"enlil_kisu").opinions[landing_actor.id] == 5, "Landing path should grant Enlil-kisu +5")
 	_check(landing_world.get_person(&"geme_inana").opinions[landing_actor.id] == 3, "Landing path should grant Geme-Inana +3")
 	_check(landing_world.has_pending_form(&"consignment_receipt"), "Landing path should open the receiving docket")
-	var sealed_context := _make_context(landing_world)
-	sealed_context.actor = landing_actor
-	sealed_context.era = registry.get_era(&"uruk_storehouse")
+	var landing_case_context := _make_context(landing_world)
+	landing_case_context.actor = landing_actor
+	landing_case_context.era = registry.get_era(&"uruk_storehouse")
 	var sealed_event: EventTemplate = registry.get_event(&"case_01_sealed_vessel")
 	_check(sealed_event != null, "Registry should load Case 1")
-	runner.resolve_outcome(sealed_event, sealed_event.outcomes[0], sealed_context)
+	runner.resolve_outcome(sealed_event, sealed_event.outcomes[0], landing_case_context)
 	_check(landing_world.get_resource(&"canal_progress") == 5, "Accepted cracked vessel should advance Canal Cut by five")
 	_check(landing_world.resolved_forms.back().get("disposition", "") == "quarantine_cracked_vessel", "Accepted vessel should resolve the receiving docket")
 	var rejected_world := WorldState.new()
