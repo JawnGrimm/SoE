@@ -1,7 +1,9 @@
 class_name WorldState
 extends RefCounted
 
-var year: int = 0
+var year: int = 1200
+# Zero-based period: 0..11. The UI displays period + 1.
+var period: int = 0
 var stockpiles: Dictionary[StringName, int] = {}
 var world_flags: Dictionary[StringName, int] = {}
 var pending_forms: Array[Dictionary] = []
@@ -11,6 +13,12 @@ var character_event_history: Dictionary[StringName, Array] = {}
 var people: Dictionary[StringName, PersonEntity] = {}
 var _next_form_sequence: int = 1
 
+func advance_period() -> void:
+	period += 1
+	if period >= 12:
+		period = 0
+		year += 1
+
 func get_person(person_id: StringName) -> PersonEntity:
 	return people.get(person_id)
 
@@ -19,6 +27,13 @@ func has_pending_form(form_type: StringName = &"") -> bool:
 		if form_type == &"" or StringName(form.get("form_type", "")) == form_type:
 			return true
 	return false
+
+func get_latest_resolved_form(form_type: StringName) -> Dictionary:
+	for index in range(resolved_forms.size() - 1, -1, -1):
+		var form: Dictionary = resolved_forms[index]
+		if StringName(form.get("form_type", "")) == form_type:
+			return form
+	return {}
 
 func enqueue_form(form: Dictionary) -> StringName:
 	var stored_form := form.duplicate(true)
