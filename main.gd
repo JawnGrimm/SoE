@@ -175,7 +175,7 @@ func _build_interface() -> void:
 	_apply_incised_text(prompt_label)
 	mat_box.add_child(prompt_label)
 	choices = VBoxContainer.new()
-	choices.add_theme_constant_override("separation", 7)
+	choices.add_theme_constant_override("separation", 11)
 	mat_box.add_child(choices)
 
 	var desk_props := HBoxContainer.new()
@@ -336,11 +336,13 @@ func _archive_docket() -> void:
 	docket_overlay.rotation_degrees = 0.0
 
 func _apply_incised_text(control: Control) -> void:
-	var silt := Color("#231a12")
-	var lip_highlight := Color("#f5e6d0", 0.45)
+	var silt := Color("#392719")
+	var recessed_shadow := Color("#1b120b", 0.62)
 	control.add_theme_color_override("font_color", silt)
 	control.add_theme_color_override("default_color", silt)
-	control.add_theme_color_override("font_shadow_color", lip_highlight)
+	control.add_theme_color_override("font_shadow_color", recessed_shadow)
+	control.add_theme_color_override("font_outline_color", Color("#6f512e", 0.42))
+	control.add_theme_constant_override("font_outline_size", 1)
 	control.add_theme_constant_override("shadow_offset_x", 0)
 	control.add_theme_constant_override("shadow_offset_y", 1)
 
@@ -600,9 +602,13 @@ func _add_choice(label_text: String, callback: Callable, archive_after_stamp: bo
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.add_theme_font_size_override("font_size", 18)
 	_apply_incised_text(button)
-	button.add_theme_stylebox_override("normal", _panel_style("#00000000", "#8b7045"))
-	button.add_theme_stylebox_override("hover", _panel_style("#00000000", "#c7a96b"))
-	button.add_theme_stylebox_override("pressed", _panel_style("#00000000", "#c7a96b"))
+	button.add_theme_color_override("font_color", Color("#3b2819"))
+	button.add_theme_color_override("font_hover_color", Color("#2b1d12"))
+	button.add_theme_color_override("font_pressed_color", Color("#21170f"))
+	button.add_theme_color_override("font_disabled_color", Color("#5a4632", 0.8))
+	button.add_theme_stylebox_override("normal", _panel_style("#00000000", "#6f512e"))
+	button.add_theme_stylebox_override("hover", _panel_style("#120b05", "#a9854e"))
+	button.add_theme_stylebox_override("pressed", _panel_style("#24180e", "#5b4228"))
 	var stamp := Label.new()
 	stamp.text = "𒂍" if label_text.contains("Temple") else "𒁹"
 	stamp.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
