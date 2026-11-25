@@ -15,6 +15,14 @@ func _run() -> void:
 	var scheduler := EventScheduler.new(runner)
 	var follow_up_catalog: Array[EventTemplate] = [ROUTINE_CASE, ORIGIN_REPLY_CASE]
 
+	_check(Registry.has_definition(&"corrupt_grain_official"), "Registry should index the initial grain event")
+	_check(Registry.has_definition(&"routine_tally_adjustment"), "Registry should index the routine tally event")
+	_check(Registry.has_definition(&"origin_side_reply"), "Registry should index the origin reply event")
+	_check(Registry.get_definition(&"corrupt_grain_official") is EventTemplate, "Registry lookup should return the loaded event Resource")
+	_check(Registry.get_definitions("events").size() == 3, "Registry should expose all three event definitions by category")
+	_check(Registry.get_definition(&"missing_definition") == null, "Unknown definition IDs should return null")
+	_check(Registry.get_definition_ids("events").size() == 3, "Registry should list event IDs")
+
 	var complicity_world := _make_world()
 	var complicity_ctx := _make_context(complicity_world)
 	var complicity_form_id: StringName = complicity_world.pending_forms[0]["id"]
