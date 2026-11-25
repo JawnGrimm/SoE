@@ -28,12 +28,13 @@ func pick_next_event(
 		if template == null:
 			continue
 		var eligible_now := runner.is_eligible(template, ctx)
-		if not eligible_now and template.id == &"case_01_sealed_vessel" and int(world.period / 3) >= 2:
-			var seasonal_copy := template.duplicate(true) as EventTemplate
-			seasonal_copy.conditions.clear()
-			eligible_now = runner.is_eligible(seasonal_copy, ctx)
 		if not eligible_now:
 			continue
+		if template.id == &"case_01_sealed_vessel":
+			var has_receipt := world.has_pending_form(&"consignment_receipt")
+			var is_harvest_or_stores := int(world.period / 3) >= 2
+			if not has_receipt and not is_harvest_or_stores:
+				continue
 		var weight := maxf(template.weight, 0.0)
 		if template.id == &"case_01_sealed_vessel":
 			var season := int(world.period / 3)
