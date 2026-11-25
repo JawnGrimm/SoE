@@ -23,14 +23,18 @@ func _run() -> void:
 	_check(registry.has_definition(&"routine_tally_adjustment"), "Registry should index the routine tally event")
 	_check(registry.has_definition(&"origin_side_reply"), "Registry should index the origin reply event")
 	_check(registry.get_definition(&"corrupt_grain_official") is EventTemplate, "Registry lookup should return the loaded event Resource")
-	_check(registry.get_definitions("events").size() == 3, "Registry should expose all three event definitions by category")
+	_check(registry.get_definitions("events").size() == 5, "Registry should expose all five event definitions by category")
 	var prototype_events_are_era_independent := true
-	for prototype_event in registry.all_events():
-		if not prototype_event.era_tags.is_empty():
+	for prototype_id in [&"corrupt_grain_official", &"routine_tally_adjustment", &"origin_side_reply"]:
+		var prototype_event := registry.get_event(prototype_id)
+		if prototype_event == null or not prototype_event.era_tags.is_empty():
 			prototype_events_are_era_independent = false
-	_check(prototype_events_are_era_independent, "All three prototype events should remain era-independent")
+	_check(prototype_events_are_era_independent, "The three prototype events should remain era-independent")
+	_check(registry.get_event(&"case_15_south_court") != null, "Registry should load Case 15")
+	_check(registry.get_event(&"case_01_sealed_vessel") != null, "Registry should load Case 1")
+	_check(registry.get_era(&"uruk_storehouse") != null, "Registry should load the Uruk era")
 	_check(registry.get_definition(&"missing_definition") == null, "Unknown definition IDs should return null")
-	_check(registry.get_definition_ids("events").size() == 3, "Registry should list event IDs")
+	_check(registry.get_definition_ids("events").size() == 5, "Registry should list all five event IDs")
 	_check(registry.get_event(&"corrupt_grain_official") != null, "Typed event lookup should return an event")
 	_check(registry.get_era_for_year(1200) == registry.get_era(&"prototype_era"), "Registry should resolve the era covering a year")
 	_check(registry.get_era_for_year(99999) == null, "Unknown years should resolve to no era")
@@ -92,13 +96,43 @@ func _run() -> void:
 	_check(CalendarFormatter.format_year(0) == "1 BCE", "Calendar formatter should convert year zero to 1 BCE")
 	_check(CalendarFormatter.format_year(-2107) == "2108 BCE", "Calendar formatter should convert negative simulation years to BCE")
 	_check(CalendarFormatter.format_date(prototype_era, 1200, 0).contains("Period 01"), "Calendar formatter should use era period labels")
-	_check(CalendarFormatter.format_date(era_definition, 1200, 1).contains("Second"), "Calendar formatter should use custom period names when supplied")
+	_check(CalendarFormatter.format_date(era_definition, 1200, 6).contains("Second"), "Calendar formatter should use custom period names when supplied")
 	era_definition.period_names = ["Spring", "Summer", "Autumn", "Winter"]
-	_check(CalendarFormatter.format_date(era_definition, 1200, 3).contains("Winter"), "Calendar formatter should support four custom seasons")
+	_check(CalendarFormatter.format_date(era_definition, 1200, 9).contains("Winter"), "Calendar formatter should support four custom seasons")
 	era_definition.period_names.clear()
 	_check(CalendarFormatter.format_date(era_definition, 1200, 0).contains("Month 01"), "Empty custom periods should fall back to the era period label")
 	_check(CalendarFormatter.format_date(null, 1200, 0) == "Period 01 • 1200 CE", "Null era should use the generic calendar fallback")
 	_check(CalendarFormatter.format_year(-2108) == "2109 BCE", "Calendar formatter should convert -2108 to 2109 BCE")
+
+	# Uruk seed forks are repeatable and independent of narrative consumption.
+	var uruk_a := WorldState.new()
+	var uruk_b := WorldState.new()
+	var uruk_player_a := UrukSeeder.seed_campaign(uruk_a, 987654321)
+	var uruk_player_b := UrukSeeder.seed_campaign(uruk_b, 987654321)
+	_check(uruk_a.master_seed == 987654321, "Uruk seeder should retain the campaign seed")
+	_check(uruk_a.year == -3200 and uruk_a.period == 0, "Uruk campaign should begin at its era start")
+	_check(uruk_a.people.size() == 8, "Uruk seeder should create the eight-person roster")
+	_check(uruk_player_a.id == &"player_apprentice", "Uruk seeder should return the apprentice")
+	_check(uruk_a.get_person(&"shuruppak_ilu").opinions[uruk_player_a.id] == 5, "Senior scribe should begin at +5 opinion")
+	_check(uruk_a.get_person(&"shuruppak_ilu").vulnerabilities[&"patience_remaining"] == uruk_b.get_person(&"shuruppak_ilu").vulnerabilities[&"patience_remaining"], "People jitter should reproduce from the same seed")
+	_check(uruk_a.stockpiles == uruk_b.stockpiles, "Simulation stockpiles should reproduce from the same seed")
+	_check(uruk_a.get_person(&"ur_nanna").vulnerabilities[&"granary_roof_integrity"] >= 40, "Roof integrity should use the specified jitter range")
+	_check(uruk_a.get_person(&"enlil_kisu").vulnerabilities[&"crew_hunger"] in [1, 2, 3], "Crew hunger should use the specified jitter range")
+	_check(CalendarFormatter.format_date(registry.get_era(&"uruk_storehouse"), -3200, 3).contains("Sowing"), "Three desk periods should map to the next Uruk season")
+	_check(CalendarFormatter.format_date(registry.get_era(&"uruk_storehouse"), -3200, 9).contains("Stores"), "Periods 9-11 should map to Stores")
+	var case15 := registry.get_event(&"case_15_south_court")
+	var uruk_ctx := EventContext.new()
+	uruk_ctx.world = uruk_a
+	uruk_ctx.actor = uruk_player_a
+	uruk_ctx.year = uruk_a.year
+	uruk_ctx.era = registry.get_era(&"uruk_storehouse")
+	_check(runner.is_eligible(case15, uruk_ctx), "Case 15 should be eligible at campaign start")
+	runner.resolve_outcome(case15, case15.outcomes[0], uruk_ctx)
+	_check(uruk_a.get_person(&"utu_mansum").opinions[uruk_player_a.id] == 2, "Case 15 should shift Utu-mansum's opinion of the apprentice")
+	_check(uruk_a.get_person(&"enlil_kisu").opinions[uruk_player_a.id] == 2, "Case 15 should shift Enlil-kisu's opinion of the apprentice")
+	_check(uruk_a.get_person(&"shuruppak_ilu").opinions[uruk_player_a.id] == 10, "Case 15 should shift Shuruppak-ilu's opinion of the apprentice")
+	_check(uruk_a.get_resource(&"barley") >= 443, "Case 15 should enter 23 measures of barley")
+	_check(uruk_a.resolved_forms.size() == 1, "Case 15 should resolve the opening grain levy")
 
 	var complicity_world := _make_world()
 	var complicity_ctx := _make_context(complicity_world)
