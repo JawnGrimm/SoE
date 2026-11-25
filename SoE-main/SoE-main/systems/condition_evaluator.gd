@@ -54,11 +54,11 @@ func _flag_set(subject: PersonEntity, p: Dictionary, ctx: EventContext) -> bool:
     var flag := StringName(p.get("flag", ""))
     match String(p.get("scope", "world")):
         "world":
-            return ctx.world != null and ctx.world.has_flag(flag, ctx.year)
+            return ctx.world != null and ctx.world.has_flag(flag, ctx.world.current_period_index())
         "actor":
-            return ctx.actor != null and ctx.actor.has_flag(flag, ctx.year)
+            return ctx.actor != null and ctx.actor.has_flag(flag, ctx.world.current_period_index())
         "target":
-            return subject != null and subject.has_flag(flag, ctx.year)
+            return subject != null and subject.has_flag(flag, ctx.world.current_period_index())
         _:
             return false
 

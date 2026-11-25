@@ -1,9 +1,14 @@
 class_name WorldState
 extends RefCounted
 
+const PERIODS_PER_YEAR := 12
+
 var year: int = 1200
-# Zero-based period: 0..11. The UI displays period + 1.
 var period: int = 0
+var master_seed: int = 0
+var rng_narrative := RandomNumberGenerator.new()
+var rng_sim := RandomNumberGenerator.new()
+var rng_people := RandomNumberGenerator.new()
 var stockpiles: Dictionary[StringName, int] = {}
 var world_flags: Dictionary[StringName, int] = {}
 var pending_forms: Array[Dictionary] = []
@@ -13,11 +18,41 @@ var character_event_history: Dictionary[StringName, Array] = {}
 var people: Dictionary[StringName, PersonEntity] = {}
 var _next_form_sequence: int = 1
 
+func set_world_seed(new_seed: int) -> void:
+	master_seed = new_seed
+	rng_narrative.seed = new_seed ^ 0x5DEECE66D
+	rng_sim.seed = new_seed ^ 0xDEADBEEF
+	rng_people.seed = new_seed ^ 0xCAFEBABE
+
+func current_period_index() -> int:
+	return year * PERIODS_PER_YEAR + period
+
 func advance_period() -> void:
 	period += 1
-	if period >= 12:
+	if period >= PERIODS_PER_YEAR:
 		period = 0
 		year += 1
+	_process_period_deadlines()
+
+func _process_period_deadlines() -> void:
+	var now := current_period_index()
+	for flag in world_flags.keys():
+		if int(world_flags[flag]) != -1 and now >= int(world_flags[flag]):
+			world_flags.erase(flag)
+	for person in people.values():
+		for flag in person.flags.keys():
+			if int(person.flags[flag]) != -1 and now >= int(person.flags[flag]):
+				person.flags.erase(flag)
+	for form in pending_forms:
+		if form.has("due_period") and int(form["due_period"]) < now:
+			form["status"] = "overdue"
+
+func get_overdue_form_count() -> int:
+	var count := 0
+	for form in pending_forms:
+		if String(form.get("status", "pending")) == "overdue":
+			count += 1
+	return count
 
 func get_person(person_id: StringName) -> PersonEntity:
 	return people.get(person_id)
@@ -42,6 +77,9 @@ func enqueue_form(form: Dictionary) -> StringName:
 		form_id = StringName("form_%06d" % _next_form_sequence)
 		_next_form_sequence += 1
 	stored_form["id"] = form_id
+	stored_form["status"] = String(stored_form.get("status", "pending"))
+	if stored_form.has("due_period") and int(stored_form["due_period"]) < current_period_index():
+		stored_form["status"] = "overdue"
 	pending_forms.append(stored_form)
 	return form_id
 
@@ -61,7 +99,6 @@ func resolve_form(parameters: Dictionary, current_year: int) -> bool:
 	if requested_id == &"" and requested_type == &"":
 		push_warning("WorldState: resolve_form requires form_id or form_type")
 		return false
-
 	var match_index := -1
 	for i in range(pending_forms.size()):
 		var form: Dictionary = pending_forms[i]
@@ -72,12 +109,12 @@ func resolve_form(parameters: Dictionary, current_year: int) -> bool:
 		elif StringName(form.get("form_type", "")) == requested_type:
 			match_index = i
 			break
-
 	if match_index < 0:
 		push_warning("WorldState: no pending form matched resolve_form request")
 		return false
-
 	var archived: Dictionary = pending_forms[match_index].duplicate(true)
+	archived["was_overdue"] = String(archived.get("status", "pending")) == "overdue"
+	archived["status"] = "resolved"
 	if parameters.has("assessment"):
 		archived["assessment"] = String(parameters["assessment"])
 		archived["assessed_year"] = current_year
@@ -99,20 +136,23 @@ func modify_resource(resource_id: StringName, amount: int, scope: String = "worl
 	if resource_id == &"":
 		push_warning("WorldState: refusing resource change with empty id")
 		return
-	stockpiles[resource_id] = get_resource(resource_id) + amount
+	var next_value := get_resource(resource_id) + amount
+	if resource_id == &"canal_progress":
+		next_value = clampi(next_value, 0, 100)
+	stockpiles[resource_id] = next_value
 
-func set_flag(flag: StringName, expiry_year: int) -> void:
+func set_flag(flag: StringName, expiry_period: int) -> void:
 	if flag != &"":
-		world_flags[flag] = expiry_year
+		world_flags[flag] = expiry_period
 
 func clear_flag(flag: StringName) -> void:
 	world_flags.erase(flag)
 
-func has_flag(flag: StringName, current_year: int) -> bool:
+func has_flag(flag: StringName, current_period: int) -> bool:
 	if not world_flags.has(flag):
 		return false
 	var expiry: int = world_flags[flag]
-	return expiry < 0 or current_year <= expiry
+	return expiry == -1 or current_period < expiry
 
 func record_event(event_id: StringName, actor_id: StringName, current_year: int) -> void:
 	event_history.append({"event_id": event_id, "actor_id": actor_id, "year": current_year})
