@@ -765,11 +765,11 @@ func _preview_choice(button: Button) -> void:
 	for effect in outcome.effects:
 		if effect.effect_type != &"change_opinion":
 			continue
-		var other := StringName(effect.parameters.get("other", &""))
+		var target_npc := StringName(effect.parameters.get("other", effect.parameters.get("subject", &"")))
 		var amount := int(effect.parameters.get("amount", 0))
-		if other == &"enlil_kisu":
+		if target_npc == &"enlil_kisu":
 			left_delta += amount
-		elif other == &"utu_mansum":
+		elif target_npc == &"utu_mansum":
 			right_delta += amount
 	_set_evidence_tension(left_delta, right_delta)
 
