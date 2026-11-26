@@ -39,11 +39,9 @@ func _simulate_epics(world: WorldState) -> void:
 	var labor := int(resources.get(&"labor", 0))
 	var barley := int(resources.get(&"barley", 0))
 	var disruption := false
-	var active_scandals: Array[StringName] = []
 	for flag in definition.disruption_flags:
 		if world.has_flag(flag, now):
 			disruption = true
-			active_scandals.append(flag)
 		var recorded_scandals: Array = state.get("scandal_flags", [])
 		if flag in recorded_scandals:
 			continue
