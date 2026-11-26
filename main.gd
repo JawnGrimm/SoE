@@ -882,7 +882,7 @@ func _show_assignment_board() -> void:
 		var label := "%s\n%s" % [String(opportunity.get("title", "Work")), String(opportunity.get("summary", "A matter requires attention."))]
 		choices_payload.append({"label": label})
 		callbacks.append(_select_assignment_opportunity.bind(index))
-		summaries.append("%d. %s / PRIORITY %d" % [index + 1, String(opportunity.get("title", "Work")), int(opportunity.get("priority", 0))])
+		summaries.append("%d. %s / %s" % [index + 1, String(opportunity.get("kind", "work")).replace("_", " ").to_upper(), String(opportunity.get("title", "Work"))])
 	var payload := {
 		"title": "THE SCRIBE'S DESK / THREE OPPORTUNITIES",
 		"left_card": {"title": "THE LIVING WORLD", "speaker_id": &"", "quote": "The city has continued its business while you were away from the desk.", "facts": "YEAR: %s\nPERIOD: %d / 12\nPENDING FORMS: %d\nACTIVE HAZARDS: %d" % [CalendarFormatter.format_year(world.year), world.period + 1, world.pending_forms.size(), world.hazards.filter(func(h: Dictionary) -> bool: return bool(h.get("active", false))).size()]},
@@ -930,10 +930,10 @@ func _show_world_engagement() -> void:
 		evidence_lines.append("%s\n%s" % [String(action_id).replace("_", " ").to_upper(), String(entry.get("facts", ""))])
 	var left_quote := String(record.get("summary", "A matter requires professional attention."))
 	var employer := world.get_person(StringName(record.get("employer_id", "")))
-	var right_quote := "The record is incomplete. Examine it, hear the responsible official, and inspect the source before making your assessment."
+	var right_quote := "The record is incomplete. Read it, reconcile the figures, hear the responsible official, and inspect the source before making your assessment."
 	var payload := {
 		"title": String(record.get("title", "ASSIGNMENT")),
-		"left_card": {"title": "WORLD SITUATION / %s" % String(record.get("kind", "work")).to_upper(), "speaker_id": &"", "quote": left_quote, "facts": "SOURCE: %s\nOPENED: PERIOD %d" % [String(record.get("source_id", "")), int(record.get("started_period", world.current_period_index()))]},
+		"left_card": {"title": "WORLD SITUATION / %s" % String(record.get("kind", "work")).to_upper(), "speaker_id": &"", "quote": left_quote, "facts": "SOURCE: %s\nOPENED: %s / PERIOD %d" % [String(record.get("source_id", "")), CalendarFormatter.format_year(world.year), world.period + 1]},
 		"right_card": {"title": "RESPONSIBLE OFFICE", "speaker_id": employer.id if employer != null else &"", "quote": right_quote, "facts": "INVESTIGATIONS RECORDED: %d / 4\n\n%s" % [actions.size(), "\n\n".join(evidence_lines)]},
 		"prompt": "Investigate the situation. Your skills affect what you can establish; your judgment determines what is entered.",
 		"choices": []
