@@ -127,7 +127,7 @@ parameters = {"resource": &"canal_progress", "amount": 0, "scope": "world"}
 [sub_resource type="Resource" id="fx_23"]
 script = ExtResource("3")
 effect_type = &"set_flag"
-parameters = {"flag": &"canal_crew_slowdown", "scope": "world", "periods": 2}
+parameters = {"flag": &"canal_crew_slowdown", "scope": "world", "periods": 11}
 
 [sub_resource type="Resource" id="outcome_1"]
 script = ExtResource("2")
