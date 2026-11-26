@@ -22,9 +22,7 @@ var institutions: Dictionary[StringName, Dictionary] = {}
 var social_groups: Dictionary[StringName, Dictionary] = {}
 var relationships: Array[Dictionary] = []
 var assignments: Dictionary[StringName, Dictionary] = {}
-var north_bay_roof_leak_active: bool = false
-var north_bay_roof_leak_rate: int = 1
-var north_bay_roof_total_spoiled: int = 0
+var hazards: Array[Dictionary] = []
 var _next_form_sequence: int = 1
 
 func set_world_seed(new_seed: int) -> void:
@@ -42,17 +40,44 @@ func advance_period() -> void:
 		period = 0
 		year += 1
 	_process_period_deadlines()
-	_process_roof_leak()
+	_process_hazards()
 
-func _process_roof_leak() -> void:
-	if not north_bay_roof_leak_active or north_bay_roof_leak_rate <= 0:
-		return
-	var available := maxi(0, get_resource(&"barley"))
-	var spoiled := mini(available, north_bay_roof_leak_rate)
-	if spoiled <= 0:
-		return
-	stockpiles[&"barley"] = available - spoiled
-	north_bay_roof_total_spoiled += spoiled
+func _process_hazards() -> void:
+	for index in range(hazards.size()):
+		var hazard: Dictionary = hazards[index]
+		if not bool(hazard.get("active", false)):
+			continue
+		var rate := maxi(0, int(hazard.get("rate", 0)))
+		var resource_id := StringName(hazard.get("resource", ""))
+		if rate <= 0 or resource_id == &"":
+			continue
+		var available := maxi(0, get_resource(resource_id))
+		var lost := mini(available, rate)
+		if lost <= 0:
+			continue
+		stockpiles[resource_id] = available - lost
+		hazard["total_lost"] = int(hazard.get("total_lost", 0)) + lost
+		hazards[index] = hazard
+
+func has_active_hazard(place_id: StringName, hazard_id: StringName = &"") -> bool:
+	for hazard in hazards:
+		if not bool(hazard.get("active", false)):
+			continue
+		if StringName(hazard.get("place_id", "")) != place_id:
+			continue
+		if hazard_id == &"" or StringName(hazard.get("id", "")) == hazard_id:
+			return true
+	return false
+
+func get_hazard_total_lost(place_id: StringName = &"", hazard_id: StringName = &"") -> int:
+	var total := 0
+	for hazard in hazards:
+		if place_id != &"" and StringName(hazard.get("place_id", "")) != place_id:
+			continue
+		if hazard_id != &"" and StringName(hazard.get("id", "")) != hazard_id:
+			continue
+		total += int(hazard.get("total_lost", 0))
+	return total
 
 func offer_assignment(assignment_id: StringName, employer_id: StringName) -> bool:
 	if assignment_id == &"" or employer_id == &"" or assignments.has(assignment_id):
