@@ -294,6 +294,8 @@ func get_resource(resource_id: StringName, scope: String = "world", owner_id: St
 			return person.resources.get(resource_id, 0) if person != null else 0
 		"office", "institution":
 			var resolved_id := institution_id if institution_id != &"" else get_institution_for_person(StringName(owner_id))
+			if resolved_id == &"" and owner_id != "":
+				return 0
 			if resolved_id == &"":
 				resolved_id = &"eanna_household"
 			var institution: Dictionary = institutions.get(resolved_id, {})
@@ -336,6 +338,9 @@ func modify_resource(resource_id: StringName, amount: int, scope: String = "worl
 		return true
 	if scope == "office" or scope == "institution" or (scope == "world" and not stockpiles.has(resource_id) and institution_has_resource(resource_id, &"eanna_household")):
 		var resolved_id := institution_id if institution_id != &"" else get_institution_for_person(StringName(owner_id))
+		if resolved_id == &"" and owner_id != "":
+			push_warning("WorldState: actor has no institution for scoped resource change")
+			return false
 		if resolved_id == &"":
 			resolved_id = &"eanna_household"
 		if not institutions.has(resolved_id):
