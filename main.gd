@@ -173,10 +173,10 @@ func _build_interface() -> void:
 	docket_motion_layer.add_child(docket_overlay)
 	var tablet_content := MarginContainer.new()
 	tablet_content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	tablet_content.add_theme_constant_override("margin_left", 68)
-	tablet_content.add_theme_constant_override("margin_right", 68)
-	tablet_content.add_theme_constant_override("margin_top", 48)
-	tablet_content.add_theme_constant_override("margin_bottom", 48)
+	tablet_content.add_theme_constant_override("margin_left", 76)
+	tablet_content.add_theme_constant_override("margin_right", 76)
+	tablet_content.add_theme_constant_override("margin_top", 56)
+	tablet_content.add_theme_constant_override("margin_bottom", 56)
 	docket_overlay.add_child(tablet_content)
 	var tablet_scroll := ScrollContainer.new()
 	tablet_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -399,8 +399,8 @@ func _load_character_portrait(character_id: StringName) -> Texture2D:
 				var source_size := portrait_image.get_size()
 				var crop_size := mini(source_size.x, source_size.y)
 				var crop_origin := Vector2i(
-					(source_size.x - crop_size) / 2,
-					(source_size.y - crop_size) / 2
+					floori(float(source_size.x - crop_size) / 2.0),
+					floori(float(source_size.y - crop_size) / 2.0)
 				)
 				portrait_image = portrait_image.get_region(
 					Rect2i(crop_origin, Vector2i(crop_size, crop_size))

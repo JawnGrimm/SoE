@@ -22,6 +22,9 @@ func load_folder(folder_path: String, category: String = "") -> int:
 	var resolved_category := category if not category.is_empty() else folder_path.get_file()
 	var access := DirAccess.open(folder_path)
 	if access == null:
+		# Traits and forms are optional data folders until their definitions are authored.
+		if resolved_category == "traits" or resolved_category == "forms":
+			return 0
 		_warn("DefinitionRegistry: cannot open definition folder '%s'" % folder_path)
 		return 0
 
