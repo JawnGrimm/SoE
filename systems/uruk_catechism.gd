@@ -6,8 +6,8 @@ static func choose_path(world: WorldState, actor: PersonEntity, path: StringName
 		return false
 	actor.flags[path] = -1
 	if path == &"path_temple":
-		world.get_person(&"ur_nanna").opinions[actor.id] += 5
-		world.get_person(&"nin_kasi").opinions[actor.id] += 3
+		world.get_person(&"ur_nanna").change_opinion(actor.id, 5, "Path catechism: temple instruction", world.year)
+		world.get_person(&"nin_kasi").change_opinion(actor.id, 3, "Path catechism: temple instruction", world.year)
 		world.enqueue_form({"form_type": &"pension_roll", "subject_id": &"brewing_house_account", "urgency": 1, "year": world.year})
 	else:
 		world.get_person(&"enlil_kisu").opinions[actor.id] += 5
