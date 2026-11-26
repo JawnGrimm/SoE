@@ -817,7 +817,7 @@ func _active_docket_payload() -> Dictionary:
 		"title": active_event.title,
 		"left_card": {"title": active_event.evidence_left_title, "speaker_id": active_event.evidence_left_portrait, "quote": active_event.evidence_left_quote if not active_event.evidence_left_quote.is_empty() else active_event.description, "facts": left_facts.strip_edges()},
 		"right_card": {"title": active_event.evidence_right_title, "speaker_id": active_event.evidence_right_portrait, "quote": active_event.evidence_right_quote if not active_event.evidence_right_quote.is_empty() else active_event.description, "facts": right_facts},
-		"prompt": "What mark will you leave?",
+		"prompt": active_event.description + "\n\nWhat mark will you leave?",
 		"choices": _authored_choices_payload()
 	}
 
