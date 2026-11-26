@@ -501,7 +501,7 @@ func _animate_docket_in() -> void:
 	docket_overlay.modulate.a = 0.0
 	var target_position := docket_home_position
 	docket_overlay.position = target_position + Vector2(-24.0, 5.0)
-	AudioManager.play_docket_slide()
+	AudioManager.play_book_open()
 	var tween := create_tween().set_parallel(true)
 	tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tween.tween_property(docket_overlay, "position", target_position, 0.2)
@@ -511,7 +511,7 @@ func _animate_docket_in() -> void:
 func _archive_docket() -> void:
 	if docket_overlay == null:
 		return
-	AudioManager.play_docket_slide()
+	AudioManager.play_book_close()
 	var archive_target := Vector2(34.0, -8.0)
 	if archive_prop != null:
 		archive_target = archive_prop.global_position + archive_prop.size * 0.5
