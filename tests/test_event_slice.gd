@@ -133,7 +133,7 @@ func _run() -> void:
 	var seeded_tie_count := 0
 	for person in uruk_a.people.values():
 		seeded_tie_count += person.relationships.size()
-	_check(seeded_tie_count == 19, "Uruk seed should establish nineteen directed social and economic ties across PersonEntity relationships")
+	_check(seeded_tie_count == 19, "Uruk seed should establish nineteen directed social and economic ties across PersonEntity relationships (found %d)" % seeded_tie_count)
 	_check(uruk_a.get_person(&"geme_tur").relationships.has(uruk_player_a.id), "The player's household member should have an explicit family tie")
 	_check(uruk_a.get_person(&"ur_gula").relationships.has(&"nin_dada"), "Pastoral wool supply should connect to textile production")
 	_check(uruk_a.places.has(&"susa") and uruk_a.places.has(&"habuba_kabira"), "Uruk seed should include both external exchange settlements")
@@ -428,6 +428,7 @@ func _run() -> void:
 	var south_case: EventTemplate = registry.get_event(&"case_15_south_court")
 	var south_honest_world := WorldState.new()
 	var south_honest_actor := UrukSeeder.seed_campaign(south_honest_world, 71)
+	south_honest_world.period = 6
 	var south_honest_ctx := _make_context(south_honest_world)
 	south_honest_ctx.actor = south_honest_actor
 	south_honest_ctx.era = registry.get_era(&"uruk_storehouse")
@@ -436,6 +437,7 @@ func _run() -> void:
 
 	var south_forged_world := WorldState.new()
 	var south_forged_actor := UrukSeeder.seed_campaign(south_forged_world, 72)
+	south_forged_world.period = 6
 	var south_forged_ctx := _make_context(south_forged_world)
 	south_forged_ctx.actor = south_forged_actor
 	south_forged_ctx.era = registry.get_era(&"uruk_storehouse")
@@ -444,6 +446,7 @@ func _run() -> void:
 
 	var south_penalty_world := WorldState.new()
 	var south_penalty_actor := UrukSeeder.seed_campaign(south_penalty_world, 73)
+	south_penalty_world.period = 6
 	var south_penalty_ctx := _make_context(south_penalty_world)
 	south_penalty_ctx.actor = south_penalty_actor
 	south_penalty_ctx.era = registry.get_era(&"uruk_storehouse")
