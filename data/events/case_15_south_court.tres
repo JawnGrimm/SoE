@@ -162,4 +162,5 @@ era_tags = Array[StringName]([&"uruk"])
 weight = 1.0
 once_per_world = false
 conditions = Array[ExtResource("4")]([SubResource("condition_1")])
+records = Array[Dictionary]([{"label": "DISPATCH TABLET", "value": "24 measures barley", "note": "Sealed at the river."}, {"label": "THRESHOLD TALLY", "value": "23 measures barley", "note": "No witness at loading, transit, or unloading."}])
 outcomes = Array[ExtResource("2")]([SubResource("outcome_1"), SubResource("outcome_2"), SubResource("outcome_3")])
