@@ -4,6 +4,19 @@ const AssignmentGeneratorScript = preload("res://systems/assignment_generator.gd
 const CAMPAIGN_SEED: int = 32003200
 const NORTH_BAY_ASSIGNMENT_ID: StringName = &"north_bay_roof"
 const ROSTER_CAST: Array[StringName] = [&"shuruppak_ilu", &"utu_mansum", &"enlil_kisu", &"ur_nanna", &"nin_kasi", &"geme_inana", &"lu_nanshe"]
+const FACTION_MEMBERS := {
+	&"eanna_household": [&"shuruppak_ilu", &"ur_nanna", &"utu_mansum", &"enlil_kisu", &"lu_nanshe"],
+	&"boatmens_guild": [&"enlil_kisu", &"ur_amas", &"enki_ili", &"geme_inana"],
+	&"city_garrison": [&"utu_mansum", &"enlil_kisu", &"ur_amas"],
+	&"council_of_elders": [&"shuruppak_ilu", &"lu_nanshe", &"utu_mansum"],
+	&"agricultural_households": [&"ama_edin", &"geme_tur", &"ur_gula"]
+}
+const FACTION_LABELS := {
+	&"eanna_household": "🏛 Eanna Temple",
+	&"boatmens_guild": "⛵ Landing Boatmen & Guilds",
+	&"city_garrison": "🛡 City Garrison",
+	&"council_of_elders": "📜 Council of Elders"
+}
 
 class CylinderSealProp extends Control:
 	func _draw() -> void:
@@ -44,7 +57,7 @@ var dossier: RichTextLabel
 var prompt_label: Label
 var choices: VBoxContainer
 var stamp_history_row: HFlowContainer
-var stores_label: Label
+var dossier_label: Label
 var canal_label: Label
 var roster_box: VBoxContainer
 var status_label: Label
@@ -115,7 +128,7 @@ func _build_interface() -> void:
 	var header := HBoxContainer.new()
 	root.add_child(header)
 	var title := Label.new()
-	title.text = "SCRIBE OF ERAS  /  EANNA STOREHOUSE"
+	title.text = "SCRIBE OF ERAS  /  THE SCRIBE’S DESK"
 	title.add_theme_font_size_override("font_size", 23)
 	title.add_theme_color_override("font_color", Color("#e5d2a8"))
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -306,21 +319,21 @@ func _build_interface() -> void:
 	compound_title.add_theme_color_override("font_color", Color("#d6bd8b"))
 	compound_box.add_child(compound_title)
 	var stores_title := Label.new()
-	stores_title.text = "SETTLEMENT STORES"
+	stores_title.text = "SCRIBE DOSSIER  /  IDENTITY & PURSE"
 	stores_title.add_theme_font_size_override("font_size", 11)
 	stores_title.add_theme_color_override("font_color", Color("#a99570"))
 	compound_box.add_child(stores_title)
-	stores_label = Label.new()
-	stores_label.add_theme_font_size_override("font_size", 14)
-	stores_label.add_theme_color_override("font_color", Color("#e5d2a8"))
-	compound_box.add_child(stores_label)
+	dossier_label = Label.new()
+	dossier_label.add_theme_font_size_override("font_size", 14)
+	dossier_label.add_theme_color_override("font_color", Color("#e5d2a8"))
+	compound_box.add_child(dossier_label)
 	canal_label = Label.new()
 	canal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	canal_label.add_theme_font_size_override("font_size", 13)
 	canal_label.add_theme_color_override("font_color", Color("#d6bd8b"))
 	compound_box.add_child(canal_label)
 	var roster_title := Label.new()
-	roster_title.text = "LIVING ROSTER  /  OPINION OF YOU"
+	roster_title.text = "FACTION STANDINGS  /  OPINION OF YOU"
 	roster_title.add_theme_font_size_override("font_size", 11)
 	roster_title.add_theme_color_override("font_color", Color("#a99570"))
 	compound_box.add_child(roster_title)
@@ -660,6 +673,14 @@ func _schedule_next_case() -> void:
 	context.year = world.year
 	current_era = Registry.get_era_for_year(world.year)
 	context.era = current_era
+	if world.epic_summon_pending and not world.epic_summon_issued:
+		active_event = null
+		procedural_assignment = AssignmentGeneratorScript.create_epic_summons()
+		world.epic_summon_pending = false
+		world.epic_summon_issued = true
+		_refresh_compound()
+		_show_case()
+		return
 	var event_templates: Array[EventTemplate] = []
 	for definition in Registry.get_definitions("events"):
 		if definition is EventTemplate:
@@ -667,7 +688,7 @@ func _schedule_next_case() -> void:
 	active_event = scheduler.pick_next_event(world, actor, event_templates, current_era)
 	procedural_assignment.clear()
 	if active_event == null:
-		procedural_assignment = AssignmentGeneratorScript.generate(world, actor)
+		procedural_assignment = AssignmentGeneratorScript.generate(world, actor, selected_path)
 	_refresh_compound()
 	if active_event == null and procedural_assignment.is_empty():
 		_show_end_of_queue()
@@ -809,6 +830,9 @@ func _confirm_character_creation() -> void:
 		_show_character_creation_screen(8)
 		return
 	selected_path = creation_selections.get_answer(&"professional_orientation")
+	world.local_path_dockets_settled = 0
+	world.epic_summon_pending = false
+	world.epic_summon_issued = false
 	if String(creation_catalog.get("era_id", "")) == "uruk_storehouse":
 		UrukSeeder.attach_player(world, actor)
 	_refresh_compound()
@@ -1031,8 +1055,8 @@ func _render_docket_payload(payload: Dictionary, callbacks: Array = []) -> void:
 	_set_evidence_tension(0, 0)
 	var left: Dictionary = payload.get("left_card", {})
 	var right: Dictionary = payload.get("right_card", {})
-	evidence_left_title.text = String(left.get("title", "RECORD"))
-	evidence_right_title.text = String(right.get("title", "CLAIM"))
+	evidence_left_title.text = String(payload.get("client_name", left.get("title", "RECORD")))
+	evidence_right_title.text = String(payload.get("opposing_name", right.get("title", "CLAIM")))
 	var left_id := StringName(left.get("speaker_id", ""))
 	var right_id := StringName(right.get("speaker_id", ""))
 	active_left_speaker_id = left_id
@@ -1093,25 +1117,33 @@ func _resolve_procedural_choice(index: int, choice: Dictionary) -> void:
 	last_opinion_deltas.clear()
 	var left_delta := int(effects.get("opinion_left", 0))
 	var right_delta := int(effects.get("opinion_right", 0))
-	if left != null:
-		left.change_opinion(actor.id, left_delta, "Procedural docket: %s" % String(procedural_assignment.get("title", "")), world.year)
-		last_opinion_deltas[left.id] = left_delta
-	if right != null:
-		right.change_opinion(actor.id, right_delta, "Procedural docket: %s" % String(procedural_assignment.get("title", "")), world.year)
-		last_opinion_deltas[right.id] = right_delta
+	var docket_kind := String(procedural_assignment.get("docket_kind", ""))
+	var opinion_reason := "Procedural docket: %s" % String(procedural_assignment.get("title", ""))
+	if docket_kind in ["local_path", "epic_summons"]:
+		_apply_faction_opinion(StringName(procedural_assignment.get("client_faction", "")), left_delta, opinion_reason)
+		_apply_faction_opinion(StringName(procedural_assignment.get("opposing_faction", "")), right_delta, opinion_reason)
+	else:
+		if left != null:
+			left.change_opinion(actor.id, left_delta, opinion_reason, world.year)
+			last_opinion_deltas[left.id] = left_delta
+		if right != null:
+			right.change_opinion(actor.id, right_delta, opinion_reason, world.year)
+			last_opinion_deltas[right.id] = right_delta
 	var resource_id := StringName(effects.get("resource", ""))
 	var resource_delta := int(effects.get("resource_amount", 0))
+	var resource_scope := String(effects.get("resource_scope", "institution"))
+	var resource_institution := StringName(effects.get("resource_institution", "eanna_household"))
 	var result_text := String(choice.get("result_text", "The entry is sealed."))
 	var allocation_paid := resource_delta >= 0
 	if resource_id != &"" and resource_delta != 0:
-		var institutional_available := world.get_resource(resource_id, "institution", "", &"eanna_household")
+		var institutional_available := world.get_resource(resource_id, resource_scope, String(actor.id), resource_institution)
 		if resource_delta < 0 and institutional_available < absi(resource_delta):
 			allocation_paid = false
 			result_text += " The allocation was not made: Eanna's stores cannot cover the cost."
 			if bool(effects.get("repair_hazard", false)):
 				result_text += " The hazard remains active."
 		else:
-			allocation_paid = world.modify_resource(resource_id, resource_delta, "institution", String(actor.id), &"eanna_household")
+			allocation_paid = world.modify_resource(resource_id, resource_delta, resource_scope, String(actor.id), resource_institution)
 			if not allocation_paid:
 				result_text += " The allocation was not made: the institutional ledger rejected it."
 	if bool(effects.get("repair_hazard", false)) and allocation_paid:
@@ -1138,6 +1170,9 @@ func _resolve_procedural_choice(index: int, choice: Dictionary) -> void:
 			world.modify_resource(active_epic_def.progress_resource, epic_progress, "world")
 	actor.memory.append({"memory_id": &"procedural_docket", "text": String(procedural_assignment.get("title", "")) + ": " + result_text, "year": world.year, "involved": pair_parts})
 	_record_case_settlement(silver_before, traits_before)
+	if docket_kind == "local_path":
+		if world.record_local_path_docket():
+			result_text += " Three local docket seals have brought an emergency requisition from the canal administration."
 	var result_title := String(choice.get("result_title", "MARK MADE"))
 	_show_procedural_result(result_title, result_text)
 
@@ -1436,6 +1471,47 @@ func _get_roster_person_ids() -> Array[StringName]:
 			roster.append(person_id)
 	return roster
 
+
+func _build_dossier_text() -> String:
+	var path_labels := {&"path_civil": "Civil / Government", &"path_religious": "Religious", &"path_martial": "Martial / Military", &"path_merchant": "Merchant / Commercial"}
+	var path_label := String(path_labels.get(selected_path, "Unchosen"))
+	var office_label := String(actor.office_id).replace("_", " ").to_upper()
+	var currency := String(current_era.currency_name) if current_era != null else "silver"
+	return "NAME  %s\nPATH  %s\nTITLE / OFFICE  %s\nPURSE  %d %s" % [actor.display_name, path_label, office_label, int(actor.resources.get(&"silver", 0)), currency.to_upper()]
+
+func _refresh_faction_standings() -> void:
+	for child in roster_box.get_children():
+		roster_box.remove_child(child)
+		child.queue_free()
+	for faction_id in [&"eanna_household", &"boatmens_guild", &"city_garrison", &"council_of_elders"]:
+		var total := 0
+		var count := 0
+		for member_id in FACTION_MEMBERS.get(faction_id, []):
+			var member := world.get_person(member_id)
+			if member == null:
+				continue
+			total += member.get_opinion(actor.id)
+			count += 1
+		var standing := int(round(float(total) / maxf(1.0, float(count))))
+		var line := RichTextLabel.new()
+		line.bbcode_enabled = true
+		line.fit_content = true
+		line.scroll_active = false
+		line.custom_minimum_size.y = 24
+		line.add_theme_font_size_override("normal_font_size", 13)
+		var color := "#8bc78b" if standing > 0 else "#d77c70" if standing < 0 else "#c7a96b"
+		line.text = "[color=#e0d4bd]%s[/color]  [color=%s]%+d[/color]" % [String(FACTION_LABELS.get(faction_id, faction_id)), color, standing]
+		roster_box.add_child(line)
+
+func _apply_faction_opinion(faction_id: StringName, amount: int, reason: String) -> void:
+	if amount == 0:
+		return
+	for member_id in FACTION_MEMBERS.get(faction_id, []):
+		var member := world.get_person(member_id)
+		if member != null:
+			member.change_opinion(actor.id, amount, reason, world.year)
+
+
 func _refresh_compound() -> void:
 	if world == null:
 		return
@@ -1443,8 +1519,8 @@ func _refresh_compound() -> void:
 	for trait_id in actor.traits:
 		if trait_id in [&"exacting", &"stubborn", &"protective", &"diplomatic"]:
 			mentor_trait = String(trait_id)
-	heirloom_label.text = "YOUR DESK PURSE: %d SHEKELS  /  MENTOR MARK: %s" % [actor.resources.get(&"silver", 0), mentor_trait.to_upper()]
-	stores_label.text = "EANNA STOREHOUSE STORES\nBarley     %d measures\nNorth-Bay water loss  %d\nTemple silver  %d shekels\nClay/Reeds %d\nLabor      %d" % [world.get_resource(&"barley", "institution", "", &"eanna_household"), world.get_hazard_total_lost(&"north_bay", &"roof_leak"), world.get_resource(&"silver", "institution", "", &"eanna_household"), world.get_resource(&"clay_reeds", "institution", "", &"eanna_household"), world.get_resource(&"labor", "institution", "", &"eanna_household")]
+	heirloom_label.text = "MENTOR MARK: %s" % mentor_trait.to_upper()
+	dossier_label.text = _build_dossier_text()
 	var active_epic_id := world.get_active_epic_id()
 	var active_epic := Registry.get_epic(active_epic_id)
 	if active_epic == null and current_era != null:
@@ -1457,31 +1533,7 @@ func _refresh_compound() -> void:
 	var epic_target := active_epic.target if active_epic != null else 100
 	var filled := int(round(float(epic_progress) / maxf(1.0, float(epic_target)) * 10.0))
 	var bar_fill := clampi(filled, 0, 10)
-	canal_label.text = "ERA EPIC: %s\n[%s%s] %d / %d\nProgress depends on decisions and available labor" % [epic_title.to_upper(), "=".repeat(bar_fill), "-".repeat(10 - bar_fill), epic_progress, epic_target]
-	for child in roster_box.get_children():
-		roster_box.remove_child(child)
-		child.queue_free()
-	for person_id in _get_roster_person_ids():
-		var person := world.get_person(person_id)
-		if person == null:
-			continue
-		var opinion := person.get_opinion(actor.id)
-		var line := RichTextLabel.new()
-		line.bbcode_enabled = true
-		line.fit_content = true
-		line.scroll_active = false
-		line.custom_minimum_size.y = 22
-		line.add_theme_font_size_override("normal_font_size", 13)
-		var change := int(last_opinion_deltas.get(person_id, 0))
-		var flash := ""
-		if change > 0:
-			flash = " [color=#8bc78b](+%d)[/color]" % change
-		elif change < 0:
-			flash = " [color=#d77c70](%d)[/color]" % change
-		if person.id == actor.id:
-			line.text = "[color=#e0d4bd]%s[/color]  [color=#a99570]APPRENTICE[/color]" % person.display_name
-		else:
-			line.text = "[color=#e0d4bd]%s[/color]  [color=#c7a96b]%+d[/color]%s" % [person.display_name, opinion, flash]
-		roster_box.add_child(line)
+	canal_label.text = "ERA EPIC / BACKDROP\n%s\n[%s%s] %d / %d\nYour docket can move the project" % [epic_title.to_upper(), "=".repeat(bar_fill), "-".repeat(10 - bar_fill), epic_progress, epic_target]
+	_refresh_faction_standings()
 	year_label.text = CalendarFormatter.format_date(current_era, world.year, world.period)
 	status_label.text = "SEED %d  /  PERIOD %02d OF 12" % [world.master_seed, world.period + 1]

@@ -31,6 +31,8 @@ static func encode_world(world: WorldState, session: Dictionary = {}) -> Diction
 			"social_groups": _json_safe(world.social_groups), "assignments": _json_safe(world.assignments),
 			"hazards": _json_safe(world.hazards), "recent_archetypes": _json_safe(world.recent_archetypes),
 			"recent_npc_pairs": _json_safe(world.recent_npc_pairs), "cases_settled": world.cases_settled,
+			"local_path_dockets_settled": world.local_path_dockets_settled,
+			"epic_summon_pending": world.epic_summon_pending, "epic_summon_issued": world.epic_summon_issued,
 			"silver_earned": world.silver_earned, "traits_gained": _json_safe(world.traits_gained),
 			"cedar_desk_log": _json_safe(world.cedar_desk_log),
 			"era_completion_started": world.era_completion_started,
@@ -93,6 +95,9 @@ static func _world_from_data(data: Dictionary) -> WorldState:
 	world.recent_archetypes = _name_array(data.get("recent_archetypes", []))
 	world.recent_npc_pairs = _string_array(data.get("recent_npc_pairs", []))
 	world.cases_settled = int(data.get("cases_settled", 0))
+	world.local_path_dockets_settled = maxi(0, int(data.get("local_path_dockets_settled", 0)))
+	world.epic_summon_pending = bool(data.get("epic_summon_pending", false))
+	world.epic_summon_issued = bool(data.get("epic_summon_issued", false))
 	world.silver_earned = int(data.get("silver_earned", 0))
 	world.traits_gained = _name_array(data.get("traits_gained", []))
 	world.cedar_desk_log = _dictionary_array(data.get("cedar_desk_log", []))

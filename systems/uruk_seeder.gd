@@ -18,6 +18,9 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 	world.recent_archetypes.clear()
 	world.recent_npc_pairs.clear()
 	world.cases_settled = 0
+	world.local_path_dockets_settled = 0
+	world.epic_summon_pending = false
+	world.epic_summon_issued = false
 	world.silver_earned = 0
 	world.traits_gained.clear()
 	world.cedar_desk_log.clear()

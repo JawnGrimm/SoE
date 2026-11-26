@@ -28,11 +28,21 @@ var hazards: Array[Dictionary] = []
 var recent_archetypes: Array[StringName] = []
 var recent_npc_pairs: Array[String] = []
 var cases_settled: int = 0
+var local_path_dockets_settled: int = 0
+var epic_summon_pending: bool = false
+var epic_summon_issued: bool = false
 var silver_earned: int = 0
 var traits_gained: Array[StringName] = []
 var cedar_desk_log: Array[Dictionary] = []
 var era_completion_started: bool = false
 var _next_form_sequence: int = 1
+
+func record_local_path_docket() -> bool:
+	local_path_dockets_settled += 1
+	if local_path_dockets_settled >= 3 and not epic_summon_issued:
+		epic_summon_pending = true
+		return true
+	return false
 
 func record_case_settlement(person: PersonEntity, silver_before: int, traits_before: Array[StringName]) -> void:
 	if person == null:
