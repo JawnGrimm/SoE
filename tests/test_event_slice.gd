@@ -477,6 +477,7 @@ func _run() -> void:
 	quayside_ctx.era = registry.get_era(&"uruk_storehouse")
 	var quayside_scheduler := EventScheduler.new(runner)
 	quayside_world.period = 0
+	quayside_world.get_person(&"enlil_kisu").set_opinion(quayside_actor.id, -15)
 	quayside_world.set_flag(&"canal_crew_slowdown", quayside_world.current_period_index() + 11)
 	_check(not runner.is_eligible(quayside_template, quayside_ctx), "Quayside challenge must not be eligible in Period 0")
 	_check(quayside_scheduler.pick_next_event(quayside_world, quayside_actor, [quayside_template], quayside_ctx.era) == null, "Scheduler must not select Quayside challenge before Stores Season")
@@ -493,7 +494,7 @@ func _run() -> void:
 	runner.resolve_outcome(quayside_template, quayside_template.outcomes[0], quayside_ctx)
 	_check(quayside_world.get_resource(&"silver") == silver_before - 4, "Silver conciliation should cost four shekels")
 	_check(quayside_world.get_resource(&"canal_progress") == 25, "Silver conciliation should add 25 canal progress")
-	_check(quayside_world.get_person(&"enlil_kisu").get_opinion(quayside_actor.id) == 12, "Silver conciliation should improve Enlil-kisu's standing by twelve")
+	_check(quayside_world.get_person(&"enlil_kisu").get_opinion(quayside_actor.id) == -3, "Silver conciliation should improve Enlil-kisu's standing by twelve")
 	_check(not quayside_world.world_flags.has(&"canal_crew_slowdown"), "Silver conciliation should clear the slowdown")
 	_check(quayside_world.resolved_forms.back().get("disposition", "") == "strike_settled_privately", "Silver conciliation should close the challenge docket")
 
