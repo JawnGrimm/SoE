@@ -3,8 +3,8 @@ extends RefCounted
 
 const PLAYER_ID: StringName = &"player_apprentice"
 
-static func seed_campaign(world: WorldState, seed: int) -> PersonEntity:
-	world.set_world_seed(seed)
+static func seed_campaign(world: WorldState, world_seed: int) -> PersonEntity:
+	world.set_world_seed(world_seed)
 	world.year = -3200
 	world.period = 0
 	world.people.clear()

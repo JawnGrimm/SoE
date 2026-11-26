@@ -16,7 +16,7 @@ static func format_date(era: EraDef, year: int, period: int) -> String:
 static func _format_period(era: EraDef, period: int) -> String:
 	var period_number := maxi(period, 0)
 	if era != null and not era.period_names.is_empty():
-		var periods_per_name := maxi(1, WorldState.PERIODS_PER_YEAR / era.period_names.size())
+		var periods_per_name := maxi(1, floori(float(WorldState.PERIODS_PER_YEAR) / float(era.period_names.size())))
 		var name_index := clampi(floori(float(period_number) / float(periods_per_name)), 0, era.period_names.size() - 1)
 		return era.period_names[name_index]
 	var label := "Period" if era == null or era.period_label.is_empty() else era.period_label
