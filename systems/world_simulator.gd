@@ -27,9 +27,19 @@ func _simulate_economy(world: WorldState) -> void:
 	_change(world, &"textiles", -1)
 	_change(world, &"labor", -4)
 	# Labor is available workforce, replenished each period before demand.
-	# Institutional activity commits part of that pool, so it cannot pin at 40.
+	# Each active institution commits a unit; one baseline unit is covered by
+	# the household's ordinary work rotation. Additional institutions draw down
+	# the available pool rather than letting it accumulate to the cap.
+	var active_institutions := 0
+	for institution in world.institutions.values():
+		var members: Array = institution.get("members", [])
+		for member_id in members:
+			var member := world.get_person(StringName(member_id))
+			if member != null and member.office_id != &"":
+				active_institutions += 1
+				break
 	_change(world, &"labor", 6)
-	_change(world, &"labor", -2) # recurring institutional activity
+	_change(world, &"labor", -maxi(0, active_institutions - 1))
 
 	# Seasonal production varies with waterworks progress and the seeded sim stream.
 	# Periods are Uruk's broad agricultural cycle, not a scripted event schedule.
