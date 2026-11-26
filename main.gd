@@ -626,6 +626,8 @@ func _offer_north_bay_assignment() -> void:
 		return
 	if world.get_hazard_total_lost(&"north_bay", &"roof_leak") < 3:
 		return
+	if not world.get_assignment_state(NORTH_BAY_ASSIGNMENT_ID).is_empty():
+		return
 	if not world.offer_assignment(north_bay_assignment.id, north_bay_assignment.employer):
 		push_warning("Main: North-Bay assignment could not be offered; it may already exist")
 		return
@@ -785,8 +787,10 @@ func _show_case() -> void:
 	evidence_right_title.text = active_event.evidence_right_title
 	evidence_left_speaker.text = active_event.evidence_left_speaker.to_upper()
 	evidence_right_speaker.text = active_event.evidence_right_speaker.to_upper()
-	evidence_left_quote.text = "“%s”" % active_event.evidence_left_quote
-	evidence_right_quote.text = "“%s”" % active_event.evidence_right_quote
+	var left_quote := active_event.evidence_left_quote if not active_event.evidence_left_quote.is_empty() else active_event.description
+	var right_quote := active_event.evidence_right_quote if not active_event.evidence_right_quote.is_empty() else active_event.description
+	evidence_left_quote.text = "“%s”" % left_quote
+	evidence_right_quote.text = "“%s”" % right_quote
 	_set_evidence_portrait(active_event.evidence_left_portrait, active_event.evidence_right_portrait)
 	for record in active_event.records:
 		var label := String(record.get("label", "RECORD"))
@@ -858,15 +862,15 @@ func _advance_period() -> void:
 	_schedule_next_case()
 
 func _prepare_seasonal_forms() -> void:
-	# Three additional Uruk dockets enter at their seasonal desks.
-	if world.period == 2 and not world.has_pending_form(&"labor_tally"):
-		world.enqueue_form({"form_type": &"labor_tally", "subject_id": &"canal_crew", "urgency": 1, "year": world.year})
-	if world.period == 4 and not world.has_pending_form(&"held_barley"):
-		world.enqueue_form({"form_type": &"held_barley", "subject_id": &"agricultural_households", "urgency": 1, "year": world.year})
-	if world.period == 8 and not world.has_pending_form(&"load_claim"):
-		world.enqueue_form({"form_type": &"load_claim", "subject_id": &"north_bay_reserve", "urgency": 1, "year": world.year}
-	)
-	# Harvest opens the South Court barley docket and the oil/textile receiving docket.
+	# The Labor Tally arrives in Sowing (Period 3).
+	if world.period == 3 and not world.has_pending_form(&"pension_roll"):
+		world.enqueue_form({"form_type": &"pension_roll", "subject_id": &"ditch_labor_tally", "urgency": 1, "year": world.year})
+	# Held barley and competing load claims enter at Harvest (Period 6).
+	if world.period == 6 and not world.has_pending_form(&"held_barley"):
+		world.enqueue_form({"form_type": &"held_barley", "subject_id": &"bay_4", "urgency": 2, "year": world.year})
+	if world.period == 6 and not world.has_pending_form(&"load_claim"):
+		world.enqueue_form({"form_type": &"load_claim", "subject_id": &"harvest_load", "urgency": 1, "year": world.year})
+	# Harvest also opens the South Court barley docket and receiving docket.
 	if world.period == 6 and not world.has_pending_form(&"grain_levy"):
 		world.enqueue_form({"form_type": &"grain_levy", "subject_id": &"south_court_storehouse", "urgency": 1, "year": world.year})
 	if world.period == 6 or world.period == 9:
