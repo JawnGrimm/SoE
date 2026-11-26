@@ -75,10 +75,17 @@ func _run() -> void:
 	identity_runner.effects.execute_all([actor_opinion_effect], actor_opinion_context)
 	_check(reaction_senior.get_opinion(reaction_player.id) == 2, "Authored opinion effects using the actor role should target the current player")
 	var authored_player_refs_clean := true
-	for authored_event_path in ["res://data/events/case_01_sealed_vessel.tres", "res://data/events/case_12_labor_tally.tres", "res://data/events/case_15_south_court.tres", "res://data/events/challenge_ledger_inquest.tres"]:
-		var authored_text := FileAccess.get_file_as_string(authored_event_path)
-		if authored_text.contains("player_apprentice") or authored_text.contains("character_0001"):
-			authored_player_refs_clean = false
+	var authored_event_directory := DirAccess.open("res://data/events")
+	if authored_event_directory == null:
+		authored_player_refs_clean = false
+	else:
+		for authored_event_filename in authored_event_directory.get_files():
+			if not authored_event_filename.ends_with(".tres"):
+				continue
+			var authored_event_path := "res://data/events/" + authored_event_filename
+			var authored_text := FileAccess.get_file_as_string(authored_event_path)
+			if authored_text.contains("player_apprentice") or authored_text.contains("character_0001"):
+				authored_player_refs_clean = false
 	_check(authored_player_refs_clean, "Authored event data must not hardcode a generated player identity")
 
 	var identity_seed_world := WorldState.new()
