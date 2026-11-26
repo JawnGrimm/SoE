@@ -45,14 +45,40 @@ func record_case_settlement(person: PersonEntity, silver_before: int, traits_bef
 		if trait_id not in traits_before and trait_id not in traits_gained:
 			traits_gained.append(trait_id)
 
-func reset_epic_for_new_shift(epic_id: StringName, initial_stage: String = "survey") -> void:
+func reset_epic_for_new_shift(epic_id: StringName, initial_stage: String = "") -> void:
 	if epic_id == &"":
 		return
 	var epic_state: Dictionary = epics.get(epic_id, {})
+	var resource_id := StringName(epic_state.get("progress_resource", ""))
+	if resource_id != &"":
+		stockpiles[resource_id] = 0
 	epic_state["progress"] = 0
-	epic_state["stage"] = initial_stage
+	epic_state["stage"] = initial_stage if initial_stage != "" else String(epic_state.get("initial_stage", "survey"))
 	epic_state["completed"] = false
+	epic_state["active"] = true
 	epics[epic_id] = epic_state
+
+func reset_active_epics() -> void:
+	for epic_id in epics.keys():
+		reset_epic_for_new_shift(StringName(epic_id))
+
+func get_active_epic_id() -> StringName:
+	for epic_id in epics.keys():
+		var state: Dictionary = epics[epic_id]
+		if bool(state.get("active", false)):
+			return StringName(epic_id)
+	return &""
+
+func is_active_epic_complete() -> bool:
+	for epic_id in epics.keys():
+		var state: Dictionary = epics[epic_id]
+		if not bool(state.get("active", false)):
+			continue
+		var resource_id := StringName(state.get("progress_resource", ""))
+		var target := int(state.get("target", 100))
+		if resource_id != &"" and get_resource(resource_id) >= target:
+			return true
+	return false
 
 func set_world_seed(new_seed: int) -> void:
 	master_seed = new_seed
@@ -405,8 +431,13 @@ func modify_resource(resource_id: StringName, amount: int, scope: String = "worl
 		institutions[resolved_id] = institution
 		return true
 	var next_value := int(stockpiles.get(resource_id, 0)) + amount
-	if resource_id == &"canal_progress":
-		next_value = clampi(next_value, 0, 100)
+	if String(resource_id).ends_with("_progress"):
+		var progress_target := 100
+		for epic_state in epics.values():
+			if StringName(epic_state.get("progress_resource", "")) == resource_id:
+				progress_target = int(epic_state.get("target", 100))
+				break
+		next_value = clampi(next_value, 0, progress_target)
 	stockpiles[resource_id] = next_value
 	return true
 
