@@ -22,6 +22,13 @@ var institutions: Dictionary[StringName, Dictionary] = {}
 var social_groups: Dictionary[StringName, Dictionary] = {}
 var assignments: Dictionary[StringName, Dictionary] = {}
 var hazards: Array[Dictionary] = []
+var recent_archetypes: Array[StringName] = []
+var recent_npc_pairs: Array[String] = []
+var cases_settled: int = 0
+var silver_earned: int = 0
+var traits_gained: Array[StringName] = []
+var cedar_desk_log: Array[Dictionary] = []
+var era_completion_started: bool = false
 var _next_form_sequence: int = 1
 
 func set_world_seed(new_seed: int) -> void:

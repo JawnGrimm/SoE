@@ -5,6 +5,7 @@ var _failures: Array[String] = []
 var registry: DefinitionRegistry
 var _finished := false
 
+const AssignmentGeneratorScript = preload("res://systems/assignment_generator.gd")
 const ROUTINE_CASE: EventTemplate = preload("res://data/events/routine_tally_adjustment.tres")
 const ORIGIN_REPLY_CASE: EventTemplate = preload("res://data/events/origin_side_reply.tres")
 
@@ -641,6 +642,43 @@ func _run() -> void:
 		if StringName(sim_form.get("generated_by", "")) == &"world_simulator":
 			generated_sim_form = true
 	_check(generated_sim_form, "World simulation should generate forms from observed resource conditions")
+
+	# Procedural assignments use live seeded world data and never repeat an archetype immediately.
+	var generator_world_a := WorldState.new()
+	var generator_world_b := WorldState.new()
+	var generator_actor_a := UrukSeeder.seed_campaign(generator_world_a, 8675309)
+	var generator_actor_b := UrukSeeder.seed_campaign(generator_world_b, 8675309)
+	generator_world_a.stockpiles[&"labor"] = 30
+	generator_world_b.stockpiles[&"labor"] = 30
+	generator_world_a.stockpiles[&"silver"] = 12
+	generator_world_b.stockpiles[&"silver"] = 12
+	var generator_previous := &""
+	var generator_deterministic := true
+	var generator_variety := {}
+	var generator_has_repair := false
+	for generator_index in range(30):
+		var docket_a: Dictionary = AssignmentGeneratorScript.generate(generator_world_a, generator_actor_a)
+		var docket_b: Dictionary = AssignmentGeneratorScript.generate(generator_world_b, generator_actor_b)
+		_check(not docket_a.is_empty() and not docket_b.is_empty(), "Assignment generator should return a playable docket")
+		_check(docket_a.has("title") and docket_a.has("left_card") and docket_a.has("right_card") and docket_a.has("prompt") and docket_a.has("choices"), "Generated docket should use the shared payload keys")
+		var left_id := StringName(docket_a.left_card.get("speaker_id", ""))
+		var right_id := StringName(docket_a.right_card.get("speaker_id", ""))
+		_check(left_id != right_id and generator_world_a.get_person(left_id) != null and generator_world_a.get_person(right_id) != null, "Generated docket should use two distinct live NPCs")
+		var archetype_id := StringName(docket_a.get("archetype", ""))
+		_check(archetype_id != generator_previous, "Procedural archetypes must not repeat on consecutive dockets")
+		generator_previous = archetype_id
+		generator_variety[archetype_id] = true
+		if docket_a.get("title", "") != docket_b.get("title", "") or archetype_id != StringName(docket_b.get("archetype", "")) or docket_a.get("npc_pair", "") != docket_b.get("npc_pair", ""):
+			generator_deterministic = false
+		var choices_a: Array = docket_a.get("choices", [])
+		_check(choices_a.size() >= 2, "Every generated docket should offer at least two choices")
+		for choice_data in choices_a:
+			_check(choice_data.has("label") and choice_data.has("result_title") and choice_data.has("result_text") and choice_data.has("effects"), "Generated choice should include the common result/effects shape")
+		if archetype_id == &"hazard_check" and bool(choices_a[0].effects.get("repair_hazard", false)):
+			generator_has_repair = true
+	_check(generator_deterministic, "Narrative RNG should reproduce procedural docket sequences from the same seed")
+	_check(generator_variety.size() >= 4, "Procedural generation should rotate across at least four archetypes in thirty turns")
+	_check(generator_has_repair, "Active maintenance hazard should produce an actual labor/silver repair choice")
 
 	_finish()
 
