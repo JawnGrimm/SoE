@@ -27,6 +27,7 @@ buses/default_bus_layout="uid://bjisv1wh7436x"
 Registry="*res://autoloads/registry.gd"
 AudioManager="*res://autoloads/audio_manager.gd"
 MusicController="*uid://r5t485lr3p7t"
+MusicDirector="*res://systems/music_director.gd"
 
 [display]
 
