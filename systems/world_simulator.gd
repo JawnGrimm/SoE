@@ -178,7 +178,13 @@ func _offer_if_ready(world: WorldState, form_type: StringName, subject_id: Strin
 func _change(world: WorldState, resource_id: StringName, amount: int) -> void:
 	if amount == 0:
 		return
-	world.modify_resource(resource_id, amount)
-	if resource_id != &"canal_progress":
-		var upper_bound := 40 if resource_id == &"labor" else 2147483647
-		world.stockpiles[resource_id] = clampi(world.get_resource(resource_id), MIN_STOCK, upper_bound)
+	if resource_id == &"canal_progress":
+		world.modify_resource(resource_id, amount, "world")
+		return
+	world.modify_resource(resource_id, amount, "institution", "", &"eanna_household")
+	var upper_bound := 40 if resource_id == &"labor" else 2147483647
+	var institution: Dictionary = world.institutions.get(&"eanna_household", {})
+	var resources: Dictionary = institution.get("stockpiles", {})
+	resources[resource_id] = clampi(world.get_resource(resource_id, "institution", "", &"eanna_household"), MIN_STOCK, upper_bound)
+	institution["stockpiles"] = resources
+	world.institutions[&"eanna_household"] = institution
