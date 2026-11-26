@@ -67,9 +67,12 @@ func _run() -> void:
 	WorldSimulator.new()._simulate_people(reaction_world)
 	_check(reaction_foreman.get_opinion(reaction_player.id) == -1 and reaction_foreman.get_opinion(reaction_old_player.id) == 0, "WorldSimulator reactions should follow the successor, not the former character")
 	var actor_opinion_effect := _effect(&"change_opinion", {"subject": &"shuruppak_ilu", "other": &"actor", "amount": 2, "reason": "current player test"})
-	var actor_opinion_context := _make_context(reaction_world)
+	var actor_opinion_context := EventContext.new()
+	actor_opinion_context.world = reaction_world
 	actor_opinion_context.actor = reaction_player
-	runner.effects.execute_all([actor_opinion_effect], actor_opinion_context)
+	actor_opinion_context.year = reaction_world.year
+	var identity_runner := EventRunner.new()
+	identity_runner.effects.execute_all([actor_opinion_effect], actor_opinion_context)
 	_check(reaction_senior.get_opinion(reaction_player.id) == 2, "Authored opinion effects using the actor role should target the current player")
 	var authored_player_refs_clean := true
 	for authored_event_path in ["res://data/events/case_01_sealed_vessel.tres", "res://data/events/case_12_labor_tally.tres", "res://data/events/case_15_south_court.tres", "res://data/events/challenge_ledger_inquest.tres"]:
