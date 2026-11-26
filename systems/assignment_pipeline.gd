@@ -101,10 +101,10 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			"kind": &"ledger",
 			"source_id": StringName(institution_id),
 			"title": "%s / Periodic Account" % String(institution.get("name", institution_id)),
-			"summary": "Reconcile the institution's current stockpiles and record the period's actual position.",
+			"summary": "Reconcile the institution's current membership, activity, and resource records.",
 			"priority": (2 if StringName(institution_id) == &"eanna_household" else 1) + _career_bonus(selected_path, &"ledger"),
 			"employer_id": &"shuruppak_ilu" if world.get_person(&"shuruppak_ilu") != null else &"",
-			"source_data": {"institution_id": StringName(institution_id)},
+			"source_data": {"institution_id": StringName(institution_id), "member_count": institution.get("members", []).size(), "activity_count": int(institution.get("activity_count", 0))},
 			"path_id": selected_path
 		})
 
@@ -284,7 +284,7 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 				"year": world.year,
 				"period": world.period,
 				"title": "PERIODIC STOREHOUSE ACCOUNT / %s" % String(ledger.get("name", ledger_institution_id)),
-				"summary": "; ".join(ledger_lines)
+				"summary": "Members: %d. Activity records: %d. Stockpiles: %s" % [int(record.get("source_data", {}).get("member_count", ledger.get("members", []).size())), int(record.get("source_data", {}).get("activity_count", ledger.get("activity_count", 0))), "; ".join(ledger_lines)]
 			})
 			result_text = "The period's actual stockpile balances are copied into the archive. No goods are created or moved by the act of recording them."
 		_:
@@ -330,7 +330,7 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 				facts = "FORM: %s\nURGENCY: %d\nINSTITUTIONAL STOCK TOTAL: %d" % [String(data.get("form_type", "")), int(data.get("urgency", 0)), total]
 			else:
 				summary = "The institution's recorded quantities are totalled from its current stockpile dictionary."
-				facts = "INSTITUTION: %s\nRECORDED STOCK TOTAL: %d\nRESOURCE LINES: %d" % [String(institution.get("name", institution_id)), total, stock.size()]
+				facts = "INSTITUTION: %s\nMEMBERS: %d\nACTIVITY RECORDS: %d\nRECORDED STOCK TOTAL: %d\nRESOURCE LINES: %d" % [String(institution.get("name", institution_id)), int(data.get("member_count", institution.get("members", []).size())), int(data.get("activity_count", institution.get("activity_count", 0))), total, stock.size()]
 			if skill_level >= 2:
 				facts += "\nARITHMETIC CHECK: SECOND-LEVEL RECONCILIATION AVAILABLE"
 		&"examine_records":
