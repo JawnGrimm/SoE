@@ -6,6 +6,7 @@ const DEFAULT_FOLDERS: Dictionary = {
 	"traits": "res://data/traits",
 	"forms": "res://data/forms",
 	"eras": "res://data/eras",
+	"assignments": "res://data/assignments",
 }
 
 var warnings: Array[String] = []
@@ -42,6 +43,12 @@ func register_event(definition: EventTemplate) -> bool:
 
 func register_era(definition: EraDef) -> bool:
 	return register_definition(definition, "eras")
+
+func register_assignment(definition: AssignmentDef) -> bool:
+	if definition == null or not definition.is_valid():
+		_warn("DefinitionRegistry: rejected malformed AssignmentDef")
+		return false
+	return register_definition(definition, "assignments")
 
 func register_trait(definition: Resource) -> bool:
 	return register_definition(definition, "traits")
@@ -82,6 +89,9 @@ func get_event(definition_id: StringName) -> EventTemplate:
 
 func get_era(definition_id: StringName) -> EraDef:
 	return get_definition(definition_id) as EraDef
+
+func get_assignment(definition_id: StringName) -> AssignmentDef:
+	return get_definition(definition_id) as AssignmentDef
 
 func get_era_for_year(year: int) -> EraDef:
 	for definition in all_eras():
