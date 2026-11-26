@@ -664,21 +664,31 @@ func _open_north_bay_assignment() -> void:
 func _show_north_bay_activity() -> void:
 	_clear_choices()
 	phase = "north_bay_activity"
-	case_heading.text = "𒂍  " + north_bay_assignment.title.to_upper()
-	case_heading.add_theme_font_size_override("font_size", 20)
-	dossier.visible = true
-	dossier.text = "Ur-Nanna has placed a sealed docket beside the South Court case. The North-Bay storehouse roof has been patched more than once, but damp has appeared among the upper beams. Inspect the structure and report what the evidence supports. The roof is not repaired merely because its condition is recorded."
-	prompt_label.text = "Examine the steward's account and the roof itself before submitting an assessment."
-	evidence_left_title.text = "TEMPLE STOREHOUSE  /  STEWARD"
-	evidence_left_speaker.text = "UR-NANNA"
-	evidence_left_portrait.texture = _load_character_portrait(&"ur_nanna")
-	evidence_left_quote.text = "“I ordered the north side patched. The stores must remain dry.”"
-	evidence_right_title.text = "NORTH BAY  /  ROOF BEAMS"
-	evidence_right_speaker.text = "INSPECTION PENDING"
-	evidence_right_portrait.texture = _make_seal_placeholder()
-	evidence_right_quote.text = "The beams have not yet been inspected."
-	_set_evidence_facts("STEWARD'S ACCOUNT\nConsultation not yet recorded.", "PHYSICAL CONDITION\nInspection not yet recorded.")
-	_refresh_north_bay_actions()
+	var state := world.get_assignment_state(NORTH_BAY_ASSIGNMENT_ID)
+	var actions: Dictionary = state.get("actions", {})
+	var payload := {
+		"title": north_bay_assignment.title,
+		"left_card": {"title": "TEMPLE STOREHOUSE / STEWARD", "speaker_id": &"ur_nanna", "quote": "“The north side was patched, but I cannot swear the beam sockets are dry. I need a report before I authorize more labor.”", "facts": "REPORTED: A patch was ordered.\nPHYSICAL CONDITION: Not yet inspected."},
+		"right_card": {"title": "NORTH BAY / ROOF BEAMS", "speaker_id": &"enlil_kisu", "quote": "The beams must be inspected before the report is certified.", "facts": "INSPECTION: %s\nACTIVE WATER INGRESS: %s" % ["RECORDED" if actions.has(&"inspect_beams") else "PENDING", "YES" if world.has_active_hazard(&"north_bay", &"roof_leak") else "NO"]},
+		"prompt": "Consult the steward and inspect the beams before submitting an assessment.",
+		"choices": []
+	}
+	var callbacks: Array = []
+	if actions.has(&"consult_steward"):
+		payload.choices.append({"label": "Consult Steward / RECORDED", "result_title": "", "result_text": "", "effects": {}})
+		callbacks.append(_north_bay_action_already_recorded.bind("Consult Steward"))
+	else:
+		payload.choices.append({"label": "Consult Steward", "result_title": "", "result_text": "", "effects": {}})
+		callbacks.append(_north_bay_consult_steward)
+	if actions.has(&"inspect_beams"):
+		payload.choices.append({"label": "Inspect Beams / RECORDED", "result_title": "", "result_text": "", "effects": {}})
+		callbacks.append(_north_bay_action_already_recorded.bind("Inspect Beams"))
+	else:
+		payload.choices.append({"label": "Inspect Beams", "result_title": "", "result_text": "", "effects": {}})
+		callbacks.append(_north_bay_inspect_beams)
+	payload.choices.append({"label": "Submit Assessment", "result_title": "", "result_text": "", "effects": {}})
+	callbacks.append(_begin_north_bay_assessment)
+	_render_docket_payload(payload, callbacks)
 
 func _refresh_north_bay_actions() -> void:
 	_clear_choices()
@@ -732,11 +742,17 @@ func _begin_north_bay_assessment() -> void:
 			return
 	_clear_choices()
 	phase = "north_bay_assessment"
-	case_heading.text = "𒂍  NORTH-BAY  /  ASSESSMENT"
-	dossier.text = "The report will become part of the storehouse record. Distinguish what the steward reported from what you physically observed."
-	prompt_label.text = "Which assessment can you certify?"
-	_add_choice("Water ingress confirmed; north beam compromised; stored barley at risk. Recommend urgent repair.", _submit_north_bay_assessment.bind(true))
-	_add_choice("Roof sound; no water ingress; no further work required.", _submit_north_bay_assessment.bind(false))
+	var payload := {
+		"title": "NORTH-BAY / ASSESSMENT",
+		"left_card": {"title": "STEWARD'S ACCOUNT", "speaker_id": &"ur_nanna", "quote": "“I ordered a patch. I cannot certify the beam sockets.”", "facts": "TESTIMONY RECORDED\nThe steward's statement is not physical inspection."},
+		"right_card": {"title": "PHYSICAL INSPECTION", "speaker_id": &"enlil_kisu", "quote": "Water ingress and softened timber were observed at the north beam socket.", "facts": "OBSERVATION: %s\nBEAM INTEGRITY INDEX: %d / 100" % ["CONFIRMED" if world.has_active_hazard(&"north_bay", &"roof_leak") else "NOT OBSERVED", int(world.get_person(&"ur_nanna").vulnerabilities.get(&"granary_roof_integrity", 0))]},
+		"prompt": "Which assessment can you certify?",
+		"choices": [
+			{"label": "Water ingress confirmed; recommend urgent repair", "result_title": "", "result_text": "", "effects": {}},
+			{"label": "Roof sound; no further work required", "result_title": "", "result_text": "", "effects": {}}
+		]
+	}
+	_render_docket_payload(payload, [_submit_north_bay_assessment.bind(true), _submit_north_bay_assessment.bind(false)])
 
 func _submit_north_bay_assessment(is_accurate: bool) -> void:
 	if phase != "north_bay_assessment" or north_bay_assignment == null:
@@ -813,7 +829,9 @@ func _show_case() -> void:
 	_clear_stamp_history()
 	_clear_choices()
 	phase = "case"
-	var payload := _active_docket_payload()
+	_render_docket_payload(_active_docket_payload())
+
+func _render_docket_payload(payload: Dictionary, callbacks: Array = []) -> void:
 	case_heading.add_theme_font_size_override("font_size", 20)
 	case_heading.text = "𒂍  " + String(payload.get("title", "Docket")).to_upper()
 	dossier.visible = false
@@ -837,9 +855,8 @@ func _show_case() -> void:
 	prompt_label.text = String(payload.get("prompt", "What mark will you leave?"))
 	var docket_choices: Array = payload.get("choices", [])
 	for index in range(docket_choices.size()):
-		_add_choice(String(docket_choices[index].get("label", "Record")), _resolve_choice.bind(index))
-	status_label.text = "THE CLERK'S MARK WILL OUTLIVE THE CLERK"
-
+		var callback: Callable = callbacks[index] if index < callbacks.size() else _resolve_choice.bind(index)
+		_add_choice(String(docket_choices[index].get("label", "Record")), callback)
 func _resolve_choice(index: int) -> void:
 	if phase != "case":
 		return
