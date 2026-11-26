@@ -32,7 +32,7 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			"title": _form_title(form_type),
 			"summary": "%s requires an assessment at %s." % [_form_title(form_type), subject_name],
 			"priority": urgency + (3 if overdue else 0) + _career_bonus(selected_path, form_type),
-			"employer_id": &"ur_nanna" if world.get_person(&"ur_nanna") != null else &"",
+			 "employer_id": _form_employer(world, form_type),
 			"source_data": form.duplicate(true),
 			"path_id": selected_path
 		})
@@ -368,6 +368,19 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 			facts += "\nRECORDED TRUST: %d / RELATIONSHIP: %s" % [int(tie.get("trust", 0)), String(tie.get("type", "unknown"))]
 	facts += "\nCAPABILITY APPLIED: %s / LEVEL %d" % [String(action_id).replace("_", " ").to_upper(), skill_level]
 	return {"summary": summary, "facts": facts, "skill_level": skill_level}
+
+static func _form_employer(world: WorldState, form_type: StringName) -> StringName:
+	var preferred_id: StringName = &"shuruppak_ilu"
+	match form_type:
+		&"grain_levy", &"held_barley":
+			preferred_id = &"ur_nanna"
+		&"pension_roll":
+			preferred_id = &"utu_mansum"
+		&"consignment_receipt":
+			preferred_id = &"geme_inana"
+		&"load_claim":
+			preferred_id = &"lu_nanshe"
+	return preferred_id if world.get_person(preferred_id) != null else &""
 
 static func _career_bonus(path_id: StringName, work_kind: StringName) -> int:
 	match path_id:
