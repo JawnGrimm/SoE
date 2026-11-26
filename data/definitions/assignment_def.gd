@@ -1,6 +1,8 @@
 class_name AssignmentDef
 extends Resource
 
+const SUPPORTED_ACTIONS: Array[StringName] = [&"consult_steward", &"inspect_beams"]
+
 @export var id: StringName = &""
 @export var title: String = ""
 @export var employer: StringName = &""
@@ -20,7 +22,7 @@ func is_valid() -> bool:
 		return false
 	var seen: Dictionary = {}
 	for action_id in required_actions:
-		if action_id == &"" or seen.has(action_id):
+		if action_id == &"" or action_id not in SUPPORTED_ACTIONS or seen.has(action_id):
 			return false
 		seen[action_id] = true
 	return true
