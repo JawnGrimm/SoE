@@ -9,6 +9,7 @@ func _ready() -> void:
 	_streams[&"stylus"] = _make_noise_stream(0.11, 0.38, 4200.0, 0.0)
 	_streams[&"seal"] = _make_thud_stream()
 	_streams[&"snap"] = _make_snap_stream()
+	_streams[&"roof_drip"] = _make_roof_drip_stream()
 	for index in range(4):
 		var player := AudioStreamPlayer.new()
 		player.volume_db = -9.0
@@ -27,6 +28,9 @@ func play_seal_press() -> void:
 func play_tablet_snap() -> void:
 	_play(&"snap")
 
+func play_roof_drip() -> void:
+	_play(&"roof_drip")
+
 func _play(sound_id: StringName) -> void:
 	if not _streams.has(sound_id):
 		return
@@ -38,6 +42,23 @@ func _play(sound_id: StringName) -> void:
 	player.stream = _streams[sound_id]
 	player.pitch_scale = randf_range(0.94, 1.06)
 	player.play()
+
+func _make_roof_drip_stream() -> AudioStreamWAV:
+	var count := int(SAMPLE_RATE * 0.46)
+	var bytes := PackedByteArray()
+	bytes.resize(count * 2)
+	for index in range(count):
+		var time := float(index) / SAMPLE_RATE
+		var first_age := time - 0.025
+		var second_age := time - 0.235
+		var first := 0.0
+		var second := 0.0
+		if first_age >= 0.0:
+			first = sin(TAU * 1180.0 * first_age) * exp(-first_age * 34.0) * 0.62
+		if second_age >= 0.0:
+			second = sin(TAU * 860.0 * second_age) * exp(-second_age * 29.0) * 0.48
+		_write_sample(bytes, index, first + second)
+	return _wav(bytes)
 
 func _make_noise_stream(duration: float, amplitude: float, cutoff: float, tone: float) -> AudioStreamWAV:
 	var count := int(SAMPLE_RATE * duration)
