@@ -139,6 +139,8 @@ static func commit(catalog: Dictionary, selections: CharacterCreationSelections,
 	# The only mutation point: the draft actor enters WorldState and every
 	# selected consequence uses the same EventEffect vocabulary as gameplay.
 	world.people[actor.id] = actor
+	if not world.set_player(actor):
+		return {"committed": false, "errors": ["The player character could not be registered in WorldState."]}
 	executor.execute_all(effects, context)
 	actor.display_name = selections.character_name.strip_edges()
 	selections.committed = true
