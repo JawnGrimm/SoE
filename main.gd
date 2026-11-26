@@ -681,11 +681,19 @@ func _schedule_next_case() -> void:
 	assignment_opportunities.clear()
 	active_world_assignment_id = &""
 	_refresh_compound()
-	if active_event != null:
-		_show_case()
-		return
 	assignment_opportunities = AssignmentPipeline.generate_opportunities(world, actor, selected_path)
-	if assignment_opportunities.size() >= 3:
+	if active_event != null:
+		assignment_opportunities.push_front({
+			"id": StringName("work_event_%s_%d" % [active_event.id, world.current_period_index()]),
+			"kind": &"event",
+			"source_id": active_event.id,
+			"title": active_event.title,
+			"summary": active_event.description,
+			"priority": 100
+		})
+		while assignment_opportunities.size() > 3:
+			assignment_opportunities.pop_back()
+	if assignment_opportunities.size() == 3:
 		_show_assignment_board()
 	else:
 		push_warning("Main: assignment pipeline produced fewer than three opportunities (%d)" % assignment_opportunities.size())
@@ -890,6 +898,15 @@ func _select_assignment_opportunity(index: int) -> void:
 	if phase != "opportunity_board" or index < 0 or index >= assignment_opportunities.size():
 		return
 	var opportunity := assignment_opportunities[index]
+	if StringName(opportunity.get("kind", "")) == &"event":
+		active_event = Registry.get_event(StringName(opportunity.get("source_id", "")))
+		if active_event == null:
+			status_label.text = "EVENT COULD NOT BE OPENED / SOURCE MAY HAVE CHANGED"
+			return
+		AudioManager.play_docket_slide()
+		_show_case()
+		return
+	active_event = null
 	if not AssignmentPipeline.begin(world, opportunity, actor):
 		status_label.text = "WORK COULD NOT BE OPENED / SOURCE MAY HAVE CHANGED"
 		return
@@ -1350,7 +1367,7 @@ func _clear_choice_preview() -> void:
 func _handle_choice(button: Button, callback: Callable) -> void:
 	if choice_locked:
 		return
-	if button.text == "End Period" or phase not in ["case", "catechism_path", "catechism_mentor", "north_bay_assessment"]:
+	if button.text == "End Period" or phase not in ["case", "catechism_path", "catechism_mentor", "north_bay_assessment", "opportunity_board", "world_engagement"]:
 		callback.call()
 		return
 	choice_locked = true
