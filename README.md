@@ -194,7 +194,7 @@ The current test covers the first-case outcomes, archived assessments, persisten
 - Complete character creation and family-history generation
 - Four playable career paths and their full work content
 - Generalized Work and Challenge generation
-- Historical Works / Epics and era-transition logic
+- Epics and era-transition logic
 - Full NPC social simulation and institutional knowledge
 - Era-specific documentary systems and content
 - Production menus, audio, and UI polish
