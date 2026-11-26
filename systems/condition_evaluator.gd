@@ -104,6 +104,8 @@ func _resource_compare(subject: PersonEntity, p: Dictionary, ctx: EventContext) 
     if ctx.world == null:
         return false
     var scope := String(p.get("scope", "world"))
+    if scope not in ["world", "actor", "office", "institution"]:
+        return false
     var owner_id: StringName = ctx.actor.id if ctx.actor != null and scope in ["actor", "office", "institution"] else (subject.id if subject != null else &"")
     var actual := ctx.world.get_resource(
         StringName(p.get("resource", "")),
