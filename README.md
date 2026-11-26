@@ -84,6 +84,12 @@ The Work Record is the accumulated history of what the player actually did and d
 
 It can include actions, authorizations, omissions, resource movements, relationships affected, obligations created, and institutional consequences.
 
+### Resource ownership
+
+Resources have owners, not just quantities. The apprentice's personal purse is stored on the person entity. Eanna's commodities and temple silver live in the institution's `stockpiles`. World-scale trackers such as canal progress remain in `WorldState.stockpiles` or the runtime Epic state.
+
+Effects and conditions can name `actor`, `office` / `institution`, or `world` scope. Personal spending cannot draw from temple stores, and institutional allocations cannot silently become personal income.
+
 ### Challenges
 
 Challenges are substantial, difficult jobs generated in response to the player's Work Record and current circumstances. They are not simply random quests or a fixed list of authored missions.
