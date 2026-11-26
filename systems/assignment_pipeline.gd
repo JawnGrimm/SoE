@@ -25,7 +25,7 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 		var urgency := int(form.get("urgency", 1))
 		var overdue := String(form.get("status", "pending")) == "overdue"
 		candidates.append({
-			"id": StringName("work_form_%s" % form_id),
+			"id": StringName("work_form_%s_%d" % [form_id, world.current_period_index()]),
 			"kind": &"form",
 			"source_id": form_id,
 			"title": _form_title(form_type),
@@ -42,7 +42,7 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 		var hazard_id := StringName(hazard.get("id", ""))
 		var place_id := StringName(hazard.get("place_id", ""))
 		candidates.append({
-			"id": StringName("work_hazard_%s" % hazard_id),
+			"id": StringName("work_hazard_%s_%d" % [hazard_id, world.current_period_index()]),
 			"kind": &"hazard",
 			"source_id": hazard_id,
 			"title": "Inspect %s" % _place_name(world, place_id),
@@ -59,7 +59,7 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 		if pressure < 1:
 			continue
 		candidates.append({
-			"id": StringName("work_pressure_%s" % institution_id),
+			"id": StringName("work_pressure_%s_%d" % [institution_id, world.current_period_index()]),
 			"kind": &"pressure",
 			"source_id": StringName(institution_id),
 			"title": "%s / Resource Pressure" % String(institution.get("name", institution_id)),
@@ -70,28 +70,22 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			"path_id": selected_path
 		})
 
-	# Routine reconciliation is real work against a real institution ledger.
-	# It guarantees a third distinct opportunity without fabricating a dispute.
-	var routine_id := StringName("work_ledger_eanna_%d" % world.current_period_index())
-	var has_ledger := false
-	for candidate in candidates:
-		if StringName(candidate.get("kind", "")) == &"ledger":
-			has_ledger = true
-			break
-	if not has_ledger:
-		var eanna: Dictionary = world.institutions.get(&"eanna_household", {})
-		if not eanna.is_empty():
-			candidates.append({
-				"id": routine_id,
-				"kind": &"ledger",
-				"source_id": &"eanna_household",
-				"title": "Eanna / Periodic Storehouse Account",
-				"summary": "Reconcile the institution's current stockpiles and record the period's position.",
-				"priority": 1,
-				"employer_id": &"shuruppak_ilu" if world.get_person(&"shuruppak_ilu") != null else &"",
-				"source_data": {"institution_id": &"eanna_household"},
-				"path_id": selected_path
-			})
+	# Routine reconciliation is real work against each institution's actual
+	# stockpile record. It is not a fabricated shortage or a scripted dispute.
+	for institution_id in world.institutions.keys():
+		var institution: Dictionary = world.institutions[institution_id]
+		var routine_id := StringName("work_ledger_%s_%d" % [institution_id, world.current_period_index()])
+		candidates.append({
+			"id": routine_id,
+			"kind": &"ledger",
+			"source_id": StringName(institution_id),
+			"title": "%s / Periodic Account" % String(institution.get("name", institution_id)),
+			"summary": "Reconcile the institution's current stockpiles and record the period's actual position.",
+			"priority": 1,
+			"employer_id": &"shuruppak_ilu" if world.get_person(&"shuruppak_ilu") != null else &"",
+			"source_data": {"institution_id": StringName(institution_id)},
+			"path_id": selected_path
+		})
 
 	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		if int(a.get("priority", 0)) == int(b.get("priority", 0)):
@@ -195,16 +189,17 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 				disposition = "referred"
 				accurate = false
 			elif verdict == &"defer":
-				disposition = "deferred"
 				accurate = false
-			var resolved := world.resolve_form({
-				"form_id": String(source_id),
-				"disposition": disposition,
-				"notes": "Assessment by %s after %d investigative actions." % [actor.display_name, actions.size()]
-			}, world.year)
-			if not resolved:
-				return {"success": false, "message": "The source form has already changed or been resolved."}
-			result_text = "The %s is entered as %s." % [_form_title(StringName(form_data.get("form_type", ""))), disposition]
+				result_text = "The assessment is deferred. The original form remains pending and may return to the desk."
+			if verdict != &"defer":
+				var resolved := world.resolve_form({
+					"form_id": String(source_id),
+					"disposition": disposition,
+					"notes": "Assessment by %s after %d investigative actions." % [actor.display_name, actions.size()]
+				}, world.year)
+				if not resolved:
+					return {"success": false, "message": "The source form has already changed or been resolved."}
+				result_text = "The %s is entered as %s." % [_form_title(StringName(form_data.get("form_type", ""))), disposition]
 		&"hazard":
 			var hazard: Dictionary = record.get("source_data", {})
 			var place_id := StringName(hazard.get("place_id", ""))
