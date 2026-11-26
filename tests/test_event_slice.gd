@@ -602,7 +602,7 @@ func _run() -> void:
 	_check(year_one_world.get_resource(&"labor") < 40, "Labor should not pin at its stockpile cap during Year 1")
 	_check(year_one_world.get_resource(&"labor") <= 25, "Seasonal and institutional demand should bring labor into the intended working range by Year 1 end")
 
-	# -- Autonomous world simulation: same seed, same world history; narrative RNG stays independent.
+	# -- World simulation: same seed, same world history; narrative RNG stays independent.
 	var sim_world_a := WorldState.new()
 	var sim_world_b := WorldState.new()
 	UrukSeeder.seed_campaign(sim_world_a, 24680)
