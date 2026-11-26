@@ -82,15 +82,19 @@ func _simulate_people(world: WorldState) -> void:
 	var foreman := world.get_person(&"enlil_kisu")
 	var senior := world.get_person(&"shuruppak_ilu")
 	var player_id := StringName("player_apprentice")
+	var now := world.current_period_index()
 	if grain_clerk != null and foreman != null:
 		var labor := world.get_resource(&"labor")
-		if labor < 8:
+		if labor < 8 and not world.has_flag(&"sim_labor_shortage_reaction", now):
 			foreman.change_opinion(player_id, -1, "The storehouse labor pool fell below the crew's workable minimum", world.year)
 			grain_clerk.change_opinion(player_id, -1, "Labor shortage increased pressure on the grain office", world.year)
-		elif labor >= 24 and world.get_resource(&"barley") >= 220:
-			foreman.change_opinion(player_id, 1, "The stores and labor pool remained sufficient for the crew", world.year)
-	if senior != null and world.get_resource(&"barley") < 100:
+			world.set_flag(&"sim_labor_shortage_reaction", now + 6)
+		elif labor >= 24 and world.get_resource(&"barley") >= 220 and world.has_flag(&"sim_labor_shortage_reaction", now):
+			foreman.change_opinion(player_id, 1, "The stores and labor pool recovered enough to support the crew", world.year)
+			world.clear_flag(&"sim_labor_shortage_reaction")
+	if senior != null and world.get_resource(&"barley") < 100 and not world.has_flag(&"sim_provisioning_reaction", now):
 		senior.change_opinion(player_id, -1, "The archive's provisioning concerns reached the storehouse", world.year)
+		world.set_flag(&"sim_provisioning_reaction", now + 6)
 
 func _generate_forms(world: WorldState) -> void:
 	var barley := world.get_resource(&"barley")
