@@ -72,7 +72,7 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 		})
 
 	# Routine reconciliation is real work against each institution's actual
-	# stockpile record. It is not a fabricated shortage or a scripted dispute.
+	# membership, activity, and resource records—not a fabricated dispute.
 	for epic_id in world.epics.keys():
 		var epic: Dictionary = world.epics[epic_id]
 		if not bool(epic.get("active", false)) or bool(epic.get("completed", false)):
@@ -283,10 +283,10 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 			world.cedar_desk_log.append({
 				"year": world.year,
 				"period": world.period,
-				"title": "PERIODIC STOREHOUSE ACCOUNT / %s" % String(ledger.get("name", ledger_institution_id)),
+				"title": "PERIODIC INSTITUTIONAL ACCOUNT / %s" % String(ledger.get("name", ledger_institution_id)),
 				"summary": "Members: %d. Activity records: %d. Stockpiles: %s" % [int(record.get("source_data", {}).get("member_count", ledger.get("members", []).size())), int(record.get("source_data", {}).get("activity_count", ledger.get("activity_count", 0))), "; ".join(ledger_lines)]
 			})
-			result_text = "The period's actual stockpile balances are copied into the archive. No goods are created or moved by the act of recording them."
+			result_text = "The institution's actual membership, activity, and resource records are copied into the archive. No goods are created or moved by the act of recording them."
 		_:
 			return {"success": false, "message": "Unsupported world situation."}
 
@@ -357,8 +357,8 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 				var stock_lines := PackedStringArray()
 				for resource_id in stock.keys():
 					stock_lines.append("%s: %d" % [String(resource_id).replace("_", " ").capitalize(), int(stock[resource_id])])
-				facts = "INSTITUTION: %s\n%s" % [String(institution.get("name", institution_id)), "\n".join(stock_lines)]
-				summary = "The physical stockpile position is checked against the institution's current ledger."
+				facts = "INSTITUTION: %s\nMEMBERS: %d\nACTIVITY RECORDS: %d\n%s" % [String(institution.get("name", institution_id)), int(data.get("member_count", institution.get("members", []).size())), int(data.get("activity_count", institution.get("activity_count", 0))), "\n".join(stock_lines)]
+				summary = "The institution's current membership, activity, and resource records are inspected."
 	if action_id == &"examine_records" and skill_level >= 2:
 		facts += "\nGENERATION REASON: %s" % String(data.get("generation_reason", "not recorded"))
 	elif action_id == &"consult_official" and skill_level >= 2:
