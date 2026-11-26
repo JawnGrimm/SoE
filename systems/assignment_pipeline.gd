@@ -347,6 +347,14 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 					stock_lines.append("%s: %d" % [String(resource_id).replace("_", " ").capitalize(), int(stock[resource_id])])
 				facts = "INSTITUTION: %s\n%s" % [String(institution.get("name", institution_id)), "\n".join(stock_lines)]
 				summary = "The physical stockpile position is checked against the institution's current ledger."
+	if action_id == &"examine_records" and skill_level >= 2:
+		facts += "\nGENERATION REASON: %s" % String(data.get("generation_reason", "not recorded"))
+	elif action_id == &"consult_official" and skill_level >= 2:
+		var consulted := world.get_person(StringName(record.get("employer_id", "")))
+		if consulted != null:
+			var tie: Dictionary = consulted.relationships.get(actor.id, {})
+			facts += "\nRECORDED TRUST: %d / RELATIONSHIP: %s" % [int(tie.get("trust", 0)), String(tie.get("type", "unknown"))]
+	facts += "\nCAPABILITY APPLIED: %s / LEVEL %d" % [String(action_id).replace("_", " ").to_upper(), skill_level]
 	return {"summary": summary, "facts": facts, "skill_level": skill_level}
 
 static func _form_title(form_type: StringName) -> String:
