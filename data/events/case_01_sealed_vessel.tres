@@ -14,12 +14,12 @@ parameters = {"form_type": &"consignment_receipt"}
 [sub_resource type="Resource" id="fx_1"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
-parameters = {"subject": &"utu_mansum", "other": &"player_apprentice", "amount": 3, "reason": "Damage noted before custody"}
+parameters = {"subject": &"utu_mansum", "other": &"actor", "amount": 3, "reason": "Damage noted before custody"}
 
 [sub_resource type="Resource" id="fx_2"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
-parameters = {"subject": &"enlil_kisu", "other": &"player_apprentice", "amount": 1, "reason": "Crew cleared of deliberate theft"}
+parameters = {"subject": &"enlil_kisu", "other": &"actor", "amount": 1, "reason": "Crew cleared of deliberate theft"}
 
 [sub_resource type="Resource" id="fx_3"]
 script = ExtResource("3")
@@ -39,12 +39,12 @@ parameters = {"form_type": &"consignment_receipt", "disposition": "quarantine_cr
 [sub_resource type="Resource" id="fx_6"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
-parameters = {"subject": &"enlil_kisu", "other": &"player_apprentice", "amount": -10, "reason": "Forced crew to sleep in the yard"}
+parameters = {"subject": &"enlil_kisu", "other": &"actor", "amount": -10, "reason": "Forced crew to sleep in the yard"}
 
 [sub_resource type="Resource" id="fx_7"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
-parameters = {"subject": &"utu_mansum", "other": &"player_apprentice", "amount": 5, "reason": "Rigid protection of storehouse gates"}
+parameters = {"subject": &"utu_mansum", "other": &"actor", "amount": 5, "reason": "Rigid protection of storehouse gates"}
 
 [sub_resource type="Resource" id="fx_8"]
 script = ExtResource("3")
