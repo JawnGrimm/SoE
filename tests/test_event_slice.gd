@@ -120,6 +120,7 @@ func _run() -> void:
 	# from the seeded form, active hazard, and actual institutional ledgers.
 	var assignment_world := WorldState.new()
 	var assignment_actor := UrukSeeder.seed_campaign(assignment_world, 44004400)
+	_check(assignment_actor.skills.levels.values().all(func(level: int) -> bool: return level >= 1), "All six core skills should begin at level one")
 	var opportunities := AssignmentPipeline.generate_opportunities(assignment_world, assignment_actor, &"path_civil")
 	_check(opportunities.size() == 3, "AssignmentPipeline should present exactly three opportunities")
 	var opportunity_kinds: Array[StringName] = []
@@ -136,9 +137,12 @@ func _run() -> void:
 			&"ledger": ledger_opportunity = opportunity
 	_check(AssignmentPipeline.begin(assignment_world, form_opportunity, assignment_actor), "A selected world opportunity should enter the active assignment lifecycle")
 	var form_assignment_id := StringName(form_opportunity.get("id", ""))
+	_check(not bool(AssignmentPipeline.resolve(assignment_world, assignment_actor, form_assignment_id, &"certify").get("success", false)), "An engagement should not permit assessment before investigation")
 	_check(bool(AssignmentPipeline.perform_action(assignment_world, assignment_actor, form_assignment_id, &"examine_records").get("success", false)), "Assignment should allow examination of its actual source record")
 	_check(bool(AssignmentPipeline.perform_action(assignment_world, assignment_actor, form_assignment_id, &"consult_official").get("success", false)), "Assignment should allow consultation as a separate investigative action")
-	_check(not bool(AssignmentPipeline.resolve(assignment_world, assignment_actor, form_assignment_id, &"certify").get("success", false)) == false, "Two investigative actions should permit a supported form assessment")
+	_check(not bool(AssignmentPipeline.perform_action(assignment_world, assignment_actor, form_assignment_id, &"examine_records").get("success", false)), "An investigative action should not be recordable twice")
+	var form_resolution := AssignmentPipeline.resolve(assignment_world, assignment_actor, form_assignment_id, &"certify")
+	_check(bool(form_resolution.get("success", false)), "Two investigative actions should permit a supported form assessment")
 	_check(assignment_world.pending_forms.is_empty(), "Certifying the generated form should resolve that exact source form")
 	_check(AssignmentPipeline.begin(assignment_world, hazard_opportunity, assignment_actor), "Active hazard should become a selectable engagement")
 	var hazard_assignment_id := StringName(hazard_opportunity.get("id", ""))
@@ -173,6 +177,7 @@ func _run() -> void:
 	save_roundtrip_world.epics[&"great_canal_cut"] = {"active": true, "progress": 41, "progress_resource": &"canal_progress", "target": 100, "stage": "cutting", "completed": false}
 	save_roundtrip_world.stockpiles[&"canal_progress"] = 41
 	save_roundtrip_world.local_path_dockets_settled = 2
+	save_roundtrip_world.assignments[&"saved_world_assignment"] = {"status": "active", "kind": "form", "source_id": "form_saved", "actions": {"examine_records": true}, "evidence": {"examine_records": {"facts": "Saved evidence."}}}
 	save_roundtrip_world.faction_standings[&"eanna_household"] = 7
 	save_roundtrip_world.epic_summon_pending = true
 	save_roundtrip_world.epic_summon_issued = false
@@ -198,6 +203,7 @@ func _run() -> void:
 		_check(restored_world.local_path_dockets_settled == 2 and restored_world.epic_summon_pending and not restored_world.epic_summon_issued and restored_world.get_faction_standing(&"eanna_household") == 7, "SaveCodec should preserve the career-to-Epic funnel state")
 		_check(restored_world.has_flag(&"save_test_flag", restored_world.current_period_index()), "SaveCodec should preserve expiring flags")
 		_check(restored_world.pending_forms.size() == save_roundtrip_world.pending_forms.size() and restored_world.hazards.size() == save_roundtrip_world.hazards.size(), "SaveCodec should preserve forms and hazards")
+		_check(restored_world.assignments.has(&"saved_world_assignment") and restored_world.assignments[&"saved_world_assignment"].get("actions", {}).has("examine_records"), "SaveCodec should preserve an unfinished multi-action assignment and its evidence")
 		_check(restored_world.rng_narrative.state == saved_narrative_state and restored_world.rng_sim.state == saved_simulation_state and restored_world.rng_people.state == saved_people_state, "SaveCodec should preserve all three RNG streams")
 		_check(String(decoded_save.session.get("active_event_id", "")) == "routine_tally_adjustment", "SaveCodec should preserve active docket session")
 	var unsupported_save := save_payload.duplicate(true)
