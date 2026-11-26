@@ -56,6 +56,10 @@ func _handle_cancel_input() -> void:
 		return
 	super._handle_cancel_input()
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_VISIBILITY_CHANGED and is_visible_in_tree() and not Engine.is_editor_hint():
+		_refresh_save_load_buttons()
+
 func _refresh_exit_button() -> void:
 	exit_button.visible = !OS.has_feature("web")
 
