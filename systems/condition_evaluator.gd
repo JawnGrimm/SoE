@@ -83,21 +83,21 @@ func _recent_event(_subject: PersonEntity, p: Dictionary, ctx: EventContext) -> 
 
 
 func _opinion_compare(subject: PersonEntity, p: Dictionary, ctx: EventContext) -> bool:
-	if subject == null or ctx.actor == null:
-		return false
-	var other_id := StringName(p.get("other", ""))
-	var opinion_owner := subject
-	if other_id != &"":
-		var other := ctx.world.get_person(other_id) if ctx.world != null else null
-		if other == null:
-			return false
-		opinion_owner = other
-	var value := int(opinion_owner.opinions.get(ctx.actor.id, 0))
-	var expected := int(p.get("value", 0))
-	match String(p.get("comparison", ">=")):
-		">=": return value >= expected
-		"<=": return value <= expected
-		"==": return value == expected
-		_:
-			push_warning("ConditionEvaluator: invalid opinion comparison")
-			return false
+    if subject == null or ctx.actor == null:
+        return false
+    var other_id := StringName(p.get("other", ""))
+    var opinion_owner: PersonEntity = subject
+    if other_id != &"":
+        var other := ctx.world.get_person(other_id) if ctx.world != null else null
+        if other == null:
+            return false
+        opinion_owner = other
+    var value := int(opinion_owner.opinions.get(ctx.actor.id, 0))
+    var expected := int(p.get("value", 0))
+    match String(p.get("comparison", ">=")):
+        ">=": return value >= expected
+        "<=": return value <= expected
+        "==": return value == expected
+        _:
+            push_warning("ConditionEvaluator: invalid opinion comparison")
+            return false
