@@ -94,7 +94,7 @@ Challenges are authored situations assembled and contextualized against the play
 
 ### Epics
 
-Epics are major historical developments: inventions, texts, buildings, reforms, trade networks, conflicts, discoveries, and other events that shape the passage from one era to another.
+Epics are autonomous historical developments: inventions, texts, buildings, reforms, trade networks, conflicts, discoveries, and other events that shape the passage from one era to another.
 
 They have their own actors, institutions, needs, resources, obstacles, and timelines. They continue whether or not the player gets involved.
 
