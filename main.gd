@@ -4,13 +4,6 @@ const AssignmentGeneratorScript = preload("res://systems/assignment_generator.gd
 const CAMPAIGN_SEED: int = 32003200
 const NORTH_BAY_ASSIGNMENT_ID: StringName = &"north_bay_roof"
 const ROSTER_CAST: Array[StringName] = [&"shuruppak_ilu", &"utu_mansum", &"enlil_kisu", &"ur_nanna", &"nin_kasi", &"geme_inana", &"lu_nanshe"]
-const FACTION_MEMBERS := {
-	&"eanna_household": [&"shuruppak_ilu", &"ur_nanna", &"utu_mansum", &"enlil_kisu", &"lu_nanshe"],
-	&"boatmens_guild": [&"enlil_kisu", &"ur_amas", &"enki_ili", &"geme_inana"],
-	&"city_garrison": [&"utu_mansum", &"enlil_kisu", &"ur_amas"],
-	&"council_of_elders": [&"shuruppak_ilu", &"lu_nanshe", &"utu_mansum"],
-	&"agricultural_households": [&"ama_edin", &"geme_tur", &"ur_gula"]
-}
 const FACTION_LABELS := {
 	&"eanna_household": "🏛 Eanna Temple",
 	&"boatmens_guild": "⛵ Landing Boatmen & Guilds",
@@ -1484,15 +1477,7 @@ func _refresh_faction_standings() -> void:
 		roster_box.remove_child(child)
 		child.queue_free()
 	for faction_id in [&"eanna_household", &"boatmens_guild", &"city_garrison", &"council_of_elders"]:
-		var total := 0
-		var count := 0
-		for member_id in FACTION_MEMBERS.get(faction_id, []):
-			var member := world.get_person(member_id)
-			if member == null:
-				continue
-			total += member.get_opinion(actor.id)
-			count += 1
-		var standing := int(round(float(total) / maxf(1.0, float(count))))
+		var standing := world.get_faction_standing(faction_id)
 		var line := RichTextLabel.new()
 		line.bbcode_enabled = true
 		line.fit_content = true
@@ -1504,12 +1489,10 @@ func _refresh_faction_standings() -> void:
 		roster_box.add_child(line)
 
 func _apply_faction_opinion(faction_id: StringName, amount: int, reason: String) -> void:
-	if amount == 0:
+	if faction_id == &"" or amount == 0:
 		return
-	for member_id in FACTION_MEMBERS.get(faction_id, []):
-		var member := world.get_person(member_id)
-		if member != null:
-			member.change_opinion(actor.id, amount, reason, world.year)
+	world.change_faction_standing(faction_id, amount)
+	last_opinion_deltas[faction_id] = amount
 
 
 func _refresh_compound() -> void:

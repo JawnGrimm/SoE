@@ -9,6 +9,9 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 	world.places.clear()
 	world.institutions.clear()
 	world.social_groups.clear()
+	world.faction_standings.clear()
+	for faction_id in [&"eanna_household", &"boatmens_guild", &"city_garrison", &"council_of_elders", &"agricultural_households"]:
+		world.faction_standings[faction_id] = 0
 	world.assignments.clear()
 	world.pending_forms.clear()
 	world.resolved_forms.clear()
