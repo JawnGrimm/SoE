@@ -181,7 +181,7 @@ func _run() -> void:
 	AssignmentPipeline.perform_action(assignment_world, assignment_actor, ledger_assignment_id, &"inspect_source")
 	var ledger_result := AssignmentPipeline.resolve(assignment_world, assignment_actor, ledger_assignment_id, &"record")
 	_check(bool(ledger_result.get("success", false)) and assignment_world.cedar_desk_log.size() == 3 and String(assignment_world.cedar_desk_log.back().get("category", "")) == "ledger", "Every completed engagement should enter the persistent work log with its source category")
-	_check(String(assignment_world.cedar_desk_log.front().get("responsible_character_id", "")) == String(assignment_actor.id) and String(assignment_world.cedar_desk_log.front().get("employer_id", "")) == "ur_nanna", "Work log should retain the responsible scribe and employer")
+	_check(String(assignment_world.cedar_desk_log.front().get("responsible_character_id", "")) == String(assignment_actor.id) and String(assignment_world.cedar_desk_log.front().get("employer_id", "")) == "ur_nanna" and String(assignment_world.cedar_desk_log.front().get("institution_id", "")) == "eanna_household", "Work log should retain the responsible scribe, employer, and institution")
 	_check(assignment_world.cases_settled == 3, "Completed world-driven engagements should enter the existing career settlement counters")
 	_check(registry.all_places().size() == 7, "DefinitionRegistry should load the seven canonical Era 1 places")
 	_check(registry.get_place(&"hacinebi") != null and registry.get_place(&"hacinebi").political_relation == &"foreign_enclave", "Typed place lookup should retain Hacinebi's autonomous local context")
