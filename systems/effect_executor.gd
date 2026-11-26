@@ -14,6 +14,7 @@ func _init() -> void:
 	_handlers[&"modify_resource"] = _modify_resource
 	_handlers[&"resolve_form"] = _resolve_form
 	_handlers[&"add_memory"] = _add_memory
+	_handlers[&"repair_hazard"] = _repair_hazard
 
 func execute_all(effects: Array[EventEffect], ctx: EventContext) -> void:
 	for effect in effects:
@@ -96,3 +97,11 @@ func _add_memory(subject: PersonEntity, p: Dictionary, ctx: EventContext) -> voi
 	if subject == null:
 		return
 	subject.memory.append({"memory_id": StringName(p.get("memory_id", "")), "text": String(p.get("text", "")), "year": ctx.year, "involved": p.get("involved", []).duplicate(true)})
+
+func _repair_hazard(_subject: PersonEntity, p: Dictionary, ctx: EventContext) -> void:
+	if ctx.world == null:
+		return
+	var place_id := StringName(p.get("place_id", ""))
+	var hazard_id := StringName(p.get("hazard_id", ""))
+	if not ctx.world.repair_hazard(place_id, hazard_id):
+		push_warning("EffectExecutor: repair_hazard could not find an active hazard %s/%s" % [place_id, hazard_id])

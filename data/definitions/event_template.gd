@@ -12,3 +12,11 @@ extends Resource
 @export var conditions: Array[EventCondition] = []
 @export var outcomes: Array[EventOutcome] = []
 @export var records: Array[Dictionary] = []
+@export var evidence_left_title: String = "RECORD  /  LEFT"
+@export var evidence_right_title: String = "RECORD  /  RIGHT"
+@export var evidence_left_speaker: String = "CLERK"
+@export var evidence_right_speaker: String = "CLERK"
+@export_multiline var evidence_left_quote: String = ""
+@export_multiline var evidence_right_quote: String = ""
+@export var evidence_left_portrait: StringName = &""
+@export var evidence_right_portrait: StringName = &""
