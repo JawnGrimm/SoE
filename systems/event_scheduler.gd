@@ -28,6 +28,8 @@ func pick_next_event(
 		if template == null:
 			continue
 		var eligible_now := runner.is_eligible(template, ctx)
+		if template.id == &"challenge_quayside_stoppage":
+			eligible_now = _quayside_challenge_is_eligible(world, actor, active_era)
 		if not eligible_now:
 			continue
 		if template.id == &"case_01_sealed_vessel":
@@ -62,3 +64,22 @@ func pick_next_event(
 		if roll < accumulated:
 			return eligible[index]
 	return eligible.back()
+
+
+## The stoppage is a consequence, not a random encounter. Either the carrier
+## foreman still distrusts the apprentice, or the crew slowdown remains active.
+func _quayside_challenge_is_eligible(world: WorldState, actor: PersonEntity, era: EraDef) -> bool:
+	if world == null or actor == null or era == null:
+		return false
+	if world.period < 8 or world.period > 10:
+		return false
+	if world.year < -3200 or world.year > -3100:
+		return false
+	if actor.office_id != &"apprentice_scribe":
+		return false
+	if world.has_event_fired(&"challenge_quayside_stoppage"):
+		return false
+	var foreman := world.get_person(&"enlil_kisu")
+	var hostile_standing := foreman != null and int(foreman.opinions.get(actor.id, 0)) <= 0
+	var crew_slowdown := world.has_flag(&"canal_crew_slowdown", world.current_period_index())
+	return hostile_standing or crew_slowdown
