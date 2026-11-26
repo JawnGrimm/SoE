@@ -26,12 +26,12 @@ parameters = {"min": 3, "max": 11}
 [sub_resource type="Resource" id="FxOpinionShuruppak1"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
-parameters = {"subject": &"shuruppak_ilu", "other": &"player_apprentice", "amount": 5, "reason": "Certified the ditch crew and denied the unlawful grain transfer"}
+parameters = {"subject": &"shuruppak_ilu", "other": &"actor", "amount": 5, "reason": "Certified the ditch crew and denied the unlawful grain transfer"}
 
 [sub_resource type="Resource" id="FxOpinionUrNanna1"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
-parameters = {"subject": &"ur_nanna", "other": &"player_apprentice", "amount": 3, "reason": "Kept household grain separate from the labor roll"}
+parameters = {"subject": &"ur_nanna", "other": &"actor", "amount": 3, "reason": "Kept household grain separate from the labor roll"}
 
 [sub_resource type="Resource" id="FxLaw1"]
 script = ExtResource("3")
@@ -61,12 +61,12 @@ parameters = {"form_type": &"pension_roll", "disposition": "crew_cleared_transfe
 [sub_resource type="Resource" id="FxOpinionShuruppak2"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
-parameters = {"subject": &"shuruppak_ilu", "other": &"player_apprentice", "amount": -10, "reason": "Conflated the labor tally with the weaver grain roll"}
+parameters = {"subject": &"shuruppak_ilu", "other": &"actor", "amount": -10, "reason": "Conflated the labor tally with the weaver grain roll"}
 
 [sub_resource type="Resource" id="FxOpinionUrNanna2"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
-parameters = {"subject": &"ur_nanna", "other": &"player_apprentice", "amount": -6, "reason": "Granted an unsupported barley transfer"}
+parameters = {"subject": &"ur_nanna", "other": &"actor", "amount": -6, "reason": "Granted an unsupported barley transfer"}
 
 [sub_resource type="Resource" id="FxBarley2"]
 script = ExtResource("3")
@@ -96,12 +96,12 @@ parameters = {"form_type": &"pension_roll", "disposition": "illicit_composite_tr
 [sub_resource type="Resource" id="FxOpinionLuNanshe3"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
-parameters = {"subject": &"lu_nanshe", "other": &"player_apprentice", "amount": 4, "reason": "Impounded the disputed tablets for inquest"}
+parameters = {"subject": &"lu_nanshe", "other": &"actor", "amount": 4, "reason": "Impounded the disputed tablets for inquest"}
 
 [sub_resource type="Resource" id="FxOpinionShuruppak3"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
-parameters = {"subject": &"shuruppak_ilu", "other": &"player_apprentice", "amount": -2, "reason": "Escalated the disputed labor and grain records"}
+parameters = {"subject": &"shuruppak_ilu", "other": &"actor", "amount": -2, "reason": "Escalated the disputed labor and grain records"}
 
 [sub_resource type="Resource" id="FxCanal3"]
 script = ExtResource("3")
