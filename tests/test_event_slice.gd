@@ -602,6 +602,21 @@ func _run() -> void:
 	_check(year_one_world.get_resource(&"labor") < 40, "Labor should not pin at its stockpile cap during Year 1")
 	_check(year_one_world.get_resource(&"labor") <= 25, "Seasonal and institutional demand should bring labor into the intended working range by Year 1 end")
 
+	# A low reserve with constrained workforce creates the competing transport/
+	# storehouse allocation that Case 3 actually describes.
+	var load_claim_world := WorldState.new()
+	UrukSeeder.seed_campaign(load_claim_world, 98765)
+	load_claim_world.pending_forms.clear()
+	load_claim_world.stockpiles[&"barley"] = 100
+	load_claim_world.stockpiles[&"labor"] = 12
+	var load_claim_sim := WorldSimulator.new()
+	load_claim_sim._generate_forms(load_claim_world)
+	var load_claim_generated := false
+	for generated_form in load_claim_world.pending_forms:
+		if StringName(generated_form.get("form_type", "")) == &"load_claim" and StringName(generated_form.get("generation_reason", "")) == &"reserve_transport_allocation_conflict":
+			load_claim_generated = true
+	_check(load_claim_generated, "Reserve/transport allocation conflict should generate the Case 3 load_claim form")
+
 	# -- World simulation: same seed, same world history; narrative RNG stays independent.
 	var sim_world_a := WorldState.new()
 	var sim_world_b := WorldState.new()
