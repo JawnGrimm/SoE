@@ -2,7 +2,6 @@ extends Control
 
 const AssignmentGeneratorScript = preload("res://systems/assignment_generator.gd")
 const CAMPAIGN_SEED: int = 32003200
-const NORTH_BAY_ASSIGNMENT_ID: StringName = &"north_bay_roof"
 const ROSTER_CAST: Array[StringName] = [&"shuruppak_ilu", &"utu_mansum", &"enlil_kisu", &"ur_nanna", &"nin_kasi", &"geme_inana", &"lu_nanshe"]
 const FACTION_LABELS := {
 	&"eanna_household": "🏛 Eanna Temple",
@@ -30,11 +29,10 @@ var world: WorldState
 var actor: PersonEntity
 var active_event: EventTemplate
 var procedural_assignment: Dictionary = {}
+var assignment_opportunities: Array[Dictionary] = []
+var active_world_assignment_id: StringName = &""
 var context: EventContext
 var current_era: EraDef
-var north_bay_assignment: AssignmentDef
-var assignment_card: Button
-var phase_before_assignment: String = ""
 var last_resolved_outcome: EventOutcome
 var selected_path: StringName = &""
 var creation_catalog: Dictionary = {}
@@ -181,17 +179,6 @@ func _build_interface() -> void:
 	upper_workspace.add_child(evidence_row)
 	evidence_left = _make_evidence_panel(evidence_row, "GRANARY TERRACES  /  TEMPLE", "Ur-Nanna", "The temple cellars are cold, dry, and exact. The gods demand honest measures.", &"ur_nanna")
 	evidence_right = _make_evidence_panel(evidence_row, "RIVER QUAYS  /  LANDING", "Enlil-kisu", "The river road is dangerous and hungry. We respect the scribe who knows what a boatman endures.", &"enlil_kisu")
-	assignment_card = Button.new()
-	assignment_card.text = "SEALED DOCKET  /  NORTH-BAY ROOF INSPECTION  /  5 SHEKELS"
-	assignment_card.custom_minimum_size.y = 38
-	assignment_card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	assignment_card.visible = false
-	assignment_card.add_theme_font_size_override("font_size", 13)
-	assignment_card.add_theme_color_override("font_color", Color("#e0d4bd"))
-	assignment_card.add_theme_stylebox_override("normal", _panel_style("#493621", "#b18a52"))
-	assignment_card.add_theme_stylebox_override("hover", _panel_style("#604326", "#d0ad70"))
-	assignment_card.pressed.connect(_open_north_bay_assignment)
-	upper_workspace.add_child(assignment_card)
 	docket_motion_layer = Control.new()
 	docket_motion_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	docket_motion_layer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -592,10 +579,6 @@ func _start_world() -> void:
 	world = WorldState.new()
 	actor = UrukSeeder.seed_campaign(world, CAMPAIGN_SEED, false)
 	creation_catalog = CharacterCreationResolver.load_catalog("res://data/character_creation/era_1_uruk.json")
-	north_bay_assignment = Registry.get_assignment(NORTH_BAY_ASSIGNMENT_ID)
-	if north_bay_assignment == null or not north_bay_assignment.is_valid():
-		push_warning("Main: North-Bay AssignmentDef is missing or malformed; docket will not be offered")
-		north_bay_assignment = null
 	current_era = Registry.get_era(&"uruk_storehouse")
 	context = EventContext.new()
 	context.world = world
@@ -606,15 +589,17 @@ func _start_world() -> void:
 	_show_character_creation_screen(0)
 
 func can_save_game() -> bool:
-	return world != null and world.get_player() != null and phase == "case" and (active_event != null or not procedural_assignment.is_empty())
+	return world != null and world.get_player() != null and phase in ["case", "opportunity_board", "world_engagement"] and (active_event != null or not procedural_assignment.is_empty() or not assignment_opportunities.is_empty() or active_world_assignment_id != &"")
 
 func save_game() -> Dictionary:
 	if not can_save_game():
-		return {"success": false, "error": "Save is available while a docket is open."}
+		return {"success": false, "error": "Save is available while the desk, an engagement, or an event is open."}
 	var session := {
-		"phase": "case",
+		"phase": phase,
 		"active_event_id": String(active_event.id) if active_event != null else "",
 		"procedural_assignment": procedural_assignment.duplicate(true),
+		"assignment_opportunities": assignment_opportunities.duplicate(true),
+		"active_world_assignment_id": String(active_world_assignment_id),
 		"selected_path": String(selected_path),
 	}
 	var result := SaveManager.save_game(world, session)
@@ -640,6 +625,8 @@ func load_game() -> Dictionary:
 	context.year = world.year
 	active_event = null
 	procedural_assignment.clear()
+	assignment_opportunities.clear()
+	active_world_assignment_id = &""
 	last_resolved_outcome = null
 	last_opinion_deltas.clear()
 	var session: Dictionary = result.get("session", {})
@@ -649,8 +636,18 @@ func load_game() -> Dictionary:
 	var saved_assignment: Variant = session.get("procedural_assignment", {})
 	if saved_assignment is Dictionary:
 		procedural_assignment = saved_assignment.duplicate(true)
+	var saved_opportunities: Variant = session.get("assignment_opportunities", [])
+	if saved_opportunities is Array:
+		for opportunity in saved_opportunities:
+			if opportunity is Dictionary:
+				assignment_opportunities.append(opportunity.duplicate(true))
+	active_world_assignment_id = StringName(session.get("active_world_assignment_id", ""))
 	selected_path = StringName(session.get("selected_path", ""))
-	if active_event == null and procedural_assignment.is_empty():
+	if active_world_assignment_id != &"":
+		_show_world_engagement()
+	elif String(session.get("phase", "")) == "opportunity_board" and not assignment_opportunities.is_empty():
+		_show_assignment_board()
+	elif active_event == null and procedural_assignment.is_empty():
 		_schedule_next_case()
 	else:
 		_show_case()
@@ -681,13 +678,26 @@ func _schedule_next_case() -> void:
 			event_templates.append(definition as EventTemplate)
 	active_event = scheduler.pick_next_event(world, actor, event_templates, current_era)
 	procedural_assignment.clear()
-	if active_event == null:
-		procedural_assignment = AssignmentGeneratorScript.generate(world, actor, selected_path)
+	assignment_opportunities.clear()
+	active_world_assignment_id = &""
 	_refresh_compound()
-	if active_event == null and procedural_assignment.is_empty():
-		_show_end_of_queue()
+	assignment_opportunities = AssignmentPipeline.generate_opportunities(world, actor, selected_path)
+	if active_event != null:
+		assignment_opportunities.push_front({
+			"id": StringName("work_event_%s_%d" % [active_event.id, world.current_period_index()]),
+			"kind": &"event",
+			"source_id": active_event.id,
+			"title": active_event.title,
+			"summary": active_event.description,
+			"priority": 100
+		})
+		while assignment_opportunities.size() > 3:
+			assignment_opportunities.pop_back()
+	if assignment_opportunities.size() == 3:
+		_show_assignment_board()
 	else:
-		_show_case()
+		push_warning("Main: assignment pipeline produced fewer than three opportunities (%d)" % assignment_opportunities.size())
+		_show_end_of_queue()
 
 func _show_character_creation_screen(screen: int) -> void:
 	creation_screen = clampi(screen, 0, 8)
@@ -830,182 +840,7 @@ func _confirm_character_creation() -> void:
 	if String(creation_catalog.get("era_id", "")) == "uruk_storehouse":
 		UrukSeeder.attach_player(world, actor)
 	_refresh_compound()
-	_offer_north_bay_assignment()
 	_schedule_next_case()
-
-func _offer_north_bay_assignment() -> void:
-	# This is a world-condition assignment, available to every career path.
-	# Do not gate it on the temple/civil catechism choice.
-	if north_bay_assignment == null:
-		return
-	if world.get_hazard_total_lost(&"north_bay", &"roof_leak") < 3:
-		return
-	if not world.get_assignment_state(NORTH_BAY_ASSIGNMENT_ID).is_empty():
-		return
-	if not world.offer_assignment(north_bay_assignment.id, north_bay_assignment.employer):
-		push_warning("Main: North-Bay assignment could not be offered; it may already exist")
-		return
-	assignment_card.visible = true
-	assignment_card.disabled = false
-	assignment_card.text = "SEALED DOCKET  /  NORTH-BAY ROOF INSPECTION  /  UR-NANNA  /  5 SHEKELS"
-	AudioManager.play_docket_slide()
-
-func _open_north_bay_assignment() -> void:
-	if north_bay_assignment == null or phase in ["north_bay_activity", "north_bay_assessment"]:
-		return
-	var state := world.get_assignment_state(NORTH_BAY_ASSIGNMENT_ID)
-	if state.is_empty() or String(state.get("status", "")) == "completed":
-		return
-	phase_before_assignment = phase
-	if String(state.get("status", "")) == "offered":
-		if not world.start_assignment(NORTH_BAY_ASSIGNMENT_ID):
-			push_warning("Main: North-Bay assignment could not be started")
-			return
-	elif String(state.get("status", "")) != "active":
-		push_warning("Main: North-Bay assignment has an invalid lifecycle state")
-		return
-	AudioManager.play_docket_slide()
-	_show_north_bay_activity()
-
-func _show_north_bay_activity() -> void:
-	_clear_choices()
-	_set_phase("north_bay_activity")
-	var state := world.get_assignment_state(NORTH_BAY_ASSIGNMENT_ID)
-	var actions: Dictionary = state.get("actions", {})
-	var payload := {
-		"title": north_bay_assignment.title,
-		"left_card": {"title": "TEMPLE STOREHOUSE / STEWARD", "speaker_id": &"ur_nanna", "quote": "“The north side was patched, but I cannot swear the beam sockets are dry. I need a report before I authorize more labor.”", "facts": "REPORTED: A patch was ordered.\nPHYSICAL CONDITION: Not yet inspected."},
-		"right_card": {"title": "NORTH BAY / ROOF BEAMS", "speaker_id": &"enlil_kisu", "quote": "The beams must be inspected before the report is certified.", "facts": "INSPECTION: %s\nACTIVE WATER INGRESS: %s" % ["RECORDED" if actions.has(&"inspect_beams") else "PENDING", "YES" if world.has_active_hazard(&"north_bay", &"roof_leak") else "NO"]},
-		"prompt": "Consult the steward and inspect the beams before submitting an assessment.",
-		"choices": []
-	}
-	if actions.has(&"consult_steward"):
-		payload.left_card.quote = "“I ordered the north side patched. I cannot swear the beam sockets are dry.”"
-		payload.left_card.facts = "REPORTED BY UR-NANNA\nPatch order confirmed; sockets unverified."
-	if actions.has(&"inspect_beams"):
-		payload.right_card.quote = "A slow drop falls from the north beam socket. Timber is dark and softened around the joint."
-		payload.right_card.facts = "DIRECT OBSERVATION\nWater ingress: %s\nIntegrity index: %d / 100" % ["CONFIRMED" if world.has_active_hazard(&"north_bay", &"roof_leak") else "NOT OBSERVED", int(world.get_person(&"ur_nanna").vulnerabilities.get(&"granary_roof_integrity", 0))]
-	var callbacks: Array = []
-	if actions.has(&"consult_steward"):
-		payload.choices.append({"label": "Consult Steward / RECORDED", "result_title": "", "result_text": "", "effects": {}})
-		callbacks.append(_north_bay_action_already_recorded.bind("Consult Steward"))
-	else:
-		payload.choices.append({"label": "Consult Steward", "result_title": "", "result_text": "", "effects": {}})
-		callbacks.append(_north_bay_consult_steward)
-	if actions.has(&"inspect_beams"):
-		payload.choices.append({"label": "Inspect Beams / RECORDED", "result_title": "", "result_text": "", "effects": {}})
-		callbacks.append(_north_bay_action_already_recorded.bind("Inspect Beams"))
-	else:
-		payload.choices.append({"label": "Inspect Beams", "result_title": "", "result_text": "", "effects": {}})
-		callbacks.append(_north_bay_inspect_beams)
-	payload.choices.append({"label": "Submit Assessment", "result_title": "", "result_text": "", "effects": {}})
-	callbacks.append(_begin_north_bay_assessment)
-	_render_docket_payload(payload, callbacks)
-
-func _refresh_north_bay_actions() -> void:
-	_show_north_bay_activity()
-
-func _north_bay_action_already_recorded(action_label: String) -> void:
-	prompt_label.text = "%s has already been recorded in this docket." % action_label
-
-func _north_bay_consult_steward() -> void:
-	if phase != "north_bay_activity" or not world.record_assignment_action(NORTH_BAY_ASSIGNMENT_ID, &"consult_steward", &"ur_nanna"):
-		return
-	AudioManager.play_stylus_mark()
-	evidence_left_title.text = "TEMPLE STOREHOUSE  /  CONSULTATION"
-	evidence_left_speaker.text = "UR-NANNA"
-	evidence_left_quote.text = "“The north side was patched, but I cannot swear the beam sockets are dry. I need a report before I authorize more labor.”"
-	_set_evidence_facts("REPORTED BY UR-NANNA\nA patch was ordered.\nThe condition of the beam sockets is unverified.\nThis is testimony, not physical inspection.", evidence_right_facts.text)
-	prompt_label.text = "The steward's account is recorded. Inspect the beams."
-	_refresh_north_bay_actions()
-
-func _north_bay_inspect_beams() -> void:
-	if phase != "north_bay_activity" or not world.record_assignment_action(NORTH_BAY_ASSIGNMENT_ID, &"inspect_beams"):
-		return
-	AudioManager.play_roof_drip()
-	var steward := world.get_person(&"ur_nanna")
-	var integrity := int(steward.vulnerabilities.get(&"granary_roof_integrity", 0)) if steward != null else 0
-	evidence_right_title.text = "NORTH BAY  /  PHYSICAL INSPECTION"
-	evidence_right_speaker.text = "APPRENTICE'S OBSERVATION"
-	evidence_right_quote.text = "A slow drop falls from the north beam socket. The timber is dark and soft around the joint."
-	_set_evidence_facts(evidence_left_facts.text, "DIRECT OBSERVATION\nActive water ingress: %s\nBeam integrity index: %d / 100\nWater is reaching the storehouse interior." % ["CONFIRMED" if world.has_active_hazard(&"north_bay", &"roof_leak") else "NOT OBSERVED", integrity])
-	prompt_label.text = "The physical inspection is recorded. Submit an assessment."
-	_refresh_north_bay_actions()
-
-func _begin_north_bay_assessment() -> void:
-	if phase != "north_bay_activity":
-		return
-	var state := world.get_assignment_state(NORTH_BAY_ASSIGNMENT_ID)
-	var actions: Dictionary = state.get("actions", {})
-	for action_id in north_bay_assignment.required_actions:
-		if not actions.has(action_id):
-			prompt_label.text = "The report cannot be submitted: consult Ur-Nanna and inspect the beams first."
-			return
-	_clear_choices()
-	_set_phase("north_bay_assessment")
-	var payload := {
-		"title": "NORTH-BAY / ASSESSMENT",
-		"left_card": {"title": "STEWARD'S ACCOUNT", "speaker_id": &"ur_nanna", "quote": "“I ordered a patch. I cannot certify the beam sockets.”", "facts": "TESTIMONY RECORDED\nThe steward's statement is not physical inspection."},
-		"right_card": {"title": "PHYSICAL INSPECTION", "speaker_id": &"enlil_kisu", "quote": "Water ingress and softened timber were observed at the north beam socket.", "facts": "OBSERVATION: %s\nBEAM INTEGRITY INDEX: %d / 100" % ["CONFIRMED" if world.has_active_hazard(&"north_bay", &"roof_leak") else "NOT OBSERVED", int(world.get_person(&"ur_nanna").vulnerabilities.get(&"granary_roof_integrity", 0))]},
-		"prompt": "Which assessment can you certify?",
-		"choices": [
-			{"label": "Water ingress confirmed; recommend urgent repair", "result_title": "", "result_text": "", "effects": {}},
-			{"label": "Roof sound; no further work required", "result_title": "", "result_text": "", "effects": {}}
-		]
-	}
-	_render_docket_payload(payload, [_submit_north_bay_assessment.bind(true), _submit_north_bay_assessment.bind(false)])
-
-func _submit_north_bay_assessment(is_accurate: bool) -> void:
-	if phase != "north_bay_assessment" or north_bay_assignment == null:
-		return
-	var assessment: StringName = &"leak_confirmed_repair_required" if is_accurate else &"roof_reported_sound"
-	var steward := world.get_person(north_bay_assignment.employer)
-	if steward == null:
-		push_warning("Main: North-Bay employer disappeared before settlement")
-		return
-	var opinion_before := int(steward.get_opinion(actor.id))
-	var silver_before_assignment := int(actor.resources.get(&"silver", 0))
-	var traits_before_assignment: Array[StringName] = actor.traits.duplicate()
-	if not world.complete_assignment(north_bay_assignment, actor.id, assessment, is_accurate):
-		push_warning("Main: North-Bay assessment rejected; required actions or lifecycle state are invalid")
-		return
-	var opinion_delta := steward.get_opinion(actor.id) - opinion_before
-	world.cases_settled += 1
-	var assignment_silver_delta := int(actor.resources.get(&"silver", 0)) - silver_before_assignment
-	if assignment_silver_delta > 0:
-		world.silver_earned += assignment_silver_delta
-	for gained_trait in actor.traits:
-		if gained_trait not in traits_before_assignment and gained_trait not in world.traits_gained:
-			world.traits_gained.append(gained_trait)
-	last_opinion_deltas.clear()
-	last_opinion_deltas[north_bay_assignment.employer] = opinion_delta
-	assignment_card.disabled = true
-	assignment_card.text = "FILED  /  NORTH-BAY ROOF INSPECTION  /  %s" % ("5 SHEKELS PAID" if is_accurate else "ASSESSMENT REJECTED")
-	_clear_choices()
-	_set_phase("north_bay_result")
-	case_heading.text = "𒂍  ASSESSMENT SEALED"
-	dossier.text = "The report has been entered into the storehouse record. The physical leak remains active; each elapsed period spoils one measure of barley. Ur-Nanna has opened a repair docket for the next available desk."
-	if is_accurate:
-		prompt_label.text = "Accurate assessment filed. +%d silver · +%d Law XP · Ur-Nanna %+d opinion." % [north_bay_assignment.compensation_amount, north_bay_assignment.law_xp, opinion_delta]
-	else:
-		prompt_label.text = "Unsupported assessment filed. No compensation or Law experience awarded. Ur-Nanna's opinion falls by %d." % absi(opinion_delta)
-	_add_choice("Return to the desk", _return_from_north_bay)
-	AudioManager.play_seal_press()
-	_refresh_compound()
-
-func _return_from_north_bay() -> void:
-	if phase != "north_bay_result":
-		return
-	match phase_before_assignment:
-		"case":
-			_show_case()
-		"result":
-			if last_resolved_outcome != null:
-				_show_result(last_resolved_outcome)
-			else:
-				_show_end_of_queue()
-		_:
-			_show_end_of_queue()
 
 func _active_docket_payload() -> Dictionary:
 	if not procedural_assignment.is_empty():
@@ -1034,6 +869,132 @@ func _authored_choices_payload() -> Array:
 	for outcome in active_event.outcomes:
 		result.append({"label": outcome.label, "result_title": outcome.title_override, "result_text": outcome.description_override, "effects": outcome.effects})
 	return result
+
+func _show_assignment_board() -> void:
+	_clear_stamp_history()
+	_clear_choices()
+	_set_phase("opportunity_board")
+	var choices_payload: Array = []
+	var callbacks: Array[Callable] = []
+	var summaries := PackedStringArray()
+	for index in range(assignment_opportunities.size()):
+		var opportunity: Dictionary = assignment_opportunities[index]
+		var label := "%s\n%s" % [String(opportunity.get("title", "Work")), String(opportunity.get("summary", "A matter requires attention."))]
+		choices_payload.append({"label": label})
+		callbacks.append(_select_assignment_opportunity.bind(index))
+		summaries.append("%d. %s / %s" % [index + 1, String(opportunity.get("kind", "work")).replace("_", " ").to_upper(), String(opportunity.get("title", "Work"))])
+	var payload := {
+		"title": "THE SCRIBE'S DESK / THREE OPPORTUNITIES",
+		"left_card": {"title": "THE LIVING WORLD", "speaker_id": &"", "quote": "The city has continued its business while you were away from the desk.", "facts": "YEAR: %s\nPERIOD: %d / 12\nPENDING FORMS: %d\nACTIVE HAZARDS: %d" % [CalendarFormatter.format_year(world.year), world.period + 1, world.pending_forms.size(), world.hazards.filter(func(h: Dictionary) -> bool: return bool(h.get("active", false))).size()]},
+		"right_card": {"title": "AVAILABLE WORK", "speaker_id": &"shuruppak_ilu", "quote": "Choose the matter you will take responsibility for this period. The others remain in the world, whether you attend to them or not.", "facts": "\n".join(summaries)},
+		"prompt": "Three matters have reached your desk. Select one engagement, or pass without penalty.",
+		"choices": choices_payload
+	}
+	_render_docket_payload(payload, callbacks)
+	_add_choice("Pass / End Period", _decline_opportunities)
+	_refresh_compound()
+
+func _select_assignment_opportunity(index: int) -> void:
+	if phase != "opportunity_board" or index < 0 or index >= assignment_opportunities.size():
+		return
+	var opportunity := assignment_opportunities[index]
+	if StringName(opportunity.get("kind", "")) == &"event":
+		active_event = Registry.get_event(StringName(opportunity.get("source_id", "")))
+		if active_event == null:
+			status_label.text = "EVENT COULD NOT BE OPENED / SOURCE MAY HAVE CHANGED"
+			return
+		AudioManager.play_docket_slide()
+		_show_case()
+		return
+	active_event = null
+	if not AssignmentPipeline.begin(world, opportunity, actor):
+		status_label.text = "WORK COULD NOT BE OPENED / SOURCE MAY HAVE CHANGED"
+		return
+	active_world_assignment_id = StringName(opportunity.get("id", ""))
+	AudioManager.play_docket_slide()
+	_show_world_engagement()
+
+func _show_world_engagement() -> void:
+	var record := AssignmentPipeline.get_record(world, active_world_assignment_id)
+	if record.is_empty():
+		active_world_assignment_id = &""
+		_show_assignment_board()
+		return
+	_clear_choices()
+	_set_phase("world_engagement")
+	var actions: Dictionary = record.get("actions", {})
+	var evidence: Dictionary = record.get("evidence", {})
+	var evidence_lines := PackedStringArray()
+	for action_id in evidence.keys():
+		var entry: Dictionary = evidence[action_id]
+		evidence_lines.append("%s\n%s" % [String(action_id).replace("_", " ").to_upper(), String(entry.get("facts", ""))])
+	var left_quote := String(record.get("summary", "A matter requires professional attention."))
+	var employer := world.get_person(StringName(record.get("employer_id", "")))
+	var right_quote := "The record is incomplete. Read it, reconcile the figures, hear the responsible official, and inspect the source before making your assessment."
+	var payload := {
+		"title": String(record.get("title", "ASSIGNMENT")),
+		"left_card": {"title": "WORLD SITUATION / %s" % String(record.get("kind", "work")).to_upper(), "speaker_id": &"", "quote": left_quote, "facts": "SOURCE: %s\nOPENED: %s / PERIOD %d" % [String(record.get("source_id", "")), CalendarFormatter.format_year(world.year), world.period + 1]},
+		"right_card": {"title": "RESPONSIBLE OFFICE", "speaker_id": employer.id if employer != null else &"", "quote": right_quote, "facts": "INVESTIGATIONS RECORDED: %d / 4\n\n%s" % [actions.size(), "\n\n".join(evidence_lines)]},
+		"prompt": "Investigate the situation. Your skills affect what you can establish; your judgment determines what is entered.",
+		"choices": []
+	}
+	var callbacks: Array[Callable] = []
+	for action in AssignmentPipeline.INVESTIGATION_ACTIONS:
+		var action_id: StringName = action.id
+		var done := actions.has(action_id)
+		payload.choices.append({"label": String(action.label) + (" / RECORDED" if done else "")})
+		callbacks.append(_world_assignment_action.bind(action_id))
+		payload.choices.back()["disabled"] = done
+	_render_docket_payload(payload, callbacks)
+	if actions.size() >= 2:
+		match StringName(record.get("kind", "")):
+			&"form":
+				_add_choice("Certify and close the form", _resolve_world_assignment.bind(&"certify"))
+				_add_choice("Refer the matter for senior review", _resolve_world_assignment.bind(&"refer"))
+				_add_choice("Defer the assessment", _resolve_world_assignment.bind(&"defer"))
+			&"hazard":
+				_add_choice("Allocate three labor and repair", _resolve_world_assignment.bind(&"repair"), world.get_resource(&"labor", "institution", "", &"eanna_household") < 3)
+				_add_choice("Record the loss and defer repair", _resolve_world_assignment.bind(&"defer"))
+			_:
+				_add_choice("File the verified account", _resolve_world_assignment.bind(&"record"))
+	_add_choice("Set this work aside", _abandon_world_assignment)
+	_refresh_compound()
+
+func _world_assignment_action(action_id: StringName) -> void:
+	if phase != "world_engagement":
+		return
+	var result := AssignmentPipeline.perform_action(world, actor, active_world_assignment_id, action_id)
+	if not bool(result.get("success", false)):
+		status_label.text = String(result.get("message", "Action could not be recorded."))
+		return
+	AudioManager.play_stylus_mark()
+	_show_world_engagement()
+
+func _resolve_world_assignment(verdict: StringName) -> void:
+	if phase != "world_engagement":
+		return
+	var result := AssignmentPipeline.resolve(world, actor, active_world_assignment_id, verdict)
+	if not bool(result.get("success", false)):
+		status_label.text = String(result.get("message", "Assessment could not be filed."))
+		_show_world_engagement()
+		return
+	active_world_assignment_id = &""
+	procedural_assignment.clear()
+	_show_procedural_result("ASSESSMENT SEALED", String(result.get("message", "The work is entered into the record.")))
+
+func _abandon_world_assignment() -> void:
+	if active_world_assignment_id == &"" or not world.assignments.has(active_world_assignment_id):
+		return
+	var record: Dictionary = world.assignments[active_world_assignment_id]
+	record["status"] = "abandoned"
+	world.assignments[active_world_assignment_id] = record
+	active_world_assignment_id = &""
+	_show_procedural_result("WORK SET ASIDE", "The matter remains in the world. No penalty is recorded for declining it.")
+
+func _decline_opportunities() -> void:
+	if phase != "opportunity_board":
+		return
+	_show_procedural_result("THE DESK IS PASSED", "No work is accepted this period. The world continues without waiting for your seal.")
 
 func _show_case() -> void:
 	_clear_stamp_history()
@@ -1068,7 +1029,7 @@ func _render_docket_payload(payload: Dictionary, callbacks: Array = []) -> void:
 	var docket_choices: Array = payload.get("choices", [])
 	for index in range(docket_choices.size()):
 		var callback: Callable = callbacks[index] if index < callbacks.size() else _resolve_choice.bind(index)
-		_add_choice(String(docket_choices[index].get("label", "Record")), callback)
+		_add_choice(String(docket_choices[index].get("label", "Record")), callback, bool(docket_choices[index].get("disabled", false)))
 func _resolve_choice(index: int) -> void:
 	if phase != "case":
 		return
@@ -1199,6 +1160,8 @@ func _show_result(outcome: EventOutcome) -> void:
 func _advance_period() -> void:
 	if phase != "result" and phase != "end_of_queue":
 		return
+	assignment_opportunities.clear()
+	active_world_assignment_id = &""
 	_clear_stamp_history()
 	world_simulator.advance_period(world)
 	if world.get_hazard_total_lost(&"north_bay", &"roof_leak") >= 3:
@@ -1405,7 +1368,7 @@ func _clear_choice_preview() -> void:
 func _handle_choice(button: Button, callback: Callable) -> void:
 	if choice_locked:
 		return
-	if button.text == "End Period" or phase not in ["case", "catechism_path", "catechism_mentor", "north_bay_assessment"]:
+	if button.text == "End Period" or phase not in ["case", "catechism_path", "catechism_mentor", "north_bay_assessment", "opportunity_board", "world_engagement"]:
 		callback.call()
 		return
 	choice_locked = true

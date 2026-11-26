@@ -115,6 +115,74 @@ func _run() -> void:
 	# --script does not inject project autoloads. Exercise the standalone registry directly.
 	registry = DefinitionRegistry.new()
 	registry.load_defaults()
+
+	# World-driven Assignment loop: three distinct opportunities are derived
+	# from the seeded form, active hazard, and actual institutional ledgers.
+	var assignment_world := WorldState.new()
+	var assignment_actor := UrukSeeder.seed_campaign(assignment_world, 44004400)
+	_check(assignment_actor.skills.levels.values().all(func(level: int) -> bool: return level >= 1), "All six core skills should begin at level one")
+	var opportunities := AssignmentPipeline.generate_opportunities(assignment_world, assignment_actor, &"path_civil")
+	_check(opportunities.size() == 3, "AssignmentPipeline should present exactly three opportunities")
+	var opportunity_kinds: Array[StringName] = []
+	for opportunity in opportunities:
+		opportunity_kinds.append(StringName(opportunity.get("kind", "")))
+	_check(opportunity_kinds.has(&"form") and opportunity_kinds.has(&"hazard") and opportunity_kinds.has(&"ledger"), "Initial opportunities should be grounded in a pending form, active hazard, and real institution ledger")
+	var martial_opportunities := AssignmentPipeline.generate_opportunities(assignment_world, assignment_actor, &"path_martial")
+	var civil_hazard_priority := 0
+	var martial_hazard_priority := 0
+	for opportunity in opportunities:
+		if StringName(opportunity.get("kind", "")) == &"hazard": civil_hazard_priority = int(opportunity.get("priority", 0))
+	for opportunity in martial_opportunities:
+		if StringName(opportunity.get("kind", "")) == &"hazard": martial_hazard_priority = int(opportunity.get("priority", 0))
+	_check(martial_opportunities.size() == 3 and martial_hazard_priority > civil_hazard_priority, "Career path should influence opportunity priority without gating access")
+	var form_opportunity: Dictionary = {}
+	var hazard_opportunity: Dictionary = {}
+	var ledger_opportunity: Dictionary = {}
+	for opportunity in opportunities:
+		match StringName(opportunity.get("kind", "")):
+			&"form": form_opportunity = opportunity
+			&"hazard": hazard_opportunity = opportunity
+			&"ledger": ledger_opportunity = opportunity
+	_check(StringName(form_opportunity.get("employer_id", "")) == &"ur_nanna", "Grain levy work should route to the grain clerk responsible for the source office")
+	_check(AssignmentPipeline.begin(assignment_world, form_opportunity, assignment_actor), "A selected world opportunity should enter the active assignment lifecycle")
+	var form_assignment_id := StringName(form_opportunity.get("id", ""))
+	var other_scribe := PersonEntity.new()
+	other_scribe.id = &"other_scribe"
+	_check(not bool(AssignmentPipeline.perform_action(assignment_world, other_scribe, form_assignment_id, &"examine_records").get("success", false)), "An engagement should only accept actions from its assigned scribe")
+	_check(not bool(AssignmentPipeline.resolve(assignment_world, assignment_actor, form_assignment_id, &"certify").get("success", false)), "An engagement should not permit assessment before investigation")
+	_check(bool(AssignmentPipeline.perform_action(assignment_world, assignment_actor, form_assignment_id, &"examine_records").get("success", false)), "Assignment should allow examination of its actual source record")
+	_check(bool(AssignmentPipeline.perform_action(assignment_world, assignment_actor, form_assignment_id, &"consult_official").get("success", false)), "Assignment should allow consultation as a separate investigative action")
+	_check(not bool(AssignmentPipeline.perform_action(assignment_world, assignment_actor, form_assignment_id, &"examine_records").get("success", false)), "An investigative action should not be recordable twice")
+	var form_resolution := AssignmentPipeline.resolve(assignment_world, assignment_actor, form_assignment_id, &"certify")
+	_check(bool(form_resolution.get("success", false)), "Two investigative actions should permit a supported form assessment")
+	_check(assignment_world.pending_forms.is_empty(), "Certifying the generated form should resolve that exact source form")
+	var deferred_world := WorldState.new()
+	var deferred_actor := UrukSeeder.seed_campaign(deferred_world, 44004401)
+	var deferred_form: Dictionary = {}
+	for opportunity in AssignmentPipeline.generate_opportunities(deferred_world, deferred_actor):
+		if StringName(opportunity.get("kind", "")) == &"form":
+			deferred_form = opportunity
+			break
+	AssignmentPipeline.begin(deferred_world, deferred_form, deferred_actor)
+	var deferred_id := StringName(deferred_form.get("id", ""))
+	AssignmentPipeline.perform_action(deferred_world, deferred_actor, deferred_id, &"examine_records")
+	AssignmentPipeline.perform_action(deferred_world, deferred_actor, deferred_id, &"reconcile_accounts")
+	var deferred_result := AssignmentPipeline.resolve(deferred_world, deferred_actor, deferred_id, &"defer")
+	_check(bool(deferred_result.get("success", false)) and deferred_world.pending_forms.is_empty() and String(deferred_world.resolved_forms.back().get("disposition", "")) == "deferred", "Deferring an assessment should file that form as deferred rather than certified")
+	_check(AssignmentPipeline.begin(assignment_world, hazard_opportunity, assignment_actor), "Active hazard should become a selectable engagement")
+	var hazard_assignment_id := StringName(hazard_opportunity.get("id", ""))
+	AssignmentPipeline.perform_action(assignment_world, assignment_actor, hazard_assignment_id, &"consult_official")
+	AssignmentPipeline.perform_action(assignment_world, assignment_actor, hazard_assignment_id, &"inspect_source")
+	var hazard_result := AssignmentPipeline.resolve(assignment_world, assignment_actor, hazard_assignment_id, &"repair")
+	_check(bool(hazard_result.get("success", false)) and not assignment_world.has_active_hazard(&"north_bay", &"roof_leak"), "Repair assessment should consume real institutional labor and stop the active hazard")
+	_check(AssignmentPipeline.begin(assignment_world, ledger_opportunity, assignment_actor), "A real institutional ledger should become a selectable engagement")
+	var ledger_assignment_id := StringName(ledger_opportunity.get("id", ""))
+	AssignmentPipeline.perform_action(assignment_world, assignment_actor, ledger_assignment_id, &"examine_records")
+	AssignmentPipeline.perform_action(assignment_world, assignment_actor, ledger_assignment_id, &"inspect_source")
+	var ledger_result := AssignmentPipeline.resolve(assignment_world, assignment_actor, ledger_assignment_id, &"record")
+	_check(bool(ledger_result.get("success", false)) and assignment_world.cedar_desk_log.size() == 3 and String(assignment_world.cedar_desk_log.back().get("category", "")) == "ledger", "Every completed engagement should enter the persistent work log with its source category")
+	_check(String(assignment_world.cedar_desk_log.front().get("responsible_character_id", "")) == String(assignment_actor.id) and String(assignment_world.cedar_desk_log.front().get("employer_id", "")) == "ur_nanna" and String(assignment_world.cedar_desk_log.front().get("institution_id", "")) == "eanna_household", "Work log should retain the responsible scribe, employer, and institution")
+	_check(assignment_world.cases_settled == 3, "Completed world-driven engagements should enter the existing career settlement counters")
 	_check(registry.all_places().size() == 7, "DefinitionRegistry should load the seven canonical Era 1 places")
 	_check(registry.get_place(&"hacinebi") != null and registry.get_place(&"hacinebi").political_relation == &"foreign_enclave", "Typed place lookup should retain Hacinebi's autonomous local context")
 	var copper_vector := AssignmentGeneratorScript.get_geographic_vector(&"counterfeit_copper")
@@ -135,6 +203,7 @@ func _run() -> void:
 	save_roundtrip_world.epics[&"great_canal_cut"] = {"active": true, "progress": 41, "progress_resource": &"canal_progress", "target": 100, "stage": "cutting", "completed": false}
 	save_roundtrip_world.stockpiles[&"canal_progress"] = 41
 	save_roundtrip_world.local_path_dockets_settled = 2
+	save_roundtrip_world.assignments[&"saved_world_assignment"] = {"status": "active", "kind": "form", "source_id": "form_saved", "actions": {"examine_records": true}, "evidence": {"examine_records": {"facts": "Saved evidence."}}}
 	save_roundtrip_world.faction_standings[&"eanna_household"] = 7
 	save_roundtrip_world.epic_summon_pending = true
 	save_roundtrip_world.epic_summon_issued = false
@@ -144,7 +213,7 @@ func _run() -> void:
 	var saved_narrative_state := save_roundtrip_world.rng_narrative.state
 	var saved_simulation_state := save_roundtrip_world.rng_sim.state
 	var saved_people_state := save_roundtrip_world.rng_people.state
-	var save_session := {"active_event_id": "routine_tally_adjustment", "procedural_assignment": {}, "selected_path": "government_scribe"}
+	var save_session := {"phase": "world_engagement", "active_event_id": "routine_tally_adjustment", "procedural_assignment": {}, "assignment_opportunities": [{"id": "work_test", "kind": "ledger", "title": "Test ledger"}], "active_world_assignment_id": "saved_world_assignment", "selected_path": "government_scribe"}
 	var save_payload := SaveCodecScript.encode_world(save_roundtrip_world, save_session)
 	var json_payload: Variant = JSON.parse_string(JSON.stringify(save_payload))
 	var decoded_save := SaveCodecScript.decode_save(json_payload)
@@ -160,8 +229,10 @@ func _run() -> void:
 		_check(restored_world.local_path_dockets_settled == 2 and restored_world.epic_summon_pending and not restored_world.epic_summon_issued and restored_world.get_faction_standing(&"eanna_household") == 7, "SaveCodec should preserve the career-to-Epic funnel state")
 		_check(restored_world.has_flag(&"save_test_flag", restored_world.current_period_index()), "SaveCodec should preserve expiring flags")
 		_check(restored_world.pending_forms.size() == save_roundtrip_world.pending_forms.size() and restored_world.hazards.size() == save_roundtrip_world.hazards.size(), "SaveCodec should preserve forms and hazards")
+		_check(restored_world.assignments.has(&"saved_world_assignment") and restored_world.assignments[&"saved_world_assignment"].get("actions", {}).has("examine_records"), "SaveCodec should preserve an unfinished multi-action assignment and its evidence")
 		_check(restored_world.rng_narrative.state == saved_narrative_state and restored_world.rng_sim.state == saved_simulation_state and restored_world.rng_people.state == saved_people_state, "SaveCodec should preserve all three RNG streams")
 		_check(String(decoded_save.session.get("active_event_id", "")) == "routine_tally_adjustment", "SaveCodec should preserve active docket session")
+		_check(String(decoded_save.session.get("phase", "")) == "world_engagement" and String(decoded_save.session.get("active_world_assignment_id", "")) == "saved_world_assignment" and decoded_save.session.get("assignment_opportunities", []).size() == 1, "SaveCodec should preserve the desk selection and active engagement session")
 	var unsupported_save := save_payload.duplicate(true)
 	unsupported_save["version"] = 999
 	_check(not bool(SaveCodecScript.decode_save(unsupported_save).get("success", false)), "SaveCodec should reject unsupported future versions")

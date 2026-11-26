@@ -225,5 +225,5 @@ static func _person(id: StringName, display_name: String, office: StringName, va
 	person.office_id = office
 	person.traits.assign(person_traits)
 	for skill in person.skills.levels.keys():
-		person.skills.levels[skill] = int(values.get(String(skill), 0))
+		person.skills.levels[skill] = int(values.get(String(skill), 1))
 	return person
