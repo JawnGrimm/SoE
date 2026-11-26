@@ -657,8 +657,8 @@ func _run() -> void:
 	var generator_variety := {}
 	var generator_has_repair := false
 	for generator_index in range(30):
-		var docket_a := AssignmentGeneratorScript.generate(generator_world_a, generator_actor_a)
-		var docket_b := AssignmentGeneratorScript.generate(generator_world_b, generator_actor_b)
+		var docket_a: Dictionary = AssignmentGeneratorScript.generate(generator_world_a, generator_actor_a)
+		var docket_b: Dictionary = AssignmentGeneratorScript.generate(generator_world_b, generator_actor_b)
 		_check(not docket_a.is_empty() and not docket_b.is_empty(), "Assignment generator should return a playable docket")
 		_check(docket_a.has("title") and docket_a.has("left_card") and docket_a.has("right_card") and docket_a.has("prompt") and docket_a.has("choices"), "Generated docket should use the shared payload keys")
 		var left_id := StringName(docket_a.left_card.get("speaker_id", ""))
