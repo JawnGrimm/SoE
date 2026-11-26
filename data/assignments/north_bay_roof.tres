@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="AssignmentDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/assignment_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"north_bay_roof"
+title = "North-Bay Roof Inspection"
+employer = &"ur_nanna"
+compensation_resource = &"silver"
+compensation_amount = 5
+law_xp = 25
+opinion_reward = 5
+opinion_penalty = -3
+required_actions = Array[StringName]([&"consult_steward", &"inspect_beams"])
