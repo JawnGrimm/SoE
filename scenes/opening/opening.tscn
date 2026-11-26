@@ -11,3 +11,6 @@ theme_override_constants/margin_left = 64
 theme_override_constants/margin_top = 64
 theme_override_constants/margin_right = 64
 theme_override_constants/margin_bottom = 64
+
+[node name="BackgroundMusicPlayer" parent="." index="1"]
+autoplay = false

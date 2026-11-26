@@ -14,7 +14,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 [application]
 
-config/name="Scribe of Eras - First Event Slice"
+config/name="Scribe of Eras"
 run/main_scene="res://scenes/opening/opening.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
@@ -50,7 +50,7 @@ locale/translations=PackedStringArray("res://addons/maaacks_menus_template/base/
 
 disable_install_wizard=true
 main_menu_scene_path="res://scenes/menus/main_menu/main_menu.tscn"
-game_scene_path=""
+game_scene_path="res://main.tscn"
 ending_scene_path="res://scenes/end_credits/end_credits.tscn"
 copy_path="res://"
 
