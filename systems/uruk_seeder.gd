@@ -62,8 +62,10 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 			if person.id != player.id and not person.relationships.has(player.id):
 				person.set_opinion(player.id, 0)
 	_seed_places(world)
-	_seed_institutions_and_groups(world, add_player_to_world)
-	_seed_relationships(world, add_player_to_world)
+	_seed_institutions_and_groups(world, false)
+	_seed_relationships(world, false)
+	if add_player_to_world:
+		attach_player(world, player)
 
 	world.stockpiles.clear()
 	world.stockpiles[&"canal_progress"] = 0
@@ -90,6 +92,37 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 	world.hazards.append({"id": &"roof_leak", "place_id": &"north_bay", "resource": &"barley", "rate": 1, "total_lost": 0, "active": true})
 	world.enqueue_form({"form_type": &"grain_levy", "subject_id": &"south_court_storehouse", "urgency": 1, "year": world.year})
 	return player
+
+static func attach_player(world: WorldState, player: PersonEntity) -> void:
+	## Adds the Era I household and roster context after character confirmation.
+	## Safe to call more than once; character creation resolution stays era-agnostic.
+	if world == null or player == null or player.id == &"":
+		push_warning("UrukSeeder.attach_player: world and a valid player are required")
+		return
+	if world.people.has(player.id) and world.get_person(player.id) != player:
+		push_warning("UrukSeeder.attach_player: another person already uses %s" % player.id)
+		return
+	world.people[player.id] = player
+
+	var household: Dictionary = world.institutions.get(&"eanna_household", {})
+	if not household.is_empty():
+		var members: Array = household.get("members", []).duplicate()
+		if not members.has(player.id):
+			members.append(player.id)
+		household["members"] = members
+		world.institutions[&"eanna_household"] = household
+
+	for person in world.people.values():
+		if person == player:
+			continue
+		if not person.opinions.has(player.id):
+			person.set_opinion(player.id, 5 if person.id == &"shuruppak_ilu" else 0)
+
+	# Restore the baseline mentor and household ties omitted while the player
+	# was held outside WorldState during the creation draft.
+	_link(world, &"shuruppak_ilu", player.id, &"mentor", 7, 8)
+	_link(world, &"geme_tur", player.id, &"family", 8, 9)
+	_link(world, player.id, &"geme_tur", &"family", 8, 9)
 
 static func _seed_places(world: WorldState) -> void:
 	world.places = {

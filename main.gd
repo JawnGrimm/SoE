@@ -626,12 +626,17 @@ func _show_character_creation_screen(screen: int) -> void:
 		prompt_label.text = String(question.get("prompt", ""))
 		dossier.text = String(question.get("title", ""))
 		for answer in question.get("answers", []):
+			var question_id := StringName(question.get("id", ""))
 			var answer_id := StringName(answer.get("id", ""))
 			var label := String(answer.get("title", ""))
-			if creation_selections.get_answer(StringName(question.get("id", ""))) == answer_id:
+			if creation_selections.get_answer(question_id) == answer_id:
 				label = "✓  " + label
 			label += "\n" + String(answer.get("description", ""))
-			_add_choice(label, _select_creation_answer.bind(StringName(question.get("id", "")), answer_id))
+			var availability := CharacterCreationResolver.is_answer_available(creation_catalog, creation_selections, question_id, answer)
+			var unavailable := not bool(availability.get("available", false))
+			if unavailable:
+				label += "\nUnavailable — " + String(availability.get("reason", "Incompatible with an earlier choice."))
+			_add_choice(label, _select_creation_answer.bind(question_id, answer_id), unavailable)
 		_add_creation_back_next()
 		return
 
@@ -702,7 +707,9 @@ func _add_creation_back_next() -> void:
 func _select_creation_answer(question_id: StringName, answer_id: StringName) -> void:
 	if phase != "character_creation":
 		return
-	creation_selections.select_answer(question_id, answer_id)
+	if not creation_selections.select_answer(question_id, answer_id):
+		return
+	CharacterCreationResolver.prune_invalid_answers(creation_catalog, creation_selections)
 	_show_character_creation_screen(creation_screen)
 
 func _set_creation_name(value: String) -> void:
@@ -717,6 +724,8 @@ func _confirm_character_creation() -> void:
 		_show_character_creation_screen(8)
 		return
 	selected_path = creation_selections.get_answer(&"professional_orientation")
+	if String(creation_catalog.get("era_id", "")) == "uruk_storehouse":
+		UrukSeeder.attach_player(world, actor)
 	_refresh_compound()
 	_offer_north_bay_assignment()
 	_schedule_next_case()
@@ -1156,7 +1165,7 @@ func _show_end_of_queue() -> void:
 	_add_choice("End Period", _advance_period)
 	status_label.text = "THE WATER RISES. THE STORES CHANGE. THE CLAY WAITS."
 
-func _add_choice(label_text: String, callback: Callable) -> void:
+func _add_choice(label_text: String, callback: Callable, disabled: bool = false) -> void:
 	var row := HBoxContainer.new()
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_theme_constant_override("separation", 10)
@@ -1173,6 +1182,7 @@ func _add_choice(label_text: String, callback: Callable) -> void:
 	row.add_child(wedge)
 	var button := Button.new()
 	button.text = label_text
+	button.disabled = disabled
 	button.custom_minimum_size = Vector2(190, choice_height)
 	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL

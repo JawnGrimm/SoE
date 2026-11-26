@@ -13,6 +13,55 @@ static func load_catalog(path: String) -> Dictionary:
 		return {}
 	return parsed
 
+static func is_answer_available(catalog: Dictionary, selections: CharacterCreationSelections, question_id: StringName, answer: Dictionary) -> Dictionary:
+	if selections == null:
+		return {"available": false, "reason": "Character choices are unavailable."}
+	var requirements: Dictionary = answer.get("requires", {})
+	for required_question_variant in requirements.keys():
+		var required_question := StringName(required_question_variant)
+		var required_answer := selections.get_answer(required_question)
+		var allowed: Array = requirements[required_question_variant]
+		if required_answer == &"":
+			return {"available": false, "reason": "Choose %s first." % _question_title(catalog, required_question)}
+		if not allowed.has(String(required_answer)):
+			var allowed_titles: Array[String] = []
+			var required_data := _find_question(catalog, required_question)
+			for allowed_id in allowed:
+				var allowed_answer := _find_answer(required_data, StringName(allowed_id))
+				allowed_titles.append(String(allowed_answer.get("title", allowed_id)))
+			return {"available": false, "reason": "Requires %s: %s." % [_question_title(catalog, required_question), ", ".join(allowed_titles)]}
+	return {"available": true, "reason": ""}
+
+static func prune_invalid_answers(catalog: Dictionary, selections: CharacterCreationSelections) -> Array[StringName]:
+	var cleared: Array[StringName] = []
+	if selections == null or selections.committed:
+		return cleared
+	var changed := true
+	while changed:
+		changed = false
+		for question_data in catalog.get("questions", []):
+			var question_id := StringName(question_data.get("id", ""))
+			var answer_id := selections.get_answer(question_id)
+			if answer_id == &"":
+				continue
+			var answer := _find_answer(question_data, answer_id)
+			if answer.is_empty() or not bool(is_answer_available(catalog, selections, question_id, answer).get("available", false)):
+				selections.clear_answer(question_id)
+				if not cleared.has(question_id):
+					cleared.append(question_id)
+				changed = true
+	return cleared
+
+static func _find_question(catalog: Dictionary, question_id: StringName) -> Dictionary:
+	for question_data in catalog.get("questions", []):
+		if StringName(question_data.get("id", "")) == question_id:
+			return question_data
+	return {}
+
+static func _question_title(catalog: Dictionary, question_id: StringName) -> String:
+	var question := _find_question(catalog, question_id)
+	return String(question.get("title", question_id))
+
 static func validate(catalog: Dictionary, selections: CharacterCreationSelections) -> Dictionary:
 	var errors: Array[String] = []
 	if catalog.is_empty() or selections == null:

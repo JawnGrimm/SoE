@@ -350,6 +350,7 @@ func _run() -> void:
 	var creation_world := WorldState.new()
 	var creation_actor := UrukSeeder.seed_campaign(creation_world, 32003200, false)
 	_check(not creation_world.people.has(creation_actor.id), "Unconfirmed player must not be inserted into WorldState")
+	_check(not creation_world.institutions[&"eanna_household"].members.has(creation_actor.id), "Unconfirmed player must not enter Eanna household membership during the draft")
 	var orphan_player_tie := false
 	for seeded_person in creation_world.people.values():
 		if seeded_person.relationships.has(creation_actor.id):
@@ -374,6 +375,12 @@ func _run() -> void:
 	incompatible_draft.select_answer(&"origin", &"origin_exchange")
 	incompatible_draft.select_answer(&"responsibility", &"responsibility_quality")
 	_check(not bool(CharacterCreationResolver.validate(creation_catalog, incompatible_draft).get("valid", false)), "Incompatible origin/responsibility combinations must fail validation")
+	var quality_answer := CharacterCreationResolver._find_answer(creation_catalog.questions[1], &"responsibility_quality")
+	_check(not bool(CharacterCreationResolver.is_answer_available(creation_catalog, incompatible_draft, &"responsibility", quality_answer).get("available", false)), "Incompatible answers should be disabled before selection")
+	incompatible_draft.select_answer(&"formative_experience", &"experience_disagreement")
+	var pruned := CharacterCreationResolver.prune_invalid_answers(creation_catalog, incompatible_draft)
+	_check(pruned.has(&"responsibility") and pruned.has(&"formative_experience"), "Changing an earlier answer should clear every invalidated downstream choice")
+	_check(incompatible_draft.get_answer(&"responsibility") == &"" and incompatible_draft.get_answer(&"formative_experience") == &"", "Pruned answers should no longer remain in the draft")
 	_check(CharacterCreationResolver.build_biography(creation_catalog, creation_draft).contains("You grew up around"), "Biography preview should assemble authored fragments")
 	_check(creation_world.people.size() == draft_people_before and creation_world.pending_forms.size() == draft_forms_before, "Preview must not mutate WorldState")
 	_check(creation_world.get_person(&"ur_nanna").get_opinion(creation_actor.id) == draft_opinion_before, "Preview must not change NPC opinions")
@@ -382,6 +389,15 @@ func _run() -> void:
 	var creation_result := CharacterCreationResolver.commit(creation_catalog, creation_draft, creation_world, creation_actor, registry.get_era(&"uruk_storehouse"), runner.effects)
 	_check(bool(creation_result.get("committed", false)), "Screen 8 should commit a valid character draft")
 	_check(creation_world.get_person(creation_actor.id) == creation_actor, "Confirmed player should enter WorldState")
+	UrukSeeder.attach_player(creation_world, creation_actor)
+	var eanna_members: Array = creation_world.institutions[&"eanna_household"].members
+	_check(eanna_members.has(creation_actor.id), "Confirmed player should join the Eanna institutional household")
+	_check(creation_world.get_person(&"geme_tur").relationships.has(creation_actor.id), "Confirmed player should receive the baseline family tie")
+	_check(creation_world.get_person(&"shuruppak_ilu").get_opinion(creation_actor.id) == 5, "Senior scribe should retain the baseline +5 opinion")
+	_check(creation_world.get_person(&"ur_nanna").get_opinion(creation_actor.id) == 0, "Other roster members should receive explicit baseline zero opinions")
+	var eanna_member_count := eanna_members.size()
+	UrukSeeder.attach_player(creation_world, creation_actor)
+	_check(creation_world.institutions[&"eanna_household"].members.size() == eanna_member_count, "Player attachment should be idempotent")
 	_check(creation_actor.has_flag(&"path_civil", creation_world.current_period_index()), "Civic orientation should set its canonical path flag")
 	_check(not creation_actor.has_flag(&"path_merchant", creation_world.current_period_index()), "Revised path choice should not leave the abandoned flag")
 	_check(creation_actor.memory.size() == 1, "Formative experience should enter the character memory through EventEffect")
