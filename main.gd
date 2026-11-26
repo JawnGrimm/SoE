@@ -34,7 +34,6 @@ var last_opinion_deltas: Dictionary[StringName, int] = {}
 var year_label: Label
 var case_heading: Label
 var dossier: RichTextLabel
-var record_grid: GridContainer
 var prompt_label: Label
 var choices: VBoxContainer
 var stamp_history_row: HFlowContainer
@@ -59,6 +58,10 @@ var evidence_left_quote: Label
 var evidence_right_quote: Label
 var evidence_left_speaker: Label
 var evidence_right_speaker: Label
+var evidence_left_facts: Label
+var evidence_right_facts: Label
+var evidence_left_portrait: TextureRect
+var evidence_right_portrait: TextureRect
 var choice_buttons: Array[Button] = []
 var choice_stamp_labels: Dictionary = {}
 var choice_locked := false
@@ -80,11 +83,11 @@ func _build_interface() -> void:
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	margin.add_theme_constant_override("margin_left", 22)
 	margin.add_theme_constant_override("margin_right", 22)
-	margin.add_theme_constant_override("margin_top", 18)
-	margin.add_theme_constant_override("margin_bottom", 14)
+	margin.add_theme_constant_override("margin_top", 10)
+	margin.add_theme_constant_override("margin_bottom", 8)
 	add_child(margin)
 	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 10)
+	root.add_theme_constant_override("separation", 6)
 	margin.add_child(root)
 	var header := HBoxContainer.new()
 	root.add_child(header)
@@ -105,7 +108,7 @@ func _build_interface() -> void:
 	var body := HBoxContainer.new()
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	body.add_theme_constant_override("separation", 14)
+	body.add_theme_constant_override("separation", 10)
 	root.add_child(body)
 
 	var mat := PanelContainer.new()
@@ -117,11 +120,11 @@ func _build_interface() -> void:
 	var desk_box := VBoxContainer.new()
 	desk_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	desk_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	desk_box.add_theme_constant_override("separation", 8)
+	desk_box.add_theme_constant_override("separation", 5)
 	mat.add_child(desk_box)
 	var desk_caption := Label.new()
 	desk_caption.text = "THE DESK  /  CEDAR AND REED"
-	desk_caption.add_theme_font_size_override("font_size", 11)
+	desk_caption.add_theme_font_size_override("font_size", 10)
 	desk_caption.add_theme_color_override("font_color", Color("#a99570"))
 	desk_box.add_child(desk_caption)
 	var upper_workspace := VBoxContainer.new()
@@ -131,17 +134,17 @@ func _build_interface() -> void:
 	upper_workspace.add_theme_constant_override("separation", 8)
 	desk_box.add_child(upper_workspace)
 	var evidence_row := HBoxContainer.new()
-	evidence_row.custom_minimum_size.y = 145
+	evidence_row.custom_minimum_size.y = 126
 	evidence_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	evidence_row.add_theme_constant_override("separation", 12)
 	upper_workspace.add_child(evidence_row)
-	evidence_left = _make_evidence_panel(evidence_row, "GRANARY TERRACES  /  TEMPLE", "Ur-Nanna", "The temple cellars are cold, dry, and exact. The gods demand honest measures.")
-	evidence_right = _make_evidence_panel(evidence_row, "RIVER QUAYS  /  LANDING", "Enlil-kisu", "The river road is dangerous and hungry. We respect the scribe who knows what a boatman endures.")
+	evidence_left = _make_evidence_panel(evidence_row, "GRANARY TERRACES  /  TEMPLE", "Ur-Nanna", "The temple cellars are cold, dry, and exact. The gods demand honest measures.", &"ur_nanna")
+	evidence_right = _make_evidence_panel(evidence_row, "RIVER QUAYS  /  LANDING", "Enlil-kisu", "The river road is dangerous and hungry. We respect the scribe who knows what a boatman endures.", &"enlil_kisu")
 	docket_motion_layer = Control.new()
 	docket_motion_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	docket_motion_layer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	docket_motion_layer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	docket_motion_layer.custom_minimum_size.y = 280
+	docket_motion_layer.custom_minimum_size.y = 244
 	desk_box.add_child(docket_motion_layer)
 	docket_overlay = PanelContainer.new()
 	docket_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -159,22 +162,22 @@ func _build_interface() -> void:
 	docket_motion_layer.add_child(docket_overlay)
 	var tablet_content := MarginContainer.new()
 	tablet_content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	tablet_content.add_theme_constant_override("margin_left", 50)
-	tablet_content.add_theme_constant_override("margin_right", 50)
-	tablet_content.add_theme_constant_override("margin_top", 50)
-	tablet_content.add_theme_constant_override("margin_bottom", 50)
+	tablet_content.add_theme_constant_override("margin_left", 34)
+	tablet_content.add_theme_constant_override("margin_right", 34)
+	tablet_content.add_theme_constant_override("margin_top", 30)
+	tablet_content.add_theme_constant_override("margin_bottom", 30)
 	docket_overlay.add_child(tablet_content)
 	var mat_box := VBoxContainer.new()
 	mat_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	mat_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	mat_box.add_theme_constant_override("separation", 14)
+	mat_box.add_theme_constant_override("separation", 7)
 	tablet_content.add_child(mat_box)
 	case_heading = Label.new()
 	var title_font := FontVariation.new()
 	title_font.base_font = ThemeDB.fallback_font
 	title_font.variation_embolden = 0.65
 	case_heading.add_theme_font_override("font", title_font)
-	case_heading.add_theme_font_size_override("font_size", 24)
+	case_heading.add_theme_font_size_override("font_size", 20)
 	_apply_incised_text(case_heading)
 	case_heading.visible = false
 	mat_box.add_child(case_heading)
@@ -188,16 +191,10 @@ func _build_interface() -> void:
 	_apply_incised_text(dossier)
 	dossier.visible = false
 	mat_box.add_child(dossier)
-	record_grid = GridContainer.new()
-	record_grid.columns = 3
-	record_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	record_grid.add_theme_constant_override("h_separation", 8)
-	record_grid.add_theme_constant_override("v_separation", 8)
-	upper_workspace.add_child(record_grid)
 	prompt_label = Label.new()
 	prompt_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	prompt_label.add_theme_font_size_override("font_size", 20)
-	prompt_label.custom_minimum_size.y = 28
+	prompt_label.add_theme_font_size_override("font_size", 17)
+	prompt_label.custom_minimum_size.y = 22
 	_apply_incised_text(prompt_label)
 	mat_box.add_child(prompt_label)
 	stamp_history_row = HFlowContainer.new()
@@ -208,7 +205,7 @@ func _build_interface() -> void:
 	stamp_history_row.add_theme_constant_override("v_separation", 4)
 	mat_box.add_child(stamp_history_row)
 	choices = VBoxContainer.new()
-	choices.add_theme_constant_override("separation", 11)
+	choices.add_theme_constant_override("separation", 5)
 	mat_box.add_child(choices)
 
 	var desk_props := HBoxContainer.new()
@@ -313,7 +310,7 @@ func _build_interface() -> void:
 	cavity_label.add_theme_color_override("font_color", Color("#c6b99f"))
 	secret_cavity.add_child(cavity_label)
 
-func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: String, quote: String) -> PanelContainer:
+func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: String, quote: String, character_id: StringName = &"") -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.size_flags_stretch_ratio = 1.0
@@ -321,17 +318,16 @@ func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: Strin
 	panel.add_theme_stylebox_override("panel", _panel_style("#2a2118", "#705b3a"))
 	parent.add_child(panel)
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 6)
+	box.add_theme_constant_override("separation", 4)
 	panel.add_child(box)
 	var header := HBoxContainer.new()
 	box.add_child(header)
-	var seal := Label.new()
-	seal.text = "◉"
-	seal.custom_minimum_size.x = 36
-	seal.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	seal.add_theme_font_size_override("font_size", 25)
-	seal.add_theme_color_override("font_color", Color("#b58c55"))
-	header.add_child(seal)
+	var portrait := TextureRect.new()
+	portrait.custom_minimum_size = Vector2(44, 44)
+	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	portrait.texture = _load_character_portrait(character_id)
+	header.add_child(portrait)
 	var title := Label.new()
 	title.text = heading
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -347,19 +343,63 @@ func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: Strin
 	var quote_label := Label.new()
 	quote_label.text = "“%s”" % quote
 	quote_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	quote_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	quote_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	quote_label.add_theme_font_size_override("font_size", 13)
 	quote_label.add_theme_color_override("font_color", Color("#e0d4bd"))
 	box.add_child(quote_label)
+	var facts_label := Label.new()
+	facts_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	facts_label.add_theme_font_size_override("font_size", 11)
+	facts_label.add_theme_color_override("font_color", Color("#c7ad7e"))
+	facts_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	box.add_child(facts_label)
 	if heading.begins_with("GRANARY"):
 		evidence_left_title = title
 		evidence_left_quote = quote_label
 		evidence_left_speaker = speaker_label
+		evidence_left_facts = facts_label
+		evidence_left_portrait = portrait
 	else:
 		evidence_right_title = title
 		evidence_right_quote = quote_label
 		evidence_right_speaker = speaker_label
+		evidence_right_facts = facts_label
+		evidence_right_portrait = portrait
 	return panel
+
+func _load_character_portrait(character_id: StringName) -> Texture2D:
+	if character_id != &"":
+		var portrait_path := "res://assets/characters/%s_portrait.png" % String(character_id).to_lower()
+		if ResourceLoader.exists(portrait_path):
+			var portrait_texture := load(portrait_path) as Texture2D
+			if portrait_texture != null:
+				return portrait_texture
+	return _make_seal_placeholder()
+
+func _make_seal_placeholder() -> Texture2D:
+	var image := Image.create(44, 44, false, Image.FORMAT_RGBA8)
+	var center := Vector2(21.5, 21.5)
+	for y in range(44):
+		for x in range(44):
+			var distance := Vector2(x, y).distance_to(center)
+			if distance <= 19.0:
+				var color := Color("#b58c55") if distance >= 15.5 else Color("#70512f")
+				if distance < 12.5:
+					color = Color("#c9a66d")
+				image.set_pixel(x, y, color)
+	return ImageTexture.create_from_image(image)
+
+func _set_evidence_portrait(left_id: StringName, right_id: StringName) -> void:
+	if evidence_left_portrait != null:
+		evidence_left_portrait.texture = _load_character_portrait(left_id)
+	if evidence_right_portrait != null:
+		evidence_right_portrait.texture = _load_character_portrait(right_id)
+
+func _set_evidence_facts(left_text: String, right_text: String) -> void:
+	if evidence_left_facts != null:
+		evidence_left_facts.text = left_text
+	if evidence_right_facts != null:
+		evidence_right_facts.text = right_text
 
 func _set_evidence_tension(left_delta: int, right_delta: int) -> void:
 	_set_evidence_style(evidence_left, left_delta)
@@ -460,31 +500,6 @@ func _panel_style(fill: String, border: String) -> StyleBoxFlat:
 	style.content_margin_bottom = 12
 	return style
 
-func _add_record(heading: String, value: String, detail: String) -> void:
-	var panel := PanelContainer.new()
-	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.add_theme_stylebox_override("panel", _panel_style("#00000000", "#705b3a"))
-	record_grid.add_child(panel)
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 5)
-	panel.add_child(box)
-	var head := Label.new()
-	head.text = "𒂍  " + heading
-	head.add_theme_font_size_override("font_size", 11)
-	_apply_incised_text(head)
-	box.add_child(head)
-	var val := Label.new()
-	val.text = value
-	val.add_theme_font_size_override("font_size", 19)
-	_apply_incised_text(val)
-	box.add_child(val)
-	var note := Label.new()
-	note.text = detail
-	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	note.add_theme_font_size_override("font_size", 11)
-	_apply_incised_text(note)
-	box.add_child(note)
-
 func _start_world() -> void:
 	runner = EventRunner.new()
 	scheduler = EventScheduler.new(runner)
@@ -519,10 +534,10 @@ func _show_path_catechism() -> void:
 	_clear_choices()
 	phase = "catechism_path"
 	case_heading.text = "𒂍  THE FIRST CLAY"
-	case_heading.add_theme_font_size_override("font_size", 24)
+	case_heading.add_theme_font_size_override("font_size", 20)
 	dossier.text = ""
 	dossier.visible = false
-	_clear_records()
+	_set_evidence_facts("", "")
 	_set_evidence_tension(0, 0)
 	prompt_label.text = "Where were you taught the city's marks?"
 	_add_choice("The Granary Terraces — Temple Path", _choose_path.bind(&"path_temple"))
@@ -542,10 +557,10 @@ func _show_mentor_catechism() -> void:
 	_clear_choices()
 	phase = "catechism_mentor"
 	case_heading.text = "𒂍  THE MENTOR'S MARK"
-	case_heading.add_theme_font_size_override("font_size", 24)
+	case_heading.add_theme_font_size_override("font_size", 20)
 	dossier.text = ""
 	dossier.visible = false
-	_clear_records()
+	_set_evidence_facts("", "")
 	_set_evidence_tension(0, 0)
 	prompt_label.text = "Whose instruction will you carry?"
 	_add_choice("Shuruppak-ilu — +1 Arithmetic; exacting", _choose_mentor.bind(&"shuruppak_ilu"))
@@ -564,31 +579,27 @@ func _choose_mentor(mentor_id: StringName) -> void:
 func _show_case() -> void:
 	_clear_choices()
 	phase = "case"
-	case_heading.add_theme_font_size_override("font_size", 24)
+	case_heading.add_theme_font_size_override("font_size", 20)
 	case_heading.text = "𒂍  " + active_event.title.to_upper()
+	dossier.visible = false
+	dossier.text = ""
+	_set_evidence_tension(0, 0)
+	_set_evidence_facts("", "")
 	if active_event.id == CASE_15_ID:
 		evidence_left_title.text = "SOUTH COURT  /  DISPATCH"
 		evidence_left_speaker.text = "ENLIL-KISU"
+		evidence_left_portrait.texture = _load_character_portrait(&"enlil_kisu")
+		evidence_right_speaker.text = "UTU-MANSUM"
+		evidence_right_portrait.texture = _load_character_portrait(&"utu_mansum")
 		evidence_left_quote.text = "“The river road is dangerous and hungry. I know what a boatman endures.”"
 		evidence_right_title.text = "SOUTH COURT  /  GATE TALLY"
 		evidence_right_speaker.text = "UTU-MANSUM"
 		evidence_right_quote.text = "“The gate tally reads twenty-three. I will answer for the count I witnessed.”"
-	dossier.visible = false
-	dossier.text = ""
-	_set_evidence_tension(0, 0)
-	_clear_records()
-	if active_event.id == CASE_15_ID:
-		_add_record("DISPATCH TABLET", "24 measures barley", "Sealed by Enlil-kisu at the river.")
-		_add_record("THRESHOLD TALLY", "23 measures barley", "Marked by Utu-mansum at the gate.")
-		_add_record("CUSTODY NOTE", "No witness", "Loading unwitnessed. Unloading unwitnessed. River transit unobserved.")
+		_set_evidence_facts("𒂍  DISPATCH TABLET\n24 measures barley\nSealed at the river.", "𒂍  THRESHOLD TALLY\n23 measures barley\nCUSTODY: No witness at loading, transit, or unloading.")
 	elif active_event.id == CASE_01_ID:
-		_add_record("PIERCED TAG", "4 jars oil", "6 linen bundles. Sender's seal intact on tag.")
-		_add_record("COURT MAT", "4 jars present", "6 bundles present. Smallest oil jar seal cracked.")
-		_add_record("CARRIER TESTIMONY", "Road was rough", "Enlil-kisu says the jar was never unstoppered.")
+		_set_evidence_facts("𒂍  PIERCED TAG\n4 jars oil · 6 linen bundles\nSender’s seal intact on tag.", "𒂍  COURT MAT\n4 jars present · 6 bundles present\nSmallest oil jar seal cracked. CARRIER: road was rough; Enlil-kisu says the jar was never unstoppered.")
 	elif active_event.id == CASE_02_ID:
-		_add_record("GRAIN ENTRIES", "6 + 8 + 4 = 18", "Subtotal written: 17.")
-		_add_record("MALT ENTRY", "3 baskets malt", "Malted spelt, recorded below the dividing line.")
-		_add_record("BLURRED SIGN", "Moisture-damaged", "Allocation between libation and worker bread cannot be established.")
+		_set_evidence_facts("𒂍  GRAIN ENTRIES\n6 + 8 + 4 = 18\nSubtotal written: 17.", "𒂍  MALT ENTRY · 3 baskets malt\nMalted spelt recorded below the dividing line.\n𒂍  BLURRED SIGN\nMoisture-damaged; allocation between libation and worker bread cannot be established.")
 	prompt_label.text = "What mark will you leave?"
 	for index in range(active_event.outcomes.size()):
 		var outcome: EventOutcome = active_event.outcomes[index]
@@ -645,11 +656,11 @@ func _play_outcome_foley(index: int) -> void:
 func _show_result(outcome: EventOutcome) -> void:
 	_clear_choices()
 	phase = "result"
-	case_heading.add_theme_font_size_override("font_size", 24)
+	case_heading.add_theme_font_size_override("font_size", 20)
 	case_heading.text = "𒂍  MARK MADE"
 	dossier.visible = false
 	dossier.text = ""
-	_clear_records()
+	_set_evidence_facts("", "")
 	_set_evidence_tension(0, 0)
 	prompt_label.text = outcome.title_override + " — " + outcome.description_override
 	_add_choice("End Period", _advance_period)
@@ -684,11 +695,11 @@ func _prepare_seasonal_forms() -> void:
 func _show_end_of_queue() -> void:
 	_clear_choices()
 	phase = "end_of_queue"
-	case_heading.add_theme_font_size_override("font_size", 24)
+	case_heading.add_theme_font_size_override("font_size", 20)
 	case_heading.text = "𒂍  THE DESK IS CLEAR"
 	dossier.visible = false
 	dossier.text = ""
-	_clear_records()
+	_set_evidence_facts("", "")
 	_set_evidence_tension(0, 0)
 	prompt_label.text = "The desk is clear. No case is set before you."
 	_add_choice("End Period", _advance_period)
@@ -698,7 +709,7 @@ func _add_choice(label_text: String, callback: Callable) -> void:
 	var row := HBoxContainer.new()
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_theme_constant_override("separation", 10)
-	row.custom_minimum_size.y = 56
+	row.custom_minimum_size.y = 46
 	choices.add_child(row)
 	var wedge := Label.new()
 	wedge.text = "𒁹"
@@ -710,10 +721,10 @@ func _add_choice(label_text: String, callback: Callable) -> void:
 	row.add_child(wedge)
 	var button := Button.new()
 	button.text = label_text
-	button.custom_minimum_size = Vector2(220, 56)
+	button.custom_minimum_size = Vector2(190, 46)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	button.add_theme_font_size_override("font_size", 18)
+	button.add_theme_font_size_override("font_size", 16)
 	_apply_incised_text(button)
 	button.add_theme_color_override("font_color", Color("#3b2819"))
 	button.add_theme_color_override("font_hover_color", Color("#2b1d12"))
@@ -826,11 +837,6 @@ func _clear_choices() -> void:
 	choice_stamp_labels.clear()
 	for child in choices.get_children():
 		choices.remove_child(child)
-		child.queue_free()
-
-func _clear_records() -> void:
-	for child in record_grid.get_children():
-		record_grid.remove_child(child)
 		child.queue_free()
 
 func _refresh_compound() -> void:
