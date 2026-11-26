@@ -976,7 +976,7 @@ func _clear_choice_preview() -> void:
 func _handle_choice(button: Button, callback: Callable) -> void:
 	if choice_locked:
 		return
-	if button.text == "End Period":
+	if button.text == "End Period" or phase not in ["case", "catechism_path", "catechism_mentor", "north_bay_assessment"]:
 		callback.call()
 		return
 	choice_locked = true
