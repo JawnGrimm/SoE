@@ -582,6 +582,26 @@ func _run() -> void:
 		_check(authored_case != null, "Registry should load authored Uruk case %s" % event_id)
 		_check(authored_case != null and authored_case.cooldown_years >= 1, "Uruk case %s should use a cooldown" % event_id)
 
+	# Year 1 must produce real, cause-matched work rather than a quiet desk.
+	var year_one_world := WorldState.new()
+	UrukSeeder.seed_campaign(year_one_world, 32003200)
+	var year_one_sim := WorldSimulator.new()
+	for year_one_period in range(12):
+		year_one_sim.advance_period(year_one_world)
+	var year_one_generated_types: Dictionary = {}
+	var roof_inspection_generated := false
+	for generated_form in year_one_world.pending_forms + year_one_world.resolved_forms:
+		if StringName(generated_form.get("generated_by", "")) != &"world_simulator":
+			continue
+		var generated_type := StringName(generated_form.get("form_type", ""))
+		year_one_generated_types[generated_type] = true
+		if generated_type == &"held_barley" and StringName(generated_form.get("generation_reason", "")) == &"roof_leak_inspection":
+			roof_inspection_generated = true
+	_check(year_one_generated_types.size() >= 2, "Year 1 simulation should generate at least two distinct form types")
+	_check(roof_inspection_generated, "Active North-Bay roof leak should generate its matching Held Barley inspection in Year 1")
+	_check(year_one_world.get_resource(&"labor") < 40, "Labor should not pin at its stockpile cap during Year 1")
+	_check(year_one_world.get_resource(&"labor") <= 25, "Seasonal and institutional demand should bring labor into the intended working range by Year 1 end")
+
 	# -- Autonomous world simulation: same seed, same world history; narrative RNG stays independent.
 	var sim_world_a := WorldState.new()
 	var sim_world_b := WorldState.new()
