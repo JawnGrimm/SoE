@@ -3,7 +3,7 @@ extends RefCounted
 
 const PLAYER_ID: StringName = &"player_apprentice"
 
-static func seed_campaign(world: WorldState, world_seed: int) -> PersonEntity:
+static func seed_campaign(world: WorldState, world_seed: int, add_player_to_world: bool = true) -> PersonEntity:
 	world.set_world_seed(world_seed)
 	world.year = -3200
 	world.period = 0
@@ -28,7 +28,8 @@ static func seed_campaign(world: WorldState, world_seed: int) -> PersonEntity:
 
 	# The original eight remain the center of the first playable slice.
 	var player := _person(&"player_apprentice", "Enlil-barni", &"apprentice_scribe", {"literacy": 1, "arithmetic": 1, "law": 1}, [])
-	world.people[player.id] = player
+	if add_player_to_world:
+		world.people[player.id] = player
 	var senior := _person(&"shuruppak_ilu", "Shuruppak-ilu", &"archive_keeper", {"literacy": 4, "arithmetic": 4, "law": 3, "rhetoric": 2, "intrigue": 2, "stewardship": 3}, [&"patient", &"exacting"])
 	senior.set_opinion(PLAYER_ID, 5)
 	senior.vulnerabilities[&"patience_remaining"] = 3 + world.rng_people.randi_range(0, 2)
@@ -55,12 +56,13 @@ static func seed_campaign(world: WorldState, world_seed: int) -> PersonEntity:
 	world.people[&"nin_azu"] = _person(&"nin_azu", "Nin-azu", &"precinct_attendant", {"literacy": 2, "rhetoric": 2}, [&"devout", &"ambitious"])
 	world.people[&"geme_tur"] = _person(&"geme_tur", "Geme-tur", &"player_household", {"stewardship": 2}, [&"practical", &"blunt"])
 
-	for person in world.people.values():
-		if person.id != player.id and not person.relationships.has(player.id):
-			person.set_opinion(player.id, 0)
+	if add_player_to_world:
+		for person in world.people.values():
+			if person.id != player.id and not person.relationships.has(player.id):
+				person.set_opinion(player.id, 0)
 	_seed_places(world)
-	_seed_institutions_and_groups(world)
-	_seed_relationships(world)
+	_seed_institutions_and_groups(world, add_player_to_world)
+	_seed_relationships(world, add_player_to_world)
 
 	world.stockpiles.clear()
 	world.stockpiles[&"canal_progress"] = 0
@@ -101,9 +103,12 @@ static func _seed_places(world: WorldState) -> void:
 		&"habuba_kabira": {"name": "Habuba Kabira", "kind": &"external_settlement", "region": &"upper_euphrates", "connected_to": [&"uruk"]}
 	}
 
-static func _seed_institutions_and_groups(world: WorldState) -> void:
+static func _seed_institutions_and_groups(world: WorldState, include_player: bool = true) -> void:
+	var eanna_members: Array[StringName] = [&"shuruppak_ilu", &"ur_nanna", &"utu_mansum", &"enlil_kisu", &"lu_nanshe"]
+	if include_player:
+		eanna_members.append(&"player_apprentice")
 	world.institutions = {
-		&"eanna_household": {"name": "Eanna Institutional Household", "kind": &"institutional_household", "place_id": &"eanna_precinct", "members": [&"shuruppak_ilu", &"ur_nanna", &"utu_mansum", &"enlil_kisu", &"lu_nanshe", &"player_apprentice"], "interests": [&"grain", &"labor", &"storage", &"canal_work"]},
+		&"eanna_household": {"name": "Eanna Institutional Household", "kind": &"institutional_household", "place_id": &"eanna_precinct", "members": eanna_members, "interests": [&"grain", &"labor", &"storage", &"canal_work"]},
 		&"anu_establishment": {"name": "Anu Precinct Establishment", "kind": &"cultic_establishment", "place_id": &"anu_precinct", "members": [&"nin_azu", &"nin_kasi"], "interests": [&"offerings", &"beer", &"prestige"]},
 		&"exchange_network": {"name": "River and Overland Exchange", "kind": &"exchange_network", "place_id": &"uruk", "members": [&"geme_inana", &"enki_ili", &"ur_amas"], "interests": [&"transport", &"materials", &"exchange"]}
 	}
@@ -115,8 +120,9 @@ static func _seed_institutions_and_groups(world: WorldState) -> void:
 		&"brewers": {"name": "Brewers", "kind": &"craft_group", "place_id": &"uruk", "members": [&"nin_kasi"], "resources": [&"barley", &"beer"]}
 	}
 
-static func _seed_relationships(world: WorldState) -> void:
-	_link(world, &"shuruppak_ilu", &"player_apprentice", &"mentor", 7, 8)
+static func _seed_relationships(world: WorldState, include_player: bool = true) -> void:
+	if include_player:
+		_link(world, &"shuruppak_ilu", &"player_apprentice", &"mentor", 7, 8)
 	_link(world, &"ur_nanna", &"shuruppak_ilu", &"professional_respect", 4, 6)
 	_link(world, &"ur_nanna", &"enlil_kisu", &"resource_dependency", 3, 5)
 	_link(world, &"enlil_kisu", &"ur_amas", &"crew_bond", 6, 7)
