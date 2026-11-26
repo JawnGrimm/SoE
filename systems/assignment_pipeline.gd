@@ -32,7 +32,7 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			"title": _form_title(form_type),
 			"summary": "%s requires an assessment at %s." % [_form_title(form_type), subject_name],
 			"priority": urgency + (3 if overdue else 0) + _career_bonus(selected_path, form_type),
-			 "employer_id": _form_employer(world, form_type),
+			"employer_id": _form_employer(world, form_type),
 			"source_data": form.duplicate(true),
 			"path_id": selected_path
 		})
