@@ -90,7 +90,7 @@ func _build_interface() -> void:
 	margin.add_theme_constant_override("margin_bottom", 8)
 	add_child(margin)
 	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 6)
+	root.add_theme_constant_override("separation", 4)
 	margin.add_child(root)
 	var header := HBoxContainer.new()
 	root.add_child(header)
@@ -123,7 +123,7 @@ func _build_interface() -> void:
 	var desk_box := VBoxContainer.new()
 	desk_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	desk_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	desk_box.add_theme_constant_override("separation", 5)
+	desk_box.add_theme_constant_override("separation", 3)
 	mat.add_child(desk_box)
 	var desk_caption := Label.new()
 	desk_caption.text = "THE DESK  /  CEDAR AND REED"
@@ -134,10 +134,10 @@ func _build_interface() -> void:
 	upper_workspace.custom_minimum_size.y = 0
 	upper_workspace.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	upper_workspace.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	upper_workspace.add_theme_constant_override("separation", 8)
+	upper_workspace.add_theme_constant_override("separation", 6)
 	desk_box.add_child(upper_workspace)
 	var evidence_row := HBoxContainer.new()
-	evidence_row.custom_minimum_size.y = 126
+	evidence_row.custom_minimum_size.y = 116
 	evidence_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	evidence_row.add_theme_constant_override("separation", 12)
 	upper_workspace.add_child(evidence_row)
@@ -158,7 +158,7 @@ func _build_interface() -> void:
 	docket_motion_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	docket_motion_layer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	docket_motion_layer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	docket_motion_layer.custom_minimum_size.y = 244
+	docket_motion_layer.custom_minimum_size.y = 256
 	desk_box.add_child(docket_motion_layer)
 	docket_overlay = PanelContainer.new()
 	docket_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -168,6 +168,12 @@ func _build_interface() -> void:
 	tablet_style.texture_margin_right = 96.0
 	tablet_style.texture_margin_top = 82.0
 	tablet_style.texture_margin_bottom = 82.0
+	# Extend the clay surface beyond the control bounds so the visible tablet
+	# fills the docket bay instead of leaving a dark halo around the asset.
+	tablet_style.expand_margin_left = 14.0
+	tablet_style.expand_margin_right = 14.0
+	tablet_style.expand_margin_top = 12.0
+	tablet_style.expand_margin_bottom = 12.0
 	tablet_style.content_margin_left = 0.0
 	tablet_style.content_margin_right = 0.0
 	tablet_style.content_margin_top = 0.0
@@ -176,10 +182,10 @@ func _build_interface() -> void:
 	docket_motion_layer.add_child(docket_overlay)
 	var tablet_content := MarginContainer.new()
 	tablet_content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	tablet_content.add_theme_constant_override("margin_left", 76)
-	tablet_content.add_theme_constant_override("margin_right", 76)
-	tablet_content.add_theme_constant_override("margin_top", 52)
-	tablet_content.add_theme_constant_override("margin_bottom", 52)
+	tablet_content.add_theme_constant_override("margin_left", 74)
+	tablet_content.add_theme_constant_override("margin_right", 74)
+	tablet_content.add_theme_constant_override("margin_top", 48)
+	tablet_content.add_theme_constant_override("margin_bottom", 48)
 	docket_overlay.add_child(tablet_content)
 	var tablet_scroll := ScrollContainer.new()
 	tablet_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -228,7 +234,7 @@ func _build_interface() -> void:
 	mat_box.add_child(choices)
 
 	var desk_props := HBoxContainer.new()
-	desk_props.custom_minimum_size.y = 52
+	desk_props.custom_minimum_size.y = 42
 	desk_props.size_flags_vertical = Control.SIZE_SHRINK_END
 	desk_props.add_theme_constant_override("separation", 14)
 	desk_props.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -297,7 +303,7 @@ func _build_interface() -> void:
 	compound_box.add_child(status_label)
 
 	var rim := PanelContainer.new()
-	rim.custom_minimum_size.y = 52
+	rim.custom_minimum_size.y = 48
 	rim.size_flags_vertical = Control.SIZE_SHRINK_END
 	rim.add_theme_stylebox_override("panel", _panel_style("#3a2b1d", "#9a7545"))
 	root.add_child(rim)
@@ -1018,7 +1024,16 @@ func _show_era_completion() -> void:
 	case_heading.text = "𒂍  THE GREAT CANAL CUT IS FINISHED"
 	dossier.visible = true
 	dossier.text = summary
-	_set_evidence_facts("CEDAR DESK / HEIRLOOM LOG\nCompletion entered.", "THE COMPOUND\nThe canal stands; the next shift awaits.")
+	_set_evidence_facts("THE CAREER RECORD\nThe canal is entered as completed work. The apprentice kept the measures and the names.", "THE STOREHOUSE\nThe reserves held long enough. The next shift inherits the result.")
+	# Completion is an authored career verdict, never leftover testimony from
+	# whichever docket happened to precede the final period.
+	evidence_left_title.text = "CAREER VERDICT / ARCHIVE"
+	evidence_right_title.text = "STOREHOUSE VERDICT / RESERVES"
+	evidence_left_speaker.text = "SHURUPPAK-ILU"
+	evidence_right_speaker.text = "UR-NANNA"
+	evidence_left_quote.text = "“A record is only useful when it survives the hands that made it. Yours will.”"
+	evidence_right_quote.text = "“The canal stands, and the stores were not emptied to build it. That is competent work.”"
+	_set_evidence_portrait(&"shuruppak_ilu", &"ur_nanna")
 	_set_evidence_tension(0, 0)
 	prompt_label.text = "The canal is built. This era's work is complete."
 	_add_choice("Begin Next Era / New Shift", _begin_next_shift)
