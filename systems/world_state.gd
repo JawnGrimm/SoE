@@ -306,6 +306,11 @@ func get_resource(resource_id: StringName, scope: String = "world", owner_id: St
 			# Eanna until all authored data has explicit institution scope.
 			return get_resource(resource_id, "institution", "", &"eanna_household")
 
+func institution_has_resource(resource_id: StringName, institution_id: StringName = &"eanna_household") -> bool:
+	var institution: Dictionary = institutions.get(institution_id, {})
+	var resources: Dictionary = institution.get("stockpiles", {})
+	return resources.has(resource_id)
+
 func get_institution_for_person(person_id: StringName) -> StringName:
 	if person_id == &"":
 		return &""
@@ -329,7 +334,7 @@ func modify_resource(resource_id: StringName, amount: int, scope: String = "worl
 			return false
 		person.resources[resource_id] = personal_next
 		return true
-	if scope == "office" or scope == "institution" or (scope == "world" and not stockpiles.has(resource_id) and get_resource(resource_id, "institution", "", &"eanna_household") != 0):
+	if scope == "office" or scope == "institution" or (scope == "world" and not stockpiles.has(resource_id) and institution_has_resource(resource_id, &"eanna_household")):
 		var resolved_id := institution_id if institution_id != &"" else get_institution_for_person(StringName(owner_id))
 		if resolved_id == &"":
 			resolved_id = &"eanna_household"
