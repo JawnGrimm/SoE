@@ -17,6 +17,8 @@ var resolved_forms: Array[Dictionary] = []
 var event_history: Array[Dictionary] = []
 var character_event_history: Dictionary[StringName, Array] = {}
 var people: Dictionary[StringName, PersonEntity] = {}
+var player_id: StringName = &""
+var _next_person_sequence: int = 1
 # Seeded world graph. These are runtime records, not shared definition Resources.
 var places: Dictionary[StringName, Dictionary] = {}
 var institutions: Dictionary[StringName, Dictionary] = {}
@@ -235,6 +237,28 @@ func get_overdue_form_count() -> int:
 
 func get_person(person_id: StringName) -> PersonEntity:
 	return people.get(person_id)
+
+func get_player() -> PersonEntity:
+	return get_person(player_id)
+
+func set_player(person: PersonEntity) -> bool:
+	if person == null or person.id == &"":
+		player_id = &""
+		return false
+	if people.has(person.id) and people[person.id] != person:
+		push_warning("WorldState: player ID '%s' belongs to another person" % person.id)
+		return false
+	people[person.id] = person
+	player_id = person.id
+	return true
+
+func allocate_person_id() -> StringName:
+	while true:
+		var candidate := StringName("character_%04d" % _next_person_sequence)
+		_next_person_sequence += 1
+		if not people.has(candidate):
+			return candidate
+	return &""
 
 func has_pending_form(form_type: StringName = &"") -> bool:
 	for form in pending_forms:
