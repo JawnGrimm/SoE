@@ -10,6 +10,7 @@ var rng_narrative := RandomNumberGenerator.new()
 var rng_sim := RandomNumberGenerator.new()
 var rng_people := RandomNumberGenerator.new()
 var stockpiles: Dictionary[StringName, int] = {}
+var epics: Dictionary[StringName, Dictionary] = {}
 var world_flags: Dictionary[StringName, int] = {}
 var pending_forms: Array[Dictionary] = []
 var resolved_forms: Array[Dictionary] = []
@@ -57,11 +58,11 @@ func _process_hazards() -> void:
 		var resource_id := StringName(hazard.get("resource", ""))
 		if rate <= 0 or resource_id == &"":
 			continue
-		var available := maxi(0, get_resource(resource_id))
+		var available := maxi(0, get_resource(resource_id, "institution", "", &"eanna_household"))
 		var lost := mini(available, rate)
 		if lost <= 0:
 			continue
-		stockpiles[resource_id] = available - lost
+		modify_resource(resource_id, -lost, "institution", "", &"eanna_household")
 		hazard["total_lost"] = int(hazard.get("total_lost", 0)) + lost
 		hazards[index] = hazard
 
@@ -284,20 +285,71 @@ func resolve_form(parameters: Dictionary, current_year: int) -> bool:
 	pending_forms.remove_at(match_index)
 	return true
 
-func get_resource(resource_id: StringName) -> int:
-	return stockpiles.get(resource_id, 0)
+func get_resource(resource_id: StringName, scope: String = "world", owner_id: String = "", institution_id: StringName = &"") -> int:
+	if resource_id == &"":
+		return 0
+	match scope:
+		"actor":
+			var person := get_person(StringName(owner_id))
+			return person.resources.get(resource_id, 0) if person != null else 0
+		"office", "institution":
+			var resolved_id := institution_id if institution_id != &"" else get_institution_for_person(StringName(owner_id))
+			if resolved_id == &"":
+				resolved_id = &"eanna_household"
+			var institution: Dictionary = institutions.get(resolved_id, {})
+			var resources: Dictionary = institution.get("stockpiles", {})
+			return int(resources.get(resource_id, 0))
+		_:
+			if stockpiles.has(resource_id):
+				return int(stockpiles[resource_id])
+			# Legacy world-scope callers resolve seeded household commodities to
+			# Eanna until all authored data has explicit institution scope.
+			return get_resource(resource_id, "institution", "", &"eanna_household")
 
-func modify_resource(resource_id: StringName, amount: int, scope: String = "world") -> void:
-	if scope != "world":
-		push_warning("WorldState: unsupported resource scope '%s'; no resource changed" % scope)
-		return
+func get_institution_for_person(person_id: StringName) -> StringName:
+	if person_id == &"":
+		return &""
+	for institution_id in institutions.keys():
+		var institution: Dictionary = institutions[institution_id]
+		if person_id in institution.get("members", []):
+			return StringName(institution_id)
+	return &""
+
+func modify_resource(resource_id: StringName, amount: int, scope: String = "world", owner_id: String = "", institution_id: StringName = &"") -> bool:
 	if resource_id == &"":
 		push_warning("WorldState: refusing resource change with empty id")
-		return
-	var next_value := get_resource(resource_id) + amount
+		return false
+	if scope == "actor":
+		var person := get_person(StringName(owner_id))
+		if person == null:
+			push_warning("WorldState: actor resource change has no owner")
+			return false
+		var personal_next := int(person.resources.get(resource_id, 0)) + amount
+		if personal_next < 0:
+			return false
+		person.resources[resource_id] = personal_next
+		return true
+	if scope == "office" or scope == "institution" or (scope == "world" and not stockpiles.has(resource_id) and get_resource(resource_id, "institution", "", &"eanna_household") != 0):
+		var resolved_id := institution_id if institution_id != &"" else get_institution_for_person(StringName(owner_id))
+		if resolved_id == &"":
+			resolved_id = &"eanna_household"
+		if not institutions.has(resolved_id):
+			push_warning("WorldState: institution resource change cannot resolve '%s'" % resolved_id)
+			return false
+		var institution: Dictionary = institutions[resolved_id]
+		var resources: Dictionary = institution.get("stockpiles", {}).duplicate(true)
+		var institution_next := int(resources.get(resource_id, 0)) + amount
+		if institution_next < 0:
+			return false
+		resources[resource_id] = institution_next
+		institution["stockpiles"] = resources
+		institutions[resolved_id] = institution
+		return true
+	var next_value := int(stockpiles.get(resource_id, 0)) + amount
 	if resource_id == &"canal_progress":
 		next_value = clampi(next_value, 0, 100)
 	stockpiles[resource_id] = next_value
+	return true
 
 func set_flag(flag: StringName, expiry_period: int) -> void:
 	if flag != &"":
