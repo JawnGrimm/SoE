@@ -138,5 +138,13 @@ era_tags = Array[StringName]([&"uruk"])
 weight = 1.0
 once_per_world = true
 conditions = Array[ExtResource("4")]([SubResource("condition_1"), SubResource("condition_2"), SubResource("condition_3")])
+evidence_left_title = "BREWING HOUSE  /  ACCOUNT"
+evidence_right_title = "ARCHIVE COPY  /  MALT & SIGN"
+evidence_left_speaker = "NIN-KASI"
+evidence_right_speaker = "CLERK'S COPY"
+evidence_left_quote = "My workers were credited eighteen measures. The subtotal says seventeen. I need the account corrected."
+evidence_right_quote = "The malt stands below the dividing line. The blurred sign cannot be restored from this copy."
+evidence_left_portrait = &"nin_kasi"
+evidence_right_portrait = &""
 records = Array[Dictionary]([{"label": "GRAIN ENTRIES", "value": "6 + 8 + 4 = 18; subtotal written: 17.", "note": ""}, {"label": "MALT ENTRY", "value": "3 baskets malt, recorded separately.", "note": "Malted spelt below the dividing line."}, {"label": "BLURRED SIGN", "value": "Moisture-damaged.", "note": "Allocation between libation and worker bread cannot be established."}])
 outcomes = Array[ExtResource("2")]([SubResource("outcome_1"), SubResource("outcome_2"), SubResource("outcome_3")])

@@ -38,7 +38,7 @@ func _run() -> void:
 	_check(registry.has_definition(&"routine_tally_adjustment"), "Registry should index the routine tally event")
 	_check(registry.has_definition(&"origin_side_reply"), "Registry should index the origin reply event")
 	_check(registry.get_definition(&"corrupt_grain_official") is EventTemplate, "Registry lookup should return the loaded event Resource")
-	_check(registry.get_definitions("events").size() == 7, "Registry should expose all seven event definitions by category")
+	_check(registry.get_definitions("events").size() == 11, "Registry should expose all eleven event definitions by category")
 	var prototype_events_are_era_independent := true
 	for prototype_id in [&"corrupt_grain_official", &"routine_tally_adjustment", &"origin_side_reply"]:
 		var prototype_event := registry.get_event(prototype_id)
@@ -49,7 +49,7 @@ func _run() -> void:
 	_check(registry.get_event(&"case_01_sealed_vessel") != null, "Registry should load Case 1")
 	_check(registry.get_era(&"uruk_storehouse") != null, "Registry should load the Uruk era")
 	_check(registry.get_definition(&"missing_definition") == null, "Unknown definition IDs should return null")
-	_check(registry.get_definition_ids("events").size() == 7, "Registry should list all seven event IDs")
+	_check(registry.get_definition_ids("events").size() == 11, "Registry should list all eleven event IDs")
 	_check(registry.get_event(&"corrupt_grain_official") != null, "Typed event lookup should return an event")
 	_check(registry.get_era_for_year(1200) == registry.get_era(&"prototype_era"), "Registry should resolve the era covering a year")
 	_check(registry.get_era_for_year(99999) == null, "Unknown years should resolve to no era")
@@ -561,6 +561,26 @@ func _run() -> void:
 	_check(not roof_world.complete_assignment(roof_assignment, roof_actor.id, &"leak_confirmed_repair_required", true), "Completed assignment should not be settled twice")
 	_check(String(roof_world.get_assignment_state(&"north_bay_roof").get("status", "")) == "completed", "Assignment lifecycle should retain its completed state")
 	_check(roof_world.has_active_hazard(&"north_bay", &"roof_leak"), "Submitting an inspection must not falsely repair the roof")
+	_check(roof_world.has_pending_form(&"north_bay_roof_repair"), "Supported roof inspection should open the repair follow-up docket")
+
+	var repair_event: EventTemplate = registry.get_event(&"case_north_bay_roof_repair")
+	_check(repair_event != null, "Registry should load the North-Bay roof repair event")
+	var repair_ctx := _make_context(roof_world)
+	repair_ctx.actor = roof_actor
+	repair_ctx.era = registry.get_era(&"uruk_storehouse")
+	_check(runner.is_eligible(repair_event, repair_ctx), "Repair docket should be eligible with its form and three labor units")
+	var labor_before_repair := roof_world.get_resource(&"labor")
+	runner.resolve_outcome(repair_event, repair_event.outcomes[0], repair_ctx)
+	_check(not roof_world.has_active_hazard(&"north_bay", &"roof_leak"), "Repair outcome should deactivate the roof leak")
+	_check(roof_world.get_resource(&"labor") == labor_before_repair - 3, "Repair outcome should consume three labor units")
+	_check(roof_world.resolved_forms.back().get("disposition", "") == "roof_repaired", "Repair outcome should close the repair docket")
+
+	var sealed_definition: EventTemplate = registry.get_event(&"case_01_sealed_vessel")
+	_check(sealed_definition != null and sealed_definition.once_per_world, "Case 1 should not repeat after the sealed vessel is resolved")
+	for event_id in [&"case_12_labor_tally", &"case_14_held_barley", &"case_03_two_claims_one_load"]:
+		var authored_case: EventTemplate = registry.get_event(event_id)
+		_check(authored_case != null, "Registry should load authored Uruk case %s" % event_id)
+		_check(authored_case != null and authored_case.cooldown_years >= 1, "Uruk case %s should use a cooldown" % event_id)
 
 	_finish()
 

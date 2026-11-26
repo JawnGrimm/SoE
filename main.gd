@@ -173,16 +173,21 @@ func _build_interface() -> void:
 	docket_motion_layer.add_child(docket_overlay)
 	var tablet_content := MarginContainer.new()
 	tablet_content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	tablet_content.add_theme_constant_override("margin_left", 34)
-	tablet_content.add_theme_constant_override("margin_right", 34)
-	tablet_content.add_theme_constant_override("margin_top", 30)
-	tablet_content.add_theme_constant_override("margin_bottom", 30)
+	tablet_content.add_theme_constant_override("margin_left", 68)
+	tablet_content.add_theme_constant_override("margin_right", 68)
+	tablet_content.add_theme_constant_override("margin_top", 48)
+	tablet_content.add_theme_constant_override("margin_bottom", 48)
 	docket_overlay.add_child(tablet_content)
+	var tablet_scroll := ScrollContainer.new()
+	tablet_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tablet_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	tablet_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	tablet_content.add_child(tablet_scroll)
 	var mat_box := VBoxContainer.new()
 	mat_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	mat_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	mat_box.add_theme_constant_override("separation", 7)
-	tablet_content.add_child(mat_box)
+	tablet_scroll.add_child(mat_box)
 	case_heading = Label.new()
 	var title_font := FontVariation.new()
 	title_font.base_font = ThemeDB.fallback_font
@@ -552,6 +557,7 @@ func _start_world() -> void:
 	_show_path_catechism()
 
 func _schedule_next_case() -> void:
+	_clear_stamp_history()
 	context.year = world.year
 	current_era = Registry.get_era_for_year(world.year)
 	context.era = current_era
@@ -567,6 +573,7 @@ func _schedule_next_case() -> void:
 		_show_case()
 
 func _show_path_catechism() -> void:
+	_clear_stamp_history()
 	_clear_choices()
 	phase = "catechism_path"
 	case_heading.text = "𒂍  THE FIRST CLAY"
@@ -615,7 +622,11 @@ func _choose_mentor(mentor_id: StringName) -> void:
 
 
 func _offer_north_bay_assignment() -> void:
-	if selected_path != &"path_temple" or north_bay_assignment == null:
+	if north_bay_assignment == null:
+		return
+	if world.get_hazard_total_lost(&"north_bay", &"roof_leak") < 3:
+		return
+	if not world.get_assignment_state(NORTH_BAY_ASSIGNMENT_ID).is_empty():
 		return
 	if not world.offer_assignment(north_bay_assignment.id, north_bay_assignment.employer):
 		push_warning("Main: North-Bay assignment could not be offered; it may already exist")
@@ -739,7 +750,7 @@ func _submit_north_bay_assessment(is_accurate: bool) -> void:
 	_clear_choices()
 	phase = "north_bay_result"
 	case_heading.text = "𒂍  ASSESSMENT SEALED"
-	dossier.text = "The report has been entered into the storehouse record. The physical leak remains active; each elapsed period now spoils one measure of barley until repair is arranged."
+	dossier.text = "The report has been entered into the storehouse record. The physical leak remains active; each elapsed period spoils one measure of barley. Ur-Nanna has opened a repair docket for the next available desk."
 	if is_accurate:
 		prompt_label.text = "Accurate assessment filed. +%d silver · +%d Law XP · Ur-Nanna %+d opinion." % [north_bay_assignment.compensation_amount, north_bay_assignment.law_xp, opinion_delta]
 	else:
@@ -763,6 +774,7 @@ func _return_from_north_bay() -> void:
 			_show_end_of_queue()
 
 func _show_case() -> void:
+	_clear_stamp_history()
 	_clear_choices()
 	phase = "case"
 	case_heading.add_theme_font_size_override("font_size", 20)
@@ -771,6 +783,15 @@ func _show_case() -> void:
 	dossier.text = active_event.description
 	_set_evidence_tension(0, 0)
 	_set_evidence_facts("", "")
+	evidence_left_title.text = active_event.evidence_left_title
+	evidence_right_title.text = active_event.evidence_right_title
+	evidence_left_speaker.text = active_event.evidence_left_speaker.to_upper()
+	evidence_right_speaker.text = active_event.evidence_right_speaker.to_upper()
+	var left_quote := active_event.evidence_left_quote if not active_event.evidence_left_quote.is_empty() else active_event.description
+	var right_quote := active_event.evidence_right_quote if not active_event.evidence_right_quote.is_empty() else active_event.description
+	evidence_left_quote.text = "“%s”" % left_quote
+	evidence_right_quote.text = "“%s”" % right_quote
+	_set_evidence_portrait(active_event.evidence_left_portrait, active_event.evidence_right_portrait)
 	for record in active_event.records:
 		var label := String(record.get("label", "RECORD"))
 		var value := String(record.get("value", ""))
@@ -832,13 +853,24 @@ func _show_result(outcome: EventOutcome) -> void:
 func _advance_period() -> void:
 	if phase != "result" and phase != "end_of_queue":
 		return
+	_clear_stamp_history()
 	world.advance_period()
 	_prepare_seasonal_forms()
+	if world.get_hazard_total_lost(&"north_bay", &"roof_leak") >= 3:
+		_offer_north_bay_assignment()
 	last_opinion_deltas.clear()
 	_schedule_next_case()
 
 func _prepare_seasonal_forms() -> void:
-	# Harvest opens the South Court barley docket and the oil/textile receiving docket.
+	# The Labor Tally arrives in Sowing (Period 3).
+	if world.period == 3 and not world.has_pending_form(&"pension_roll"):
+		world.enqueue_form({"form_type": &"pension_roll", "subject_id": &"ditch_labor_tally", "urgency": 1, "year": world.year})
+	# Held barley and competing load claims enter at Harvest (Period 6).
+	if world.period == 6 and not world.has_pending_form(&"held_barley"):
+		world.enqueue_form({"form_type": &"held_barley", "subject_id": &"bay_4", "urgency": 2, "year": world.year})
+	if world.period == 6 and not world.has_pending_form(&"load_claim"):
+		world.enqueue_form({"form_type": &"load_claim", "subject_id": &"harvest_load", "urgency": 1, "year": world.year})
+	# Harvest also opens the South Court barley docket and receiving docket.
 	if world.period == 6 and not world.has_pending_form(&"grain_levy"):
 		world.enqueue_form({"form_type": &"grain_levy", "subject_id": &"south_court_storehouse", "urgency": 1, "year": world.year})
 	if world.period == 6 or world.period == 9:
@@ -943,6 +975,9 @@ func _clear_choice_preview() -> void:
 
 func _handle_choice(button: Button, callback: Callable) -> void:
 	if choice_locked:
+		return
+	if button.text == "End Period" or phase not in ["case", "catechism_path", "catechism_mentor", "north_bay_assessment"]:
+		callback.call()
 		return
 	choice_locked = true
 	for choice_button in choice_buttons:
