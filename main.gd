@@ -1128,8 +1128,8 @@ func _show_era_completion() -> void:
 		trait_names.append(String(trait_id))
 	var traits_text := ", ".join(trait_names) if not trait_names.is_empty() else "none recorded"
 	var summary := "Year %s / %s\nCases settled: %d\nThe Great Canal Cut: 100 / 100 — BUILT\nSilver earned: %d\nTraits gained: %s\nCompound standing: %+d average opinion" % [CalendarFormatter.format_year(world.year), String(current_era.display_name if current_era != null else "Current Era"), world.cases_settled, world.silver_earned, traits_text, standing]
-	world.cedar_desk_log.append({"year": world.year, "era_id": current_era.id if current_era != null else &"", "title": "THE GREAT CANAL CUT IS FINISHED", "summary": summary, "cases_settled": world.cases_settled, "canal_progress": 100, "silver_earned": world.silver_earned, "traits_gained": world.traits_gained.duplicate(), "standing": standing})
-	case_heading.text = "𒂍  THE GREAT CANAL CUT IS FINISHED"
+	world.cedar_desk_log.append({"year": world.year, "era_id": current_era.id if current_era != null else &"", "title": "ERA EPIC: THE GREAT CANAL CUT — COMPLETE", "summary": summary, "cases_settled": world.cases_settled, "canal_progress": 100, "silver_earned": world.silver_earned, "traits_gained": world.traits_gained.duplicate(), "standing": standing})
+	case_heading.text = "𒂍  ERA EPIC COMPLETE / THE GREAT CANAL CUT"
 	dossier.visible = true
 	dossier.text = summary
 	_set_evidence_facts("THE CAREER RECORD\nThe canal is entered as a completed Epic. The apprentice kept the measures and the names.", "THE STOREHOUSE\nThe reserves held long enough. The next shift inherits the result.")
