@@ -31,6 +31,53 @@ func _run() -> void:
 	_check(successor.id == &"character_0002", "Person ID allocation should advance deterministically")
 	_check(identity_world.set_player(successor), "WorldState should allow player succession to another existing person")
 	_check(identity_world.get_player() == successor and identity_world.get_person(first_character.id) == first_character, "Succession should move the player pointer while retaining the former character")
+	var conflicting_successor := PersonEntity.new()
+	conflicting_successor.id = successor.id
+	_check(not identity_world.set_player(conflicting_successor) and identity_world.get_player() == successor, "WorldState should reject a duplicate person ID without moving the player pointer")
+	var attach_world := WorldState.new()
+	var draft_to_attach := UrukSeeder.seed_campaign(attach_world, 32003201, false)
+	UrukSeeder.attach_player(attach_world, draft_to_attach)
+	_check(attach_world.get_player() == draft_to_attach, "attach_player should set the current player pointer")
+	var no_player_world := WorldState.new()
+	var no_player_clerk := PersonEntity.new()
+	no_player_clerk.id = &"ur_nanna"
+	var no_player_foreman := PersonEntity.new()
+	no_player_foreman.id = &"enlil_kisu"
+	no_player_world.people[no_player_clerk.id] = no_player_clerk
+	no_player_world.people[no_player_foreman.id] = no_player_foreman
+	no_player_world.stockpiles[&"labor"] = 0
+	WorldSimulator.new()._simulate_people(no_player_world)
+	_check(no_player_clerk.get_opinion(&"") == 0 and no_player_foreman.get_opinion(&"") == 0, "World reactions should safely do nothing before character confirmation")
+	var reaction_world := WorldState.new()
+	var reaction_old_player := PersonEntity.new()
+	reaction_old_player.id = &"former_character"
+	var reaction_player := PersonEntity.new()
+	reaction_player.id = &"successor_character"
+	var reaction_clerk := PersonEntity.new()
+	reaction_clerk.id = &"ur_nanna"
+	var reaction_foreman := PersonEntity.new()
+	reaction_foreman.id = &"enlil_kisu"
+	var reaction_senior := PersonEntity.new()
+	reaction_senior.id = &"shuruppak_ilu"
+	for reaction_person in [reaction_old_player, reaction_player, reaction_clerk, reaction_foreman, reaction_senior]:
+		reaction_world.people[reaction_person.id] = reaction_person
+	reaction_world.set_player(reaction_old_player)
+	reaction_world.set_player(reaction_player)
+	reaction_world.stockpiles[&"labor"] = 0
+	WorldSimulator.new()._simulate_people(reaction_world)
+	_check(reaction_foreman.get_opinion(reaction_player.id) == -1 and reaction_foreman.get_opinion(reaction_old_player.id) == 0, "WorldSimulator reactions should follow the successor, not the former character")
+	var actor_opinion_effect := _effect(&"change_opinion", {"subject": &"shuruppak_ilu", "other": &"actor", "amount": 2, "reason": "current player test"})
+	var actor_opinion_context := _make_context(reaction_world)
+	actor_opinion_context.actor = reaction_player
+	runner.effects.execute_all([actor_opinion_effect], actor_opinion_context)
+	_check(reaction_senior.get_opinion(reaction_player.id) == 2, "Authored opinion effects using the actor role should target the current player")
+	var authored_player_refs_clean := true
+	for authored_event_path in ["res://data/events/case_01_sealed_vessel.tres", "res://data/events/case_12_labor_tally.tres", "res://data/events/case_15_south_court.tres", "res://data/events/challenge_ledger_inquest.tres"]:
+		var authored_text := FileAccess.get_file_as_string(authored_event_path)
+		if authored_text.contains("player_apprentice") or authored_text.contains("character_0001"):
+			authored_player_refs_clean = false
+	_check(authored_player_refs_clean, "Authored event data must not hardcode a generated player identity")
+
 	var identity_seed_world := WorldState.new()
 	var seeded_player := UrukSeeder.seed_campaign(identity_seed_world, 32003200, false)
 	_check(seeded_player.id == &"character_0001", "Uruk seed should create a generated player identity")
@@ -163,7 +210,8 @@ func _run() -> void:
 	for resource_id in [&"barley", &"dates", &"sheep", &"goats", &"cattle", &"fish", &"beer", &"wool", &"textiles", &"clay", &"reeds", &"bitumen", &"timber", &"copper", &"silver"]:
 		_check(seeded_eanna_stockpiles.has(resource_id), "Uruk seed should initialize institutional commodity %s" % resource_id)
 	_check(not uruk_a.stockpiles.has(&"barley") and not uruk_a.stockpiles.has(&"silver"), "Compound commodities should not remain duplicated in world stockpiles")
-	_check(uruk_player_a.id == &"player_apprentice", "Uruk seeder should return the apprentice")
+	_check(uruk_player_a.id == &"character_0001", "Uruk seeder should return the first generated character identity")
+	_check(uruk_a.player_id == uruk_player_a.id and uruk_a.get_player() == uruk_player_a, "Uruk seed should register its confirmed player pointer")
 	_check(uruk_a.get_person(&"shuruppak_ilu").get_opinion(uruk_player_a.id) == 5, "Senior scribe should begin at +5 opinion")
 	for resident_id in [&"ur_nanna", &"utu_mansum", &"enlil_kisu", &"lu_nanshe", &"nin_kasi", &"geme_inana"]:
 		_check(uruk_a.get_person(resident_id).relationships.has(uruk_player_a.id) and uruk_a.get_person(resident_id).get_opinion(uruk_player_a.id) == 0, "Every other resident should store an explicit zero opinion")
