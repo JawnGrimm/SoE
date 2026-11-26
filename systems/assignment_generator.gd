@@ -39,11 +39,31 @@ static func generate(world: WorldState, actor: PersonEntity) -> Dictionary:
 		right = people[world.rng_narrative.randi_range(0, people.size() - 1)]
 		if right.id != left.id and not world.recent_npc_pairs.has("%s|%s" % [left.id, right.id]) and not world.recent_npc_pairs.has("%s|%s" % [right.id, left.id]):
 			break
+	var chosen_alternate: PersonEntity = null
 	if right.id == left.id or world.recent_npc_pairs.has("%s|%s" % [left.id, right.id]) or world.recent_npc_pairs.has("%s|%s" % [right.id, left.id]):
 		for candidate in people:
+			if candidate.id == left.id:
+				continue
 			var candidate_pair := "%s|%s" % [left.id, candidate.id]
 			var reverse_pair := "%s|%s" % [candidate.id, left.id]
-			if candidate.id != left.id and not world.recent_npc_pairs.has(candidate_pair) and not world.recent_npc_pairs.has(reverse_pair):
+			if not world.recent_npc_pairs.has(candidate_pair) and not world.recent_npc_pairs.has(reverse_pair):
+				chosen_alternate = candidate
+				break
+		if chosen_alternate == null:
+			var previous_pair := String(world.recent_npc_pairs.back()) if not world.recent_npc_pairs.is_empty() else ""
+			for candidate in people:
+				if candidate.id == left.id:
+					continue
+				var candidate_pair := "%s|%s" % [left.id, candidate.id]
+				var reverse_pair := "%s|%s" % [candidate.id, left.id]
+				if candidate_pair != previous_pair and reverse_pair != previous_pair:
+					chosen_alternate = candidate
+					break
+	if chosen_alternate != null:
+		right = chosen_alternate
+	if right.id == left.id:
+		for candidate in people:
+			if candidate.id != left.id:
 				right = candidate
 				break
 	var pair := "%s|%s" % [left.id, right.id]
