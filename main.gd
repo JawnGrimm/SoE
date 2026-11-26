@@ -21,6 +21,7 @@ var world_simulator: WorldSimulator
 var world: WorldState
 var actor: PersonEntity
 var active_event: EventTemplate
+var procedural_assignment: Dictionary = {}
 var context: EventContext
 var current_era: EraDef
 var north_bay_assignment: AssignmentDef
@@ -176,8 +177,8 @@ func _build_interface() -> void:
 	tablet_content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	tablet_content.add_theme_constant_override("margin_left", 76)
 	tablet_content.add_theme_constant_override("margin_right", 76)
-	tablet_content.add_theme_constant_override("margin_top", 56)
-	tablet_content.add_theme_constant_override("margin_bottom", 56)
+	tablet_content.add_theme_constant_override("margin_top", 52)
+	tablet_content.add_theme_constant_override("margin_bottom", 52)
 	docket_overlay.add_child(tablet_content)
 	var tablet_scroll := ScrollContainer.new()
 	tablet_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -568,8 +569,11 @@ func _schedule_next_case() -> void:
 		if definition is EventTemplate:
 			event_templates.append(definition as EventTemplate)
 	active_event = scheduler.pick_next_event(world, actor, event_templates, current_era)
-	_refresh_compound()
+	procedural_assignment.clear()
 	if active_event == null:
+		procedural_assignment = AssignmentGenerator.generate(world, actor)
+	_refresh_compound()
+	if active_event == null and procedural_assignment.is_empty():
 		_show_end_of_queue()
 	else:
 		_show_case()
@@ -777,43 +781,79 @@ func _return_from_north_bay() -> void:
 		_:
 			_show_end_of_queue()
 
+func _active_docket_payload() -> Dictionary:
+	if not procedural_assignment.is_empty():
+		return procedural_assignment
+	if active_event == null:
+		return {}
+	var left_facts := ""
+	var right_facts := ""
+	for record in active_event.records:
+		var line := "%s: %s" % [String(record.get("label", "RECORD")), String(record.get("value", ""))]
+		if not String(record.get("note", "")).is_empty():
+			line += " — " + String(record.get("note", ""))
+		left_facts += line + "\n"
+	return {
+		"title": active_event.title,
+		"left_card": {"title": active_event.evidence_left_title, "speaker_id": active_event.evidence_left_portrait, "quote": active_event.evidence_left_quote if not active_event.evidence_left_quote.is_empty() else active_event.description, "facts": left_facts.strip_edges()},
+		"right_card": {"title": active_event.evidence_right_title, "speaker_id": active_event.evidence_right_portrait, "quote": active_event.evidence_right_quote if not active_event.evidence_right_quote.is_empty() else active_event.description, "facts": right_facts},
+		"prompt": "What mark will you leave?",
+		"choices": _authored_choices_payload()
+	}
+
+func _authored_choices_payload() -> Array:
+	var result: Array = []
+	if active_event == null:
+		return result
+	for outcome in active_event.outcomes:
+		result.append({"label": outcome.label, "result_title": outcome.title_override, "result_text": outcome.description_override, "effects": outcome.effects})
+	return result
+
 func _show_case() -> void:
 	_clear_stamp_history()
 	_clear_choices()
 	phase = "case"
+	var payload := _active_docket_payload()
 	case_heading.add_theme_font_size_override("font_size", 20)
-	case_heading.text = "𒂍  " + active_event.title.to_upper()
-	dossier.visible = true
-	dossier.text = active_event.description
+	case_heading.text = "𒂍  " + String(payload.get("title", "Docket")).to_upper()
+	dossier.visible = false
+	dossier.text = ""
 	_set_evidence_tension(0, 0)
-	_set_evidence_facts("", "")
-	evidence_left_title.text = active_event.evidence_left_title
-	evidence_right_title.text = active_event.evidence_right_title
-	evidence_left_speaker.text = active_event.evidence_left_speaker.to_upper()
-	evidence_right_speaker.text = active_event.evidence_right_speaker.to_upper()
-	var left_quote := active_event.evidence_left_quote if not active_event.evidence_left_quote.is_empty() else active_event.description
-	var right_quote := active_event.evidence_right_quote if not active_event.evidence_right_quote.is_empty() else active_event.description
-	evidence_left_quote.text = "“%s”" % left_quote
-	evidence_right_quote.text = "“%s”" % right_quote
-	_set_evidence_portrait(active_event.evidence_left_portrait, active_event.evidence_right_portrait)
-	for record in active_event.records:
-		var label := String(record.get("label", "RECORD"))
-		var value := String(record.get("value", ""))
-		var note := String(record.get("note", ""))
-		dossier.text += "\n\n[b]%s[/b]\n%s" % [label, value]
-		if not note.is_empty():
-			dossier.text += "\n[color=#7b6546]%s[/color]" % note
-	prompt_label.text = "What mark will you leave?"
-	for index in range(active_event.outcomes.size()):
-		var outcome: EventOutcome = active_event.outcomes[index]
-		_add_choice(outcome.label, _resolve_choice.bind(index))
+	var left: Dictionary = payload.get("left_card", {})
+	var right: Dictionary = payload.get("right_card", {})
+	evidence_left_title.text = String(left.get("title", "RECORD"))
+	evidence_right_title.text = String(right.get("title", "CLAIM"))
+	var left_id := StringName(left.get("speaker_id", ""))
+	var right_id := StringName(right.get("speaker_id", ""))
+	var left_person := world.get_person(left_id)
+	var right_person := world.get_person(right_id)
+	evidence_left_speaker.text = left_person.display_name.to_upper() if left_person != null else String(left_id).to_upper()
+	evidence_right_speaker.text = right_person.display_name.to_upper() if right_person != null else String(right_id).to_upper()
+	evidence_left_quote.text = "“%s”" % String(left.get("quote", ""))
+	evidence_right_quote.text = "“%s”" % String(right.get("quote", ""))
+	evidence_left_facts.text = String(left.get("facts", ""))
+	evidence_right_facts.text = String(right.get("facts", ""))
+	_set_evidence_portrait(left_id, right_id)
+	prompt_label.text = String(payload.get("prompt", "What mark will you leave?"))
+	var docket_choices: Array = payload.get("choices", [])
+	for index in range(docket_choices.size()):
+		_add_choice(String(docket_choices[index].get("label", "Record")), _resolve_choice.bind(index))
 	status_label.text = "THE CLERK'S MARK WILL OUTLIVE THE CLERK"
 
 func _resolve_choice(index: int) -> void:
-	if phase != "case" or active_event == null:
+	if phase != "case":
 		return
-	if index < 0 or index >= active_event.outcomes.size():
+	var payload := _active_docket_payload()
+	var docket_choices: Array = payload.get("choices", [])
+	if index < 0 or index >= docket_choices.size():
 		return
+	if not procedural_assignment.is_empty():
+		_resolve_procedural_choice(index, docket_choices[index])
+		return
+	if active_event == null:
+		return
+	var silver_before := world.get_resource(&"silver")
+	var traits_before: Array[StringName] = actor.traits.duplicate()
 	var before: Dictionary[StringName, int] = {}
 	for person_id in ROSTER_ORDER:
 		var person := world.get_person(person_id)
@@ -829,7 +869,59 @@ func _resolve_choice(index: int) -> void:
 		var delta := person.get_opinion(actor.id) - before[person_id]
 		if delta != 0:
 			last_opinion_deltas[person_id] = delta
+	_record_case_settlement(silver_before, traits_before)
 	_show_result(active_event.outcomes[index])
+
+func _resolve_procedural_choice(index: int, choice: Dictionary) -> void:
+	var effects: Dictionary = choice.get("effects", {})
+	var pair_parts := String(procedural_assignment.get("npc_pair", "")).split("|")
+	var left := world.get_person(StringName(pair_parts[0])) if pair_parts.size() > 0 else null
+	var right := world.get_person(StringName(pair_parts[1])) if pair_parts.size() > 1 else null
+	var silver_before := world.get_resource(&"silver")
+	var traits_before: Array[StringName] = actor.traits.duplicate()
+	last_opinion_deltas.clear()
+	var left_delta := int(effects.get("opinion_left", 0))
+	var right_delta := int(effects.get("opinion_right", 0))
+	if left != null:
+		left.change_opinion(actor.id, left_delta, "Procedural docket: %s" % String(procedural_assignment.get("title", "")), world.year)
+		last_opinion_deltas[left.id] = left_delta
+	if right != null:
+		right.change_opinion(actor.id, right_delta, "Procedural docket: %s" % String(procedural_assignment.get("title", "")), world.year)
+		last_opinion_deltas[right.id] = right_delta
+	var resource_id := StringName(effects.get("resource", ""))
+	var resource_delta := int(effects.get("resource_amount", 0))
+	var result_text := String(choice.get("result_text", "The entry is sealed."))
+	if resource_id != &"" and resource_delta != 0:
+		if resource_delta < 0 and world.get_resource(resource_id) < absi(resource_delta):
+			result_text += " The allocation was not made: stores cannot cover the cost."
+			if bool(effects.get("repair_hazard", false)):
+				result_text += " The hazard remains active."
+		else:
+			world.stockpiles[resource_id] = maxi(0, world.get_resource(resource_id) + resource_delta)
+	if bool(effects.get("repair_hazard", false)) and (resource_id == &"" or world.get_resource(resource_id) >= 0):
+		if world.get_resource(resource_id) >= 0 and world.has_active_hazard(StringName(procedural_assignment.get("place_id", "")), StringName(procedural_assignment.get("hazard_id", ""))):
+			world.repair_hazard(StringName(procedural_assignment.get("place_id", "")), StringName(procedural_assignment.get("hazard_id", "")))
+	var skill_id := StringName(effects.get("skill", ""))
+	if skill_id != &"":
+		actor.skills.add_xp(skill_id, int(effects.get("xp", 0)))
+	var trait_id := StringName(effects.get("trait", ""))
+	if trait_id != &"" and trait_id not in actor.traits:
+		actor.traits.append(trait_id)
+	if int(effects.get("canal", 0)) > 0:
+		world.modify_resource(&"canal_progress", int(effects.get("canal", 0)))
+	actor.memory.append({"memory_id": &"procedural_docket", "text": String(procedural_assignment.get("title", "")) + ": " + result_text, "year": world.year, "involved": pair_parts})
+	_record_case_settlement(silver_before, traits_before)
+	var result_title := String(choice.get("result_title", "MARK MADE"))
+	_show_procedural_result(result_title, result_text)
+
+func _record_case_settlement(silver_before: int, traits_before: Array[StringName]) -> void:
+	world.cases_settled += 1
+	var silver_delta := world.get_resource(&"silver") - silver_before
+	if silver_delta > 0:
+		world.silver_earned += silver_delta
+	for trait_id in actor.traits:
+		if trait_id not in traits_before and trait_id not in world.traits_gained:
+			world.traits_gained.append(trait_id)
 
 func _play_outcome_foley(index: int) -> void:
 	match index:
@@ -862,6 +954,64 @@ func _advance_period() -> void:
 	if world.get_hazard_total_lost(&"north_bay", &"roof_leak") >= 3:
 		_offer_north_bay_assignment()
 	last_opinion_deltas.clear()
+	if world.get_resource(&"canal_progress") >= 100 and not world.era_completion_started:
+		_show_era_completion()
+		return
+	_schedule_next_case()
+
+func _show_procedural_result(result_title: String, result_text: String) -> void:
+	_clear_choices()
+	phase = "result"
+	case_heading.text = "𒂍  " + result_title.to_upper()
+	dossier.visible = false
+	dossier.text = ""
+	_set_evidence_facts("", "")
+	_set_evidence_tension(0, 0)
+	prompt_label.text = result_text
+	_add_choice("End Period", _advance_period)
+	_refresh_compound()
+
+func _show_era_completion() -> void:
+	world.era_completion_started = true
+	phase = "era_complete"
+	_clear_choices()
+	var standing_total := 0
+	var standing_count := 0
+	for person_id in ROSTER_ORDER:
+		var person := world.get_person(person_id)
+		if person != null and person.id != actor.id:
+			standing_total += person.get_opinion(actor.id)
+			standing_count += 1
+	var standing := int(round(float(standing_total) / maxf(1.0, float(standing_count))))
+	var traits_text := ", ".join(PackedStringArray(world.traits_gained.map(func(value): return String(value))))
+	if traits_text.is_empty():
+		traits_text = "none recorded"
+	var summary := "Year %s / %s\nCases settled: %d\nThe Great Canal Cut: 100 / 100 — BUILT\nSilver earned: %d\nTraits gained: %s\nCompound standing: %+d average opinion" % [CalendarFormatter.format_year(world.year), String(current_era.display_name if current_era != null else "Current Era"), world.cases_settled, world.silver_earned, traits_text, standing]
+	world.cedar_desk_log.append({"year": world.year, "era_id": current_era.id if current_era != null else &"", "title": "THE GREAT CANAL CUT IS FINISHED", "summary": summary, "cases_settled": world.cases_settled, "canal_progress": 100, "silver_earned": world.silver_earned, "traits_gained": world.traits_gained.duplicate(), "standing": standing})
+	case_heading.text = "𒂍  THE GREAT CANAL CUT IS FINISHED"
+	dossier.visible = true
+	dossier.text = summary
+	_set_evidence_facts("CEDAR DESK / HEIRLOOM LOG\nCompletion entered.", "THE COMPOUND\nThe canal stands; the next shift awaits.")
+	_set_evidence_tension(0, 0)
+	prompt_label.text = "The canal is built. This era's work is complete."
+	_add_choice("Begin Next Era / New Shift", _begin_next_shift)
+	status_label.text = "ERA WORK COMPLETE  /  CEDAR DESK ENTRY SEALED"
+
+func _begin_next_shift() -> void:
+	if phase != "era_complete":
+		return
+	var previous_era := current_era
+	var next_year := previous_era.end_year + 1 if previous_era != null else world.year + 1
+	world.year = next_year
+	world.period = 0
+	world.stockpiles[&"canal_progress"] = 0
+	world.era_completion_started = false
+	world.cedar_desk_log.append({"year": world.year, "title": "NEW SHIFT BEGUN", "summary": "The scribe leaves the completed canal on the record and begins the next shift."})
+	current_era = Registry.get_era_for_year(world.year)
+	if current_era == null:
+		current_era = previous_era
+	context.era = current_era
+	context.year = world.year
 	_schedule_next_case()
 
 func _show_end_of_queue() -> void:
