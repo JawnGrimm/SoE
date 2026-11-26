@@ -869,14 +869,14 @@ func _submit_north_bay_assessment(is_accurate: bool) -> void:
 		push_warning("Main: North-Bay employer disappeared before settlement")
 		return
 	var opinion_before := int(steward.get_opinion(actor.id))
-	var silver_before_assignment := world.get_resource(&"silver")
+	var silver_before_assignment := int(actor.resources.get(&"silver", 0))
 	var traits_before_assignment: Array[StringName] = actor.traits.duplicate()
 	if not world.complete_assignment(north_bay_assignment, actor.id, assessment, is_accurate):
 		push_warning("Main: North-Bay assessment rejected; required actions or lifecycle state are invalid")
 		return
 	var opinion_delta := steward.get_opinion(actor.id) - opinion_before
 	world.cases_settled += 1
-	var assignment_silver_delta := world.get_resource(&"silver") - silver_before_assignment
+	var assignment_silver_delta := int(actor.resources.get(&"silver", 0)) - silver_before_assignment
 	if assignment_silver_delta > 0:
 		world.silver_earned += assignment_silver_delta
 	for gained_trait in actor.traits:
@@ -1027,14 +1027,16 @@ func _resolve_procedural_choice(index: int, choice: Dictionary) -> void:
 	var result_text := String(choice.get("result_text", "The entry is sealed."))
 	var allocation_paid := resource_delta >= 0
 	if resource_id != &"" and resource_delta != 0:
-		if resource_delta < 0 and world.get_resource(resource_id) < absi(resource_delta):
+		var institutional_available := world.get_resource(resource_id, "institution", "", &"eanna_household")
+		if resource_delta < 0 and institutional_available < absi(resource_delta):
 			allocation_paid = false
-			result_text += " The allocation was not made: stores cannot cover the cost."
+			result_text += " The allocation was not made: Eanna's stores cannot cover the cost."
 			if bool(effects.get("repair_hazard", false)):
 				result_text += " The hazard remains active."
 		else:
-			allocation_paid = true
-			world.stockpiles[resource_id] = maxi(0, world.get_resource(resource_id) + resource_delta)
+			allocation_paid = world.modify_resource(resource_id, resource_delta, "institution", String(actor.id), &"eanna_household")
+			if not allocation_paid:
+				result_text += " The allocation was not made: the institutional ledger rejected it."
 	if bool(effects.get("repair_hazard", false)) and allocation_paid:
 		var repair_place := StringName(procedural_assignment.get("place_id", ""))
 		var repair_id := StringName(procedural_assignment.get("hazard_id", ""))
