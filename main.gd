@@ -8,7 +8,8 @@ const FACTION_LABELS := {
 	&"eanna_household": "🏛 Eanna Temple",
 	&"boatmens_guild": "⛵ Landing Boatmen & Guilds",
 	&"city_garrison": "🛡 City Garrison",
-	&"council_of_elders": "📜 Council of Elders"
+	&"council_of_elders": "📜 Council of Elders",
+	&"agricultural_households": "🌾 Agricultural Households"
 }
 
 class CylinderSealProp extends Control:
@@ -1476,7 +1477,7 @@ func _refresh_faction_standings() -> void:
 	for child in roster_box.get_children():
 		roster_box.remove_child(child)
 		child.queue_free()
-	for faction_id in [&"eanna_household", &"boatmens_guild", &"city_garrison", &"council_of_elders"]:
+	for faction_id in [&"eanna_household", &"boatmens_guild", &"city_garrison", &"council_of_elders", &"agricultural_households"]:
 		var standing := world.get_faction_standing(faction_id)
 		var line := RichTextLabel.new()
 		line.bbcode_enabled = true
