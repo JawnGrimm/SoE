@@ -62,6 +62,7 @@ var evidence_left_facts: Label
 var evidence_right_facts: Label
 var evidence_left_portrait: TextureRect
 var evidence_right_portrait: TextureRect
+var portrait_cache: Dictionary = {}
 var choice_buttons: Array[Button] = []
 var choice_stamp_labels: Dictionary = {}
 var choice_locked := false
@@ -368,13 +369,35 @@ func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: Strin
 	return panel
 
 func _load_character_portrait(character_id: StringName) -> Texture2D:
-	if character_id != &"":
-		var portrait_path := "res://assets/characters/%s_portrait.png" % String(character_id).to_lower()
-		if ResourceLoader.exists(portrait_path):
-			var portrait_texture := load(portrait_path) as Texture2D
-			if portrait_texture != null:
-				return portrait_texture
-	return _make_seal_placeholder()
+	if character_id == &"":
+		return _make_seal_placeholder()
+	if portrait_cache.has(character_id):
+		return portrait_cache[character_id] as Texture2D
+
+	var portrait_path := "res://assets/characters/%s_portrait.png" % String(character_id).to_lower()
+	if ResourceLoader.exists(portrait_path):
+		var source_texture := load(portrait_path) as Texture2D
+		if source_texture != null:
+			var portrait_image := source_texture.get_image()
+			if portrait_image != null and not portrait_image.is_empty():
+				# Center-crop and downsample once for the 44px evidence badge.
+				var source_size := portrait_image.get_size()
+				var crop_size := mini(source_size.x, source_size.y)
+				var crop_origin := Vector2i(
+					(source_size.x - crop_size) / 2,
+					(source_size.y - crop_size) / 2
+				)
+				portrait_image = portrait_image.get_region(
+					Rect2i(crop_origin, Vector2i(crop_size, crop_size))
+				)
+				portrait_image.resize(128, 128, Image.INTERPOLATE_LANCZOS)
+				var badge_texture := ImageTexture.create_from_image(portrait_image)
+				portrait_cache[character_id] = badge_texture
+				return badge_texture
+
+	var fallback := _make_seal_placeholder()
+	portrait_cache[character_id] = fallback
+	return fallback
 
 func _make_seal_placeholder() -> Texture2D:
 	var image := Image.create(44, 44, false, Image.FORMAT_RGBA8)
