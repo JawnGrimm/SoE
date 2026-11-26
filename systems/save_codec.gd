@@ -18,9 +18,9 @@ static func encode_world(world: WorldState, session: Dictionary = {}) -> Diction
 		"world": {
 			"year": world.year, "period": world.period, "master_seed": world.master_seed,
 			"rng": {
-				"narrative_seed": world.rng_narrative.seed, "narrative_state": world.rng_narrative.state,
-				"simulation_seed": world.rng_sim.seed, "simulation_state": world.rng_sim.state,
-				"people_seed": world.rng_people.seed, "people_state": world.rng_people.state,
+				"narrative_seed": String(world.rng_narrative.seed), "narrative_state": String(world.rng_narrative.state),
+				"simulation_seed": String(world.rng_sim.seed), "simulation_state": String(world.rng_sim.state),
+				"people_seed": String(world.rng_people.seed), "people_state": String(world.rng_people.state),
 			},
 			"stockpiles": _json_safe(world.stockpiles), "epics": _json_safe(world.epics),
 			"world_flags": _json_safe(world.world_flags), "pending_forms": _json_safe(world.pending_forms),
@@ -64,12 +64,12 @@ static func _world_from_data(data: Dictionary) -> WorldState:
 	world.period = clampi(int(data.get("period", 0)), 0, 11)
 	world.master_seed = int(data.get("master_seed", 0))
 	var rng: Dictionary = data.get("rng", {})
-	world.rng_narrative.seed = int(rng.get("narrative_seed", world.master_seed))
-	world.rng_narrative.state = int(rng.get("narrative_state", world.rng_narrative.seed))
-	world.rng_sim.seed = int(rng.get("simulation_seed", world.master_seed))
-	world.rng_sim.state = int(rng.get("simulation_state", world.rng_sim.seed))
-	world.rng_people.seed = int(rng.get("people_seed", world.master_seed))
-	world.rng_people.state = int(rng.get("people_state", world.rng_people.seed))
+	world.rng_narrative.seed = int(String(rng.get("narrative_seed", world.master_seed)))
+	world.rng_narrative.state = int(String(rng.get("narrative_state", world.rng_narrative.seed)))
+	world.rng_sim.seed = int(String(rng.get("simulation_seed", world.master_seed)))
+	world.rng_sim.state = int(String(rng.get("simulation_state", world.rng_sim.seed)))
+	world.rng_people.seed = int(String(rng.get("people_seed", world.master_seed)))
+	world.rng_people.state = int(String(rng.get("people_state", world.rng_people.seed)))
 	world.stockpiles = _name_int_map(data.get("stockpiles", {}))
 	world.epics = _name_dictionary_map(data.get("epics", {}))
 	world.world_flags = _name_int_map(data.get("world_flags", {}))
