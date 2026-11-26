@@ -115,6 +115,44 @@ func _run() -> void:
 	# --script does not inject project autoloads. Exercise the standalone registry directly.
 	registry = DefinitionRegistry.new()
 	registry.load_defaults()
+
+	# World-driven Assignment loop: three distinct opportunities are derived
+	# from the seeded form, active hazard, and actual institutional ledgers.
+	var assignment_world := WorldState.new()
+	var assignment_actor := UrukSeeder.seed_campaign(assignment_world, 44004400)
+	var opportunities := AssignmentPipeline.generate_opportunities(assignment_world, assignment_actor, &"path_civil")
+	_check(opportunities.size() == 3, "AssignmentPipeline should present exactly three opportunities")
+	var opportunity_kinds: Array[StringName] = []
+	for opportunity in opportunities:
+		opportunity_kinds.append(StringName(opportunity.get("kind", "")))
+	_check(opportunity_kinds.has(&"form") and opportunity_kinds.has(&"hazard") and opportunity_kinds.has(&"ledger"), "Initial opportunities should be grounded in a pending form, active hazard, and real institution ledger")
+	var form_opportunity: Dictionary = {}
+	var hazard_opportunity: Dictionary = {}
+	var ledger_opportunity: Dictionary = {}
+	for opportunity in opportunities:
+		match StringName(opportunity.get("kind", "")):
+			&"form": form_opportunity = opportunity
+			&"hazard": hazard_opportunity = opportunity
+			&"ledger": ledger_opportunity = opportunity
+	_check(AssignmentPipeline.begin(assignment_world, form_opportunity, assignment_actor), "A selected world opportunity should enter the active assignment lifecycle")
+	var form_assignment_id := StringName(form_opportunity.get("id", ""))
+	_check(bool(AssignmentPipeline.perform_action(assignment_world, assignment_actor, form_assignment_id, &"examine_records").get("success", false)), "Assignment should allow examination of its actual source record")
+	_check(bool(AssignmentPipeline.perform_action(assignment_world, assignment_actor, form_assignment_id, &"consult_official").get("success", false)), "Assignment should allow consultation as a separate investigative action")
+	_check(not bool(AssignmentPipeline.resolve(assignment_world, assignment_actor, form_assignment_id, &"certify").get("success", false)) == false, "Two investigative actions should permit a supported form assessment")
+	_check(assignment_world.pending_forms.is_empty(), "Certifying the generated form should resolve that exact source form")
+	_check(AssignmentPipeline.begin(assignment_world, hazard_opportunity, assignment_actor), "Active hazard should become a selectable engagement")
+	var hazard_assignment_id := StringName(hazard_opportunity.get("id", ""))
+	AssignmentPipeline.perform_action(assignment_world, assignment_actor, hazard_assignment_id, &"consult_official")
+	AssignmentPipeline.perform_action(assignment_world, assignment_actor, hazard_assignment_id, &"inspect_source")
+	var hazard_result := AssignmentPipeline.resolve(assignment_world, assignment_actor, hazard_assignment_id, &"repair")
+	_check(bool(hazard_result.get("success", false)) and not assignment_world.has_active_hazard(&"north_bay", &"roof_leak"), "Repair assessment should consume real institutional labor and stop the active hazard")
+	_check(AssignmentPipeline.begin(assignment_world, ledger_opportunity, assignment_actor), "A real institutional ledger should become a selectable engagement")
+	var ledger_assignment_id := StringName(ledger_opportunity.get("id", ""))
+	AssignmentPipeline.perform_action(assignment_world, assignment_actor, ledger_assignment_id, &"examine_records")
+	AssignmentPipeline.perform_action(assignment_world, assignment_actor, ledger_assignment_id, &"inspect_source")
+	var ledger_result := AssignmentPipeline.resolve(assignment_world, assignment_actor, ledger_assignment_id, &"record")
+	_check(bool(ledger_result.get("success", false)) and assignment_world.cedar_desk_log.size() == 1, "Ledger assessment should archive actual stockpile values without inventing or moving goods")
+	_check(assignment_world.cases_settled == 3, "Completed world-driven engagements should enter the existing career settlement counters")
 	_check(registry.all_places().size() == 7, "DefinitionRegistry should load the seven canonical Era 1 places")
 	_check(registry.get_place(&"hacinebi") != null and registry.get_place(&"hacinebi").political_relation == &"foreign_enclave", "Typed place lookup should retain Hacinebi's autonomous local context")
 	var copper_vector := AssignmentGeneratorScript.get_geographic_vector(&"counterfeit_copper")
