@@ -12,6 +12,7 @@ $projectFile = Join-Path $projectRoot "project.godot"
 $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("soe-limboai-" + [guid]::NewGuid().ToString("N"))
 $archivePath = Join-Path $tempRoot "limboai-gdextension.zip"
 
+# SHA-256 published/verified for the upstream v1.8.1 Godot 4.6+ GDExtension archive.
 $expectedHash = "0910411f8dbc0da8920f6c8bbbb6397c347cd9f2f193942468a702dfb11d5f0e"
 $downloadUrl = "https://github.com/limbonaut/limboai/releases/download/v$Version/limboai%2Bv$Version.gdextension-4.6.zip"
 
@@ -33,24 +34,25 @@ try {
     if ($actualHash -ne $expectedHash) {
         throw "LimboAI archive checksum mismatch. Expected $expectedHash, got $actualHash. Nothing was installed."
     }
+    Write-Host "Archive checksum verified."
 
     $extractPath = Join-Path $tempRoot "extracted"
     Expand-Archive -Path $archivePath -DestinationPath $extractPath -Force
 
-    $pluginConfig = Get-ChildItem -Path $extractPath -Filter "plugin.cfg" -File -Recurse |
-        Where-Object { $_.FullName -match '[\\/]addons[\\/]limboai[\\/]plugin\.cfg$' } |
-        Select-Object -First 1
-
-    if ($null -eq $pluginConfig) {
-        throw "The verified archive did not contain addons/limboai/plugin.cfg. Nothing was installed."
-    }
-
-    $sourceAddonPath = $pluginConfig.Directory.FullName
-    $extensionFile = Get-ChildItem -Path $sourceAddonPath -Filter "*.gdextension" -File -Recurse |
+    # LimboAI is a GDExtension, not a conventional editor plugin: it has no plugin.cfg.
+    # The .gdextension descriptor is what Godot discovers and loads automatically.
+    $extensionFile = Get-ChildItem -Path $extractPath -Filter "limboai.gdextension" -File -Recurse |
         Select-Object -First 1
 
     if ($null -eq $extensionFile) {
-        throw "The LimboAI plugin folder did not contain a .gdextension descriptor. Nothing was installed."
+        throw "The verified archive did not contain limboai.gdextension. Nothing was installed."
+    }
+
+    $sourceAddonPath = $extensionFile.Directory.FullName
+    $windowsEditorLibrary = Join-Path $sourceAddonPath "bin\liblimboai.windows.editor.x86_64.dll"
+
+    if (-not (Test-Path $windowsEditorLibrary)) {
+        throw "The archive contains limboai.gdextension but is missing the Windows x86_64 editor library. Nothing was installed."
     }
 
     if (Test-Path $installPath) {
@@ -59,37 +61,29 @@ try {
         Write-Host "Existing addons/limboai moved to $backupPath"
     }
 
-    Copy-Item -Path $sourceAddonPath -Destination $installPath -Recurse
+    try {
+        Copy-Item -Path $sourceAddonPath -Destination $installPath -Recurse
 
-    $installedConfig = Join-Path $installPath "plugin.cfg"
-    if (-not (Test-Path $installedConfig)) {
-        throw "Installation copy is missing plugin.cfg."
-    }
+        $installedDescriptor = Join-Path $installPath "limboai.gdextension"
+        $installedLibrary = Join-Path $installPath "bin\liblimboai.windows.editor.x86_64.dll"
 
-    $projectText = [System.IO.File]::ReadAllText($projectFile)
-    $pluginEntry = '"res://addons/limboai/plugin.cfg"'
-
-    if ($projectText -notmatch [regex]::Escape($pluginEntry)) {
-        $enabledPattern = '(?m)^(enabled=PackedStringArray\()([^\r\n]*)(\))$'
-        if ($projectText -notmatch $enabledPattern) {
-            throw "Could not locate editor_plugins.enabled in project.godot. Plugin files were installed, but automatic enablement was skipped."
+        if (-not (Test-Path $installedDescriptor) -or -not (Test-Path $installedLibrary)) {
+            throw "The installed LimboAI folder failed its post-copy validation."
         }
-
-        $enabledRegex = [regex]::new($enabledPattern)
-        $projectText = $enabledRegex.Replace(
-            $projectText,
-            [System.Text.RegularExpressions.MatchEvaluator]{
-                param($match)
-                return $match.Groups[1].Value + $match.Groups[2].Value + ', ' + $pluginEntry + $match.Groups[3].Value
-            },
-            1
-        )
-        [System.IO.File]::WriteAllText($projectFile, $projectText, [System.Text.UTF8Encoding]::new($false))
+    }
+    catch {
+        if (Test-Path $installPath) {
+            Remove-Item -Path $installPath -Recurse -Force
+        }
+        if ($backupPath -and (Test-Path $backupPath)) {
+            Move-Item -Path $backupPath -Destination $installPath
+        }
+        throw
     }
 
     Write-Host ""
-    Write-Host "LimboAI $Version installed at res://addons/limboai/"
-    Write-Host "The editor plugin is enabled in project.godot."
+    Write-Host "LimboAI $Version GDExtension installed at res://addons/limboai/"
+    Write-Host "Godot loads GDExtensions from their .gdextension descriptor; no editor plugin toggle is required."
     Write-Host "Open the SoE project in Godot 4.7.2 and allow the filesystem scan to finish."
     Write-Host "If the editor was already open, restart it once."
 }
