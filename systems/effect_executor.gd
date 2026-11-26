@@ -121,11 +121,12 @@ func _clear_flag(subject: PersonEntity, p: Dictionary, ctx: EventContext) -> voi
 func _modify_resource(subject: PersonEntity, p: Dictionary, ctx: EventContext) -> void:
 	if ctx.world == null:
 		return
-	var owner_id := subject.id if subject != null else (ctx.actor.id if ctx.actor != null else "")
+	var scope := String(p.get("scope", "world"))
+	var owner_id := ctx.actor.id if ctx.actor != null and scope in ["actor", "office", "institution"] else (subject.id if subject != null else "")
 	ctx.world.modify_resource(
 		StringName(p.get("resource", "")),
 		int(p.get("amount", 0)),
-		String(p.get("scope", "world")),
+		scope,
 		String(owner_id),
 		StringName(p.get("institution_id", ""))
 	)
