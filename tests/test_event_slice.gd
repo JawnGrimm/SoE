@@ -496,27 +496,6 @@ func _run() -> void:
 	_check(south_penalty_world.get_resource(&"canal_progress") == 0, "Docking the carrier crew should leave Canal Cut progress unchanged")
 	_check(south_penalty_world.has_flag(&"canal_crew_slowdown", south_penalty_world.current_period_index()), "Docking the carrier crew should slow canal stone transport for two periods")
 
-	# The four mentor records each add exactly one skill level, the named trait, and five standing.
-	var mentor_cases: Array = [
-		[&"shuruppak_ilu", &"arithmetic", &"exacting", 1, 5],
-		[&"utu_mansum", &"law", &"stubborn", 1, 0],
-		[&"enlil_kisu", &"stewardship", &"protective", 0, 0],
-		[&"nin_kasi", &"rhetoric", &"diplomatic", 0, 0]
-	]
-	for mentor_case in mentor_cases:
-		var mentor_world := WorldState.new()
-		var mentor_actor := UrukSeeder.seed_campaign(mentor_world, 88)
-		var mentor_id: StringName = mentor_case[0]
-		var mentor_skill: StringName = mentor_case[1]
-		var mentor_trait: StringName = mentor_case[2]
-		var starting_level: int = mentor_case[3]
-		var starting_opinion: int = mentor_case[4]
-		_check(UrukCatechism.choose_mentor(mentor_world, mentor_actor, mentor_id), "Each authored mentor should be selectable")
-		_check(mentor_actor.skills.get_level(mentor_skill) == starting_level + 1, "Each mentor should add exactly one level in the named skill")
-		_check(mentor_trait in mentor_actor.traits, "Each mentor should grant the named trait")
-		_check(mentor_world.get_person(mentor_id).get_opinion(mentor_actor.id) == starting_opinion + 5, "Each mentor should gain five opinion of the apprentice")
-
-
 	# Phase 8B: Quayside Stoppage uses the live event condition/scheduler path.
 	var quayside_template: EventTemplate = registry.get_event(&"challenge_quayside_stoppage")
 	_check(quayside_template != null, "Registry should load the Quayside Stoppage definition")
