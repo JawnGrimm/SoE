@@ -624,6 +624,8 @@ func _choose_mentor(mentor_id: StringName) -> void:
 
 
 func _offer_north_bay_assignment() -> void:
+	# This is a world-condition assignment, available to every career path.
+	# Do not gate it on the temple/civil catechism choice.
 	if north_bay_assignment == null:
 		return
 	if world.get_hazard_total_lost(&"north_bay", &"roof_leak") < 3:
