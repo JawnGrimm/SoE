@@ -59,11 +59,19 @@ const PLACE_LABELS := {
 	&"uruk": "Uruk", &"ur": "Ur", &"umma": "Umma", &"nippur": "Nippur",
 	&"habuba_kabira": "Habuba Kabira", &"hacinebi": "Hacinebi", &"susa": "Susa"
 }
+const DOCKET_COMMODITIES := {
+	&"ditch_guard_rations": &"barley", &"spear_requisition": &"copper",
+	&"watchtower_supply": &"lamp_oil", &"conscription_exemption": &"manpower",
+	&"boundary_stones": &"land_claim", &"inheritance_tablets": &"land_claim",
+	&"market_vendor_fine": &"silver", &"sacrificial_sheep": &"sheep",
+	&"ritual_beer": &"beer", &"storehouse_seal": &"seal",
+	&"administrative_record": &"administrative_record"
+}
 
 static func get_geographic_vector(docket_id: StringName) -> Dictionary:
 	if GEOGRAPHIC_VECTORS.has(docket_id):
 		return (GEOGRAPHIC_VECTORS[docket_id] as Dictionary).duplicate(true)
-	return {"origin_id": &"uruk", "destination_id": &"uruk", "route_id": &"uruk_internal", "commodity_id": &"administrative_record", "route_mode": "within Uruk"}
+	return {"origin_id": &"uruk", "destination_id": &"uruk", "route_id": &"uruk_internal", "commodity_id": DOCKET_COMMODITIES.get(docket_id, &"administrative_record"), "route_mode": "within Uruk"}
 
 static func generate(world: WorldState, actor: PersonEntity, selected_path: StringName = &"") -> Dictionary:
 	if world == null or actor == null:
