@@ -453,7 +453,7 @@ func _run() -> void:
 
 
 	# Phase 8B: Quayside Stoppage is gated by the player's carrier history.
-	var quayside_template: EventTemplate = Registry.get_event(&"challenge_quayside_stoppage")
+	var quayside_template: EventTemplate = registry.get_event(&"challenge_quayside_stoppage")
 	_check(quayside_template != null, "Registry should load the Quayside Stoppage definition")
 	var quayside_world := WorldState.new()
 	var quayside_actor := UrukSeeder.seed_campaign(quayside_world, 32003200)
