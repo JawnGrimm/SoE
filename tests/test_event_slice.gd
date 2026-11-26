@@ -908,6 +908,11 @@ func _run() -> void:
 	WorldSimulator.new(registry).advance_period(epic_silt_world)
 	_check(epic_silt_world.period == 0 and epic_silt_world.get_resource(&"canal_progress") == 5, "Inundation with labor below eight should regress the canal by three")
 
+	var generic_progress_world := WorldState.new()
+	generic_progress_world.epics[&"epic_two"] = {"active": true, "progress_resource": &"epic_two_progress", "target": 40}
+	generic_progress_world.modify_resource(&"epic_two_progress", 100, "world")
+	_check(generic_progress_world.get_resource(&"epic_two_progress") == 40, "WorldState should clamp progress to the active Epic definition target, not a Canal constant")
+
 	# Epic pacing and fish sustainability are simulation guardrails.
 	var low_labor_epic_world := WorldState.new()
 	low_labor_epic_world.year = -3200
