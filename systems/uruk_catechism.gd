@@ -35,5 +35,5 @@ static func choose_mentor(world: WorldState, actor: PersonEntity, mentor_id: Str
 	var mentor := world.get_person(mentor_id)
 	if mentor == null:
 		return false
-	mentor.opinions[actor.id] = int(mentor.opinions.get(actor.id, 0)) + 5
+	mentor.change_opinion(actor.id, 5, "Mentor selection", world.year)
 	return true
