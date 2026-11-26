@@ -144,8 +144,10 @@ func _run() -> void:
 			if uruk_a.get_person(other_id) == null:
 				world_graph_is_closed = false
 	_check(world_graph_is_closed, "Every seeded person-to-person relationship should resolve both endpoints")
+	var seeded_eanna_stockpiles: Dictionary = uruk_a.institutions[&"eanna_household"].get("stockpiles", {})
 	for resource_id in [&"barley", &"dates", &"sheep", &"goats", &"cattle", &"fish", &"beer", &"wool", &"textiles", &"clay", &"reeds", &"bitumen", &"timber", &"copper", &"silver"]:
-		_check(uruk_a.stockpiles.has(resource_id), "Uruk seed should initialize commodity %s" % resource_id)
+		_check(seeded_eanna_stockpiles.has(resource_id), "Uruk seed should initialize institutional commodity %s" % resource_id)
+	_check(not uruk_a.stockpiles.has(&"barley") and not uruk_a.stockpiles.has(&"silver"), "Compound commodities should not remain duplicated in world stockpiles")
 	_check(uruk_player_a.id == &"player_apprentice", "Uruk seeder should return the apprentice")
 	_check(uruk_a.get_person(&"shuruppak_ilu").get_opinion(uruk_player_a.id) == 5, "Senior scribe should begin at +5 opinion")
 	for resident_id in [&"ur_nanna", &"utu_mansum", &"enlil_kisu", &"lu_nanshe", &"nin_kasi", &"geme_inana"]:
