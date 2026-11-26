@@ -6,6 +6,7 @@ var registry: DefinitionRegistry
 var _finished := false
 
 const AssignmentGeneratorScript = preload("res://systems/assignment_generator.gd")
+const MainSceneScript = preload("res://main.gd")
 const ROUTINE_CASE: EventTemplate = preload("res://data/events/routine_tally_adjustment.tres")
 const ORIGIN_REPLY_CASE: EventTemplate = preload("res://data/events/origin_side_reply.tres")
 
@@ -828,6 +829,44 @@ func _run() -> void:
 		epic_silt_world.institutions[StringName("labor_institution_%d" % labor_office)] = {"members": [labor_person.id], "stockpiles": {}}
 	WorldSimulator.new().advance_period(epic_silt_world)
 	_check(epic_silt_world.period == 0 and epic_silt_world.get_resource(&"canal_progress") == 6, "Inundation with labor below six should regress the canal by two")
+
+	# Career silver is measured from the actor's personal purse, never Eanna's
+	# institutional/world silver stockpile.
+	var purse_world := WorldState.new()
+	purse_world.stockpiles[&"silver"] = 100
+	var purse_actor := PersonEntity.new()
+	purse_actor.id = &"purse_test"
+	purse_actor.resources[&"silver"] = 5
+	var settlement_main = MainSceneScript.new()
+	settlement_main.world = purse_world
+	settlement_main.actor = purse_actor
+	var no_traits: Array[StringName] = []
+	settlement_main._record_case_settlement(4, no_traits)
+	_check(purse_world.silver_earned == 1, "Case settlement should count personal purse silver gained")
+	purse_world.stockpiles[&"silver"] = 110
+	settlement_main._record_case_settlement(5, no_traits)
+	_check(purse_world.silver_earned == 1, "Institutional/world silver must not inflate personal silver earned")
+
+	# A completed Epic must be re-armed for a new shift, otherwise the
+	# simulator's completed guard freezes progress at zero.
+	var epic_reset_world := WorldState.new()
+	epic_reset_world.year = -3200
+	epic_reset_world.stockpiles[&"canal_progress"] = 0
+	epic_reset_world.epics[&"great_canal_cut"] = {
+		"progress": 100,
+		"stage": "completed",
+		"completed": true,
+		"scandal_flags": [],
+		"history_notes": []
+	}
+	var epic_reset_main = MainSceneScript.new()
+	epic_reset_main.world = epic_reset_world
+	epic_reset_main._reset_epic_for_new_shift(&"great_canal_cut")
+	var reset_epic_state: Dictionary = epic_reset_world.epics[&"great_canal_cut"]
+	_check(int(reset_epic_state.get("progress", -1)) == 0 and String(reset_epic_state.get("stage", "")) == "survey" and not bool(reset_epic_state.get("completed", true)), "New shift should reset the completed canal Epic state")
+	epic_reset_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 128, &"labor": 10}}
+	WorldSimulator.new().advance_period(epic_reset_world)
+	_check(epic_reset_world.get_resource(&"canal_progress") > 0, "Canal Epic should resume autonomous progress after its new-shift reset")
 
 	_finish()
 
