@@ -17,6 +17,13 @@ static func seed_campaign(world: WorldState, world_seed: int) -> PersonEntity:
 	world.event_history.clear()
 	world.character_event_history.clear()
 	world.hazards.clear()
+	world.recent_archetypes.clear()
+	world.recent_npc_pairs.clear()
+	world.cases_settled = 0
+	world.silver_earned = 0
+	world.traits_gained.clear()
+	world.cedar_desk_log.clear()
+	world.era_completion_started = false
 	world._next_form_sequence = 1
 
 	# The original eight remain the center of the first playable slice.
