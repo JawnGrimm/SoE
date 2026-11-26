@@ -3,7 +3,7 @@ extends Control
 const AssignmentGeneratorScript = preload("res://systems/assignment_generator.gd")
 const CAMPAIGN_SEED: int = 32003200
 const NORTH_BAY_ASSIGNMENT_ID: StringName = &"north_bay_roof"
-const ROSTER_ORDER: Array[StringName] = [&"player_apprentice", &"shuruppak_ilu", &"utu_mansum", &"enlil_kisu", &"ur_nanna", &"nin_kasi", &"geme_inana", &"lu_nanshe"]
+const ROSTER_CAST: Array[StringName] = [&"shuruppak_ilu", &"utu_mansum", &"enlil_kisu", &"ur_nanna", &"nin_kasi", &"geme_inana", &"lu_nanshe"]
 
 class CylinderSealProp extends Control:
 	func _draw() -> void:
@@ -580,6 +580,10 @@ func _start_world() -> void:
 
 func _schedule_next_case() -> void:
 	_clear_stamp_history()
+	var current_player := world.get_player()
+	if current_player != null:
+		actor = current_player
+	context.actor = actor
 	context.year = world.year
 	current_era = Registry.get_era_for_year(world.year)
 	context.era = current_era
@@ -989,7 +993,7 @@ func _resolve_choice(index: int) -> void:
 	var silver_before := int(actor.resources.get(&"silver", 0))
 	var traits_before: Array[StringName] = actor.traits.duplicate()
 	var before: Dictionary[StringName, int] = {}
-	for person_id in ROSTER_ORDER:
+	for person_id in _get_roster_person_ids():
 		var person := world.get_person(person_id)
 		if person != null:
 			before[person_id] = int(person.get_opinion(actor.id))
@@ -1325,6 +1329,15 @@ func _clear_choices() -> void:
 		choices.remove_child(child)
 		child.queue_free()
 
+func _get_roster_person_ids() -> Array[StringName]:
+	var roster: Array[StringName] = []
+	if world != null and world.player_id != &"":
+		roster.append(world.player_id)
+	for person_id in ROSTER_CAST:
+		if not roster.has(person_id):
+			roster.append(person_id)
+	return roster
+
 func _refresh_compound() -> void:
 	if world == null:
 		return
@@ -1340,7 +1353,7 @@ func _refresh_compound() -> void:
 	for child in roster_box.get_children():
 		roster_box.remove_child(child)
 		child.queue_free()
-	for person_id in ROSTER_ORDER:
+	for person_id in _get_roster_person_ids():
 		var person := world.get_person(person_id)
 		if person == null:
 			continue

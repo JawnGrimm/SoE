@@ -162,7 +162,9 @@ func _simulate_people(world: WorldState) -> void:
 	var grain_clerk := world.get_person(&"ur_nanna")
 	var foreman := world.get_person(&"enlil_kisu")
 	var senior := world.get_person(&"shuruppak_ilu")
-	var player_id := StringName("player_apprentice")
+	var player_id := world.player_id
+	if player_id == &"" or world.get_player() == null:
+		return
 	var now := world.current_period_index()
 	if grain_clerk != null and foreman != null:
 		var labor := world.get_resource(&"labor")

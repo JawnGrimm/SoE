@@ -25,7 +25,7 @@ parameters = {"memory_id": &"ledger_inquest_cooperated", "text": "The apprentice
 [sub_resource type="Resource" id="fx_2"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
-parameters = {"subject": &"shuruppak_ilu", "other": &"player_apprentice", "amount": 6, "reason": "Produced the disputed accounts for review"}
+parameters = {"subject": &"shuruppak_ilu", "other": &"actor", "amount": 6, "reason": "Produced the disputed accounts for review"}
 
 [sub_resource type="Resource" id="fx_3"]
 script = ExtResource("3")
