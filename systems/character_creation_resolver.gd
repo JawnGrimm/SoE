@@ -13,7 +13,7 @@ static func load_catalog(path: String) -> Dictionary:
 		return {}
 	return parsed
 
-static func is_answer_available(catalog: Dictionary, selections: CharacterCreationSelections, question_id: StringName, answer: Dictionary) -> Dictionary:
+static func is_answer_available(catalog: Dictionary, selections: CharacterCreationSelections, _question_id: StringName, answer: Dictionary) -> Dictionary:
 	if selections == null:
 		return {"available": false, "reason": "Character choices are unavailable."}
 	var requirements: Dictionary = answer.get("requires", {})

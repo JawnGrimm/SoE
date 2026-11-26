@@ -115,8 +115,7 @@ static func attach_player(world: WorldState, player: PersonEntity) -> void:
 	for person in world.people.values():
 		if person == player:
 			continue
-		if not person.opinions.has(player.id):
-			person.set_opinion(player.id, 5 if person.id == &"shuruppak_ilu" else 0)
+		person.set_opinion(player.id, 5 if person.id == &"shuruppak_ilu" else 0)
 
 	# Restore the baseline mentor and household ties omitted while the player
 	# was held outside WorldState during the creation draft.
