@@ -62,6 +62,7 @@ var evidence_left_facts: Label
 var evidence_right_facts: Label
 var evidence_left_portrait: TextureRect
 var evidence_right_portrait: TextureRect
+var portrait_cache: Dictionary = {}
 var choice_buttons: Array[Button] = []
 var choice_stamp_labels: Dictionary = {}
 var choice_locked := false
@@ -368,13 +369,35 @@ func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: Strin
 	return panel
 
 func _load_character_portrait(character_id: StringName) -> Texture2D:
-	if character_id != &"":
-		var portrait_path := "res://assets/characters/%s_portrait.png" % String(character_id).to_lower()
-		if ResourceLoader.exists(portrait_path):
-			var portrait_texture := load(portrait_path) as Texture2D
-			if portrait_texture != null:
-				return portrait_texture
-	return _make_seal_placeholder()
+	if character_id == &"":
+		return _make_seal_placeholder()
+	if portrait_cache.has(character_id):
+		return portrait_cache[character_id] as Texture2D
+
+	var portrait_path := "res://assets/characters/%s_portrait.png" % String(character_id).to_lower()
+	if ResourceLoader.exists(portrait_path):
+		var source_texture := load(portrait_path) as Texture2D
+		if source_texture != null:
+			var portrait_image := source_texture.get_image()
+			if portrait_image != null and not portrait_image.is_empty():
+				# Center-crop and downsample once for the 44px evidence badge.
+				var source_size := portrait_image.get_size()
+				var crop_size := mini(source_size.x, source_size.y)
+				var crop_origin := Vector2i(
+					(source_size.x - crop_size) / 2,
+					(source_size.y - crop_size) / 2
+				)
+				portrait_image = portrait_image.get_region(
+					Rect2i(crop_origin, Vector2i(crop_size, crop_size))
+				)
+				portrait_image.resize(128, 128, Image.INTERPOLATE_LANCZOS)
+				var badge_texture := ImageTexture.create_from_image(portrait_image)
+				portrait_cache[character_id] = badge_texture
+				return badge_texture
+
+	var fallback := _make_seal_placeholder()
+	portrait_cache[character_id] = fallback
+	return fallback
 
 func _make_seal_placeholder() -> Texture2D:
 	var image := Image.create(44, 44, false, Image.FORMAT_RGBA8)
@@ -597,8 +620,20 @@ func _show_case() -> void:
 		evidence_right_quote.text = "“The gate tally reads twenty-three. I will answer for the count I witnessed.”"
 		_set_evidence_facts("𒂍  DISPATCH TABLET\n24 measures barley\nSealed at the river.", "𒂍  THRESHOLD TALLY\n23 measures barley\nCUSTODY: No witness at loading, transit, or unloading.")
 	elif active_event.id == CASE_01_ID:
+		evidence_left_title.text = "RIVER QUAYS  /  PIERCED TAG"
+		evidence_left_speaker.text = "ENLIL-KISU"
+		evidence_left_portrait.texture = _load_character_portrait(&"enlil_kisu")
+		evidence_right_title.text = "SOUTH COURT  /  RECEIPT"
+		evidence_right_speaker.text = "UTU-MANSUM"
+		evidence_right_portrait.texture = _load_character_portrait(&"utu_mansum")
 		_set_evidence_facts("𒂍  PIERCED TAG\n4 jars oil · 6 linen bundles\nSender’s seal intact on tag.", "𒂍  COURT MAT\n4 jars present · 6 bundles present\nSmallest oil jar seal cracked. CARRIER: road was rough; Enlil-kisu says the jar was never unstoppered.")
 	elif active_event.id == CASE_02_ID:
+		evidence_left_title.text = "BREWING HOUSE  /  ACCOUNT"
+		evidence_left_speaker.text = "NIN-KASI"
+		evidence_left_portrait.texture = _load_character_portrait(&"nin_kasi")
+		evidence_right_title.text = "ARCHIVE COPY  /  MALT & SIGN"
+		evidence_right_speaker.text = "CLERK'S COPY"
+		evidence_right_portrait.texture = _make_seal_placeholder()
 		_set_evidence_facts("𒂍  GRAIN ENTRIES\n6 + 8 + 4 = 18\nSubtotal written: 17.", "𒂍  MALT ENTRY · 3 baskets malt\nMalted spelt recorded below the dividing line.\n𒂍  BLURRED SIGN\nMoisture-damaged; allocation between libation and worker bread cannot be established.")
 	prompt_label.text = "What mark will you leave?"
 	for index in range(active_event.outcomes.size()):
