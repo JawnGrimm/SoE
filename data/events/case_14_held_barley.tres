@@ -15,7 +15,7 @@ parameters = {"form_type": &"held_barley"}
 script = ExtResource("4")
 condition_type = &"period_in_range"
 target = "actor"
-parameters = {"min": 6, "max": 6}
+parameters = {"min": 6, "max": 11}
 
 [sub_resource type="Resource" id="FxReleaseFive"]
 script = ExtResource("3")
