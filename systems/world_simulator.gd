@@ -26,9 +26,10 @@ func _simulate_economy(world: WorldState) -> void:
 	_change(world, &"fish", -2)
 	_change(world, &"textiles", -1)
 	_change(world, &"labor", -4)
-	# Labor is available labor-days/workforce, not a consumable household good.
-	# Replenish the period's workforce pool before institutional demand is applied.
+	# Labor is available workforce, replenished each period before demand.
+	# Institutional activity commits part of that pool, so it cannot pin at 40.
 	_change(world, &"labor", 6)
+	_change(world, &"labor", -2) # recurring institutional activity
 
 	# Seasonal production varies with waterworks progress and the seeded sim stream.
 	# Periods are Uruk's broad agricultural cycle, not a scripted event schedule.
@@ -39,11 +40,12 @@ func _simulate_economy(world: WorldState) -> void:
 		_change(world, &"dates", world.rng_sim.randi_range(5, 11))
 	if p >= 2 and p <= 9:
 		_change(world, &"fish", world.rng_sim.randi_range(1, 4))
+	if p >= 4 and p <= 7:
+		_change(world, &"labor", -3) # field and canal labor peak during harvest
+	if p == 0 or p == 8:
+		_change(world, &"labor", 2) # seasonal workforce returns to the pool
 	if p == 8:
 		_change(world, &"wool", world.rng_sim.randi_range(3, 7))
-		_change(world, &"labor", 7)
-	if p == 0:
-		_change(world, &"labor", 12)
 	# Brewing converts a small amount of barley into beer. It is a production
 	# chain, so shortages in barley also constrain beer output.
 	if p == 3 or p == 7 or p == 10:
@@ -105,24 +107,39 @@ func _generate_forms(world: WorldState) -> void:
 	var labor := world.get_resource(&"labor")
 	var dates := world.get_resource(&"dates")
 	var wool := world.get_resource(&"wool")
-	var pressure := _total_institution_pressure(world)
+	var period := world.period
+	var institution_activity := 0
+	for institution in world.institutions.values():
+		institution_activity += int(institution.get("activity_count", 0))
 
-	# Form generation is driven by observed state and a per-form cooldown.
-	# It is deliberately not a fixed list injected on particular calendar dates.
-	if barley >= 390 and pressure >= 1:
+	# Surplus levy is harvest/stores accounting, not scarcity pressure.
+	var harvest_or_stores := period >= 4 and period <= 11
+	if barley >= 390 and harvest_or_stores and institution_activity > 0:
 		_offer_if_ready(world, &"grain_levy", &"south_court_storehouse", 2, &"surplus_levy")
 	elif barley <= 85:
 		_offer_if_ready(world, &"grain_levy", &"south_court_storehouse", 3, &"shortage_assessment")
-	if labor <= 7:
-		_offer_if_ready(world, &"pension_roll", &"ditch_labor_tally", 2, &"labor_shortage")
+
+	# Canal maintenance and field mobilization require labor tallies before
+	# workforce reaches an emergency zero.
+	var sowing_or_harvest := period >= 0 and period <= 7
+	if sowing_or_harvest and (world.get_resource(&"canal_progress") < 60 or labor <= 18):
+		_offer_if_ready(world, &"pension_roll", &"ditch_labor_tally", 2, &"canal_workforce_demand")
+
 	if dates >= 100 and barley >= 180:
 		_offer_if_ready(world, &"consignment_receipt", &"temple_consignment", 1, &"surplus_provisions")
 	elif world.get_resource(&"fish") <= 14:
 		_offer_if_ready(world, &"consignment_receipt", &"river_fish_supply", 2, &"fish_shortage")
+
+	# The active North-Bay roof leak spoils stored barley and generates its
+	# own inspection docket; this is the cause of the Held Barley case.
+	if world.has_active_hazard(&"north_bay", &"roof_leak") and barley >= 100:
+		_offer_if_ready(world, &"held_barley", &"north_bay", 2, &"roof_leak_inspection")
+
+	# Textile and brewing bottlenecks are delivery/consignment issues.
 	if wool >= 30 and world.get_resource(&"textiles") < 8:
-		_offer_if_ready(world, &"held_barley", &"textile_workshop", 2, &"wool_backlog")
-	if world.get_resource(&"beer") <= 4 and world.get_resource(&"barley") >= 40:
-		_offer_if_ready(world, &"load_claim", &"brewery_delivery", 1, &"beer_shortage")
+		_offer_if_ready(world, &"consignment_receipt", &"textile_workshop", 2, &"wool_backlog")
+	if world.get_resource(&"beer") <= 4 and barley >= 40:
+		_offer_if_ready(world, &"consignment_receipt", &"brewery_delivery", 1, &"beer_shortage")
 
 func _total_institution_pressure(world: WorldState) -> int:
 	var total := 0
