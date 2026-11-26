@@ -7,6 +7,7 @@ const DEFAULT_FOLDERS: Dictionary = {
 	"forms": "res://data/forms",
 	"eras": "res://data/eras",
 	"assignments": "res://data/assignments",
+	"epics": "res://data/epics",
 }
 
 var warnings: Array[String] = []
@@ -46,6 +47,12 @@ func register_event(definition: EventTemplate) -> bool:
 
 func register_era(definition: EraDef) -> bool:
 	return register_definition(definition, "eras")
+
+func register_epic(definition: EpicDef) -> bool:
+	if definition == null or definition.id == &"":
+		_warn("DefinitionRegistry: rejected malformed EpicDef")
+		return false
+	return register_definition(definition, "epics")
 
 func register_assignment(definition: AssignmentDef) -> bool:
 	if definition == null or not definition.is_valid():
@@ -97,6 +104,17 @@ func get_event(definition_id: StringName) -> EventTemplate:
 
 func get_era(definition_id: StringName) -> EraDef:
 	return get_definition(definition_id) as EraDef
+
+func get_epic(definition_id: StringName) -> EpicDef:
+	return get_definition(definition_id) as EpicDef
+
+func all_epics() -> Array[EpicDef]:
+	var result: Array[EpicDef] = []
+	for definition in _definitions_by_category.get("epics", []):
+		if definition is EpicDef:
+			result.append(definition)
+	result.sort_custom(func(a: EpicDef, b: EpicDef) -> bool: return String(a.id) < String(b.id))
+	return result
 
 func get_assignment(definition_id: StringName) -> AssignmentDef:
 	return get_definition(definition_id) as AssignmentDef
