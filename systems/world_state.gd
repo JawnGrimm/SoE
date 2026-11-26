@@ -60,6 +60,7 @@ func offer_assignment(assignment_id: StringName, employer_id: StringName) -> boo
 		"employer_id": employer_id,
 		"offered_period": current_period_index(),
 		"actions": {},
+		"consultations": [],
 		"assessment": &"",
 	}
 	return true
@@ -74,17 +75,24 @@ func start_assignment(assignment_id: StringName) -> bool:
 	assignments[assignment_id] = entry
 	return true
 
-func record_assignment_action(assignment_id: StringName, action_id: StringName) -> bool:
+func record_assignment_action(assignment_id: StringName, action_id: StringName, consulted_person_id: StringName = &"") -> bool:
 	if assignment_id == &"" or action_id == &"" or not assignments.has(assignment_id):
 		return false
 	var entry: Dictionary = assignments[assignment_id]
 	if String(entry.get("status", "")) != "active":
+		return false
+	if consulted_person_id != &"" and get_person(consulted_person_id) == null:
+		push_warning("WorldState: consultation references unknown person %s" % consulted_person_id)
 		return false
 	var actions: Dictionary = entry.get("actions", {})
 	if actions.has(action_id):
 		return false
 	actions[action_id] = true
 	entry["actions"] = actions
+	if consulted_person_id != &"":
+		var consultations: Array = entry.get("consultations", [])
+		consultations.append({"person_id": consulted_person_id, "period": current_period_index()})
+		entry["consultations"] = consultations
 	assignments[assignment_id] = entry
 	return true
 
