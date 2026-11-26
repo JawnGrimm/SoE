@@ -3,3 +3,6 @@
 .export/
 *.tmp
 .DS_Store
+
+# LimboAI native GDExtension binaries are installed locally by tools/install_limboai.ps1.
+addons/limboai/bin/
