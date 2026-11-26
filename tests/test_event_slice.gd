@@ -212,7 +212,7 @@ func _run() -> void:
 	var saved_narrative_state := save_roundtrip_world.rng_narrative.state
 	var saved_simulation_state := save_roundtrip_world.rng_sim.state
 	var saved_people_state := save_roundtrip_world.rng_people.state
-	var save_session := {"active_event_id": "routine_tally_adjustment", "procedural_assignment": {}, "selected_path": "government_scribe"}
+	var save_session := {"phase": "world_engagement", "active_event_id": "routine_tally_adjustment", "procedural_assignment": {}, "assignment_opportunities": [{"id": "work_test", "kind": "ledger", "title": "Test ledger"}], "active_world_assignment_id": "saved_world_assignment", "selected_path": "government_scribe"}
 	var save_payload := SaveCodecScript.encode_world(save_roundtrip_world, save_session)
 	var json_payload: Variant = JSON.parse_string(JSON.stringify(save_payload))
 	var decoded_save := SaveCodecScript.decode_save(json_payload)
@@ -231,6 +231,7 @@ func _run() -> void:
 		_check(restored_world.assignments.has(&"saved_world_assignment") and restored_world.assignments[&"saved_world_assignment"].get("actions", {}).has("examine_records"), "SaveCodec should preserve an unfinished multi-action assignment and its evidence")
 		_check(restored_world.rng_narrative.state == saved_narrative_state and restored_world.rng_sim.state == saved_simulation_state and restored_world.rng_people.state == saved_people_state, "SaveCodec should preserve all three RNG streams")
 		_check(String(decoded_save.session.get("active_event_id", "")) == "routine_tally_adjustment", "SaveCodec should preserve active docket session")
+		_check(String(decoded_save.session.get("phase", "")) == "world_engagement" and String(decoded_save.session.get("active_world_assignment_id", "")) == "saved_world_assignment" and decoded_save.session.get("assignment_opportunities", []).size() == 1, "SaveCodec should preserve the desk selection and active engagement session")
 	var unsupported_save := save_payload.duplicate(true)
 	unsupported_save["version"] = 999
 	_check(not bool(SaveCodecScript.decode_save(unsupported_save).get("success", false)), "SaveCodec should reject unsupported future versions")
