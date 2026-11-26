@@ -12,6 +12,8 @@ extends PopupWindowPanel
 @onready var options_button = %OptionsButton
 @onready var main_menu_button = %MainMenuButton
 @onready var exit_button = %ExitButton
+@onready var save_button = %SaveButton
+@onready var load_button = %LoadButton
 ## If Maaack's Scene Loader is installed, then it will be used to change scenes.
 @onready var scene_loader_node = get_tree().root.get_node_or_null(^"SceneLoader")
 
@@ -63,15 +65,22 @@ func _refresh_options_button() -> void:
 func _refresh_main_menu_button() -> void:
 	main_menu_button.visible = !get_main_menu_scene_path().is_empty()
 
+func _refresh_save_load_buttons() -> void:
+	var game := get_tree().current_scene
+	save_button.disabled = game == null or not game.has_method("can_save_game") or not bool(game.call("can_save_game"))
+	load_button.disabled = game == null or not game.has_method("load_game") or not SaveManager.has_save()
+
 func _ready() -> void:
 	super._ready()
-	_refresh_exit_button()
-	_refresh_options_button()
-	_refresh_main_menu_button()
-	restart_confirmation.confirmed.connect(_on_restart_confirmation_confirmed)
-	restart_confirmation.closed.connect(_on_restart_confirmation_closed)
-	main_menu_confirmation.confirmed.connect(_on_main_menu_confirmation_confirmed)
-	exit_confirmation.confirmed.connect(_on_exit_confirmation_confirmed)
+	if not Engine.is_editor_hint():
+		_refresh_exit_button()
+		_refresh_options_button()
+		_refresh_main_menu_button()
+		_refresh_save_load_buttons()
+		restart_confirmation.confirmed.connect(_on_restart_confirmation_confirmed)
+		restart_confirmation.closed.connect(_on_restart_confirmation_closed)
+		main_menu_confirmation.confirmed.connect(_on_main_menu_confirmation_confirmed)
+		exit_confirmation.confirmed.connect(_on_exit_confirmation_confirmed)
 
 func _on_restart_button_pressed() -> void:
 	_show_window(restart_confirmation)
@@ -84,6 +93,24 @@ func _on_main_menu_button_pressed() -> void:
 
 func _on_exit_button_pressed() -> void:
 	_show_window(exit_confirmation)
+
+func _on_save_button_pressed() -> void:
+	var game := get_tree().current_scene
+	if game == null or not game.has_method("save_game"):
+		return
+	var result: Dictionary = game.call("save_game")
+	save_button.text = "Save / Seal  ✓" if bool(result.get("success", false)) else "Save Failed"
+
+func _on_load_button_pressed() -> void:
+	var game := get_tree().current_scene
+	if game == null or not game.has_method("load_game"):
+		return
+	var result: Dictionary = game.call("load_game")
+	if bool(result.get("success", false)):
+		get_tree().paused = false
+		hide()
+	else:
+		load_button.text = "Load Failed"
 
 func _on_restart_confirmation_confirmed() -> void:
 	restarting = true
