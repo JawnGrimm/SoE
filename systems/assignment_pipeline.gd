@@ -159,6 +159,8 @@ static func perform_action(world: WorldState, actor: PersonEntity, assignment_id
 	var record: Dictionary = world.assignments[assignment_id]
 	if String(record.get("status", "")) != "active":
 		return {"success": false, "message": "This engagement is not active."}
+	if StringName(record.get("actor_id", "")) != actor.id:
+		return {"success": false, "message": "This engagement belongs to another scribe."}
 	var actions: Dictionary = record.get("actions", {})
 	if actions.has(action_id):
 		return {"success": false, "message": "That action has already been recorded."}
@@ -194,6 +196,8 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 	var record: Dictionary = world.assignments[assignment_id]
 	if String(record.get("status", "")) != "active":
 		return {"success": false, "message": "This engagement is not active."}
+	if StringName(record.get("actor_id", "")) != actor.id:
+		return {"success": false, "message": "This engagement belongs to another scribe."}
 	var actions: Dictionary = record.get("actions", {})
 	if actions.size() < 2:
 		return {"success": false, "message": "At least two investigative actions must be recorded before assessment."}
@@ -299,6 +303,12 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 	record["result"] = result_text
 	record["accurate"] = accurate
 	world.assignments[assignment_id] = record
+	actor.memory.append({
+		"memory_id": &"assignment_assessment",
+		"text": "%s — %s" % [String(record.get("title", "Assignment")), result_text],
+		"year": world.year,
+		"involved": [String(source_id)]
+	})
 	world.record_case_settlement(actor, int(actor.resources.get(&"silver", 0)) - (2 if accurate else 1), actor.traits.duplicate())
 	return {"success": true, "message": result_text, "accurate": accurate}
 
