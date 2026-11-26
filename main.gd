@@ -672,14 +672,21 @@ func _refresh_north_bay_actions() -> void:
 	_clear_choices()
 	var state := world.get_assignment_state(NORTH_BAY_ASSIGNMENT_ID)
 	var actions: Dictionary = state.get("actions", {})
-	if not actions.has(&"consult_steward"):
+	if actions.has(&"consult_steward"):
+		_add_choice("Consult Steward  /  RECORDED", _north_bay_action_already_recorded.bind("Consult Steward"))
+	else:
 		_add_choice("Consult Steward", _north_bay_consult_steward)
-	if not actions.has(&"inspect_beams"):
+	if actions.has(&"inspect_beams"):
+		_add_choice("Inspect Beams  /  RECORDED", _north_bay_action_already_recorded.bind("Inspect Beams"))
+	else:
 		_add_choice("Inspect Beams", _north_bay_inspect_beams)
 	_add_choice("Submit Assessment", _begin_north_bay_assessment)
 
+func _north_bay_action_already_recorded(action_label: String) -> void:
+	prompt_label.text = "%s has already been recorded in this docket." % action_label
+
 func _north_bay_consult_steward() -> void:
-	if phase != "north_bay_activity" or not world.record_assignment_action(NORTH_BAY_ASSIGNMENT_ID, &"consult_steward"):
+	if phase != "north_bay_activity" or not world.record_assignment_action(NORTH_BAY_ASSIGNMENT_ID, &"consult_steward", &"ur_nanna"):
 		return
 	AudioManager.play_stylus_mark()
 	evidence_left_title.text = "TEMPLE STOREHOUSE  /  CONSULTATION"
@@ -723,12 +730,12 @@ func _submit_north_bay_assessment(is_accurate: bool) -> void:
 	if phase != "north_bay_assessment" or north_bay_assignment == null:
 		return
 	var assessment: StringName = &"leak_confirmed_repair_required" if is_accurate else &"roof_reported_sound"
-	if not world.complete_assignment(NORTH_BAY_ASSIGNMENT_ID, north_bay_assignment.required_actions, assessment):
-		push_warning("Main: North-Bay assessment rejected; required actions or lifecycle state are invalid")
-		return
 	var steward := world.get_person(north_bay_assignment.employer)
 	if steward == null:
 		push_warning("Main: North-Bay employer disappeared before settlement")
+		return
+	if not world.complete_assignment(NORTH_BAY_ASSIGNMENT_ID, north_bay_assignment.required_actions, assessment):
+		push_warning("Main: North-Bay assessment rejected; required actions or lifecycle state are invalid")
 		return
 	var opinion_delta := north_bay_assignment.opinion_penalty
 	if is_accurate:
@@ -1086,7 +1093,7 @@ func _refresh_compound() -> void:
 		if trait_id in [&"exacting", &"stubborn", &"protective", &"diplomatic"]:
 			mentor_trait = String(trait_id)
 	heirloom_label.text = "HEIRLOOM RIM  /  APPRENTICE SCRIBE  /  MENTOR MARK: %s  /  SILVER AT DESK: %d SHEKELS" % [mentor_trait.to_upper(), world.get_resource(&"silver")]
-	stores_label.text = "Barley     %d measures\nSilver     %d shekels\nClay/Reeds %d\nLabor      %d" % [world.get_resource(&"barley"), world.get_resource(&"silver"), world.get_resource(&"clay_reeds"), world.get_resource(&"labor")]
+	stores_label.text = "Barley     %d measures\nNorth-Bay water loss  %d\nSilver     %d shekels\nClay/Reeds %d\nLabor      %d" % [world.get_resource(&"barley"), world.north_bay_roof_total_spoiled, world.get_resource(&"silver"), world.get_resource(&"clay_reeds"), world.get_resource(&"labor")]
 	var canal := world.get_resource(&"canal_progress")
 	var filled := int(round(float(canal) / 10.0))
 	canal_label.text = "THE GREAT CANAL CUT\n[%s%s] %d / 100\nTarget before Inundation" % ["=".repeat(filled), "-".repeat(10 - filled), canal]
