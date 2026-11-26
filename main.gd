@@ -1164,8 +1164,6 @@ func _advance_period() -> void:
 	active_world_assignment_id = &""
 	_clear_stamp_history()
 	world_simulator.advance_period(world)
-	if world.get_hazard_total_lost(&"north_bay", &"roof_leak") >= 3:
-		_offer_north_bay_assignment()
 	last_opinion_deltas.clear()
 	if world.is_active_epic_complete() and not world.era_completion_started:
 		_show_era_completion()
