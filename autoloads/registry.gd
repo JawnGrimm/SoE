@@ -12,6 +12,9 @@ func rebuild() -> void:
 func get_event(definition_id: StringName) -> EventTemplate:
 	return defs.get_event(definition_id)
 
+func get_assignment(definition_id: StringName) -> AssignmentDef:
+	return defs.get_assignment(definition_id)
+
 func all_events() -> Array[EventTemplate]:
 	return defs.all_events()
 
