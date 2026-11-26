@@ -503,7 +503,7 @@ func _show_path_catechism() -> void:
 	_clear_choices()
 	phase = "catechism_path"
 	case_heading.text = "𒂍  THE FIRST CLAY"
-	case_heading.add_theme_font_size_override("font_size", 24)
+	case_heading.add_theme_font_size_override("font_size", 20)
 	dossier.text = ""
 	dossier.visible = false
 	_set_evidence_facts("", "")
@@ -526,7 +526,7 @@ func _show_mentor_catechism() -> void:
 	_clear_choices()
 	phase = "catechism_mentor"
 	case_heading.text = "𒂍  THE MENTOR'S MARK"
-	case_heading.add_theme_font_size_override("font_size", 24)
+	case_heading.add_theme_font_size_override("font_size", 20)
 	dossier.text = ""
 	dossier.visible = false
 	_set_evidence_facts("", "")
@@ -548,15 +548,8 @@ func _choose_mentor(mentor_id: StringName) -> void:
 func _show_case() -> void:
 	_clear_choices()
 	phase = "case"
-	case_heading.add_theme_font_size_override("font_size", 24)
+	case_heading.add_theme_font_size_override("font_size", 20)
 	case_heading.text = "𒂍  " + active_event.title.to_upper()
-	if active_event.id == CASE_15_ID:
-		evidence_left_title.text = "SOUTH COURT  /  DISPATCH"
-		evidence_left_speaker.text = "ENLIL-KISU"
-		evidence_left_quote.text = "“The river road is dangerous and hungry. I know what a boatman endures.”"
-		evidence_right_title.text = "SOUTH COURT  /  GATE TALLY"
-		evidence_right_speaker.text = "UTU-MANSUM"
-		evidence_right_quote.text = "“The gate tally reads twenty-three. I will answer for the count I witnessed.”"
 	dossier.visible = false
 	dossier.text = ""
 	_set_evidence_tension(0, 0)
@@ -568,11 +561,11 @@ func _show_case() -> void:
 		evidence_right_title.text = "SOUTH COURT  /  GATE TALLY"
 		evidence_right_speaker.text = "UTU-MANSUM"
 		evidence_right_quote.text = "“The gate tally reads twenty-three. I will answer for the count I witnessed.”"
-		_set_evidence_facts("𒂍  DISPATCH TABLET\\n24 measures barley\\nSealed at the river.", "𒂍  THRESHOLD TALLY\\n23 measures barley\\nCUSTODY: No witness at loading, transit, or unloading.")
+		_set_evidence_facts("𒂍  DISPATCH TABLET\n24 measures barley\nSealed at the river.", "𒂍  THRESHOLD TALLY\n23 measures barley\nCUSTODY: No witness at loading, transit, or unloading.")
 	elif active_event.id == CASE_01_ID:
-		_set_evidence_facts("𒂍  PIERCED TAG\\n4 jars oil · 6 linen bundles\\nSender’s seal intact on tag.", "𒂍  COURT MAT\\n4 jars present · 6 bundles present\\nSmallest oil jar seal cracked. CARRIER: road was rough; Enlil-kisu says the jar was never unstoppered.")
+		_set_evidence_facts("𒂍  PIERCED TAG\n4 jars oil · 6 linen bundles\nSender’s seal intact on tag.", "𒂍  COURT MAT\n4 jars present · 6 bundles present\nSmallest oil jar seal cracked. CARRIER: road was rough; Enlil-kisu says the jar was never unstoppered.")
 	elif active_event.id == CASE_02_ID:
-		_set_evidence_facts("𒂍  GRAIN ENTRIES\\n6 + 8 + 4 = 18\\nSubtotal written: 17.", "𒂍  MALT ENTRY · 3 baskets malt\\nMalted spelt recorded below the dividing line.\\n𒂍  BLURRED SIGN\\nMoisture-damaged; allocation between libation and worker bread cannot be established.")
+		_set_evidence_facts("𒂍  GRAIN ENTRIES\n6 + 8 + 4 = 18\nSubtotal written: 17.", "𒂍  MALT ENTRY · 3 baskets malt\nMalted spelt recorded below the dividing line.\n𒂍  BLURRED SIGN\nMoisture-damaged; allocation between libation and worker bread cannot be established.")
 	prompt_label.text = "What mark will you leave?"
 	for index in range(active_event.outcomes.size()):
 		var outcome: EventOutcome = active_event.outcomes[index]
@@ -629,7 +622,7 @@ func _play_outcome_foley(index: int) -> void:
 func _show_result(outcome: EventOutcome) -> void:
 	_clear_choices()
 	phase = "result"
-	case_heading.add_theme_font_size_override("font_size", 24)
+	case_heading.add_theme_font_size_override("font_size", 20)
 	case_heading.text = "𒂍  MARK MADE"
 	dossier.visible = false
 	dossier.text = ""
@@ -668,7 +661,7 @@ func _prepare_seasonal_forms() -> void:
 func _show_end_of_queue() -> void:
 	_clear_choices()
 	phase = "end_of_queue"
-	case_heading.add_theme_font_size_override("font_size", 24)
+	case_heading.add_theme_font_size_override("font_size", 20)
 	case_heading.text = "𒂍  THE DESK IS CLEAR"
 	dossier.visible = false
 	dossier.text = ""
