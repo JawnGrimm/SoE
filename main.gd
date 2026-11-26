@@ -1068,8 +1068,12 @@ func _resolve_procedural_choice(index: int, choice: Dictionary) -> void:
 	var trait_id := StringName(effects.get("trait", ""))
 	if trait_id != &"" and trait_id not in actor.traits:
 		actor.traits.append(trait_id)
-	if int(effects.get("canal", 0)) > 0:
-		world.modify_resource(&"canal_progress", int(effects.get("canal", 0)))
+	var epic_progress := int(effects.get("epic_progress", 0))
+	if epic_progress != 0:
+		var active_epic_id := world.get_active_epic_id()
+		var active_epic_def := Registry.get_epic(active_epic_id)
+		if active_epic_def != null:
+			world.modify_resource(active_epic_def.progress_resource, epic_progress, "world")
 	actor.memory.append({"memory_id": &"procedural_docket", "text": String(procedural_assignment.get("title", "")) + ": " + result_text, "year": world.year, "involved": pair_parts})
 	_record_case_settlement(silver_before, traits_before)
 	var result_title := String(choice.get("result_title", "MARK MADE"))
@@ -1109,7 +1113,7 @@ func _advance_period() -> void:
 	if world.get_hazard_total_lost(&"north_bay", &"roof_leak") >= 3:
 		_offer_north_bay_assignment()
 	last_opinion_deltas.clear()
-	if world.get_resource(&"canal_progress") >= 100 and not world.era_completion_started:
+	if world.is_active_epic_complete() and not world.era_completion_started:
 		_show_era_completion()
 		return
 	_schedule_next_case()
@@ -1141,9 +1145,14 @@ func _show_era_completion() -> void:
 	for trait_id in world.traits_gained:
 		trait_names.append(String(trait_id))
 	var traits_text := ", ".join(trait_names) if not trait_names.is_empty() else "none recorded"
-	var summary := "Year %s / %s\nCases settled: %d\nThe Great Canal Cut: 100 / 100 — BUILT\nSilver earned: %d\nTraits gained: %s\nCompound standing: %+d average opinion" % [CalendarFormatter.format_year(world.year), String(current_era.display_name if current_era != null else "Current Era"), world.cases_settled, world.silver_earned, traits_text, standing]
-	world.cedar_desk_log.append({"year": world.year, "era_id": current_era.id if current_era != null else &"", "title": "ERA EPIC: THE GREAT CANAL CUT — COMPLETE", "summary": summary, "cases_settled": world.cases_settled, "canal_progress": 100, "silver_earned": world.silver_earned, "traits_gained": world.traits_gained.duplicate(), "standing": standing})
-	case_heading.text = "𒂍  ERA EPIC COMPLETE / THE GREAT CANAL CUT"
+	var completed_epic_id := world.get_active_epic_id()
+	var completed_epic := Registry.get_epic(completed_epic_id)
+	var completed_epic_title := completed_epic.title if completed_epic != null else "Era Epic"
+	var completed_epic_progress := world.get_resource(completed_epic.progress_resource) if completed_epic != null else 0
+	var completed_epic_target := completed_epic.target if completed_epic != null else 0
+	var summary := "Year %s / %s\nCases settled: %d\n%s: %d / %d — COMPLETE\nSilver earned: %d\nTraits gained: %s\nCompound standing: %+d average opinion" % [CalendarFormatter.format_year(world.year), String(current_era.display_name if current_era != null else "Current Era"), world.cases_settled, completed_epic_title, completed_epic_progress, completed_epic_target, world.silver_earned, traits_text, standing]
+	world.cedar_desk_log.append({"year": world.year, "era_id": current_era.id if current_era != null else &"", "title": "ERA EPIC: %s — COMPLETE" % completed_epic_title, "epic_id": completed_epic_id, "epic_progress": completed_epic_progress, "epic_target": completed_epic_target, "summary": summary, "cases_settled": world.cases_settled, "silver_earned": world.silver_earned, "traits_gained": world.traits_gained.duplicate(), "standing": standing})
+	case_heading.text = "𒂍  ERA EPIC COMPLETE / " + completed_epic_title.to_upper()
 	dossier.visible = true
 	dossier.text = summary
 	_set_evidence_facts("THE CAREER RECORD\nThe canal is entered as a completed Epic. The apprentice kept the measures and the names.", "THE STOREHOUSE\nThe reserves held long enough. The next shift inherits the result.")
@@ -1157,7 +1166,7 @@ func _show_era_completion() -> void:
 	evidence_right_quote.text = "“The canal stands, and the stores were not emptied to build it. That is competent work.”"
 	_set_evidence_portrait(&"shuruppak_ilu", &"ur_nanna")
 	_set_evidence_tension(0, 0)
-	prompt_label.text = "The canal is built. This era's Epic is complete."
+	prompt_label.text = completed_epic_title + " is complete. This era Epic is entered into the record."
 	_add_choice("Begin Next Era / New Shift", _begin_next_shift)
 	status_label.text = "ERA EPIC COMPLETE  /  CEDAR DESK ENTRY SEALED"
 
@@ -1168,11 +1177,14 @@ func _begin_next_shift() -> void:
 	var next_year := previous_era.end_year + 1 if previous_era != null else world.year + 1
 	world.year = next_year
 	world.period = 0
-	world.stockpiles[&"canal_progress"] = 0
-	world.reset_epic_for_new_shift(&"great_canal_cut")
 	world.era_completion_started = false
 	world.cedar_desk_log.append({"year": world.year, "title": "NEW SHIFT BEGUN", "summary": "The scribe leaves the completed canal on the record and begins the next shift."})
 	current_era = Registry.get_era_for_year(world.year)
+	if current_era != null:
+		var previous_epic_id := world.get_active_epic_id()
+		var previous_epic_def := Registry.get_epic(previous_epic_id)
+		if previous_epic_def != null and previous_epic_def.era_id == current_era.id:
+			world.reset_epic_for_new_shift(previous_epic_id)
 	if current_era == null:
 		current_era = previous_era
 	context.era = current_era
@@ -1363,9 +1375,19 @@ func _refresh_compound() -> void:
 			mentor_trait = String(trait_id)
 	heirloom_label.text = "YOUR DESK PURSE: %d SHEKELS  /  MENTOR MARK: %s" % [actor.resources.get(&"silver", 0), mentor_trait.to_upper()]
 	stores_label.text = "EANNA STOREHOUSE STORES\nBarley     %d measures\nNorth-Bay water loss  %d\nTemple silver  %d shekels\nClay/Reeds %d\nLabor      %d" % [world.get_resource(&"barley", "institution", "", &"eanna_household"), world.get_hazard_total_lost(&"north_bay", &"roof_leak"), world.get_resource(&"silver", "institution", "", &"eanna_household"), world.get_resource(&"clay_reeds", "institution", "", &"eanna_household"), world.get_resource(&"labor", "institution", "", &"eanna_household")]
-	var canal := world.get_resource(&"canal_progress")
-	var filled := int(round(float(canal) / 10.0))
-	canal_label.text = "ERA EPIC: THE GREAT CANAL CUT\n[%s%s] %d / 100\nAutonomous works" % ["=".repeat(filled), "-".repeat(10 - filled), canal]
+	var active_epic_id := world.get_active_epic_id()
+	var active_epic := Registry.get_epic(active_epic_id)
+	if active_epic == null and current_era != null:
+		for epic_definition in Registry.all_epics():
+			if epic_definition.era_id == current_era.id:
+				active_epic = epic_definition
+				break
+	var epic_title := active_epic.title if active_epic != null else "No active Epic"
+	var epic_progress := world.get_resource(active_epic.progress_resource) if active_epic != null else 0
+	var epic_target := active_epic.target if active_epic != null else 100
+	var filled := int(round(float(epic_progress) / maxf(1.0, float(epic_target)) * 10.0))
+	var bar_fill := clampi(filled, 0, 10)
+	canal_label.text = "ERA EPIC: %s\n[%s%s] %d / %d\nProgress depends on decisions and available labor" % [epic_title.to_upper(), "=".repeat(bar_fill), "-".repeat(10 - bar_fill), epic_progress, epic_target]
 	for child in roster_box.get_children():
 		roster_box.remove_child(child)
 		child.queue_free()
