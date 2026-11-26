@@ -1011,7 +1011,7 @@ func _refresh_compound() -> void:
 		var person := world.get_person(person_id)
 		if person == null:
 			continue
-		var opinion := int(person.opinions.get(actor.id, 0))
+		var opinion := person.get_opinion(actor.id)
 		var line := RichTextLabel.new()
 		line.bbcode_enabled = true
 		line.fit_content = true
