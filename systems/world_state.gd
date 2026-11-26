@@ -28,11 +28,32 @@ var hazards: Array[Dictionary] = []
 var recent_archetypes: Array[StringName] = []
 var recent_npc_pairs: Array[String] = []
 var cases_settled: int = 0
+var faction_standings: Dictionary[StringName, int] = {}
+var local_path_dockets_settled: int = 0
+var epic_summon_pending: bool = false
+var epic_summon_issued: bool = false
 var silver_earned: int = 0
 var traits_gained: Array[StringName] = []
 var cedar_desk_log: Array[Dictionary] = []
 var era_completion_started: bool = false
 var _next_form_sequence: int = 1
+
+func get_faction_standing(faction_id: StringName) -> int:
+	return int(faction_standings.get(faction_id, 0))
+
+func change_faction_standing(faction_id: StringName, amount: int) -> int:
+	if faction_id == &"" or amount == 0:
+		return get_faction_standing(faction_id)
+	var next_value := clampi(get_faction_standing(faction_id) + amount, -100, 100)
+	faction_standings[faction_id] = next_value
+	return next_value
+
+func record_local_path_docket() -> bool:
+	local_path_dockets_settled += 1
+	if local_path_dockets_settled >= 3 and not epic_summon_issued:
+		epic_summon_pending = true
+		return true
+	return false
 
 func record_case_settlement(person: PersonEntity, silver_before: int, traits_before: Array[StringName]) -> void:
 	if person == null:

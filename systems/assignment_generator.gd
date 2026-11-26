@@ -5,9 +5,59 @@ const GOODS: Array[StringName] = [&"barley", &"dates", &"fish", &"beer", &"wool"
 const DAMAGED_GOODS: Array[StringName] = [&"beer", &"wool", &"textiles"]
 const ARCHETYPES: Array[StringName] = [&"delivery_mismatch", &"damaged_consignment", &"subtotal_claim", &"goods_unreturned", &"hazard_check"]
 
-static func generate(world: WorldState, actor: PersonEntity) -> Dictionary:
+
+const PATH_FACTION_MEMBERS := {
+	&"eanna_household": [&"shuruppak_ilu", &"ur_nanna", &"lu_nanshe"],
+	&"boatmens_guild": [&"enlil_kisu", &"enki_ili", &"geme_inana"],
+	&"city_garrison": [&"utu_mansum", &"ur_amas"],
+	&"council_of_elders": [&"shuruppak_ilu", &"lu_nanshe"],
+	&"agricultural_households": [&"ama_edin", &"geme_tur", &"ur_gula"]
+}
+const PATH_FACTION_DISPLAY_NAMES := {
+	&"eanna_household": "Eanna Temple",
+	&"boatmens_guild": "Landing Boatmen & Guilds",
+	&"city_garrison": "City Garrison",
+	&"council_of_elders": "Council of Elders",
+	&"agricultural_households": "Agricultural Households"
+}
+const PATH_DOCKET_DATA := {
+	&"path_merchant": [
+		{"id":"timber_grade_dispute","title":"TIMBER GRADES / REJECTED LOAD","client":"boatmens_guild","opposing":"council_of_elders","left":"The timber was accepted at the landing by grade. The tablet now calls it inferior.","left_facts":"GRADE AT LANDING: ACCEPTED\nREVISED GRADE: DISPUTED","right":"The council's builder says the beams will not hold the cut's retaining frame.","right_facts":"STRUCTURAL USE: RETAINING FRAME\nREJECTION: REQUESTED","prompt":"Does the grade mark stand, or does the load return?"},
+		{"id":"boat_demurrage","title":"BOAT DEMURRAGE / DELAYED UNLOADING","client":"boatmens_guild","opposing":"eanna_household","left":"Our boat waited three periods for the unloading crew. The charge is not charity; it is time spent tied to your quay.","left_facts":"WAIT: 3 PERIODS\nDEMURRAGE: UNSETTLED","right":"The household claims the boat arrived outside its assigned landing window.","right_facts":"LANDING WINDOW: DISPUTED\nCREW RECORD: INCOMPLETE","prompt":"Which account will carry the delay?"},
+		{"id":"counterfeit_copper","title":"COPPER INGOTS / FALSE WEIGHT","client":"boatmens_guild","opposing":"council_of_elders","left":"These ingots passed the market balance yesterday. Today the council calls them light and counterfeit.","left_facts":"MARK: PRESENT\nWEIGHT: CHALLENGED","right":"The council asks that the entire batch be held until the source is named.","right_facts":"BATCH: 12 INGOTS\nSOURCE: UNVERIFIED","prompt":"Do you certify the mark, impound the batch, or split the risk?"},
+		{"id":"missing_quay_sacks","title":"QUAYSIDE GRAIN / MISSING SACKS","client":"eanna_household","opposing":"boatmens_guild","left":"The storehouse tally records forty sacks sent to the quay. Only thirty-six were entered on the boat.","left_facts":"DISPATCHED: 40\nLOADED: 36","right":"The boatmen insist four sacks were moved to a second craft without a witness tablet.","right_facts":"SECOND CRAFT: UNWITNESSED\nSHORTAGE: 4 SACKS","prompt":"Do you charge the landing, amend the tally, or demand a second witness?"}
+	],
+	&"path_martial": [
+		{"id":"ditch_guard_rations","title":"DITCH GUARD / RATION SHORTFALL","client":"city_garrison","opposing":"eanna_household","left":"The ditch guards received half their barley. They will not keep watch on empty stomachs.","left_facts":"RATION ISSUE: HALF\nWATCH: AT RISK","right":"The storehouse says the guard roll contains names not present at the ditch.","right_facts":"ROLL: DISPUTED\nMUSTER: NOT ATTACHED","prompt":"Do you certify the shortage, challenge the roll, or guarantee the watch?"},
+		{"id":"spear_requisition","title":"SPEAR REQUISITION / UNMATCHED COUNT","client":"city_garrison","opposing":"council_of_elders","left":"The captain requisitioned twenty spearheads. The workshop delivered fourteen and claims the rest were never authorized.","left_facts":"REQUESTED: 20\nDELIVERED: 14","right":"The council's tablet bears a smaller order, but its seal impression is incomplete.","right_facts":"ORDER: 14 OR 20\nSEAL: INCOMPLETE","prompt":"Which requisition becomes the record?"},
+		{"id":"watchtower_supply","title":"WATCHTOWER / SUPPLY GAP","client":"city_garrison","opposing":"boatmens_guild","left":"The tower has no lamp oil or rope. The captain says the supply boat never arrived.","left_facts":"OIL: MISSING\nROPE: MISSING","right":"The boatman has a receipt for delivery at the lower landing, not the tower.","right_facts":"LOWER LANDING: RECEIPT\nTOWER: NO ACKNOWLEDGMENT","prompt":"Do you hold the carrier, reroute the supply, or certify the receipt?"},
+		{"id":"conscription_exemption","title":"CONSCRIPTION EXEMPTION / HOUSEHOLD CLAIM","client":"city_garrison","opposing":"council_of_elders","left":"The captain says this household's exemption was never entered on the muster tablet.","left_facts":"EXEMPTION: CLAIMED\nMUSTER: ACTIVE","right":"The council elder says the exemption was witnessed and the tablet misplaced.","right_facts":"WITNESS: NAMED\nENTRY: MISSING","prompt":"Does the missing entry cancel the exemption?"}
+	],
+	&"path_civil": [
+		{"id":"boundary_stones","title":"BOUNDARY STONES / FARMER DISPUTE","client":"council_of_elders","opposing":"agricultural_households","left":"The boundary stone stands where the elder's copy places it. The household says it was moved after the flood.","left_facts":"STONE POSITION: DISPUTED\nOLDER COPY: PRESENT","right":"The household's field marks show a narrower strip than the council's levy map.","right_facts":"FIELD MARKS: PRESENT\nLEVY MAP: WIDER","prompt":"Which boundary does your seal recognize?"},
+		{"id":"canal_water_sharing","title":"CANAL WATER / SHARED ALLOCATION","client":"council_of_elders","opposing":"agricultural_households","left":"The upper fields received three turns of water. The lower households say their turn was skipped.","left_facts":"UPPER: 3 TURNS\nLOWER: 0 RECORDED","right":"The canal keeper claims the lower gate was blocked with silt and could not be opened.","right_facts":"GATE: SILTED\nWATER TURN: UNSETTLED","prompt":"Do you assign a lost turn, a debt, or a new schedule?"},
+		{"id":"inheritance_tablets","title":"INHERITANCE TABLETS / DOUBLE CLAIM","client":"council_of_elders","opposing":"eanna_household","left":"Two tablets name the same field allotment. One bears the father's seal; the other the household's later mark.","left_facts":"CLAIM A: OLDER SEAL\nCLAIM B: LATER MARK","right":"The household says the later mark records a settlement made before the father's death.","right_facts":"SETTLEMENT: ORAL\nWITNESS: NOT LISTED","prompt":"Which claim receives provisional recognition?"},
+		{"id":"market_vendor_fine","title":"MARKET VENDOR / FINE APPEAL","client":"council_of_elders","opposing":"boatmens_guild","left":"The council imposed a fine for occupying the quay path. The vendor says the boatmen blocked the proper stall.","left_facts":"FINE: 2 SHEKELS\nOBSTRUCTION: CLAIMED","right":"The landing guild says the vendor's baskets narrowed the unloading lane.","right_facts":"LANE: OBSTRUCTED\nPRIOR WARNING: DISPUTED","prompt":"Do you uphold the fine, reduce it, or return the matter for witness? "}
+	],
+	&"path_religious": [
+		{"id":"sacrificial_sheep","title":"SACRIFICIAL SHEEP / COUNT VARIANCE","client":"eanna_household","opposing":"agricultural_households","left":"The offering roll lists twelve sheep. The shepherd delivered ten and says two were rejected as unfit.","left_facts":"ROLL: 12\nDELIVERED: 10","right":"The household says no rejection mark was made at the gate.","right_facts":"REJECTION MARK: ABSENT\nDELIVERY WITNESS: DISPUTED","prompt":"Do you certify the rejection, charge the shortage, or require a witness?"},
+		{"id":"ritual_beer","title":"RITUAL BEER / ALLOCATION DISPUTE","client":"eanna_household","opposing":"boatmens_guild","left":"The ritual brewer received less beer than the allocation tablet promised.","left_facts":"PROMISED: 8 JARS\nISSUED: 5 JARS","right":"The carrier claims three jars broke during unloading and were entered as loss.","right_facts":"BREAKAGE: CLAIMED\nLOSS TABLET: MISSING","prompt":"Does the loss stand against the carrier or the allocation?"},
+		{"id":"storehouse_seal","title":"STOREHOUSE SEAL / INSPECTION","client":"eanna_household","opposing":"council_of_elders","left":"The seal on the offering storehouse is intact, but its clay impression does not match the archive copy.","left_facts":"SEAL: INTACT\nIMPRESSION: VARIANT","right":"The council asks whether the seal was replaced during the last inspection.","right_facts":"LAST INSPECTION: UNDATED\nREPLACEMENT: UNRECORDED","prompt":"Do you accept the seal, order a re-impression, or open an inquiry?"},
+		{"id":"festival_tithes","title":"FESTIVAL TITHES / UNRECORDED SHARE","client":"eanna_household","opposing":"council_of_elders","left":"The festival tithe is short by one basket. The temple steward says the share was promised to the musicians.","left_facts":"EXPECTED: 9 BASKETS\nENTERED: 8","right":"The council says a promise is not a recorded exemption.","right_facts":"EXEMPTION: NONE\nPROMISE: ORAL","prompt":"Do you honor the promise, recover the tithe, or amend the next roll?"}
+	]
+}
+
+static func generate(world: WorldState, actor: PersonEntity, selected_path: StringName = &"") -> Dictionary:
 	if world == null or actor == null:
 		return {}
+	var path_id := selected_path
+	if path_id == &"":
+		for candidate in [&"path_civil", &"path_religious", &"path_martial", &"path_merchant"]:
+			if actor.flags.has(candidate):
+				path_id = candidate
+				break
+	if PATH_DOCKET_DATA.has(path_id):
+		return _generate_path_docket(world, actor, path_id)
 	var archetypes: Array[StringName] = []
 	for item in ARCHETYPES:
 		if world.recent_archetypes.is_empty() or StringName(world.recent_archetypes.back()) != item:
@@ -156,6 +206,78 @@ static func generate(world: WorldState, actor: PersonEntity) -> Dictionary:
 				var repair_cost := 3
 				payload.choices = [_choice("Allocate %s and repair" % repair_resource, "The hazard is repaired and its ongoing loss stops.", repair_resource, -repair_cost, 2, 2, "stewardship", 15, "", 2, true), _choice("Record loss; defer repair", "The hazard remains active; loss continues.", good, 0, -1, -1, "arithmetic", 5, "", 1)]
 	return payload
+
+static func _generate_path_docket(world: WorldState, actor: PersonEntity, path_id: StringName) -> Dictionary:
+	var templates: Array = PATH_DOCKET_DATA.get(path_id, [])
+	if templates.is_empty():
+		return {}
+	var eligible: Array = []
+	for template in templates:
+		var archetype_id := StringName("path_%s" % template.get("id", "docket"))
+		if world.recent_archetypes.is_empty() or StringName(world.recent_archetypes.back()) != archetype_id:
+			eligible.append(template)
+	if eligible.is_empty():
+		eligible = templates
+	var template: Dictionary = eligible[world.rng_narrative.randi_range(0, eligible.size() - 1)]
+	var client_faction := StringName(template.get("client", ""))
+	var opposing_faction := StringName(template.get("opposing", ""))
+	var client_members: Array = PATH_FACTION_MEMBERS.get(client_faction, [])
+	var opposing_members: Array = PATH_FACTION_MEMBERS.get(opposing_faction, [])
+	if client_members.is_empty() or opposing_members.is_empty():
+		push_warning("AssignmentGenerator: path docket has unresolved faction members: %s / %s" % [client_faction, opposing_faction])
+		return {}
+	var client_id := StringName(client_members[world.rng_narrative.randi_range(0, client_members.size() - 1)])
+	var opposing_id := StringName(opposing_members[world.rng_narrative.randi_range(0, opposing_members.size() - 1)])
+	if client_id == opposing_id and opposing_members.size() > 1:
+		for member_id in opposing_members:
+			if StringName(member_id) != client_id:
+				opposing_id = StringName(member_id)
+				break
+	var pair := "%s|%s" % [client_id, opposing_id]
+	world.recent_npc_pairs.append(pair)
+	while world.recent_npc_pairs.size() > 6:
+		world.recent_npc_pairs.pop_front()
+	var archetype_id := StringName("path_%s" % template.get("id", "docket"))
+	world.recent_archetypes.append(archetype_id)
+	while world.recent_archetypes.size() > 6:
+		world.recent_archetypes.pop_front()
+	var client_name := String(PATH_FACTION_DISPLAY_NAMES.get(client_faction, String(client_faction).replace("_", " ").capitalize()))
+	var opposing_name := String(PATH_FACTION_DISPLAY_NAMES.get(opposing_faction, String(opposing_faction).replace("_", " ").capitalize()))
+	var title := String(template.get("title", "LOCAL DOCKET"))
+	var payload := {
+		"title": title, "archetype": archetype_id, "docket_kind": "local_path",
+		"path_id": path_id, "npc_pair": pair, "client_faction": client_faction,
+		"opposing_faction": opposing_faction, "client_name": "CLIENT / " + client_name,
+		"opposing_name": "OPPOSING PARTY / " + opposing_name,
+		"left_card": {"title": "CLIENT", "speaker_id": client_id, "quote": String(template.get("left", "")), "facts": String(template.get("left_facts", ""))},
+		"right_card": {"title": "OPPOSING PARTY", "speaker_id": opposing_id, "quote": String(template.get("right", "")), "facts": String(template.get("right_facts", ""))},
+		"prompt": String(template.get("prompt", "What mark will you leave?")),
+		"choices": [
+			{"label": "Certify the client's record", "result_title": "CLIENT RECORD CERTIFIED", "result_text": "The client's entry is certified; the opposing claim remains attached.", "effects": {"opinion_left": 3, "opinion_right": -2, "epic_progress": 1, "skill": "law", "xp": 12}},
+			{"label": "Hold both claims for corroboration", "result_title": "CLAIMS HELD", "result_text": "Neither claim is erased. A second witness is required before the record can be closed.", "effects": {"opinion_left": -1, "opinion_right": -1, "epic_progress": 0, "skill": "arithmetic", "xp": 10}},
+			{"label": "Accept the opposing party's account", "result_title": "OPPOSING ACCOUNT ACCEPTED", "result_text": "The opposing account is entered. The client may appeal the mark.", "effects": {"opinion_left": -2, "opinion_right": 3, "epic_progress": 2, "skill": "rhetoric", "xp": 12}}
+		]
+	}
+	return payload
+
+
+static func create_epic_summons() -> Dictionary:
+	return {
+		"title": "EMERGENCY REQUISITION / GREAT CANAL CUT",
+		"archetype": &"epic_summons", "docket_kind": "epic_summons",
+		"npc_pair": "ur_nanna|enlil_kisu",
+		"client_faction": &"eanna_household", "opposing_faction": &"boatmens_guild",
+		"client_name": "High Stewards of Eanna", "opposing_name": "Landing Boatmen & Guilds",
+		"left_card": {"title": "CLIENT / HIGH STEWARDS", "speaker_id": &"ur_nanna", "quote": "The canal cut has bogged down in the silt basin. The ditch crews are refusing to dig without fresh rations.", "facts": "WORK HALTED\nEMERGENCY ALLOCATION REQUESTED"},
+		"right_card": {"title": "OPPOSING PARTY / BOATMEN", "speaker_id": &"enlil_kisu", "quote": "The boatmen will not deliver stone until the ration promise is entered and the timber tally is answered.", "facts": "STONE DELIVERIES WITHHELD\nTIMBER BALANCE DISPUTED"},
+		"prompt": "Your seal has a reputation at the landing. Settle this.",
+		"choices": [
+			{"label": "Release emergency barley / bind the ration promise", "result_title": "RATION REQUISITION SEALED", "result_text": "Fresh rations reach the ditch crews. The boatmen resume stone deliveries under a witnessed promise.", "effects": {"resource": &"barley", "resource_amount": -20, "resource_scope": "institution", "resource_institution": &"eanna_household", "epic_progress": 22, "opinion_left": 3, "opinion_right": 4, "skill": "stewardship", "xp": 20}},
+			{"label": "Audit missing timber before authorizing delivery", "result_title": "TIMBER AUDIT ORDERED", "result_text": "The missing timber is entered as a disputed balance. Stone may move under a provisional tally.", "effects": {"resource": &"", "resource_amount": 0, "epic_progress": 16, "opinion_left": 2, "opinion_right": 2, "skill": "arithmetic", "xp": 18}},
+			{"label": "Guarantee the crews' terms and break the strike", "result_title": "CREW TERMS WITNESSED", "result_text": "The crews return to the cut. The guarantee is costly in reputation, but work resumes.", "effects": {"resource": &"", "resource_amount": 0, "epic_progress": 19, "opinion_left": -2, "opinion_right": 5, "skill": "rhetoric", "xp": 20, "trait": "diplomatic"}}
+		]
+	}
+
 
 static func _choice(label: String, result: String, resource: StringName, amount: int, left_opinion: int, right_opinion: int, skill: String, xp: int, trait_name: String, epic_progress: int = 0, repair: bool = false) -> Dictionary:
 	return {"label": label, "result_title": "MARK MADE", "result_text": result, "effects": {"resource": resource, "resource_amount": amount, "opinion_left": left_opinion, "opinion_right": right_opinion, "skill": skill, "xp": xp, "trait": trait_name, "epic_progress": epic_progress, "repair_hazard": repair}}

@@ -23,6 +23,7 @@ static func encode_world(world: WorldState, session: Dictionary = {}) -> Diction
 				"people_seed": str(world.rng_people.seed), "people_state": str(world.rng_people.state),
 			},
 			"stockpiles": _json_safe(world.stockpiles), "epics": _json_safe(world.epics),
+			"faction_standings": _json_safe(world.faction_standings),
 			"world_flags": _json_safe(world.world_flags), "pending_forms": _json_safe(world.pending_forms),
 			"resolved_forms": _json_safe(world.resolved_forms), "event_history": _json_safe(world.event_history),
 			"character_event_history": _json_safe(world.character_event_history), "people": people_data,
@@ -31,6 +32,8 @@ static func encode_world(world: WorldState, session: Dictionary = {}) -> Diction
 			"social_groups": _json_safe(world.social_groups), "assignments": _json_safe(world.assignments),
 			"hazards": _json_safe(world.hazards), "recent_archetypes": _json_safe(world.recent_archetypes),
 			"recent_npc_pairs": _json_safe(world.recent_npc_pairs), "cases_settled": world.cases_settled,
+			"local_path_dockets_settled": world.local_path_dockets_settled,
+			"epic_summon_pending": world.epic_summon_pending, "epic_summon_issued": world.epic_summon_issued,
 			"silver_earned": world.silver_earned, "traits_gained": _json_safe(world.traits_gained),
 			"cedar_desk_log": _json_safe(world.cedar_desk_log),
 			"era_completion_started": world.era_completion_started,
@@ -72,6 +75,7 @@ static func _world_from_data(data: Dictionary) -> WorldState:
 	world.rng_people.state = int(String(rng.get("people_state", world.rng_people.seed)))
 	world.stockpiles = _name_int_map(data.get("stockpiles", {}))
 	world.epics = _name_dictionary_map(data.get("epics", {}))
+	world.faction_standings = _name_int_map(data.get("faction_standings", {}))
 	world.world_flags = _name_int_map(data.get("world_flags", {}))
 	world.pending_forms = _dictionary_array(data.get("pending_forms", []))
 	world.resolved_forms = _dictionary_array(data.get("resolved_forms", []))
@@ -93,6 +97,10 @@ static func _world_from_data(data: Dictionary) -> WorldState:
 	world.recent_archetypes = _name_array(data.get("recent_archetypes", []))
 	world.recent_npc_pairs = _string_array(data.get("recent_npc_pairs", []))
 	world.cases_settled = int(data.get("cases_settled", 0))
+	world.local_path_dockets_settled = maxi(0, int(data.get("local_path_dockets_settled", 0)))
+	world.faction_standings = _name_int_map(data.get("faction_standings", {}))
+	world.epic_summon_pending = bool(data.get("epic_summon_pending", false))
+	world.epic_summon_issued = bool(data.get("epic_summon_issued", false))
 	world.silver_earned = int(data.get("silver_earned", 0))
 	world.traits_gained = _name_array(data.get("traits_gained", []))
 	world.cedar_desk_log = _dictionary_array(data.get("cedar_desk_log", []))

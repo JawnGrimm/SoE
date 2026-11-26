@@ -126,6 +126,10 @@ func _run() -> void:
 	save_roundtrip_world.pending_forms.append({"id": &"save_pending_1", "form_type": &"travel_pass", "status": "overdue", "due_period": save_roundtrip_world.current_period_index() - 1})
 	save_roundtrip_world.epics[&"great_canal_cut"] = {"active": true, "progress": 41, "progress_resource": &"canal_progress", "target": 100, "stage": "cutting", "completed": false}
 	save_roundtrip_world.stockpiles[&"canal_progress"] = 41
+	save_roundtrip_world.local_path_dockets_settled = 2
+	save_roundtrip_world.faction_standings[&"eanna_household"] = 7
+	save_roundtrip_world.epic_summon_pending = true
+	save_roundtrip_world.epic_summon_issued = false
 	save_roundtrip_world.rng_narrative.randi()
 	save_roundtrip_world.rng_sim.randi()
 	save_roundtrip_world.rng_people.randi()
@@ -145,6 +149,7 @@ func _run() -> void:
 		_check(restored_player.resources.get(&"silver", 0) == 17 and restored_player.skills.xp.get(&"law", 0) == save_roundtrip_player.skills.xp.get(&"law", 0), "SaveCodec should preserve purse and skill XP")
 		_check(restored_player.memory.size() == save_roundtrip_player.memory.size() and restored_player.memory.back().get("memory_id", &"") == &"save_test_memory", "SaveCodec should preserve personal memory")
 		_check(restored_world.get_resource(&"canal_progress") == 41 and restored_world.epics[&"great_canal_cut"].get("stage", "") == "cutting", "SaveCodec should preserve Epic progress and stage")
+		_check(restored_world.local_path_dockets_settled == 2 and restored_world.epic_summon_pending and not restored_world.epic_summon_issued and restored_world.get_faction_standing(&"eanna_household") == 7, "SaveCodec should preserve the career-to-Epic funnel state")
 		_check(restored_world.has_flag(&"save_test_flag", restored_world.current_period_index()), "SaveCodec should preserve expiring flags")
 		_check(restored_world.pending_forms.size() == save_roundtrip_world.pending_forms.size() and restored_world.hazards.size() == save_roundtrip_world.hazards.size(), "SaveCodec should preserve forms and hazards")
 		_check(restored_world.rng_narrative.state == saved_narrative_state and restored_world.rng_sim.state == saved_simulation_state and restored_world.rng_people.state == saved_people_state, "SaveCodec should preserve all three RNG streams")
@@ -869,6 +874,33 @@ func _run() -> void:
 	_check(generator_deterministic, "Narrative RNG should reproduce procedural docket sequences from the same seed")
 	_check(generator_variety.size() >= 4, "Procedural generation should rotate across at least four archetypes in thirty turns")
 	_check(generator_has_repair, "Active maintenance hazard should produce an actual labor/silver repair choice")
+
+
+	# Path-biased local dockets name both sides and use the chosen professional orientation.
+	var path_ids: Array[StringName] = [&"path_civil", &"path_religious", &"path_martial", &"path_merchant"]
+	for path_id in path_ids:
+		var path_world := WorldState.new()
+		var path_actor := UrukSeeder.seed_campaign(path_world, 44000 + path_ids.find(path_id))
+		var path_docket: Dictionary = AssignmentGeneratorScript.generate(path_world, path_actor, path_id)
+		_check(StringName(path_docket.get("path_id", "")) == path_id and String(path_docket.get("docket_kind", "")) == "local_path", "Selected path should generate its own local docket")
+		_check(StringName(path_docket.get("client_faction", "")) != &"" and StringName(path_docket.get("opposing_faction", "")) != &"" and path_docket.get("client_faction") != path_docket.get("opposing_faction"), "Path docket should name distinct client and opposing factions")
+		_check(not String(path_docket.get("client_name", "")).is_empty() and not String(path_docket.get("opposing_name", "")).is_empty(), "Path docket should label client institution and opposing party")
+		_check(path_docket.get("left_card", {}).get("speaker_id", &"") != &"" and path_docket.get("right_card", {}).get("speaker_id", &"") != &"", "Path docket should provide live faction representatives")
+		_check(path_docket.get("choices", []).size() == 3 and path_docket.get("choices", [])[0].get("effects", {}).has("opinion_left") and path_docket.get("choices", [])[0].get("effects", {}).has("opinion_right"), "Path docket choices should carry client/opposing standing shifts")
+		_check(AssignmentGeneratorScript.PATH_DOCKET_DATA.get(path_id, []).size() >= 4, "Each career path should have at least four authored Uruk docket subjects")
+	var faction_test_world := WorldState.new()
+	_check(faction_test_world.change_faction_standing(&"boatmens_guild", 6) == 6 and faction_test_world.change_faction_standing(&"boatmens_guild", -2) == 4, "Faction standings should track faction-level opinion independently of overlapping NPC membership")
+	_check(faction_test_world.change_faction_standing(&"boatmens_guild", 500) == 100, "Faction standing should clamp at the reputation ceiling")
+	var funnel_world := WorldState.new()
+	_check(not funnel_world.record_local_path_docket() and funnel_world.local_path_dockets_settled == 1, "First local docket should not summon the Epic")
+	_check(not funnel_world.record_local_path_docket() and funnel_world.local_path_dockets_settled == 2, "Second local docket should not summon the Epic")
+	_check(funnel_world.record_local_path_docket() and funnel_world.epic_summon_pending, "Third local docket should trigger the Epic requisition")
+	var epic_summons_payload := AssignmentGeneratorScript.create_epic_summons()
+	_check(String(epic_summons_payload.get("docket_kind", "")) == "epic_summons" and epic_summons_payload.get("choices", []).size() >= 3, "Epic requisition should offer distinct high-stakes resolutions")
+	_check(int(epic_summons_payload.get("choices", [])[0].get("effects", {}).get("epic_progress", 0)) > 0 and int(epic_summons_payload.get("choices", [])[0].get("effects", {}).get("resource_amount", 0)) < 0, "Epic requisition should directly advance progress and allocate emergency rations")
+	funnel_world.epic_summon_pending = false
+	funnel_world.epic_summon_issued = true
+	_check(not funnel_world.record_local_path_docket(), "A campaign should not issue the Epic summons a second time")
 
 	# Record-seeded Challenges are selected by the scheduler, resolve once, and do not pause the Epic.
 	var ledger_challenge: EventTemplate = registry.get_event(&"challenge_ledger_inquest")

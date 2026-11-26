@@ -14,5 +14,6 @@ extends Resource
 
 ## Optional calendar metadata used by CalendarFormatter.
 @export var calendar_name: String = ""
+@export var currency_name: String = "silver"
 @export var period_label: String = "Period"
 @export var period_names: Array[String] = []
