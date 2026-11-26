@@ -498,6 +498,36 @@ func _run() -> void:
 	_check(&"severe" in force_actor.traits, "Temple Guard outcome should mark the apprentice severe")
 	_check(force_world.get_person(&"enlil_kisu").opinions[force_actor.id] == -30, "Temple Guard outcome should create lasting carrier hatred")
 
+	# North-Bay assignment: definition loading, fail-closed lifecycle, and a real leaking roof.
+	var roof_assignment := registry.get_assignment(&"north_bay_roof")
+	_check(roof_assignment != null, "Registry should load the North-Bay AssignmentDef")
+	_check(roof_assignment != null and roof_assignment.is_valid(), "North-Bay AssignmentDef should pass validation")
+	_check(roof_assignment != null and roof_assignment.title == "North-Bay Roof Inspection", "Assignment title should match the authored docket")
+	_check(roof_assignment != null and roof_assignment.employer == &"ur_nanna", "Ur-Nanna should own the North-Bay assignment")
+	_check(roof_assignment != null and roof_assignment.compensation_amount == 5 and roof_assignment.compensation_resource == &"silver", "North-Bay assignment should pay five silver")
+	var malformed_assignment := AssignmentDef.new()
+	malformed_assignment.id = &"malformed_roof_test"
+	_check(not registry.register_assignment(malformed_assignment), "Registry should reject a malformed AssignmentDef")
+
+	var roof_world := WorldState.new()
+	var roof_actor := UrukSeeder.seed_campaign(roof_world, 32003200)
+	var barley_before_leak := roof_world.get_resource(&"barley")
+	_check(roof_world.north_bay_roof_leak_active, "Uruk seeding should establish the active North-Bay leak")
+	roof_world.advance_period()
+	_check(roof_world.get_resource(&"barley") == barley_before_leak - 1, "An elapsed period should spoil one measure of barley through the roof leak")
+	_check(roof_world.north_bay_roof_total_spoiled == 1, "WorldState should retain cumulative barley lost to the leak")
+	_check(roof_world.offer_assignment(&"north_bay_roof", &"ur_nanna"), "WorldState should offer the North-Bay assignment to the existing steward")
+	_check(not roof_world.offer_assignment(&"north_bay_roof", &"ur_nanna"), "WorldState should prevent duplicate assignment offers")
+	_check(roof_world.start_assignment(&"north_bay_roof"), "Player should be able to open an offered assignment")
+	_check(roof_world.record_assignment_action(&"north_bay_roof", &"consult_steward"), "Consultation should be recorded")
+	_check(not roof_world.record_assignment_action(&"north_bay_roof", &"consult_steward"), "A consultation action should not be repeatable")
+	_check(not roof_world.complete_assignment(&"north_bay_roof", roof_assignment.required_actions, &"leak_confirmed_repair_required"), "Submission should fail until the physical inspection is recorded")
+	_check(roof_world.record_assignment_action(&"north_bay_roof", &"inspect_beams"), "Physical inspection should be recorded")
+	_check(roof_world.complete_assignment(&"north_bay_roof", roof_assignment.required_actions, &"leak_confirmed_repair_required"), "Complete evidence should allow assessment submission")
+	_check(not roof_world.complete_assignment(&"north_bay_roof", roof_assignment.required_actions, &"leak_confirmed_repair_required"), "Completed assignment should not be settled twice")
+	_check(String(roof_world.get_assignment_state(&"north_bay_roof").get("status", "")) == "completed", "Assignment lifecycle should retain its completed state")
+	_check(roof_world.north_bay_roof_leak_active, "Submitting an inspection must not falsely repair the roof")
+
 	_finish()
 
 func _check(cond: bool, msg: String) -> bool:
