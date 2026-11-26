@@ -451,6 +451,53 @@ func _run() -> void:
 		_check(mentor_trait in mentor_actor.traits, "Each mentor should grant the named trait")
 		_check(mentor_world.get_person(mentor_id).opinions[mentor_actor.id] == starting_opinion + 5, "Each mentor should gain five opinion of the apprentice")
 
+
+	# Phase 8B: Quayside Stoppage is gated by the player's carrier history.
+	var quayside_template: EventTemplate = Registry.get_event(&"challenge_quayside_stoppage")
+	_check(quayside_template != null, "Registry should load the Quayside Stoppage definition")
+	var quayside_world := WorldState.new()
+	var quayside_actor := UrukSeeder.seed_campaign(quayside_world, 32003200)
+	quayside_world.period = 8
+	quayside_world.get_person(&"enlil_kisu").opinions[quayside_actor.id] = -15
+	var quayside_ctx := _make_context(quayside_world)
+	quayside_ctx.actor = quayside_actor
+	quayside_ctx.year = quayside_world.year
+	quayside_ctx.era = registry.get_era(&"uruk_storehouse")
+	var quayside_scheduler := EventScheduler.new(runner)
+	_check(quayside_scheduler._quayside_challenge_is_eligible(quayside_world, quayside_actor, quayside_ctx.era), "Hostile carrier standing should unlock the challenge in Stores Season")
+	quayside_world.get_person(&"enlil_kisu").opinions[quayside_actor.id] = 2
+	_check(not quayside_scheduler._quayside_challenge_is_eligible(quayside_world, quayside_actor, quayside_ctx.era), "Fair carrier standing without slowdown should not unlock the challenge")
+	quayside_world.set_flag(&"canal_crew_slowdown", quayside_world.current_period_index() + 2)
+	_check(quayside_scheduler._quayside_challenge_is_eligible(quayside_world, quayside_actor, quayside_ctx.era), "Active crew slowdown should independently unlock the challenge")
+	quayside_world.period = 7
+	_check(not quayside_scheduler._quayside_challenge_is_eligible(quayside_world, quayside_actor, quayside_ctx.era), "Challenge must not fire before Stores Season")
+	quayside_world.period = 8
+	quayside_world.clear_flag(&"canal_crew_slowdown")
+	quayside_world.get_person(&"enlil_kisu").opinions[quayside_actor.id] = -15
+	quayside_world.enqueue_form({"form_type": &"succession_claim", "subject_id": &"quayside_stoppage"})
+	quayside_ctx.year = quayside_world.year
+	quayside_ctx.era = registry.get_era(&"uruk_storehouse")
+	var silver_before := quayside_world.get_resource(&"silver")
+	runner.resolve_outcome(quayside_template, quayside_template.outcomes[0], quayside_ctx)
+	_check(quayside_world.get_resource(&"silver") == silver_before - 4, "Silver conciliation should cost four shekels")
+	_check(quayside_world.get_resource(&"canal_progress") == 25, "Silver conciliation should add 25 canal progress")
+	_check(quayside_world.get_person(&"enlil_kisu").opinions[quayside_actor.id] == -3, "Silver conciliation should improve Enlil-kisu's standing by twelve")
+	_check(not quayside_world.world_flags.has(&"canal_crew_slowdown"), "Silver conciliation should clear the slowdown")
+	_check(quayside_world.resolved_forms.back().get("disposition", "") == "strike_settled_privately", "Silver conciliation should close the challenge docket")
+
+	var force_world := WorldState.new()
+	var force_actor := UrukSeeder.seed_campaign(force_world, 32003201)
+	force_world.period = 8
+	force_world.enqueue_form({"form_type": &"succession_claim", "subject_id": &"quayside_stoppage"})
+	var force_ctx := _make_context(force_world)
+	force_ctx.actor = force_actor
+	force_ctx.era = registry.get_era(&"uruk_storehouse")
+	runner.resolve_outcome(quayside_template, quayside_template.outcomes[2], force_ctx)
+	_check(force_world.get_resource(&"canal_progress") == 30, "Temple Guard outcome should add 30 canal progress")
+	_check(force_world.has_flag(&"blood_on_the_quays", force_world.current_period_index()), "Temple Guard outcome should leave the twelve-period blood flag")
+	_check(&"severe" in force_actor.traits, "Temple Guard outcome should mark the apprentice severe")
+	_check(force_world.get_person(&"enlil_kisu").opinions[force_actor.id] == -30, "Temple Guard outcome should create lasting carrier hatred")
+
 	_finish()
 
 func _check(cond: bool, msg: String) -> bool:
