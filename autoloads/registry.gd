@@ -15,6 +15,12 @@ func get_event(definition_id: StringName) -> EventTemplate:
 func get_assignment(definition_id: StringName) -> AssignmentDef:
 	return defs.get_assignment(definition_id)
 
+func get_epic(definition_id: StringName) -> EpicDef:
+	return defs.get_epic(definition_id)
+
+func all_epics() -> Array[EpicDef]:
+	return defs.all_epics()
+
 func all_events() -> Array[EventTemplate]:
 	return defs.all_events()
 
