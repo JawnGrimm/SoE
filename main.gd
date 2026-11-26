@@ -79,6 +79,11 @@ func _ready() -> void:
 	_start_world()
 	MusicDirector.play_for_phase(phase)
 
+func _open_pause_menu() -> void:
+	var pause_controller := get_node_or_null("PauseMenuController")
+	if pause_controller != null and pause_controller.has_method("pause"):
+		pause_controller.call("pause")
+
 func _set_phase(next_phase: String) -> void:
 	phase = next_phase
 	MusicDirector.play_for_phase(phase)
