@@ -170,7 +170,7 @@ func _run() -> void:
 	uruk_ctx.era = registry.get_era(&"uruk_storehouse")
 	_check(runner.is_eligible(case15, uruk_ctx), "Case 15 should be eligible at campaign start")
 	runner.resolve_outcome(case15, case15.outcomes[0], uruk_ctx)
-	_check(uruk_a.get_person(&"utu_mansum").opinions[uruk_player_a.id] == 2, "Case 15 should shift Utu-mansum's opinion of the apprentice")
+	_check(uruk_a.get_person(&"utu_mansum").get_opinion(uruk_player_a.id) == 2, "Case 15 should shift Utu-mansum's opinion of the apprentice")
 	_check(uruk_a.get_person(&"enlil_kisu").opinions[uruk_player_a.id] == 2, "Case 15 should shift Enlil-kisu's opinion of the apprentice")
 	_check(uruk_a.get_person(&"shuruppak_ilu").opinions[uruk_player_a.id] == 10, "Case 15 should shift Shuruppak-ilu's opinion of the apprentice")
 	_check(uruk_a.get_resource(&"barley") >= 443, "Case 15 should enter 23 measures of barley")
