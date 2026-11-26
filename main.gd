@@ -1151,7 +1151,7 @@ func _resolve_procedural_choice(index: int, choice: Dictionary) -> void:
 	if trait_id != &"" and trait_id not in actor.traits:
 		actor.traits.append(trait_id)
 	var epic_progress := int(effects.get("epic_progress", 0))
-	if epic_progress != 0:
+	if epic_progress != 0 and allocation_paid:
 		var active_epic_id := world.get_active_epic_id()
 		var active_epic_def := Registry.get_epic(active_epic_id)
 		if active_epic_def == null and current_era != null:
