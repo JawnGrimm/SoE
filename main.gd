@@ -891,16 +891,21 @@ func _resolve_procedural_choice(index: int, choice: Dictionary) -> void:
 	var resource_id := StringName(effects.get("resource", ""))
 	var resource_delta := int(effects.get("resource_amount", 0))
 	var result_text := String(choice.get("result_text", "The entry is sealed."))
+	var allocation_paid := resource_delta >= 0
 	if resource_id != &"" and resource_delta != 0:
 		if resource_delta < 0 and world.get_resource(resource_id) < absi(resource_delta):
+			allocation_paid = false
 			result_text += " The allocation was not made: stores cannot cover the cost."
 			if bool(effects.get("repair_hazard", false)):
 				result_text += " The hazard remains active."
 		else:
+			allocation_paid = true
 			world.stockpiles[resource_id] = maxi(0, world.get_resource(resource_id) + resource_delta)
-	if bool(effects.get("repair_hazard", false)) and (resource_id == &"" or world.get_resource(resource_id) >= 0):
-		if world.get_resource(resource_id) >= 0 and world.has_active_hazard(StringName(procedural_assignment.get("place_id", "")), StringName(procedural_assignment.get("hazard_id", ""))):
-			world.repair_hazard(StringName(procedural_assignment.get("place_id", "")), StringName(procedural_assignment.get("hazard_id", "")))
+	if bool(effects.get("repair_hazard", false)) and allocation_paid:
+		var repair_place := StringName(procedural_assignment.get("place_id", ""))
+		var repair_id := StringName(procedural_assignment.get("hazard_id", ""))
+		if world.has_active_hazard(repair_place, repair_id):
+			world.repair_hazard(repair_place, repair_id)
 	var skill_id := StringName(effects.get("skill", ""))
 	if skill_id != &"":
 		actor.skills.add_xp(skill_id, int(effects.get("xp", 0)))
@@ -1085,25 +1090,33 @@ func _add_choice(label_text: String, callback: Callable) -> void:
 	row.add_child(button)
 
 func _preview_choice(button: Button) -> void:
-	if phase != "case" or active_event == null or choice_locked:
+	if phase != "case" or choice_locked:
 		return
 	var index := choice_buttons.find(button)
-	if index < 0 or index >= active_event.outcomes.size():
+	if index < 0:
 		return
-	# Preview only: calculate expected opinion deltas from the outcome's declared effects.
-	# No world, component, resource, flag, or memory is changed here.
 	var left_delta := 0
 	var right_delta := 0
-	var outcome: EventOutcome = active_event.outcomes[index]
-	for effect in outcome.effects:
-		if effect.effect_type != &"change_opinion":
-			continue
-		var target_npc := StringName(effect.parameters.get("other", effect.parameters.get("subject", &"")))
-		var amount := int(effect.parameters.get("amount", 0))
-		if target_npc == &"enlil_kisu":
-			left_delta += amount
-		elif target_npc == &"utu_mansum":
-			right_delta += amount
+	if not procedural_assignment.is_empty():
+		var docket_choices: Array = procedural_assignment.get("choices", [])
+		if index >= docket_choices.size():
+			return
+		var effects: Dictionary = docket_choices[index].get("effects", {})
+		left_delta = int(effects.get("opinion_left", 0))
+		right_delta = int(effects.get("opinion_right", 0))
+	else:
+		if active_event == null or index >= active_event.outcomes.size():
+			return
+		var outcome: EventOutcome = active_event.outcomes[index]
+		for effect in outcome.effects:
+			if effect.effect_type != &"change_opinion":
+				continue
+			var target_npc := StringName(effect.parameters.get("other", effect.parameters.get("subject", &"")))
+			var amount := int(effect.parameters.get("amount", 0))
+			if target_npc == &"enlil_kisu":
+				left_delta += amount
+			elif target_npc == &"utu_mansum":
+				right_delta += amount
 	_set_evidence_tension(left_delta, right_delta)
 
 func _clear_choice_preview() -> void:
