@@ -1130,7 +1130,7 @@ func _show_era_completion() -> void:
 	case_heading.text = "𒂍  THE GREAT CANAL CUT IS FINISHED"
 	dossier.visible = true
 	dossier.text = summary
-	_set_evidence_facts("THE CAREER RECORD\nThe canal is entered as completed work. The apprentice kept the measures and the names.", "THE STOREHOUSE\nThe reserves held long enough. The next shift inherits the result.")
+	_set_evidence_facts("THE CAREER RECORD\nThe canal is entered as a completed Epic. The apprentice kept the measures and the names.", "THE STOREHOUSE\nThe reserves held long enough. The next shift inherits the result.")
 	# Completion is an authored career verdict, never leftover testimony from
 	# whichever docket happened to precede the final period.
 	evidence_left_title.text = "CAREER VERDICT / ARCHIVE"
