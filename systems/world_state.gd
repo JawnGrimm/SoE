@@ -96,19 +96,47 @@ func record_assignment_action(assignment_id: StringName, action_id: StringName, 
 	assignments[assignment_id] = entry
 	return true
 
-func complete_assignment(assignment_id: StringName, required_actions: Array[StringName], assessment: StringName) -> bool:
-	if assignment_id == &"" or assessment == &"" or required_actions.is_empty() or not assignments.has(assignment_id):
+func complete_assignment(assignment: AssignmentDef, actor_id: StringName, assessment: StringName, is_accurate: bool) -> bool:
+	if assignment == null or not assignment.is_valid() or actor_id == &"" or assessment == &"":
+		return false
+	var assignment_id := assignment.id
+	if not assignments.has(assignment_id):
 		return false
 	var entry: Dictionary = assignments[assignment_id]
 	if String(entry.get("status", "")) != "active":
 		return false
+	if StringName(entry.get("employer_id", "")) != assignment.employer:
+		push_warning("WorldState: assignment employer does not match its definition")
+		return false
+	var actor := get_person(actor_id)
+	var employer := get_person(assignment.employer)
+	if actor == null or employer == null:
+		push_warning("WorldState: assignment settlement could not resolve actor and employer")
+		return false
 	var actions: Dictionary = entry.get("actions", {})
-	for action_id in required_actions:
+	for action_id in assignment.required_actions:
 		if not actions.has(action_id):
 			return false
+
+	var opinion_delta := assignment.opinion_penalty
+	if is_accurate:
+		opinion_delta = assignment.opinion_reward
+		modify_resource(assignment.compensation_resource, assignment.compensation_amount)
+		actor.skills.add_xp(&"law", assignment.law_xp)
+	employer.opinions[actor_id] = int(employer.opinions.get(actor_id, 0)) + opinion_delta
+	var reasons: Array = employer.opinion_reasons.get(actor_id, [])
+	reasons.append({
+		"year": year,
+		"amount": opinion_delta,
+		"reason": "North-Bay roof inspection assessment: %s" % ("accurate and supported" if is_accurate else "unsupported; contradicted by physical inspection"),
+	})
+	employer.opinion_reasons[actor_id] = reasons
+
 	entry["status"] = "completed"
 	entry["assessment"] = assessment
+	entry["accurate"] = is_accurate
 	entry["completed_period"] = current_period_index()
+	entry["rewarded"] = is_accurate
 	assignments[assignment_id] = entry
 	return true
 
