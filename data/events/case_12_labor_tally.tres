@@ -21,7 +21,7 @@ parameters = {"form_type": &"pension_roll"}
 script = ExtResource("4")
 condition_type = &"period_in_range"
 target = "actor"
-parameters = {"min": 3, "max": 3}
+parameters = {"min": 3, "max": 11}
 
 [sub_resource type="Resource" id="FxOpinionShuruppak1"]
 script = ExtResource("3")
