@@ -6,7 +6,11 @@ extends RefCounted
 
 const MIN_STOCK := 0
 const FORM_COOLDOWN_PERIODS := 3
-const GREAT_CANAL_CUT: EpicDef = preload("res://data/epics/great_canal_cut.tres")
+
+var definition_registry: DefinitionRegistry
+
+func _init(registry: DefinitionRegistry = null) -> void:
+	definition_registry = registry
 
 func advance_period(world: WorldState) -> void:
 	if world == null:
@@ -18,59 +22,113 @@ func advance_period(world: WorldState) -> void:
 	_simulate_people(world)
 	_generate_forms(world)
 
+func _get_definition_registry() -> DefinitionRegistry:
+	if definition_registry != null:
+		return definition_registry
+	var main_loop := Engine.get_main_loop()
+	if main_loop is SceneTree:
+		var tree := main_loop as SceneTree
+		var registry_node := tree.root.get_node_or_null("Registry")
+		if registry_node != null:
+			var candidate: Variant = registry_node.get("defs")
+			if candidate is DefinitionRegistry:
+				definition_registry = candidate
+	return definition_registry
+
 func _simulate_epics(world: WorldState) -> void:
-	var definition: EpicDef = GREAT_CANAL_CUT
-	if definition == null or definition.id == &"":
+	var definitions := _get_definition_registry()
+	if definitions == null:
+		push_warning("WorldSimulator: cannot tick Epics without a DefinitionRegistry")
 		return
-	var progress := clampi(world.get_resource(&"canal_progress"), 0, definition.target)
-	var state: Dictionary = world.epics.get(definition.id, {
-		"progress": progress,
-		"stage": "survey",
-		"completed": false,
-		"scandal_flags": [],
-		"history_notes": []
-	})
+	var current_era := definitions.get_era_for_year(world.year)
+	for definition in definitions.all_epics():
+		if definition.era_id != &"" and (current_era == null or current_era.id != definition.era_id):
+			continue
+		if not world.epics.has(definition.id):
+			world.epics[definition.id] = {
+				"active": true,
+				"progress": world.get_resource(definition.progress_resource),
+				"progress_resource": definition.progress_resource,
+				"target": definition.target,
+				"title": definition.title,
+				"era_id": definition.era_id,
+				"initial_stage": definition.initial_stage,
+				"stage": definition.initial_stage,
+				"completed": false,
+				"scandal_flags": [],
+				"history_notes": []
+			}
+
+	for epic_id in world.epics.keys():
+		var definition := definitions.get_epic(StringName(epic_id))
+		if definition == null:
+			push_warning("WorldSimulator: active Epic '%s' has no registered EpicDef" % epic_id)
+			continue
+		var state: Dictionary = world.epics[epic_id]
+		var era_matches := definition.era_id == &"" or (current_era != null and current_era.id == definition.era_id)
+		state["active"] = era_matches
+		state["progress_resource"] = definition.progress_resource
+		state["target"] = definition.target
+		state["title"] = definition.title
+		state["era_id"] = definition.era_id
+		state["initial_stage"] = definition.initial_stage
+		if not era_matches:
+			world.epics[epic_id] = state
+			continue
+		_simulate_epic(world, definition, state)
+
+func _simulate_epic(world: WorldState, definition: EpicDef, state: Dictionary) -> void:
+	var resource_id := definition.progress_resource
+	if resource_id == &"" or definition.target <= 0:
+		push_warning("WorldSimulator: Epic '%s' has no valid progress resource or target" % definition.id)
+		return
+	var progress := clampi(world.get_resource(resource_id), 0, definition.target)
 	if bool(state.get("completed", false)):
-		world.stockpiles[&"canal_progress"] = progress
+		state["progress"] = progress
+		world.epics[definition.id] = state
 		return
+
 	var now := world.current_period_index()
 	var institution: Dictionary = world.institutions.get(definition.sponsor_institution, {})
 	var resources: Dictionary = institution.get("stockpiles", {})
 	var labor := int(resources.get(&"labor", 0))
 	var barley := int(resources.get(&"barley", 0))
 	var disruption := false
+	var recorded_scandals: Array = state.get("scandal_flags", [])
 	for flag in definition.disruption_flags:
 		if world.has_flag(flag, now):
 			disruption = true
-		var recorded_scandals: Array = state.get("scandal_flags", [])
-		if flag in recorded_scandals:
-			continue
-		if world.has_flag(flag, now):
-			recorded_scandals.append(flag)
-		state["scandal_flags"] = recorded_scandals
+			if flag not in recorded_scandals:
+				recorded_scandals.append(flag)
+	state["scandal_flags"] = recorded_scandals
+
 	var previous_progress := progress
 	var note := ""
+	var inundation := world.period >= definition.inundation_period_min and world.period <= definition.inundation_period_max
 	if disruption:
 		note = "Canal crews stalled by an active disruption."
-		if world.period >= definition.inundation_period_min and world.period <= definition.inundation_period_max and labor < definition.regression_labor_below:
+	elif labor < definition.regression_labor_below:
+		note = "Work crews stood down below the minimum labor threshold."
+		if inundation:
 			progress = maxi(0, progress - definition.regression_amount)
 			note = "Inundation silt reclaimed part of the cut while labor was below minimum."
 	elif labor >= definition.strong_labor and barley >= definition.strong_barley:
 		if world.modify_resource(&"barley", -definition.strong_barley_cost, "institution", "", definition.sponsor_institution):
 			progress += definition.strong_progress
-			note = "Crews advanced the canal on full rations."
+			note = "Crews advanced the Epic on full rations."
 	elif labor >= definition.partial_labor and barley >= definition.partial_barley:
 		if world.modify_resource(&"barley", -definition.partial_barley_cost, "institution", "", definition.sponsor_institution):
 			progress += definition.partial_progress
-			note = "Crews made partial progress on reduced rations."
+			note = "Crews made partial Epic progress on reduced rations."
 	else:
-		note = "Canal work stalled for lack of labor or barley."
-		if world.period >= definition.inundation_period_min and world.period <= definition.inundation_period_max and labor < definition.regression_labor_below:
-			progress = maxi(0, progress - definition.regression_amount)
-			note = "Inundation silt reclaimed part of the cut for want of labor."
+		note = "Epic work stalled for lack of labor or barley."
+
 	progress = clampi(progress, 0, definition.target)
+	var current_progress := world.get_resource(resource_id)
+	if progress != current_progress:
+		world.modify_resource(resource_id, progress - current_progress, "world")
 	state["progress"] = progress
-	state["stage"] = "completed" if progress >= definition.target else ("approaching_completion" if progress >= definition.target * 0.75 else ("cutting" if progress >= definition.target * 0.25 else "survey"))
+	state["stage"] = "completed" if progress >= definition.target else ("approaching_completion" if progress >= definition.target * 0.75 else ("cutting" if progress >= definition.target * 0.25 else definition.initial_stage))
 	state["completed"] = progress >= definition.target
 	if progress != previous_progress:
 		var history: Array = state.get("history_notes", [])
@@ -79,7 +137,6 @@ func _simulate_epics(world: WorldState) -> void:
 			history.pop_front()
 		state["history_notes"] = history
 	world.epics[definition.id] = state
-	world.stockpiles[&"canal_progress"] = progress
 
 func _simulate_economy(world: WorldState) -> void:
 	var p := world.period
@@ -114,7 +171,7 @@ func _simulate_economy(world: WorldState) -> void:
 	if p == 5 or p == 6:
 		_change(world, &"dates", world.rng_sim.randi_range(5, 11))
 	if p >= 2 and p <= 9:
-		_change(world, &"fish", world.rng_sim.randi_range(1, 4))
+		_change(world, &"fish", world.rng_sim.randi_range(2, 5))
 	if p >= 4 and p <= 7:
 		_change(world, &"labor", -3) # field and canal labor peak during harvest
 	if p == 0 or p == 8:
