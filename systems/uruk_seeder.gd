@@ -1,8 +1,6 @@
 class_name UrukSeeder
 extends RefCounted
 
-const PLAYER_ID: StringName = &"player_apprentice"
-
 static func seed_campaign(world: WorldState, world_seed: int, add_player_to_world: bool = true) -> PersonEntity:
 	world.set_world_seed(world_seed)
 	world.year = -3200
@@ -26,15 +24,15 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 	world.era_completion_started = false
 	world.epics.clear()
 	world._next_form_sequence = 1
+	world._next_person_sequence = 1
+	world.player_id = &""
 
 	# The original eight remain the center of the first playable slice.
-	var player := _person(&"player_apprentice", "Enlil-barni", &"apprentice_scribe", {"literacy": 1, "arithmetic": 1, "law": 1}, [])
+	var player := _person(world.allocate_person_id(), "Enlil-barni", &"apprentice_scribe", {"literacy": 1, "arithmetic": 1, "law": 1}, [])
 	player.resources[&"silver"] = 2
 	if add_player_to_world:
-		world.people[player.id] = player
+		world.set_player(player)
 	var senior := _person(&"shuruppak_ilu", "Shuruppak-ilu", &"archive_keeper", {"literacy": 4, "arithmetic": 4, "law": 3, "rhetoric": 2, "intrigue": 2, "stewardship": 3}, [&"patient", &"exacting"])
-	if add_player_to_world:
-		senior.set_opinion(PLAYER_ID, 5)
 	senior.vulnerabilities[&"patience_remaining"] = 3 + world.rng_people.randi_range(0, 2)
 	world.people[senior.id] = senior
 	var steward := _person(&"ur_nanna", "Ur-Nanna", &"grain_clerk", {"stewardship": 4, "law": 2, "arithmetic": 3}, [&"cautious", &"weather_watcher"])
@@ -61,11 +59,11 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 
 	if add_player_to_world:
 		for person in world.people.values():
-			if person.id != player.id and not person.relationships.has(player.id):
+			if person.id != world.player_id and not person.relationships.has(world.player_id):
 				person.set_opinion(player.id, 0)
 	_seed_places(world)
-	_seed_institutions_and_groups(world, false)
-	_seed_relationships(world, false)
+	_seed_institutions_and_groups(world)
+	_seed_relationships(world)
 	if add_player_to_world:
 		attach_player(world, player)
 
@@ -113,7 +111,8 @@ static func attach_player(world: WorldState, player: PersonEntity) -> void:
 	if world.people.has(player.id) and world.get_person(player.id) != player:
 		push_warning("UrukSeeder.attach_player: another person already uses %s" % player.id)
 		return
-	world.people[player.id] = player
+	if not world.set_player(player):
+		return
 
 	var household: Dictionary = world.institutions.get(&"eanna_household", {})
 	if not household.is_empty():
@@ -126,12 +125,12 @@ static func attach_player(world: WorldState, player: PersonEntity) -> void:
 	for person in world.people.values():
 		if person == player:
 			continue
-		person.set_opinion(player.id, 5 if person.id == &"shuruppak_ilu" else 0)
+		person.set_opinion(world.player_id, 5 if person.id == &"shuruppak_ilu" else 0)
 
 	# Restore the baseline mentor and household ties omitted while the player
 	# was held outside WorldState during the creation draft.
-	_link(world, &"shuruppak_ilu", player.id, &"mentor", 7, 8)
-	_link(world, &"geme_tur", player.id, &"family", 8, 9)
+	_link(world, &"shuruppak_ilu", world.player_id, &"mentor", 7, 8)
+	_link(world, &"geme_tur", world.player_id, &"family", 8, 9)
 
 static func _seed_places(world: WorldState) -> void:
 	world.places = {
@@ -146,10 +145,8 @@ static func _seed_places(world: WorldState) -> void:
 		&"habuba_kabira": {"name": "Habuba Kabira", "kind": &"external_settlement", "region": &"upper_euphrates", "connected_to": [&"uruk"]}
 	}
 
-static func _seed_institutions_and_groups(world: WorldState, include_player: bool = true) -> void:
+static func _seed_institutions_and_groups(world: WorldState) -> void:
 	var eanna_members: Array[StringName] = [&"shuruppak_ilu", &"ur_nanna", &"utu_mansum", &"enlil_kisu", &"lu_nanshe"]
-	if include_player:
-		eanna_members.append(&"player_apprentice")
 	world.institutions = {
 		&"eanna_household": {"name": "Eanna Institutional Household", "kind": &"institutional_household", "place_id": &"eanna_precinct", "members": eanna_members, "interests": [&"grain", &"labor", &"storage", &"canal_work"]},
 		&"anu_establishment": {"name": "Anu Precinct Establishment", "kind": &"cultic_establishment", "place_id": &"anu_precinct", "members": [&"nin_azu", &"nin_kasi"], "interests": [&"offerings", &"beer", &"prestige"]},
@@ -163,9 +160,6 @@ static func _seed_institutions_and_groups(world: WorldState, include_player: boo
 		&"brewers": {"name": "Brewers", "kind": &"craft_group", "place_id": &"uruk", "members": [&"nin_kasi"], "resources": [&"barley", &"beer"]}
 	}
 
-static func _seed_relationships(world: WorldState, include_player: bool = true) -> void:
-	if include_player:
-		_link(world, &"shuruppak_ilu", &"player_apprentice", &"mentor", 7, 8)
 	_link(world, &"ur_nanna", &"shuruppak_ilu", &"professional_respect", 4, 6)
 	_link(world, &"ur_nanna", &"enlil_kisu", &"resource_dependency", 3, 5)
 	_link(world, &"enlil_kisu", &"ur_amas", &"crew_bond", 6, 7)
@@ -182,8 +176,6 @@ static func _seed_relationships(world: WorldState, include_player: bool = true) 
 	_link(world, &"ab_kala", &"ur_nanna", &"institutional_supplier", 2, 5)
 	_link(world, &"nin_dada", &"geme_inana", &"textile_trade", 3, 5)
 	_link(world, &"nin_azu", &"nin_kasi", &"cultic_and_workplace_tie", 2, 5)
-	if include_player:
-		_link(world, &"geme_tur", &"player_apprentice", &"family", 8, 9)
 	_link(world, &"geme_tur", &"shuruppak_ilu", &"household_reputation", 1, 4)
 	_link(world, &"nin_kasi", &"ama_edin", &"brewery_household_supply", 2, 4)
 
