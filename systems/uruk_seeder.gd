@@ -48,6 +48,9 @@ static func seed_campaign(world: WorldState, seed: int) -> PersonEntity:
 	world.people[&"nin_azu"] = _person(&"nin_azu", "Nin-azu", &"precinct_attendant", {"literacy": 2, "rhetoric": 2}, [&"devout", &"ambitious"])
 	world.people[&"geme_tur"] = _person(&"geme_tur", "Geme-tur", &"player_household", {"stewardship": 2}, [&"practical", &"blunt"])
 
+	for person in world.people.values():
+		if person.id != player.id and not person.relationships.has(player.id):
+			person.set_opinion(player.id, 0)
 	_seed_places(world)
 	_seed_institutions_and_groups(world)
 	_seed_relationships(world)
@@ -134,7 +137,7 @@ static func _link(world: WorldState, source_id: StringName, target_id: StringNam
 		return
 	var tie := {"type": relation_type, "strength": strength, "trust": trust}
 	source.relationships[target_id] = tie
-	tie["opinion"] = strength
+	tie["opinion"] = 0
 	tie["reasons"] = []
 	source.relationships[target_id] = tie
 
