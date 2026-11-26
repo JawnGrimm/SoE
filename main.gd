@@ -35,6 +35,8 @@ var creation_selections := CharacterCreationSelections.new()
 var creation_screen: int = 0
 var phase := "case"
 var last_opinion_deltas: Dictionary[StringName, int] = {}
+var active_left_speaker_id: StringName = &""
+var active_right_speaker_id: StringName = &""
 
 var year_label: Label
 var case_heading: Label
@@ -867,14 +869,14 @@ func _submit_north_bay_assessment(is_accurate: bool) -> void:
 		push_warning("Main: North-Bay employer disappeared before settlement")
 		return
 	var opinion_before := int(steward.get_opinion(actor.id))
-	var silver_before_assignment := world.get_resource(&"silver")
+	var silver_before_assignment := int(actor.resources.get(&"silver", 0))
 	var traits_before_assignment: Array[StringName] = actor.traits.duplicate()
 	if not world.complete_assignment(north_bay_assignment, actor.id, assessment, is_accurate):
 		push_warning("Main: North-Bay assessment rejected; required actions or lifecycle state are invalid")
 		return
 	var opinion_delta := steward.get_opinion(actor.id) - opinion_before
 	world.cases_settled += 1
-	var assignment_silver_delta := world.get_resource(&"silver") - silver_before_assignment
+	var assignment_silver_delta := int(actor.resources.get(&"silver", 0)) - silver_before_assignment
 	if assignment_silver_delta > 0:
 		world.silver_earned += assignment_silver_delta
 	for gained_trait in actor.traits:
@@ -956,6 +958,8 @@ func _render_docket_payload(payload: Dictionary, callbacks: Array = []) -> void:
 	evidence_right_title.text = String(right.get("title", "CLAIM"))
 	var left_id := StringName(left.get("speaker_id", ""))
 	var right_id := StringName(right.get("speaker_id", ""))
+	active_left_speaker_id = left_id
+	active_right_speaker_id = right_id
 	var left_person := world.get_person(left_id)
 	var right_person := world.get_person(right_id)
 	evidence_left_speaker.text = left_person.display_name.to_upper() if left_person != null else String(left_id).to_upper()
@@ -1023,14 +1027,16 @@ func _resolve_procedural_choice(index: int, choice: Dictionary) -> void:
 	var result_text := String(choice.get("result_text", "The entry is sealed."))
 	var allocation_paid := resource_delta >= 0
 	if resource_id != &"" and resource_delta != 0:
-		if resource_delta < 0 and world.get_resource(resource_id) < absi(resource_delta):
+		var institutional_available := world.get_resource(resource_id, "institution", "", &"eanna_household")
+		if resource_delta < 0 and institutional_available < absi(resource_delta):
 			allocation_paid = false
-			result_text += " The allocation was not made: stores cannot cover the cost."
+			result_text += " The allocation was not made: Eanna's stores cannot cover the cost."
 			if bool(effects.get("repair_hazard", false)):
 				result_text += " The hazard remains active."
 		else:
-			allocation_paid = true
-			world.stockpiles[resource_id] = maxi(0, world.get_resource(resource_id) + resource_delta)
+			allocation_paid = world.modify_resource(resource_id, resource_delta, "institution", String(actor.id), &"eanna_household")
+			if not allocation_paid:
+				result_text += " The allocation was not made: the institutional ledger rejected it."
 	if bool(effects.get("repair_hazard", false)) and allocation_paid:
 		var repair_place := StringName(procedural_assignment.get("place_id", ""))
 		var repair_id := StringName(procedural_assignment.get("hazard_id", ""))
@@ -1122,11 +1128,11 @@ func _show_era_completion() -> void:
 		trait_names.append(String(trait_id))
 	var traits_text := ", ".join(trait_names) if not trait_names.is_empty() else "none recorded"
 	var summary := "Year %s / %s\nCases settled: %d\nThe Great Canal Cut: 100 / 100 — BUILT\nSilver earned: %d\nTraits gained: %s\nCompound standing: %+d average opinion" % [CalendarFormatter.format_year(world.year), String(current_era.display_name if current_era != null else "Current Era"), world.cases_settled, world.silver_earned, traits_text, standing]
-	world.cedar_desk_log.append({"year": world.year, "era_id": current_era.id if current_era != null else &"", "title": "THE GREAT CANAL CUT IS FINISHED", "summary": summary, "cases_settled": world.cases_settled, "canal_progress": 100, "silver_earned": world.silver_earned, "traits_gained": world.traits_gained.duplicate(), "standing": standing})
-	case_heading.text = "𒂍  THE GREAT CANAL CUT IS FINISHED"
+	world.cedar_desk_log.append({"year": world.year, "era_id": current_era.id if current_era != null else &"", "title": "ERA EPIC: THE GREAT CANAL CUT — COMPLETE", "summary": summary, "cases_settled": world.cases_settled, "canal_progress": 100, "silver_earned": world.silver_earned, "traits_gained": world.traits_gained.duplicate(), "standing": standing})
+	case_heading.text = "𒂍  ERA EPIC COMPLETE / THE GREAT CANAL CUT"
 	dossier.visible = true
 	dossier.text = summary
-	_set_evidence_facts("THE CAREER RECORD\nThe canal is entered as completed work. The apprentice kept the measures and the names.", "THE STOREHOUSE\nThe reserves held long enough. The next shift inherits the result.")
+	_set_evidence_facts("THE CAREER RECORD\nThe canal is entered as a completed Epic. The apprentice kept the measures and the names.", "THE STOREHOUSE\nThe reserves held long enough. The next shift inherits the result.")
 	# Completion is an authored career verdict, never leftover testimony from
 	# whichever docket happened to precede the final period.
 	evidence_left_title.text = "CAREER VERDICT / ARCHIVE"
@@ -1137,9 +1143,9 @@ func _show_era_completion() -> void:
 	evidence_right_quote.text = "“The canal stands, and the stores were not emptied to build it. That is competent work.”"
 	_set_evidence_portrait(&"shuruppak_ilu", &"ur_nanna")
 	_set_evidence_tension(0, 0)
-	prompt_label.text = "The canal is built. This era's work is complete."
+	prompt_label.text = "The canal is built. This era's Epic is complete."
 	_add_choice("Begin Next Era / New Shift", _begin_next_shift)
-	status_label.text = "ERA WORK COMPLETE  /  CEDAR DESK ENTRY SEALED"
+	status_label.text = "ERA EPIC COMPLETE  /  CEDAR DESK ENTRY SEALED"
 
 func _begin_next_shift() -> void:
 	if phase != "era_complete":
@@ -1253,11 +1259,16 @@ func _preview_choice(button: Button) -> void:
 		for effect in outcome.effects:
 			if effect.effect_type != &"change_opinion":
 				continue
-			var target_npc := StringName(effect.parameters.get("other", effect.parameters.get("subject", &"")))
-			var amount := int(effect.parameters.get("amount", 0))
-			if target_npc == &"enlil_kisu":
+			var effect_params: Dictionary = effect.parameters
+			var affected_id := StringName(effect_params.get("subject", ""))
+			if affected_id == &"" and context != null:
+				var affected_person := context.resolve_subject(String(effect.target))
+				if affected_person != null:
+					affected_id = affected_person.id
+			var amount := int(effect_params.get("amount", 0))
+			if affected_id == active_left_speaker_id and active_left_speaker_id != &"":
 				left_delta += amount
-			elif target_npc == &"utu_mansum":
+			elif affected_id == active_right_speaker_id and active_right_speaker_id != &"":
 				right_delta += amount
 	_set_evidence_tension(left_delta, right_delta)
 
@@ -1326,11 +1337,11 @@ func _refresh_compound() -> void:
 	for trait_id in actor.traits:
 		if trait_id in [&"exacting", &"stubborn", &"protective", &"diplomatic"]:
 			mentor_trait = String(trait_id)
-	heirloom_label.text = "HEIRLOOM RIM  /  APPRENTICE SCRIBE  /  MENTOR MARK: %s  /  SILVER AT DESK: %d SHEKELS" % [mentor_trait.to_upper(), world.get_resource(&"silver")]
-	stores_label.text = "Barley     %d measures\nNorth-Bay water loss  %d\nSilver     %d shekels\nClay/Reeds %d\nLabor      %d" % [world.get_resource(&"barley"), world.get_hazard_total_lost(&"north_bay", &"roof_leak"), world.get_resource(&"silver"), world.get_resource(&"clay_reeds"), world.get_resource(&"labor")]
+	heirloom_label.text = "YOUR DESK PURSE: %d SHEKELS  /  MENTOR MARK: %s" % [actor.resources.get(&"silver", 0), mentor_trait.to_upper()]
+	stores_label.text = "EANNA STOREHOUSE STORES\nBarley     %d measures\nNorth-Bay water loss  %d\nTemple silver  %d shekels\nClay/Reeds %d\nLabor      %d" % [world.get_resource(&"barley", "institution", "", &"eanna_household"), world.get_hazard_total_lost(&"north_bay", &"roof_leak"), world.get_resource(&"silver", "institution", "", &"eanna_household"), world.get_resource(&"clay_reeds", "institution", "", &"eanna_household"), world.get_resource(&"labor", "institution", "", &"eanna_household")]
 	var canal := world.get_resource(&"canal_progress")
 	var filled := int(round(float(canal) / 10.0))
-	canal_label.text = "THE GREAT CANAL CUT\n[%s%s] %d / 100\nTarget before Inundation" % ["=".repeat(filled), "-".repeat(10 - filled), canal]
+	canal_label.text = "ERA EPIC: THE GREAT CANAL CUT\n[%s%s] %d / 100\nAutonomous works" % ["=".repeat(filled), "-".repeat(10 - filled), canal]
 	for child in roster_box.get_children():
 		roster_box.remove_child(child)
 		child.queue_free()

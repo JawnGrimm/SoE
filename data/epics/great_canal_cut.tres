@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="EpicDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/epic_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"great_canal_cut"
+title = "The Great Canal Cut"
+target = 100
+sponsor_institution = &"eanna_household"
+strong_labor = 10
+strong_barley = 120
+strong_progress = 3
+strong_barley_cost = 4
+partial_labor = 6
+partial_barley = 60
+partial_progress = 1
+partial_barley_cost = 2
+disruption_flags = Array[StringName]([&"canal_crew_slowdown", &"thirsty_diggers"])
+inundation_period_min = 0
+inundation_period_max = 2
+regression_labor_below = 6
+regression_amount = 2

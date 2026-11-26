@@ -1,0 +1,63 @@
+[gd_resource type="Resource" script_class="EventTemplate" load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/event_template.gd" id="1"]
+[ext_resource type="Script" path="res://data/definitions/event_outcome.gd" id="2"]
+[ext_resource type="Script" path="res://data/definitions/event_effect.gd" id="3"]
+[ext_resource type="Script" path="res://data/definitions/event_condition.gd" id="4"]
+
+[sub_resource type="Resource" id="condition_record_trait"]
+script = ExtResource("4")
+condition_type = &"has_trait"
+target = "actor"
+parameters = {"trait_ids": Array[StringName]([&"complicit", &"pliable"]), "match": "any"}
+
+[sub_resource type="Resource" id="condition_record_pattern"]
+script = ExtResource("4")
+condition_type = &"flag_set"
+target = "actor"
+parameters = {"flags": Array[StringName]([&"entangled_brewery_accounts", &"phantom_barley_measure"]), "scope": "world", "match": "any"}
+
+[sub_resource type="Resource" id="fx_1"]
+script = ExtResource("3")
+effect_type = &"add_memory"
+parameters = {"memory_id": &"ledger_inquest_cooperated", "text": "The apprentice opened the brewery and barley accounts to formal scrutiny.", "involved": [&"shuruppak_ilu", &"nin_kasi"]}
+
+[sub_resource type="Resource" id="fx_2"]
+script = ExtResource("3")
+effect_type = &"change_opinion"
+parameters = {"subject": &"shuruppak_ilu", "other": &"player_apprentice", "amount": 6, "reason": "Produced the disputed accounts for review"}
+
+[sub_resource type="Resource" id="fx_3"]
+script = ExtResource("3")
+effect_type = &"set_flag"
+parameters = {"flag": &"ledger_inquest_suppressed", "scope": "world", "years": 2}
+
+[sub_resource type="Resource" id="fx_4"]
+script = ExtResource("3")
+effect_type = &"add_memory"
+parameters = {"memory_id": &"ledger_inquest_buried", "text": "The apprentice sealed the brewery and barley discrepancies rather than submit them to the inquest.", "involved": [&"shuruppak_ilu", &"nin_kasi"]}
+
+[sub_resource type="Resource" id="outcome_1"]
+script = ExtResource("2")
+label = "Open the accounts"
+title_override = "THE LEDGER IS BROUGHT INTO DAYLIGHT"
+description_override = "The brewery tallies and phantom barley measures are laid before the archive keeper. The figures do not explain themselves, but they can no longer be quietly misplaced."
+effects = Array[ExtResource("3")]([SubResource("fx_1"), SubResource("fx_2")])
+
+[sub_resource type="Resource" id="outcome_2"]
+script = ExtResource("2")
+label = "Seal the disputed folios"
+title_override = "THE LEDGER IS CLOSED"
+description_override = "The folios are sealed under an administrative cover. The inquest loses its clean path, and the archive remembers who pressed the seal."
+effects = Array[ExtResource("3")]([SubResource("fx_3"), SubResource("fx_4")])
+
+[resource]
+script = ExtResource("1")
+id = &"challenge_ledger_inquest"
+title = "The Ledger Inquest"
+description = "A pattern in the apprentice's record has drawn the archive keeper's attention to the brewery and barley accounts."
+era_tags = Array[StringName]([&"uruk"])
+weight = 25.0
+once_per_world = true
+conditions = Array[ExtResource("4")]([SubResource("condition_record_trait"), SubResource("condition_record_pattern")])
+outcomes = Array[ExtResource("2")]([SubResource("outcome_1"), SubResource("outcome_2")])

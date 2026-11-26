@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="EventTemplate" load_steps=33 format=3]
+[gd_resource type="Resource" script_class="EventTemplate" load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://data/definitions/event_template.gd" id="1"]
 [ext_resource type="Script" path="res://data/definitions/event_outcome.gd" id="2"]
@@ -143,12 +143,17 @@ description_override = "Neither man blamed. The single missing measure is noted 
 effects = Array[ExtResource("3")]([SubResource("fx_1"), SubResource("fx_2"), SubResource("fx_3"), SubResource("fx_4"), SubResource("fx_5"), SubResource("fx_6"), SubResource("fx_7"), SubResource("fx_20")])
 
 
+[sub_resource type="Resource" id="fx_24"]
+script = ExtResource("3")
+effect_type = &"resolve_form"
+parameters = {"form_type": &"grain_levy", "disposition": "certified_full_dispatch"}
+
 [sub_resource type="Resource" id="outcome_2"]
 script = ExtResource("2")
 label = "Press Seal as 24"
 title_override = "THE TABLET SAYS TWENTY-FOUR"
 description_override = "You smooth wet mud over Utu-mansum's mark and press the storehouse seal for 24. The books balance with the boatmen's dispatch. The granary holds one measure less than the clay claims."
-effects = Array[ExtResource("3")]([SubResource("fx_8"), SubResource("fx_9"), SubResource("fx_10"), SubResource("fx_11"), SubResource("fx_12"), SubResource("fx_13"), SubResource("fx_21")])
+effects = Array[ExtResource("3")]([SubResource("fx_8"), SubResource("fx_9"), SubResource("fx_10"), SubResource("fx_11"), SubResource("fx_12"), SubResource("fx_13"), SubResource("fx_21"), SubResource("fx_24")])
 
 
 [sub_resource type="Resource" id="outcome_3"]

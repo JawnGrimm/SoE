@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="EventTemplate" load_steps=35 format=3]
+[gd_resource type="Resource" script_class="EventTemplate" load_steps=36 format=3]
 
 [ext_resource type="Script" path="res://data/definitions/event_template.gd" id="1"]
 [ext_resource type="Script" path="res://data/definitions/event_outcome.gd" id="2"]
@@ -17,6 +17,12 @@ condition_type = &"flag_set"
 target = "actor"
 parameters = {"flag": &"canal_crew_slowdown", "scope": "world"}
 
+[sub_resource type="Resource" id="condition_personal_silver"]
+script = ExtResource("4")
+condition_type = &"resource_compare"
+target = "actor"
+parameters = {"resource": &"silver", "scope": "actor", "comparison": ">=", "value": 4}
+
 [sub_resource type="Resource" id="condition_period"]
 script = ExtResource("4")
 condition_type = &"period_in_range"
@@ -32,7 +38,7 @@ parameters = {"min": -3200, "max": -3100}
 [sub_resource type="Resource" id="fx_1"]
 script = ExtResource("3")
 effect_type = &"modify_resource"
-parameters = {"resource": &"silver", "amount": -4, "scope": "world"}
+parameters = {"resource": &"silver", "amount": -4, "scope": "actor"}
 
 [sub_resource type="Resource" id="fx_2"]
 script = ExtResource("3")

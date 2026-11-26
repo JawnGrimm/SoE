@@ -6,6 +6,7 @@ extends RefCounted
 
 const MIN_STOCK := 0
 const FORM_COOLDOWN_PERIODS := 3
+const GREAT_CANAL_CUT: EpicDef = preload("res://data/epics/great_canal_cut.tres")
 
 func advance_period(world: WorldState) -> void:
 	if world == null:
@@ -13,8 +14,72 @@ func advance_period(world: WorldState) -> void:
 	world.advance_period()
 	_simulate_economy(world)
 	_simulate_institutions(world)
+	_simulate_epics(world)
 	_simulate_people(world)
 	_generate_forms(world)
+
+func _simulate_epics(world: WorldState) -> void:
+	var definition: EpicDef = GREAT_CANAL_CUT
+	if definition == null or definition.id == &"":
+		return
+	var progress := clampi(world.get_resource(&"canal_progress"), 0, definition.target)
+	var state: Dictionary = world.epics.get(definition.id, {
+		"progress": progress,
+		"stage": "survey",
+		"completed": false,
+		"scandal_flags": [],
+		"history_notes": []
+	})
+	if bool(state.get("completed", false)):
+		world.stockpiles[&"canal_progress"] = progress
+		return
+	var now := world.current_period_index()
+	var institution: Dictionary = world.institutions.get(definition.sponsor_institution, {})
+	var resources: Dictionary = institution.get("stockpiles", {})
+	var labor := int(resources.get(&"labor", 0))
+	var barley := int(resources.get(&"barley", 0))
+	var disruption := false
+	for flag in definition.disruption_flags:
+		if world.has_flag(flag, now):
+			disruption = true
+		var recorded_scandals: Array = state.get("scandal_flags", [])
+		if flag in recorded_scandals:
+			continue
+		if world.has_flag(flag, now):
+			recorded_scandals.append(flag)
+		state["scandal_flags"] = recorded_scandals
+	var previous_progress := progress
+	var note := ""
+	if disruption:
+		note = "Canal crews stalled by an active disruption."
+		if world.period >= definition.inundation_period_min and world.period <= definition.inundation_period_max and labor < definition.regression_labor_below:
+			progress = maxi(0, progress - definition.regression_amount)
+			note = "Inundation silt reclaimed part of the cut while labor was below minimum."
+	elif labor >= definition.strong_labor and barley >= definition.strong_barley:
+		if world.modify_resource(&"barley", -definition.strong_barley_cost, "institution", "", definition.sponsor_institution):
+			progress += definition.strong_progress
+			note = "Crews advanced the canal on full rations."
+	elif labor >= definition.partial_labor and barley >= definition.partial_barley:
+		if world.modify_resource(&"barley", -definition.partial_barley_cost, "institution", "", definition.sponsor_institution):
+			progress += definition.partial_progress
+			note = "Crews made partial progress on reduced rations."
+	else:
+		note = "Canal work stalled for lack of labor or barley."
+		if world.period >= definition.inundation_period_min and world.period <= definition.inundation_period_max and labor < definition.regression_labor_below:
+			progress = maxi(0, progress - definition.regression_amount)
+			note = "Inundation silt reclaimed part of the cut for want of labor."
+	progress = clampi(progress, 0, definition.target)
+	state["progress"] = progress
+	state["stage"] = "completed" if progress >= definition.target else ("approaching_completion" if progress >= definition.target * 0.75 else ("cutting" if progress >= definition.target * 0.25 else "survey"))
+	state["completed"] = progress >= definition.target
+	if progress != previous_progress:
+		var history: Array = state.get("history_notes", [])
+		history.append({"year": world.year, "period": world.period, "from": previous_progress, "to": progress, "note": note})
+		while history.size() > 32:
+			history.pop_front()
+		state["history_notes"] = history
+	world.epics[definition.id] = state
+	world.stockpiles[&"canal_progress"] = progress
 
 func _simulate_economy(world: WorldState) -> void:
 	var p := world.period
@@ -178,7 +243,17 @@ func _offer_if_ready(world: WorldState, form_type: StringName, subject_id: Strin
 func _change(world: WorldState, resource_id: StringName, amount: int) -> void:
 	if amount == 0:
 		return
-	world.modify_resource(resource_id, amount)
-	if resource_id != &"canal_progress":
-		var upper_bound := 40 if resource_id == &"labor" else 2147483647
-		world.stockpiles[resource_id] = clampi(world.get_resource(resource_id), MIN_STOCK, upper_bound)
+	if resource_id == &"canal_progress":
+		world.modify_resource(resource_id, amount, "world")
+		return
+	var available := world.get_resource(resource_id, "institution", "", &"eanna_household")
+	var applied_amount := amount
+	if amount < 0:
+		applied_amount = -mini(-amount, available)
+	world.modify_resource(resource_id, applied_amount, "institution", "", &"eanna_household")
+	var upper_bound := 40 if resource_id == &"labor" else 2147483647
+	var institution: Dictionary = world.institutions.get(&"eanna_household", {})
+	var resources: Dictionary = institution.get("stockpiles", {})
+	resources[resource_id] = clampi(world.get_resource(resource_id, "institution", "", &"eanna_household"), MIN_STOCK, upper_bound)
+	institution["stockpiles"] = resources
+	world.institutions[&"eanna_household"] = institution

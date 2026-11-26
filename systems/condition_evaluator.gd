@@ -30,7 +30,19 @@ func evaluate(condition: EventCondition, ctx: EventContext) -> bool:
     return bool(_handlers[condition.condition_type].call(subject, condition.parameters, ctx))
 
 func _has_trait(subject: PersonEntity, p: Dictionary, _ctx: EventContext) -> bool:
-    return subject != null and StringName(p.get("trait_id", "")) in subject.traits
+    if subject == null:
+        return false
+    var required: Array = p.get("trait_ids", [])
+    if required.is_empty():
+        required = [StringName(p.get("trait_id", ""))]
+    var any_match := false
+    for trait_value in required:
+        var found := StringName(trait_value) in subject.traits
+        if String(p.get("match", "all")) == "all" and not found:
+            return false
+        if found:
+            any_match = true
+    return any_match if String(p.get("match", "all")) == "any" else true
 
 func _lacks_trait(subject: PersonEntity, p: Dictionary, _ctx: EventContext) -> bool:
     return subject != null and not (StringName(p.get("trait_id", "")) in subject.traits)
@@ -64,21 +76,43 @@ func _has_pending_form(_subject: PersonEntity, p: Dictionary, ctx: EventContext)
     return ctx.world != null and ctx.world.has_pending_form(StringName(p.get("form_type", "")))
 
 func _flag_set(subject: PersonEntity, p: Dictionary, ctx: EventContext) -> bool:
-    var flag := StringName(p.get("flag", ""))
-    match String(p.get("scope", "world")):
-        "world":
-            return ctx.world != null and ctx.world.has_flag(flag, ctx.world.current_period_index())
-        "actor":
-            return ctx.actor != null and ctx.actor.has_flag(flag, ctx.world.current_period_index())
-        "target":
-            return subject != null and subject.has_flag(flag, ctx.world.current_period_index())
-        _:
+    var flags: Array = p.get("flags", [])
+    if flags.is_empty():
+        flags = [StringName(p.get("flag", ""))]
+    var match_any := String(p.get("match", "all")) == "any"
+    var matched := false
+    for flag_value in flags:
+        var flag := StringName(flag_value)
+        var found := false
+        match String(p.get("scope", "world")):
+            "world":
+                found = ctx.world != null and ctx.world.has_flag(flag, ctx.world.current_period_index())
+            "actor":
+                found = ctx.actor != null and ctx.world != null and ctx.actor.has_flag(flag, ctx.world.current_period_index())
+            "target":
+                found = subject != null and ctx.world != null and subject.has_flag(flag, ctx.world.current_period_index())
+            _:
+                return false
+        if match_any and found:
+            return true
+        if not match_any and not found:
             return false
+        matched = found
+    return matched
 
-func _resource_compare(_subject: PersonEntity, p: Dictionary, ctx: EventContext) -> bool:
+func _resource_compare(subject: PersonEntity, p: Dictionary, ctx: EventContext) -> bool:
     if ctx.world == null:
         return false
-    var actual := ctx.world.get_resource(StringName(p.get("resource", "")))
+    var scope := String(p.get("scope", "world"))
+    if scope not in ["world", "actor", "office", "institution"]:
+        return false
+    var owner_id: StringName = ctx.actor.id if ctx.actor != null and scope in ["actor", "office", "institution"] else (subject.id if subject != null else &"")
+    var actual := ctx.world.get_resource(
+        StringName(p.get("resource", "")),
+        scope,
+        String(owner_id),
+        StringName(p.get("institution_id", ""))
+    )
     var expected := int(p.get("value", 0))
     match String(p.get("comparison", ">=")):
         ">=": return actual >= expected

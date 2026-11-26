@@ -11,6 +11,8 @@ var flags: Dictionary[StringName, int] = {}
 var memory: Array[Dictionary] = []
 # Directed social ties keyed by the other person's entity id.
 var relationships: Dictionary[StringName, Dictionary] = {}
+# Personal property is separate from institutional stockpiles.
+var resources: Dictionary[StringName, int] = {}
 
 func get_opinion(other_id: StringName) -> int:
 	var tie: Dictionary = relationships.get(other_id, {})

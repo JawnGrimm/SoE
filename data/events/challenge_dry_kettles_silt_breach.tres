@@ -1,0 +1,63 @@
+[gd_resource type="Resource" script_class="EventTemplate" load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/event_template.gd" id="1"]
+[ext_resource type="Script" path="res://data/definitions/event_outcome.gd" id="2"]
+[ext_resource type="Script" path="res://data/definitions/event_effect.gd" id="3"]
+[ext_resource type="Script" path="res://data/definitions/event_condition.gd" id="4"]
+
+[sub_resource type="Resource" id="condition_severe"]
+script = ExtResource("4")
+condition_type = &"has_trait"
+target = "actor"
+parameters = {"trait_id": &"severe"}
+
+[sub_resource type="Resource" id="condition_breach_pattern"]
+script = ExtResource("4")
+condition_type = &"flag_set"
+target = "actor"
+parameters = {"flags": Array[StringName]([&"thirsty_diggers", &"blood_on_the_quays"]), "scope": "world", "match": "any"}
+
+[sub_resource type="Resource" id="fx_1"]
+script = ExtResource("3")
+effect_type = &"modify_resource"
+parameters = {"resource": &"barley", "amount": -20, "scope": "institution", "institution_id": &"eanna_household"}
+
+[sub_resource type="Resource" id="fx_2"]
+script = ExtResource("3")
+effect_type = &"clear_flag"
+parameters = {"flag": &"thirsty_diggers", "scope": "world"}
+
+[sub_resource type="Resource" id="fx_3"]
+script = ExtResource("3")
+effect_type = &"set_flag"
+parameters = {"flag": &"thirsty_diggers", "scope": "world", "years": 1}
+
+[sub_resource type="Resource" id="fx_4"]
+script = ExtResource("3")
+effect_type = &"add_memory"
+parameters = {"memory_id": &"silt_breach_ignored", "text": "The apprentice concealed the diggers' ration shortage as inundation silt began to reclaim the canal cut.", "involved": [&"enlil_kisu", &"ur_nanna"]}
+
+[sub_resource type="Resource" id="outcome_1"]
+script = ExtResource("2")
+label = "Issue emergency rations"
+title_override = "THE KETTLES ARE FILLED"
+description_override = "The storehouse releases barley for the crews. The ration account will be difficult to defend, but the diggers return to the cut."
+effects = Array[ExtResource("3")]([SubResource("fx_1"), SubResource("fx_2")])
+
+[sub_resource type="Resource" id="outcome_2"]
+script = ExtResource("2")
+label = "Hide the shortage"
+title_override = "THE SILT IS LEFT UNMARKED"
+description_override = "The shortage is entered as a river condition. The canal's immediate progress remains in the hands of the crews and the water."
+effects = Array[ExtResource("3")]([SubResource("fx_3"), SubResource("fx_4")])
+
+[resource]
+script = ExtResource("1")
+id = &"challenge_dry_kettles_silt_breach"
+title = "The Dry Kettles / Silt Breach"
+description = "The apprentice's severe record and a trail of blood or thirsty diggers have brought a dangerous canal shortage to the desk."
+era_tags = Array[StringName]([&"uruk"])
+weight = 25.0
+once_per_world = true
+conditions = Array[ExtResource("4")]([SubResource("condition_severe"), SubResource("condition_breach_pattern")])
+outcomes = Array[ExtResource("2")]([SubResource("outcome_1"), SubResource("outcome_2")])

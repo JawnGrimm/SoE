@@ -39,7 +39,7 @@ func _run() -> void:
 	_check(registry.has_definition(&"routine_tally_adjustment"), "Registry should index the routine tally event")
 	_check(registry.has_definition(&"origin_side_reply"), "Registry should index the origin reply event")
 	_check(registry.get_definition(&"corrupt_grain_official") is EventTemplate, "Registry lookup should return the loaded event Resource")
-	_check(registry.get_definitions("events").size() == 11, "Registry should expose all eleven event definitions by category")
+	_check(registry.get_definitions("events").size() == 13, "Registry should expose all thirteen event definitions by category")
 	var prototype_events_are_era_independent := true
 	for prototype_id in [&"corrupt_grain_official", &"routine_tally_adjustment", &"origin_side_reply"]:
 		var prototype_event := registry.get_event(prototype_id)
@@ -50,7 +50,7 @@ func _run() -> void:
 	_check(registry.get_event(&"case_01_sealed_vessel") != null, "Registry should load Case 1")
 	_check(registry.get_era(&"uruk_storehouse") != null, "Registry should load the Uruk era")
 	_check(registry.get_definition(&"missing_definition") == null, "Unknown definition IDs should return null")
-	_check(registry.get_definition_ids("events").size() == 11, "Registry should list all eleven event IDs")
+	_check(registry.get_definition_ids("events").size() == 13, "Registry should list all thirteen event IDs")
 	_check(registry.get_event(&"corrupt_grain_official") != null, "Typed event lookup should return an event")
 	_check(registry.get_era_for_year(1200) == registry.get_era(&"prototype_era"), "Registry should resolve the era covering a year")
 	_check(registry.get_era_for_year(99999) == null, "Unknown years should resolve to no era")
@@ -144,8 +144,10 @@ func _run() -> void:
 			if uruk_a.get_person(other_id) == null:
 				world_graph_is_closed = false
 	_check(world_graph_is_closed, "Every seeded person-to-person relationship should resolve both endpoints")
+	var seeded_eanna_stockpiles: Dictionary = uruk_a.institutions[&"eanna_household"].get("stockpiles", {})
 	for resource_id in [&"barley", &"dates", &"sheep", &"goats", &"cattle", &"fish", &"beer", &"wool", &"textiles", &"clay", &"reeds", &"bitumen", &"timber", &"copper", &"silver"]:
-		_check(uruk_a.stockpiles.has(resource_id), "Uruk seed should initialize commodity %s" % resource_id)
+		_check(seeded_eanna_stockpiles.has(resource_id), "Uruk seed should initialize institutional commodity %s" % resource_id)
+	_check(not uruk_a.stockpiles.has(&"barley") and not uruk_a.stockpiles.has(&"silver"), "Compound commodities should not remain duplicated in world stockpiles")
 	_check(uruk_player_a.id == &"player_apprentice", "Uruk seeder should return the apprentice")
 	_check(uruk_a.get_person(&"shuruppak_ilu").get_opinion(uruk_player_a.id) == 5, "Senior scribe should begin at +5 opinion")
 	for resident_id in [&"ur_nanna", &"utu_mansum", &"enlil_kisu", &"lu_nanshe", &"nin_kasi", &"geme_inana"]:
@@ -530,15 +532,16 @@ func _run() -> void:
 	quayside_world.period = 7
 	_check(not runner.is_eligible(quayside_template, quayside_ctx), "Quayside challenge must not be eligible before Period 8")
 	quayside_world.period = 8
-	_check(runner.is_eligible(quayside_template, quayside_ctx), "Active slowdown should make Quayside eligible during Stores Season")
+	quayside_actor.resources[&"silver"] = 4
+	_check(runner.is_eligible(quayside_template, quayside_ctx), "Active slowdown and sufficient personal silver should make Quayside eligible during Stores Season")
 	_check(quayside_scheduler.pick_next_event(quayside_world, quayside_actor, [quayside_template], quayside_ctx.era) == quayside_template, "Scheduler should select eligible Quayside event from supplied template pool")
 	quayside_world.period = 11
 	_check(not runner.is_eligible(quayside_template, quayside_ctx), "Quayside challenge must stop being eligible after Period 10")
 	quayside_world.period = 8
 	quayside_world.enqueue_form({"form_type": &"succession_claim", "subject_id": &"quayside_stoppage"})
-	var silver_before := quayside_world.get_resource(&"silver")
+	var silver_before := int(quayside_actor.resources.get(&"silver", 0))
 	runner.resolve_outcome(quayside_template, quayside_template.outcomes[0], quayside_ctx)
-	_check(quayside_world.get_resource(&"silver") == silver_before - 4, "Silver conciliation should cost four shekels")
+	_check(int(quayside_actor.resources.get(&"silver", 0)) == silver_before - 4, "Silver conciliation should cost four personal shekels")
 	_check(quayside_world.get_resource(&"canal_progress") == 25, "Silver conciliation should add 25 canal progress")
 	_check(quayside_world.get_person(&"enlil_kisu").get_opinion(quayside_actor.id) == -3, "Silver conciliation should improve Enlil-kisu's standing by twelve")
 	_check(not quayside_world.world_flags.has(&"canal_crew_slowdown"), "Silver conciliation should clear the slowdown")
@@ -546,6 +549,7 @@ func _run() -> void:
 
 	var force_world := WorldState.new()
 	var force_actor := UrukSeeder.seed_campaign(force_world, 32003201)
+	force_actor.resources[&"silver"] = 4
 	force_world.period = 8
 	force_world.set_flag(&"canal_crew_slowdown", force_world.current_period_index() + 11)
 	force_world.enqueue_form({"form_type": &"succession_claim", "subject_id": &"quayside_stoppage"})
@@ -572,6 +576,7 @@ func _run() -> void:
 
 	var roof_world := WorldState.new()
 	var roof_actor := UrukSeeder.seed_campaign(roof_world, 32003200)
+	_check(int(roof_actor.resources.get(&"silver", 0)) == 2, "Uruk apprentice should begin with two personal shekels")
 	var barley_before_leak := roof_world.get_resource(&"barley")
 	_check(roof_world.has_active_hazard(&"north_bay", &"roof_leak"), "Uruk seeding should establish the active North-Bay leak")
 	roof_world.advance_period()
@@ -585,13 +590,15 @@ func _run() -> void:
 	var roof_progress := roof_world.get_assignment_state(&"north_bay_roof")
 	var roof_consultations: Array = roof_progress.get("consultations", [])
 	_check(roof_consultations.size() == 1 and roof_consultations[0]["person_id"] == &"ur_nanna", "Consultation log should preserve the consulted NPC and period")
-	var roof_silver_before := roof_world.get_resource(&"silver")
+	var roof_silver_before := int(roof_actor.resources.get(&"silver", 0))
+	var eanna_silver_before := roof_world.get_resource(&"silver", "institution", "", &"eanna_household")
 	var roof_law_xp_before := int(roof_actor.skills.xp.get(&"law", 0))
 	var roof_opinion_before := int(roof_world.get_person(&"ur_nanna").get_opinion(roof_actor.id))
 	_check(not roof_world.complete_assignment(roof_assignment, roof_actor.id, &"leak_confirmed_repair_required", true), "Submission should fail until the physical inspection is recorded")
 	_check(roof_world.record_assignment_action(&"north_bay_roof", &"inspect_beams"), "Physical inspection should be recorded")
 	_check(roof_world.complete_assignment(roof_assignment, roof_actor.id, &"leak_confirmed_repair_required", true), "Complete evidence should allow assessment submission")
-	_check(roof_world.get_resource(&"silver") == roof_silver_before + 5, "Accurate assessment should pay five silver")
+	_check(int(roof_actor.resources.get(&"silver", 0)) == roof_silver_before + 5, "Accurate assessment should pay five personal silver")
+	_check(roof_world.get_resource(&"silver", "institution", "", &"eanna_household") == eanna_silver_before, "North-Bay compensation must not inflate Eanna institutional silver")
 	_check(int(roof_actor.skills.xp.get(&"law", 0)) == roof_law_xp_before + 25, "Accurate assessment should award 25 Law XP")
 	_check(int(roof_world.get_person(&"ur_nanna").get_opinion(roof_actor.id)) == roof_opinion_before + 5, "Accurate assessment should improve Ur-Nanna's opinion by five")
 	_check(bool(roof_world.get_assignment_state(&"north_bay_roof").get("rewarded", false)), "Assignment settlement should record that its reward was paid")
@@ -618,6 +625,23 @@ func _run() -> void:
 		var authored_case: EventTemplate = registry.get_event(event_id)
 		_check(authored_case != null, "Registry should load authored Uruk case %s" % event_id)
 		_check(authored_case != null and authored_case.cooldown_years >= 1, "Uruk case %s should use a cooldown" % event_id)
+
+	# Case 15 Outcome 2 must close its grain levy so the simulator can offer a later one.
+	var south_court := registry.get_event(&"case_15_south_court")
+	var south_court_world := _make_world()
+	south_court_world.year = -3200
+	south_court_world.period = 6
+	var south_court_ctx := _make_context(south_court_world)
+	south_court_ctx.era = registry.get_era(&"uruk_storehouse")
+	south_court_ctx.year = south_court_world.year
+	_check(south_court != null and south_court.outcomes.size() >= 2, "Case 15 should expose the Press Seal as 24 outcome")
+	if south_court != null and south_court.outcomes.size() >= 2:
+		runner.resolve_outcome(south_court, south_court.outcomes[1], south_court_ctx, true)
+		_check(not south_court_world.has_pending_form(&"grain_levy"), "Case 15 Outcome 2 should remove the resolved grain levy from pending forms")
+		_check(not south_court_world.resolved_forms.is_empty() and String(south_court_world.resolved_forms.back().get("disposition", "")) == "certified_full_dispatch", "Case 15 Outcome 2 should archive certified_full_dispatch")
+		south_court_world.stockpiles[&"barley"] = 0
+		WorldSimulator.new().advance_period(south_court_world)
+		_check(south_court_world.has_pending_form(&"grain_levy"), "WorldSimulator should be able to generate a fresh grain levy after Outcome 2 closes the previous one")
 
 	# Year 1 must produce real, cause-matched work rather than a quiet desk.
 	var year_one_world := WorldState.new()
@@ -717,6 +741,93 @@ func _run() -> void:
 	_check(generator_deterministic, "Narrative RNG should reproduce procedural docket sequences from the same seed")
 	_check(generator_variety.size() >= 4, "Procedural generation should rotate across at least four archetypes in thirty turns")
 	_check(generator_has_repair, "Active maintenance hazard should produce an actual labor/silver repair choice")
+
+	# Record-seeded Challenges are selected by the scheduler, resolve once, and do not pause the Epic.
+	var ledger_challenge: EventTemplate = registry.get_event(&"challenge_ledger_inquest")
+	var ledger_world := WorldState.new()
+	var ledger_actor := UrukSeeder.seed_campaign(ledger_world, 32003210)
+	ledger_actor.traits.append(&"complicit")
+	ledger_world.set_flag(&"entangled_brewery_accounts", ledger_world.current_period_index() + 8)
+	var ledger_ctx := _make_context(ledger_world)
+	ledger_ctx.actor = ledger_actor
+	ledger_ctx.era = registry.get_era(&"uruk_storehouse")
+	var challenge_scheduler := EventScheduler.new(runner)
+	_check(ledger_challenge != null and runner.is_eligible(ledger_challenge, ledger_ctx), "Ledger Inquest should become eligible from a complicit trait and an entangled-account record")
+	_check(challenge_scheduler.pick_next_event(ledger_world, ledger_actor, [ledger_challenge], ledger_ctx.era) == ledger_challenge, "EventScheduler should surface the eligible Ledger Inquest")
+	if ledger_challenge != null:
+		runner.resolve_outcome(ledger_challenge, ledger_challenge.outcomes[0], ledger_ctx)
+		_check(not runner.is_eligible(ledger_challenge, ledger_ctx), "Ledger Inquest should respect once_per_world after resolution")
+	var canal_before_inquest_period := ledger_world.get_resource(&"canal_progress")
+	WorldSimulator.new().advance_period(ledger_world)
+	_check(ledger_world.get_resource(&"canal_progress") > canal_before_inquest_period, "Resolving a Challenge should not block the autonomous Canal Epic tick")
+
+	var dry_challenge: EventTemplate = registry.get_event(&"challenge_dry_kettles_silt_breach")
+	var dry_world := WorldState.new()
+	var dry_actor := UrukSeeder.seed_campaign(dry_world, 32003211)
+	dry_actor.traits.append(&"severe")
+	dry_world.set_flag(&"blood_on_the_quays", dry_world.current_period_index() + 8)
+	var dry_ctx := _make_context(dry_world)
+	dry_ctx.actor = dry_actor
+	dry_ctx.era = registry.get_era(&"uruk_storehouse")
+	_check(dry_challenge != null and runner.is_eligible(dry_challenge, dry_ctx), "Dry Kettles should become eligible from severe conduct and blood on the quays")
+	_check(challenge_scheduler.pick_next_event(dry_world, dry_actor, [dry_challenge], dry_ctx.era) == dry_challenge, "EventScheduler should surface the eligible Dry Kettles challenge")
+	if dry_challenge != null:
+		runner.resolve_outcome(dry_challenge, dry_challenge.outcomes[0], dry_ctx)
+		_check(not runner.is_eligible(dry_challenge, dry_ctx), "Dry Kettles should respect once_per_world after resolution")
+
+	# Resource ownership and autonomous Epic simulation.
+	var ownership_world := WorldState.new()
+	var purse_actor := PersonEntity.new()
+	purse_actor.id = &"purse_test"
+	purse_actor.resources[&"silver"] = 5
+	ownership_world.people[purse_actor.id] = purse_actor
+	ownership_world.institutions[&"eanna_household"] = {"members": [purse_actor.id], "stockpiles": {&"silver": 12, &"barley": 128, &"labor": 10}}
+	_check(ownership_world.modify_resource(&"silver", -4, "actor", String(purse_actor.id)), "Personal resource scope should spend available purse silver")
+	_check(purse_actor.resources[&"silver"] == 1, "Personal silver should change independently")
+	_check(ownership_world.get_resource(&"silver", "institution", "", &"eanna_household") == 12, "Personal silver spending must not alter Eanna silver")
+	_check(not ownership_world.modify_resource(&"silver", -2, "actor", String(purse_actor.id)), "Personal purse should fail closed when a spend exceeds available silver")
+	_check(ownership_world.get_resource(&"silver", "institution", "", &"eanna_household") == 12, "Failed personal spend must leave institutional silver untouched")
+	_check(ownership_world.modify_resource(&"silver", -5, "institution", "", &"eanna_household"), "Institutional resource scope should spend Eanna silver")
+	_check(purse_actor.resources[&"silver"] == 1 and ownership_world.get_resource(&"silver", "institution", "", &"eanna_household") == 7, "Institutional spending must not alter the personal purse")
+
+	var epic_high_world := WorldState.new()
+	epic_high_world.year = -3200
+	epic_high_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 128, &"labor": 10}}
+	epic_high_world.stockpiles[&"canal_progress"] = 0
+	WorldSimulator.new().advance_period(epic_high_world)
+	_check(epic_high_world.get_resource(&"canal_progress") == 3, "Canal Epic should autonomously gain three progress at full labor and ration thresholds")
+	_check(epic_high_world.get_resource(&"barley", "institution", "", &"eanna_household") == 116, "Full canal progress should consume four institutional barley after household demand")
+	var epic_high_state: Dictionary = epic_high_world.epics.get(&"great_canal_cut", {})
+	_check(int(epic_high_state.get("progress", 0)) == 3 and String(epic_high_state.get("stage", "")) == "survey" and not bool(epic_high_state.get("completed", true)), "Epic runtime state should retain progress, stage, and completion status")
+
+	var epic_partial_world := WorldState.new()
+	epic_partial_world.year = -3200
+	epic_partial_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 70, &"labor": 7}}
+	WorldSimulator.new().advance_period(epic_partial_world)
+	_check(epic_partial_world.get_resource(&"canal_progress") == 1, "Canal Epic should make partial progress at labor 6–9 with adequate barley")
+	_check(epic_partial_world.get_resource(&"barley", "institution", "", &"eanna_household") == 60, "Partial canal progress should consume two institutional barley after household demand")
+
+	var epic_stall_world := WorldState.new()
+	epic_stall_world.year = -3200
+	epic_stall_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 128, &"labor": 10}}
+	epic_stall_world.set_flag(&"canal_crew_slowdown", epic_stall_world.current_period_index() + 10)
+	WorldSimulator.new().advance_period(epic_stall_world)
+	_check(epic_stall_world.get_resource(&"canal_progress") == 0, "Active canal disruption should stall autonomous progress")
+	_check(epic_stall_world.get_resource(&"barley", "institution", "", &"eanna_household") == 120, "Stalled canal crews should not consume Epic rations")
+
+	var epic_silt_world := WorldState.new()
+	epic_silt_world.year = -3200
+	epic_silt_world.period = 11
+	epic_silt_world.stockpiles[&"canal_progress"] = 8
+	epic_silt_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 20, &"labor": 0}}
+	for labor_office in range(4):
+		var labor_person := PersonEntity.new()
+		labor_person.id = StringName("labor_test_%d" % labor_office)
+		labor_person.office_id = &"labor_office"
+		epic_silt_world.people[labor_person.id] = labor_person
+		epic_silt_world.institutions[StringName("labor_institution_%d" % labor_office)] = {"members": [labor_person.id], "stockpiles": {}}
+	WorldSimulator.new().advance_period(epic_silt_world)
+	_check(epic_silt_world.period == 0 and epic_silt_world.get_resource(&"canal_progress") == 6, "Inundation with labor below six should regress the canal by two")
 
 	_finish()
 
