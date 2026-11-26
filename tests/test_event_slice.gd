@@ -20,6 +20,21 @@ func _watchdog() -> void:
 		quit(2)
 
 func _run() -> void:
+	# Player identity is a runtime pointer, not a named seeded person.
+	var identity_world := WorldState.new()
+	var first_character := PersonEntity.new()
+	first_character.id = identity_world.allocate_person_id()
+	_check(first_character.id == &"character_0001", "First allocated character should use a generated identity")
+	_check(identity_world.set_player(first_character), "WorldState should register the first current player")
+	var successor := PersonEntity.new()
+	successor.id = identity_world.allocate_person_id()
+	_check(successor.id == &"character_0002", "Person ID allocation should advance deterministically")
+	_check(identity_world.set_player(successor), "WorldState should allow player succession to another existing person")
+	_check(identity_world.get_player() == successor and identity_world.get_person(first_character.id) == first_character, "Succession should move the player pointer while retaining the former character")
+	var identity_seed_world := WorldState.new()
+	var seeded_player := UrukSeeder.seed_campaign(identity_seed_world, 32003200, false)
+	_check(seeded_player.id == &"character_0001", "Uruk seed should create a generated player identity")
+	_check(identity_seed_world.player_id == &"" and identity_seed_world.get_player() == null, "Unconfirmed character draft should not be the world's player")
 	_check(ResourceLoader.exists("res://assets/desk/desk_tabletop.png"), "Cedar tabletop texture should be present")
 	_check(ResourceLoader.exists("res://assets/desk/clay_docket.png"), "Clay docket texture should be present")
 	_check(ResourceLoader.exists("res://assets/desk/archive_stack.png"), "Archive stack texture should be present")
