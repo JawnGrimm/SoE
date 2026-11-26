@@ -7,6 +7,7 @@ const DEFAULT_FOLDERS: Dictionary = {
 	"forms": "res://data/forms",
 	"eras": "res://data/eras",
 	"assignments": "res://data/assignments",
+	"places": "res://data/places",
 	"epics": "res://data/epics",
 }
 
@@ -60,6 +61,12 @@ func register_assignment(definition: AssignmentDef) -> bool:
 		return false
 	return register_definition(definition, "assignments")
 
+func register_place(definition: PlaceDef) -> bool:
+	if definition == null or not definition.is_valid():
+		_warn("DefinitionRegistry: rejected malformed PlaceDef")
+		return false
+	return register_definition(definition, "places")
+
 func register_trait(definition: Resource) -> bool:
 	return register_definition(definition, "traits")
 
@@ -77,6 +84,11 @@ func register_definition(definition: Resource, category: String) -> bool:
 		var assignment := definition as AssignmentDef
 		if assignment == null or not assignment.is_valid():
 			_warn("DefinitionRegistry: rejected malformed AssignmentDef")
+			return false
+	if category == "places":
+		var place := definition as PlaceDef
+		if place == null or not place.is_valid():
+			_warn("DefinitionRegistry: rejected malformed PlaceDef")
 			return false
 
 	var definition_id := StringName(str(definition.get("id")))
@@ -118,6 +130,17 @@ func all_epics() -> Array[EpicDef]:
 
 func get_assignment(definition_id: StringName) -> AssignmentDef:
 	return get_definition(definition_id) as AssignmentDef
+
+func get_place(definition_id: StringName) -> PlaceDef:
+	return get_definition(definition_id) as PlaceDef
+
+func all_places() -> Array[PlaceDef]:
+	var result: Array[PlaceDef] = []
+	for definition in _definitions_by_category.get("places", []):
+		if definition is PlaceDef:
+			result.append(definition)
+	result.sort_custom(func(a: PlaceDef, b: PlaceDef) -> bool: return String(a.id) < String(b.id))
+	return result
 
 func get_era_for_year(year: int) -> EraDef:
 	for definition in all_eras():

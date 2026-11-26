@@ -97,6 +97,8 @@ func _run() -> void:
 	_check(identity_seed_world.player_id == &"" and identity_seed_world.get_player() == null, "Unconfirmed character draft should not be the world's player")
 	_check(not identity_seed_world.people.has(seeded_player.id), "Unconfirmed character draft should remain outside the world roster")
 	_check(identity_seed_world.get_person(&"ur_nanna").relationships.has(&"shuruppak_ilu"), "Seed campaign should invoke the NPC relationship seeding method")
+	_check(identity_seed_world.places.has(&"uruk") and identity_seed_world.places.has(&"umma") and identity_seed_world.places.has(&"nippur") and identity_seed_world.places.has(&"ur") and identity_seed_world.places.has(&"habuba_kabira") and identity_seed_world.places.has(&"hacinebi") and identity_seed_world.places.has(&"susa"), "UrukSeeder should populate all seven canonical settlements in runtime world places")
+	_check(identity_seed_world.places.get(&"hacinebi", {}).get("political_relation", &"") == &"foreign_enclave", "Runtime place state should preserve authored baseline relationship without treating Hacinebi as a direct colony")
 	_check(not identity_seed_world.get_person(&"ur_nanna").relationships.has(seeded_player.id), "Unconfirmed player draft should not receive authored NPC ties")
 	_check(ResourceLoader.exists("res://assets/desk/desk_tabletop.png"), "Cedar tabletop texture should be present")
 	_check(ResourceLoader.exists("res://assets/desk/clay_docket.png"), "Clay docket texture should be present")
@@ -113,6 +115,12 @@ func _run() -> void:
 	# --script does not inject project autoloads. Exercise the standalone registry directly.
 	registry = DefinitionRegistry.new()
 	registry.load_defaults()
+	_check(registry.all_places().size() == 7, "DefinitionRegistry should load the seven canonical Era 1 places")
+	_check(registry.get_place(&"hacinebi") != null and registry.get_place(&"hacinebi").political_relation == &"foreign_enclave", "Typed place lookup should retain Hacinebi's autonomous local context")
+	var copper_vector := AssignmentGeneratorScript.get_geographic_vector(&"counterfeit_copper")
+	_check(copper_vector.origin_id == &"hacinebi" and copper_vector.destination_id == &"uruk" and copper_vector.commodity_id == &"copper", "Copper docket vector should use authored Hacinebi-to-Uruk geography")
+	var canal_vector := AssignmentGeneratorScript.get_geographic_vector(&"canal_water_sharing")
+	_check(canal_vector.origin_id == &"umma" and canal_vector.destination_id == &"uruk" and canal_vector.route_id == &"umma_shared_canal", "Water-rights docket should use the authored Umma route")
 
 	# Versioned Save/Load v1 round-trips runtime state and RNG streams.
 	var save_roundtrip_world := WorldState.new()
@@ -260,7 +268,7 @@ func _run() -> void:
 	_check(uruk_a.master_seed == 987654321, "Uruk seeder should retain the campaign seed")
 	_check(uruk_a.year == -3200 and uruk_a.period == 0, "Uruk campaign should begin at its era start")
 	_check(uruk_a.people.size() == 17, "Uruk seeder should create the expanded seventeen-person roster")
-	_check(uruk_a.places.size() == 9, "Uruk seed should establish nine local and connected places")
+	_check(uruk_a.places.size() == 14, "Uruk seed should establish seven canonical settlements plus seven local and connected places")
 	_check(uruk_a.institutions.size() == 3, "Uruk seed should establish three institutions and exchange networks")
 	_check(uruk_a.social_groups.size() == 5, "Uruk seed should establish five working and household groups")
 	var seeded_tie_count := 0
@@ -887,6 +895,8 @@ func _run() -> void:
 		_check(not String(path_docket.get("client_name", "")).is_empty() and not String(path_docket.get("opposing_name", "")).is_empty(), "Path docket should label client institution and opposing party")
 		_check(path_docket.get("left_card", {}).get("speaker_id", &"") != &"" and path_docket.get("right_card", {}).get("speaker_id", &"") != &"", "Path docket should provide live faction representatives")
 		_check(path_docket.get("choices", []).size() == 3 and path_docket.get("choices", [])[0].get("effects", {}).has("opinion_left") and path_docket.get("choices", [])[0].get("effects", {}).has("opinion_right"), "Path docket choices should carry client/opposing standing shifts")
+		_check(path_docket.has("origin_id") and path_docket.has("destination_id") and path_docket.has("route_id") and path_docket.has("commodity_id"), "Every path docket should carry geographic references")
+		_check(String(path_docket.left_card.get("facts", "")).begins_with("ORIGIN: ") and String(path_docket.right_card.get("facts", "")).begins_with("ORIGIN: "), "Evidence cards should display docket origin, destination, and transit")
 		_check(AssignmentGeneratorScript.PATH_DOCKET_DATA.get(path_id, []).size() >= 4, "Each career path should have at least four authored Uruk docket subjects")
 	var faction_test_world := WorldState.new()
 	_check(faction_test_world.change_faction_standing(&"boatmens_guild", 6) == 6 and faction_test_world.change_faction_standing(&"boatmens_guild", -2) == 4, "Faction standings should track faction-level opinion independently of overlapping NPC membership")

@@ -30,6 +30,12 @@ func get_era(definition_id: StringName) -> EraDef:
 func get_era_for_year(year: int) -> EraDef:
 	return defs.get_era_for_year(year)
 
+func get_place(definition_id: StringName) -> PlaceDef:
+	return defs.get_place(definition_id)
+
+func all_places() -> Array[PlaceDef]:
+	return defs.all_places()
+
 func get_trait(definition_id: StringName) -> Resource:
 	return defs.get_trait(definition_id)
 

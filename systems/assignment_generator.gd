@@ -47,6 +47,32 @@ const PATH_DOCKET_DATA := {
 	]
 }
 
+const GEOGRAPHIC_VECTORS := {
+	&"timber_grade_dispute": {"origin_id": &"habuba_kabira", "destination_id": &"uruk", "route_id": &"upper_euphrates_river_raft", "commodity_id": &"timber", "route_mode": "river raft", "transit_periods": 2},
+	&"counterfeit_copper": {"origin_id": &"hacinebi", "destination_id": &"uruk", "route_id": &"hacinebi_overland_caravan", "commodity_id": &"copper", "route_mode": "overland caravan", "transit_periods": 3},
+	&"canal_water_sharing": {"origin_id": &"umma", "destination_id": &"uruk", "route_id": &"umma_shared_canal", "commodity_id": &"water_rights", "route_mode": "shared canal", "transit_periods": 1},
+	&"boat_demurrage": {"origin_id": &"ur", "destination_id": &"uruk", "route_id": &"lower_river_landing", "commodity_id": &"boat_service", "route_mode": "river barge", "transit_periods": 1},
+	&"missing_quay_sacks": {"origin_id": &"uruk", "destination_id": &"uruk", "route_id": &"uruk_quay_transfer", "commodity_id": &"grain", "route_mode": "quayside transfer", "transit_periods": 0},
+	&"festival_tithes": {"origin_id": &"nippur", "destination_id": &"uruk", "route_id": &"nippur_temple_road", "commodity_id": &"offerings", "route_mode": "temple road", "transit_periods": 2}
+}
+const PLACE_LABELS := {
+	&"uruk": "Uruk", &"ur": "Ur", &"umma": "Umma", &"nippur": "Nippur",
+	&"habuba_kabira": "Habuba Kabira", &"hacinebi": "Hacinebi", &"susa": "Susa"
+}
+const DOCKET_COMMODITIES := {
+	&"ditch_guard_rations": &"barley", &"spear_requisition": &"copper",
+	&"watchtower_supply": &"lamp_oil", &"conscription_exemption": &"manpower",
+	&"boundary_stones": &"land_claim", &"inheritance_tablets": &"land_claim",
+	&"market_vendor_fine": &"silver", &"sacrificial_sheep": &"sheep",
+	&"ritual_beer": &"beer", &"storehouse_seal": &"seal",
+	&"administrative_record": &"administrative_record"
+}
+
+static func get_geographic_vector(docket_id: StringName) -> Dictionary:
+	if GEOGRAPHIC_VECTORS.has(docket_id):
+		return (GEOGRAPHIC_VECTORS[docket_id] as Dictionary).duplicate(true)
+	return {"origin_id": &"uruk", "destination_id": &"uruk", "route_id": &"uruk_internal", "commodity_id": DOCKET_COMMODITIES.get(docket_id, &"administrative_record"), "route_mode": "within Uruk"}
+
 static func generate(world: WorldState, actor: PersonEntity, selected_path: StringName = &"") -> Dictionary:
 	if world == null or actor == null:
 		return {}
@@ -258,6 +284,16 @@ static func _generate_path_docket(world: WorldState, actor: PersonEntity, path_i
 			{"label": "Accept the opposing party's account", "result_title": "OPPOSING ACCOUNT ACCEPTED", "result_text": "The opposing account is entered. The client may appeal the mark.", "effects": {"opinion_left": -2, "opinion_right": 3, "epic_progress": 2, "skill": "rhetoric", "xp": 12}}
 		]
 	}
+	var geography := get_geographic_vector(StringName(template.get("id", "")))
+	payload.merge(geography, true)
+	var origin_name := String(PLACE_LABELS.get(geography.origin_id, String(geography.origin_id).replace("_", " ").capitalize()))
+	var destination_name := String(PLACE_LABELS.get(geography.destination_id, String(geography.destination_id).replace("_", " ").capitalize()))
+	var route_line := "ORIGIN: %s  →  DESTINATION: %s" % [origin_name, destination_name]
+	route_line += "\nTRANSIT: %s" % String(geography.route_mode).capitalize()
+	if geography.has("transit_periods"):
+		route_line += " · %d season%s" % [int(geography.transit_periods), "" if int(geography.transit_periods) == 1 else "s"]
+	payload.left_card.facts = route_line + "\n" + String(payload.left_card.facts)
+	payload.right_card.facts = route_line + "\n" + String(payload.right_card.facts)
 	return payload
 
 
