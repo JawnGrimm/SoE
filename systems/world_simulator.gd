@@ -106,7 +106,10 @@ func _simulate_epic(world: WorldState, definition: EpicDef, state: Dictionary) -
 	var note := ""
 	var inundation := world.period >= definition.inundation_period_min and world.period <= definition.inundation_period_max
 	if disruption:
-		note = "Canal crews stalled by an active disruption."
+		note = "Epic crews stalled by an active disruption."
+		if inundation and labor < definition.regression_labor_below:
+			progress = maxi(0, progress - definition.regression_amount)
+			note = "Inundation silt reclaimed part of the cut during disruption and labor shortage."
 	elif labor < definition.regression_labor_below:
 		note = "Work crews stood down below the minimum labor threshold."
 		if inundation:
