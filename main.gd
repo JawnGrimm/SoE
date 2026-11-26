@@ -593,7 +593,7 @@ func can_save_game() -> bool:
 
 func save_game() -> Dictionary:
 	if not can_save_game():
-		return {"success": false, "error": "Save is available while a docket is open."}
+		return {"success": false, "error": "Save is available while the desk, an engagement, or an event is open."}
 	var session := {
 		"phase": phase,
 		"active_event_id": String(active_event.id) if active_event != null else "",
