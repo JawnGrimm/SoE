@@ -7,10 +7,10 @@ const ARCHETYPES: Array[StringName] = [&"delivery_mismatch", &"damaged_consignme
 
 
 const PATH_FACTION_MEMBERS := {
-	&"eanna_household": [&"shuruppak_ilu", &"ur_nanna", &"utu_mansum", &"enlil_kisu", &"lu_nanshe"],
-	&"boatmens_guild": [&"enlil_kisu", &"ur_amas", &"enki_ili", &"geme_inana"],
-	&"city_garrison": [&"utu_mansum", &"enlil_kisu", &"ur_amas"],
-	&"council_of_elders": [&"shuruppak_ilu", &"lu_nanshe", &"utu_mansum"],
+	&"eanna_household": [&"shuruppak_ilu", &"ur_nanna", &"lu_nanshe"],
+	&"boatmens_guild": [&"enlil_kisu", &"enki_ili", &"geme_inana"],
+	&"city_garrison": [&"utu_mansum", &"ur_amas"],
+	&"council_of_elders": [&"shuruppak_ilu", &"lu_nanshe"],
 	&"agricultural_households": [&"ama_edin", &"geme_tur", &"ur_gula"]
 }
 const PATH_FACTION_DISPLAY_NAMES := {
