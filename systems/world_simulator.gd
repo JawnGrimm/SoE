@@ -248,7 +248,11 @@ func _change(world: WorldState, resource_id: StringName, amount: int) -> void:
 	if resource_id == &"canal_progress":
 		world.modify_resource(resource_id, amount, "world")
 		return
-	world.modify_resource(resource_id, amount, "institution", "", &"eanna_household")
+	var available := world.get_resource(resource_id, "institution", "", &"eanna_household")
+	var applied_amount := amount
+	if amount < 0:
+		applied_amount = -mini(-amount, available)
+	world.modify_resource(resource_id, applied_amount, "institution", "", &"eanna_household")
 	var upper_bound := 40 if resource_id == &"labor" else 2147483647
 	var institution: Dictionary = world.institutions.get(&"eanna_household", {})
 	var resources: Dictionary = institution.get("stockpiles", {})
