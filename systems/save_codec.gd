@@ -18,9 +18,9 @@ static func encode_world(world: WorldState, session: Dictionary = {}) -> Diction
 		"world": {
 			"year": world.year, "period": world.period, "master_seed": world.master_seed,
 			"rng": {
-				"narrative_seed": String(world.rng_narrative.seed), "narrative_state": String(world.rng_narrative.state),
-				"simulation_seed": String(world.rng_sim.seed), "simulation_state": String(world.rng_sim.state),
-				"people_seed": String(world.rng_people.seed), "people_state": String(world.rng_people.state),
+				"narrative_seed": str(world.rng_narrative.seed), "narrative_state": str(world.rng_narrative.state),
+				"simulation_seed": str(world.rng_sim.seed), "simulation_state": str(world.rng_sim.state),
+				"people_seed": str(world.rng_people.seed), "people_state": str(world.rng_people.state),
 			},
 			"stockpiles": _json_safe(world.stockpiles), "epics": _json_safe(world.epics),
 			"world_flags": _json_safe(world.world_flags), "pending_forms": _json_safe(world.pending_forms),
