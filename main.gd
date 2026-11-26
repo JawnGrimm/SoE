@@ -727,11 +727,11 @@ func _submit_north_bay_assessment(is_accurate: bool) -> void:
 	if steward == null:
 		push_warning("Main: North-Bay employer disappeared before settlement")
 		return
-	var opinion_before := int(steward.opinions.get(actor.id, 0))
+	var opinion_before := int(steward.get_opinion(actor.id))
 	if not world.complete_assignment(north_bay_assignment, actor.id, assessment, is_accurate):
 		push_warning("Main: North-Bay assessment rejected; required actions or lifecycle state are invalid")
 		return
-	var opinion_delta := int(steward.opinions.get(actor.id, 0)) - opinion_before
+	var opinion_delta := steward.get_opinion(actor.id) - opinion_before
 	last_opinion_deltas.clear()
 	last_opinion_deltas[north_bay_assignment.employer] = opinion_delta
 	assignment_card.disabled = true
@@ -793,7 +793,7 @@ func _resolve_choice(index: int) -> void:
 	for person_id in ROSTER_ORDER:
 		var person := world.get_person(person_id)
 		if person != null:
-			before[person_id] = int(person.opinions.get(actor.id, 0))
+			before[person_id] = int(person.get_opinion(actor.id))
 	context.year = world.year
 	context.era = Registry.get_era_for_year(world.year)
 	last_resolved_outcome = active_event.outcomes[index]
@@ -801,7 +801,7 @@ func _resolve_choice(index: int) -> void:
 	last_opinion_deltas.clear()
 	for person_id in before:
 		var person := world.get_person(person_id)
-		var delta := int(person.opinions.get(actor.id, 0)) - before[person_id]
+		var delta := person.get_opinion(actor.id) - before[person_id]
 		if delta != 0:
 			last_opinion_deltas[person_id] = delta
 	_show_result(active_event.outcomes[index])
