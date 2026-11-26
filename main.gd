@@ -60,6 +60,8 @@ var evidence_left_speaker: Label
 var evidence_right_speaker: Label
 var evidence_left_facts: Label
 var evidence_right_facts: Label
+var evidence_left_portrait: TextureRect
+var evidence_right_portrait: TextureRect
 var choice_buttons: Array[Button] = []
 var choice_stamp_labels: Dictionary = {}
 var choice_locked := false
@@ -136,8 +138,8 @@ func _build_interface() -> void:
 	evidence_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	evidence_row.add_theme_constant_override("separation", 12)
 	upper_workspace.add_child(evidence_row)
-	evidence_left = _make_evidence_panel(evidence_row, "GRANARY TERRACES  /  TEMPLE", "Ur-Nanna", "The temple cellars are cold, dry, and exact. The gods demand honest measures.")
-	evidence_right = _make_evidence_panel(evidence_row, "RIVER QUAYS  /  LANDING", "Enlil-kisu", "The river road is dangerous and hungry. We respect the scribe who knows what a boatman endures.")
+	evidence_left = _make_evidence_panel(evidence_row, "GRANARY TERRACES  /  TEMPLE", "Ur-Nanna", "The temple cellars are cold, dry, and exact. The gods demand honest measures.", &"ur_nanna")
+	evidence_right = _make_evidence_panel(evidence_row, "RIVER QUAYS  /  LANDING", "Enlil-kisu", "The river road is dangerous and hungry. We respect the scribe who knows what a boatman endures.", &"enlil_kisu")
 	docket_motion_layer = Control.new()
 	docket_motion_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	docket_motion_layer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -308,7 +310,7 @@ func _build_interface() -> void:
 	cavity_label.add_theme_color_override("font_color", Color("#c6b99f"))
 	secret_cavity.add_child(cavity_label)
 
-func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: String, quote: String) -> PanelContainer:
+func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: String, quote: String, character_id: StringName = &"") -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.size_flags_stretch_ratio = 1.0
@@ -320,13 +322,12 @@ func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: Strin
 	panel.add_child(box)
 	var header := HBoxContainer.new()
 	box.add_child(header)
-	var seal := Label.new()
-	seal.text = "◉"
-	seal.custom_minimum_size.x = 36
-	seal.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	seal.add_theme_font_size_override("font_size", 25)
-	seal.add_theme_color_override("font_color", Color("#b58c55"))
-	header.add_child(seal)
+	var portrait := TextureRect.new()
+	portrait.custom_minimum_size = Vector2(44, 44)
+	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	portrait.texture = _load_character_portrait(character_id)
+	header.add_child(portrait)
 	var title := Label.new()
 	title.text = heading
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -357,12 +358,42 @@ func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: Strin
 		evidence_left_quote = quote_label
 		evidence_left_speaker = speaker_label
 		evidence_left_facts = facts_label
+		evidence_left_portrait = portrait
 	else:
 		evidence_right_title = title
 		evidence_right_quote = quote_label
 		evidence_right_speaker = speaker_label
 		evidence_right_facts = facts_label
+		evidence_right_portrait = portrait
 	return panel
+
+func _load_character_portrait(character_id: StringName) -> Texture2D:
+	if character_id != &"":
+		var portrait_path := "res://assets/characters/%s_portrait.png" % String(character_id).to_lower()
+		if ResourceLoader.exists(portrait_path):
+			var portrait_texture := load(portrait_path) as Texture2D
+			if portrait_texture != null:
+				return portrait_texture
+	return _make_seal_placeholder()
+
+func _make_seal_placeholder() -> Texture2D:
+	var image := Image.create(44, 44, false, Image.FORMAT_RGBA8)
+	var center := Vector2(21.5, 21.5)
+	for y in range(44):
+		for x in range(44):
+			var distance := Vector2(x, y).distance_to(center)
+			if distance <= 19.0:
+				var color := Color("#b58c55") if distance >= 15.5 else Color("#70512f")
+				if distance < 12.5:
+					color = Color("#c9a66d")
+				image.set_pixel(x, y, color)
+	return ImageTexture.create_from_image(image)
+
+func _set_evidence_portrait(left_id: StringName, right_id: StringName) -> void:
+	if evidence_left_portrait != null:
+		evidence_left_portrait.texture = _load_character_portrait(left_id)
+	if evidence_right_portrait != null:
+		evidence_right_portrait.texture = _load_character_portrait(right_id)
 
 func _set_evidence_facts(left_text: String, right_text: String) -> void:
 	if evidence_left_facts != null:
@@ -557,6 +588,9 @@ func _show_case() -> void:
 	if active_event.id == CASE_15_ID:
 		evidence_left_title.text = "SOUTH COURT  /  DISPATCH"
 		evidence_left_speaker.text = "ENLIL-KISU"
+		evidence_left_portrait.texture = _load_character_portrait(&"enlil_kisu")
+		evidence_right_speaker.text = "UTU-MANSUM"
+		evidence_right_portrait.texture = _load_character_portrait(&"utu_mansum")
 		evidence_left_quote.text = "“The river road is dangerous and hungry. I know what a boatman endures.”"
 		evidence_right_title.text = "SOUTH COURT  /  GATE TALLY"
 		evidence_right_speaker.text = "UTU-MANSUM"
