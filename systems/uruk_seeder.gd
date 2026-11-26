@@ -129,6 +129,7 @@ static func _seed_relationships(world: WorldState) -> void:
 	_link(world, &"geme_tur", &"player_apprentice", &"family", 8, 9)
 	_link(world, &"geme_tur", &"shuruppak_ilu", &"household_reputation", 1, 4)
 	_link(world, &"nin_kasi", &"ama_edin", &"brewery_household_supply", 2, 4)
+	_link(world, &"player_apprentice", &"nin_azu", &"apprentice_cultic_contact", 1, 2)
 
 static func _link(world: WorldState, source_id: StringName, target_id: StringName, relation_type: StringName, strength: int, trust: int) -> void:
 	var source := world.get_person(source_id)
