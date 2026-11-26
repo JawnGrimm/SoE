@@ -4,6 +4,7 @@ const CAMPAIGN_SEED: int = 32003200
 const CASE_15_ID: StringName = &"case_15_south_court"
 const CASE_01_ID: StringName = &"case_01_sealed_vessel"
 const CASE_02_ID: StringName = &"case_02_brewers_reckoning"
+const NORTH_BAY_ASSIGNMENT_ID: StringName = &"north_bay_roof"
 const ROSTER_ORDER: Array[StringName] = [&"player_apprentice", &"shuruppak_ilu", &"utu_mansum", &"enlil_kisu", &"ur_nanna", &"nin_kasi", &"geme_inana", &"lu_nanshe"]
 
 class CylinderSealProp extends Control:
@@ -24,6 +25,10 @@ var actor: PersonEntity
 var active_event: EventTemplate
 var context: EventContext
 var current_era: EraDef
+var north_bay_assignment: AssignmentDef
+var assignment_card: Button
+var phase_before_assignment: String = ""
+var last_resolved_outcome: EventOutcome
 var first_case_pending := true
 var turn_two_pending := false
 var arc_complete := false
@@ -141,6 +146,17 @@ func _build_interface() -> void:
 	upper_workspace.add_child(evidence_row)
 	evidence_left = _make_evidence_panel(evidence_row, "GRANARY TERRACES  /  TEMPLE", "Ur-Nanna", "The temple cellars are cold, dry, and exact. The gods demand honest measures.", &"ur_nanna")
 	evidence_right = _make_evidence_panel(evidence_row, "RIVER QUAYS  /  LANDING", "Enlil-kisu", "The river road is dangerous and hungry. We respect the scribe who knows what a boatman endures.", &"enlil_kisu")
+	assignment_card = Button.new()
+	assignment_card.text = "SEALED DOCKET  /  NORTH-BAY ROOF INSPECTION  /  5 SHEKELS"
+	assignment_card.custom_minimum_size.y = 38
+	assignment_card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	assignment_card.visible = false
+	assignment_card.add_theme_font_size_override("font_size", 13)
+	assignment_card.add_theme_color_override("font_color", Color("#e0d4bd"))
+	assignment_card.add_theme_stylebox_override("normal", _panel_style("#493621", "#b18a52"))
+	assignment_card.add_theme_stylebox_override("hover", _panel_style("#604326", "#d0ad70"))
+	assignment_card.pressed.connect(_open_north_bay_assignment)
+	upper_workspace.add_child(assignment_card)
 	docket_motion_layer = Control.new()
 	docket_motion_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	docket_motion_layer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -528,6 +544,10 @@ func _start_world() -> void:
 	scheduler = EventScheduler.new(runner)
 	world = WorldState.new()
 	actor = UrukSeeder.seed_campaign(world, CAMPAIGN_SEED)
+	north_bay_assignment = Registry.get_assignment(NORTH_BAY_ASSIGNMENT_ID)
+	if north_bay_assignment == null or not north_bay_assignment.is_valid():
+		push_warning("Main: North-Bay AssignmentDef is missing or malformed; docket will not be offered")
+		north_bay_assignment = null
 	current_era = Registry.get_era(&"uruk_storehouse")
 	context = EventContext.new()
 	context.world = world
@@ -596,8 +616,158 @@ func _choose_mentor(mentor_id: StringName) -> void:
 		return
 	if not UrukCatechism.choose_mentor(world, actor, mentor_id):
 		return
+	_offer_north_bay_assignment()
 	_refresh_compound()
 	_schedule_next_case()
+
+
+func _offer_north_bay_assignment() -> void:
+	if selected_path != &"path_temple" or north_bay_assignment == null:
+		return
+	if not world.offer_assignment(north_bay_assignment.id, north_bay_assignment.employer):
+		push_warning("Main: North-Bay assignment could not be offered; it may already exist")
+		return
+	assignment_card.visible = true
+	assignment_card.disabled = false
+	assignment_card.text = "SEALED DOCKET  /  NORTH-BAY ROOF INSPECTION  /  UR-NANNA  /  5 SHEKELS"
+	AudioManager.play_docket_slide()
+
+func _open_north_bay_assignment() -> void:
+	if north_bay_assignment == null or phase in ["north_bay_activity", "north_bay_assessment"]:
+		return
+	var state := world.get_assignment_state(NORTH_BAY_ASSIGNMENT_ID)
+	if state.is_empty() or String(state.get("status", "")) == "completed":
+		return
+	phase_before_assignment = phase
+	if String(state.get("status", "")) == "offered":
+		if not world.start_assignment(NORTH_BAY_ASSIGNMENT_ID):
+			push_warning("Main: North-Bay assignment could not be started")
+			return
+	elif String(state.get("status", "")) != "active":
+		push_warning("Main: North-Bay assignment has an invalid lifecycle state")
+		return
+	AudioManager.play_docket_slide()
+	_show_north_bay_activity()
+
+func _show_north_bay_activity() -> void:
+	_clear_choices()
+	phase = "north_bay_activity"
+	case_heading.text = "𒂍  " + north_bay_assignment.title.to_upper()
+	case_heading.add_theme_font_size_override("font_size", 20)
+	dossier.visible = true
+	dossier.text = "Ur-Nanna has placed a sealed docket beside the South Court case. The North-Bay storehouse roof has been patched more than once, but damp has appeared among the upper beams. Inspect the structure and report what the evidence supports. The roof is not repaired merely because its condition is recorded."
+	prompt_label.text = "Examine the steward's account and the roof itself before submitting an assessment."
+	evidence_left_title.text = "TEMPLE STOREHOUSE  /  STEWARD"
+	evidence_left_speaker.text = "UR-NANNA"
+	evidence_left_portrait.texture = _load_character_portrait(&"ur_nanna")
+	evidence_left_quote.text = "“I ordered the north side patched. The stores must remain dry.”"
+	evidence_right_title.text = "NORTH BAY  /  ROOF BEAMS"
+	evidence_right_speaker.text = "INSPECTION PENDING"
+	evidence_right_portrait.texture = _make_seal_placeholder()
+	evidence_right_quote.text = "The beams have not yet been inspected."
+	_set_evidence_facts("STEWARD'S ACCOUNT\nConsultation not yet recorded.", "PHYSICAL CONDITION\nInspection not yet recorded.")
+	_refresh_north_bay_actions()
+
+func _refresh_north_bay_actions() -> void:
+	_clear_choices()
+	var state := world.get_assignment_state(NORTH_BAY_ASSIGNMENT_ID)
+	var actions: Dictionary = state.get("actions", {})
+	if not actions.has(&"consult_steward"):
+		_add_choice("Consult Steward", _north_bay_consult_steward)
+	if not actions.has(&"inspect_beams"):
+		_add_choice("Inspect Beams", _north_bay_inspect_beams)
+	_add_choice("Submit Assessment", _begin_north_bay_assessment)
+
+func _north_bay_consult_steward() -> void:
+	if phase != "north_bay_activity" or not world.record_assignment_action(NORTH_BAY_ASSIGNMENT_ID, &"consult_steward"):
+		return
+	AudioManager.play_stylus_mark()
+	evidence_left_title.text = "TEMPLE STOREHOUSE  /  CONSULTATION"
+	evidence_left_speaker.text = "UR-NANNA"
+	evidence_left_quote.text = "“The north side was patched, but I cannot swear the beam sockets are dry. I need a report before I authorize more labor.”"
+	_set_evidence_facts("REPORTED BY UR-NANNA\nA patch was ordered.\nThe condition of the beam sockets is unverified.\nThis is testimony, not physical inspection.", evidence_right_facts.text)
+	prompt_label.text = "The steward's account is recorded. Inspect the beams."
+	_refresh_north_bay_actions()
+
+func _north_bay_inspect_beams() -> void:
+	if phase != "north_bay_activity" or not world.record_assignment_action(NORTH_BAY_ASSIGNMENT_ID, &"inspect_beams"):
+		return
+	AudioManager.play_roof_drip()
+	var steward := world.get_person(&"ur_nanna")
+	var integrity := int(steward.vulnerabilities.get(&"granary_roof_integrity", 0)) if steward != null else 0
+	evidence_right_title.text = "NORTH BAY  /  PHYSICAL INSPECTION"
+	evidence_right_speaker.text = "APPRENTICE'S OBSERVATION"
+	evidence_right_quote.text = "A slow drop falls from the north beam socket. The timber is dark and soft around the joint."
+	_set_evidence_facts(evidence_left_facts.text, "DIRECT OBSERVATION\nActive water ingress: %s\nBeam integrity index: %d / 100\nWater is reaching the storehouse interior." % ["CONFIRMED" if world.north_bay_roof_leak_active else "NOT OBSERVED", integrity])
+	prompt_label.text = "The physical inspection is recorded. Submit an assessment."
+	_refresh_north_bay_actions()
+
+func _begin_north_bay_assessment() -> void:
+	if phase != "north_bay_activity":
+		return
+	var state := world.get_assignment_state(NORTH_BAY_ASSIGNMENT_ID)
+	var actions: Dictionary = state.get("actions", {})
+	for action_id in north_bay_assignment.required_actions:
+		if not actions.has(action_id):
+			prompt_label.text = "The report cannot be submitted: consult Ur-Nanna and inspect the beams first."
+			return
+	_clear_choices()
+	phase = "north_bay_assessment"
+	case_heading.text = "𒂍  NORTH-BAY  /  ASSESSMENT"
+	dossier.text = "The report will become part of the storehouse record. Distinguish what the steward reported from what you physically observed."
+	prompt_label.text = "Which assessment can you certify?"
+	_add_choice("Water ingress confirmed; north beam compromised; stored barley at risk. Recommend urgent repair.", _submit_north_bay_assessment.bind(true))
+	_add_choice("Roof sound; no water ingress; no further work required.", _submit_north_bay_assessment.bind(false))
+
+func _submit_north_bay_assessment(is_accurate: bool) -> void:
+	if phase != "north_bay_assessment" or north_bay_assignment == null:
+		return
+	var assessment: StringName = &"leak_confirmed_repair_required" if is_accurate else &"roof_reported_sound"
+	if not world.complete_assignment(NORTH_BAY_ASSIGNMENT_ID, north_bay_assignment.required_actions, assessment):
+		push_warning("Main: North-Bay assessment rejected; required actions or lifecycle state are invalid")
+		return
+	var steward := world.get_person(north_bay_assignment.employer)
+	if steward == null:
+		push_warning("Main: North-Bay employer disappeared before settlement")
+		return
+	var opinion_delta := north_bay_assignment.opinion_penalty
+	if is_accurate:
+		world.modify_resource(north_bay_assignment.compensation_resource, north_bay_assignment.compensation_amount)
+		actor.skills.add_xp(&"law", north_bay_assignment.law_xp)
+		opinion_delta = north_bay_assignment.opinion_reward
+	steward.opinions[actor.id] = int(steward.opinions.get(actor.id, 0)) + opinion_delta
+	var reasons: Array = steward.opinion_reasons.get(actor.id, [])
+	reasons.append({"year": world.year, "amount": opinion_delta, "reason": "North-Bay roof inspection assessment: %s" % ("accurate and supported" if is_accurate else "unsupported; contradicted by physical inspection")})
+	steward.opinion_reasons[actor.id] = reasons
+	last_opinion_deltas.clear()
+	last_opinion_deltas[north_bay_assignment.employer] = opinion_delta
+	assignment_card.disabled = true
+	assignment_card.text = "FILED  /  NORTH-BAY ROOF INSPECTION  /  %s" % ("5 SHEKELS PAID" if is_accurate else "ASSESSMENT REJECTED")
+	_clear_choices()
+	phase = "north_bay_result"
+	case_heading.text = "𒂍  ASSESSMENT SEALED"
+	dossier.text = "The report has been entered into the storehouse record. The physical leak remains active; each elapsed period now spoils one measure of barley until repair is arranged."
+	if is_accurate:
+		prompt_label.text = "Accurate assessment filed. +%d silver · +%d Law XP · Ur-Nanna %+d opinion." % [north_bay_assignment.compensation_amount, north_bay_assignment.law_xp, opinion_delta]
+	else:
+		prompt_label.text = "Unsupported assessment filed. No compensation or Law experience awarded. Ur-Nanna's opinion falls by %d." % absi(opinion_delta)
+	_add_choice("Return to the desk", _return_from_north_bay)
+	AudioManager.play_seal_press()
+	_refresh_compound()
+
+func _return_from_north_bay() -> void:
+	if phase != "north_bay_result":
+		return
+	match phase_before_assignment:
+		"case":
+			_show_case()
+		"result":
+			if last_resolved_outcome != null:
+				_show_result(last_resolved_outcome)
+			else:
+				_show_end_of_queue()
+		_:
+			_show_end_of_queue()
 
 func _show_case() -> void:
 	_clear_choices()
@@ -666,6 +836,7 @@ func _resolve_choice(index: int) -> void:
 			before[person_id] = int(person.opinions.get(actor.id, 0))
 	context.year = world.year
 	context.era = Registry.get_era_for_year(world.year)
+	last_resolved_outcome = active_event.outcomes[index]
 	runner.resolve_outcome(active_event, active_event.outcomes[index], context)
 	if active_event.id == CASE_15_ID:
 		turn_two_pending = true
@@ -702,6 +873,7 @@ func _play_outcome_foley(index: int) -> void:
 				AudioManager.play_tablet_snap()
 
 func _show_result(outcome: EventOutcome) -> void:
+	last_resolved_outcome = outcome
 	_clear_choices()
 	phase = "result"
 	case_heading.add_theme_font_size_override("font_size", 20)
