@@ -1056,16 +1056,7 @@ func _resolve_procedural_choice(index: int, choice: Dictionary) -> void:
 	_show_procedural_result(result_title, result_text)
 
 func _record_case_settlement(silver_before: int, traits_before: Array[StringName]) -> void:
-	_record_case_settlement_state(world, actor, silver_before, traits_before)
-
-static func _record_case_settlement_state(world_state: WorldState, person: PersonEntity, silver_before: int, traits_before: Array[StringName]) -> void:
-	world_state.cases_settled += 1
-	var silver_delta := int(person.resources.get(&"silver", 0)) - silver_before
-	if silver_delta > 0:
-		world_state.silver_earned += silver_delta
-	for trait_id in person.traits:
-		if trait_id not in traits_before and trait_id not in world_state.traits_gained:
-			world_state.traits_gained.append(trait_id)
+	world.record_case_settlement(actor, silver_before, traits_before)
 
 func _play_outcome_foley(index: int) -> void:
 	match index:
@@ -1150,13 +1141,6 @@ func _show_era_completion() -> void:
 	_add_choice("Begin Next Era / New Shift", _begin_next_shift)
 	status_label.text = "ERA EPIC COMPLETE  /  CEDAR DESK ENTRY SEALED"
 
-static func _reset_epic_for_new_shift(world_state: WorldState, epic_id: StringName) -> void:
-	var epic_state: Dictionary = world_state.epics.get(epic_id, {})
-	epic_state["progress"] = 0
-	epic_state["stage"] = "survey"
-	epic_state["completed"] = false
-	world_state.epics[epic_id] = epic_state
-
 func _begin_next_shift() -> void:
 	if phase != "era_complete":
 		return
@@ -1165,7 +1149,7 @@ func _begin_next_shift() -> void:
 	world.year = next_year
 	world.period = 0
 	world.stockpiles[&"canal_progress"] = 0
-	_reset_epic_for_new_shift(world, &"great_canal_cut")
+	world.reset_epic_for_new_shift(&"great_canal_cut")
 	world.era_completion_started = false
 	world.cedar_desk_log.append({"year": world.year, "title": "NEW SHIFT BEGUN", "summary": "The scribe leaves the completed canal on the record and begins the next shift."})
 	current_era = Registry.get_era_for_year(world.year)
