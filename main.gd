@@ -1160,7 +1160,7 @@ func _show_era_completion() -> void:
 	case_heading.text = "𒂍  ERA EPIC COMPLETE / " + completed_epic_title.to_upper()
 	dossier.visible = true
 	dossier.text = summary
-	_set_evidence_facts("THE CAREER RECORD\nThe canal is entered as a completed Epic. The apprentice kept the measures and the names.", "THE STOREHOUSE\nThe reserves held long enough. The next shift inherits the result.")
+	_set_evidence_facts("THE CAREER RECORD\nThe completed Epic is entered into the chronicle. The apprentice kept the measures and the names.", "THE INSTITUTION\nThe work stands on the record. The next shift inherits its consequences.")
 	# Completion is an authored career verdict, never leftover testimony from
 	# whichever docket happened to precede the final period.
 	evidence_left_title.text = "CAREER VERDICT / ARCHIVE"
@@ -1168,7 +1168,7 @@ func _show_era_completion() -> void:
 	evidence_left_speaker.text = "SHURUPPAK-ILU"
 	evidence_right_speaker.text = "UR-NANNA"
 	evidence_left_quote.text = "“A record is only useful when it survives the hands that made it. Yours will.”"
-	evidence_right_quote.text = "“The canal stands, and the stores were not emptied to build it. That is competent work.”"
+	evidence_right_quote.text = "“The work stands, and the record names what it cost. That is competent work.”"
 	_set_evidence_portrait(&"shuruppak_ilu", &"ur_nanna")
 	_set_evidence_tension(0, 0)
 	prompt_label.text = completed_epic_title + " is complete. This era Epic is entered into the record."
@@ -1183,7 +1183,7 @@ func _begin_next_shift() -> void:
 	world.year = next_year
 	world.period = 0
 	world.era_completion_started = false
-	world.cedar_desk_log.append({"year": world.year, "title": "NEW SHIFT BEGUN", "summary": "The scribe leaves the completed canal on the record and begins the next shift."})
+	world.cedar_desk_log.append({"year": world.year, "title": "NEW SHIFT BEGUN", "summary": "The scribe leaves the completed Epic on the record and begins the next shift."})
 	current_era = Registry.get_era_for_year(world.year)
 	if current_era != null:
 		var previous_epic_id := world.get_active_epic_id()
@@ -1197,6 +1197,9 @@ func _begin_next_shift() -> void:
 				world.epics[previous_epic_id] = previous_epic_state
 	if current_era == null:
 		current_era = previous_era
+		var fallback_epic_id := world.get_active_epic_id()
+		if fallback_epic_id != &"":
+			world.reset_epic_for_new_shift(fallback_epic_id)
 	context.era = current_era
 	context.year = world.year
 	_schedule_next_case()
