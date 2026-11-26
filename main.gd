@@ -944,6 +944,7 @@ func _show_world_engagement() -> void:
 		var done := actions.has(action_id)
 		payload.choices.append({"label": String(action.label) + (" / RECORDED" if done else "")})
 		callbacks.append(_world_assignment_action.bind(action_id))
+		payload.choices.back()["disabled"] = done
 	_render_docket_payload(payload, callbacks)
 	if actions.size() >= 2:
 		match StringName(record.get("kind", "")):
@@ -1028,7 +1029,7 @@ func _render_docket_payload(payload: Dictionary, callbacks: Array = []) -> void:
 	var docket_choices: Array = payload.get("choices", [])
 	for index in range(docket_choices.size()):
 		var callback: Callable = callbacks[index] if index < callbacks.size() else _resolve_choice.bind(index)
-		_add_choice(String(docket_choices[index].get("label", "Record")), callback)
+		_add_choice(String(docket_choices[index].get("label", "Record")), callback, bool(docket_choices[index].get("disabled", false)))
 func _resolve_choice(index: int) -> void:
 	if phase != "case":
 		return
