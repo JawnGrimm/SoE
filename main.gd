@@ -30,6 +30,8 @@ var world: WorldState
 var actor: PersonEntity
 var active_event: EventTemplate
 var procedural_assignment: Dictionary = {}
+var assignment_opportunities: Array[Dictionary] = []
+var active_world_assignment_id: StringName = &""
 var context: EventContext
 var current_era: EraDef
 var north_bay_assignment: AssignmentDef
@@ -606,15 +608,17 @@ func _start_world() -> void:
 	_show_character_creation_screen(0)
 
 func can_save_game() -> bool:
-	return world != null and world.get_player() != null and phase == "case" and (active_event != null or not procedural_assignment.is_empty())
+	return world != null and world.get_player() != null and phase in ["case", "opportunity_board", "world_engagement"] and (active_event != null or not procedural_assignment.is_empty() or not assignment_opportunities.is_empty() or active_world_assignment_id != &"")
 
 func save_game() -> Dictionary:
 	if not can_save_game():
 		return {"success": false, "error": "Save is available while a docket is open."}
 	var session := {
-		"phase": "case",
+		"phase": phase,
 		"active_event_id": String(active_event.id) if active_event != null else "",
 		"procedural_assignment": procedural_assignment.duplicate(true),
+		"assignment_opportunities": assignment_opportunities.duplicate(true),
+		"active_world_assignment_id": String(active_world_assignment_id),
 		"selected_path": String(selected_path),
 	}
 	var result := SaveManager.save_game(world, session)
@@ -640,6 +644,8 @@ func load_game() -> Dictionary:
 	context.year = world.year
 	active_event = null
 	procedural_assignment.clear()
+	assignment_opportunities.clear()
+	active_world_assignment_id = &""
 	last_resolved_outcome = null
 	last_opinion_deltas.clear()
 	var session: Dictionary = result.get("session", {})
@@ -649,8 +655,18 @@ func load_game() -> Dictionary:
 	var saved_assignment: Variant = session.get("procedural_assignment", {})
 	if saved_assignment is Dictionary:
 		procedural_assignment = saved_assignment.duplicate(true)
+	var saved_opportunities: Variant = session.get("assignment_opportunities", [])
+	if saved_opportunities is Array:
+		for opportunity in saved_opportunities:
+			if opportunity is Dictionary:
+				assignment_opportunities.append(opportunity.duplicate(true))
+	active_world_assignment_id = StringName(session.get("active_world_assignment_id", ""))
 	selected_path = StringName(session.get("selected_path", ""))
-	if active_event == null and procedural_assignment.is_empty():
+	if active_world_assignment_id != &"":
+		_show_world_engagement()
+	elif String(session.get("phase", "")) == "opportunity_board" and not assignment_opportunities.is_empty():
+		_show_assignment_board()
+	elif active_event == null and procedural_assignment.is_empty():
 		_schedule_next_case()
 	else:
 		_show_case()
@@ -681,13 +697,18 @@ func _schedule_next_case() -> void:
 			event_templates.append(definition as EventTemplate)
 	active_event = scheduler.pick_next_event(world, actor, event_templates, current_era)
 	procedural_assignment.clear()
-	if active_event == null:
-		procedural_assignment = AssignmentGeneratorScript.generate(world, actor, selected_path)
+	assignment_opportunities.clear()
+	active_world_assignment_id = &""
 	_refresh_compound()
-	if active_event == null and procedural_assignment.is_empty():
-		_show_end_of_queue()
-	else:
+	if active_event != null:
 		_show_case()
+		return
+	assignment_opportunities = AssignmentPipeline.generate_opportunities(world, actor, selected_path)
+	if assignment_opportunities.size() >= 3:
+		_show_assignment_board()
+	else:
+		push_warning("Main: assignment pipeline produced fewer than three opportunities (%d)" % assignment_opportunities.size())
+		_show_end_of_queue()
 
 func _show_character_creation_screen(screen: int) -> void:
 	creation_screen = clampi(screen, 0, 8)
@@ -1035,6 +1056,122 @@ func _authored_choices_payload() -> Array:
 		result.append({"label": outcome.label, "result_title": outcome.title_override, "result_text": outcome.description_override, "effects": outcome.effects})
 	return result
 
+func _show_assignment_board() -> void:
+	_clear_stamp_history()
+	_clear_choices()
+	_set_phase("opportunity_board")
+	var choices_payload: Array = []
+	var callbacks: Array[Callable] = []
+	var summaries := PackedStringArray()
+	for index in range(assignment_opportunities.size()):
+		var opportunity: Dictionary = assignment_opportunities[index]
+		var label := "%s\n%s" % [String(opportunity.get("title", "Work")), String(opportunity.get("summary", "A matter requires attention."))]
+		choices_payload.append({"label": label})
+		callbacks.append(_select_assignment_opportunity.bind(index))
+		summaries.append("%d. %s / PRIORITY %d" % [index + 1, String(opportunity.get("title", "Work")), int(opportunity.get("priority", 0))])
+	var payload := {
+		"title": "THE SCRIBE'S DESK / THREE OPPORTUNITIES",
+		"left_card": {"title": "THE LIVING WORLD", "speaker_id": &"", "quote": "The city has continued its business while you were away from the desk.", "facts": "YEAR: %s\nPERIOD: %d / 12\nPENDING FORMS: %d\nACTIVE HAZARDS: %d" % [CalendarFormatter.format_year(world.year), world.period + 1, world.pending_forms.size(), world.hazards.filter(func(h: Dictionary) -> bool: return bool(h.get("active", false))).size()]},
+		"right_card": {"title": "AVAILABLE WORK", "speaker_id": &"shuruppak_ilu", "quote": "Choose the matter you will take responsibility for this period. The others remain in the world, whether you attend to them or not.", "facts": "\n".join(summaries)},
+		"prompt": "Three matters have reached your desk. Select one engagement, or pass without penalty.",
+		"choices": choices_payload
+	}
+	_render_docket_payload(payload, callbacks)
+	_add_choice("Pass / End Period", _decline_opportunities)
+	_refresh_compound()
+
+func _select_assignment_opportunity(index: int) -> void:
+	if phase != "opportunity_board" or index < 0 or index >= assignment_opportunities.size():
+		return
+	var opportunity := assignment_opportunities[index]
+	if not AssignmentPipeline.begin(world, opportunity, actor):
+		status_label.text = "WORK COULD NOT BE OPENED / SOURCE MAY HAVE CHANGED"
+		return
+	active_world_assignment_id = StringName(opportunity.get("id", ""))
+	AudioManager.play_docket_slide()
+	_show_world_engagement()
+
+func _show_world_engagement() -> void:
+	var record := AssignmentPipeline.get_record(world, active_world_assignment_id)
+	if record.is_empty():
+		active_world_assignment_id = &""
+		_show_assignment_board()
+		return
+	_clear_choices()
+	_set_phase("world_engagement")
+	var actions: Dictionary = record.get("actions", {})
+	var evidence: Dictionary = record.get("evidence", {})
+	var evidence_lines := PackedStringArray()
+	for action_id in evidence.keys():
+		var entry: Dictionary = evidence[action_id]
+		evidence_lines.append("%s\n%s" % [String(action_id).replace("_", " ").to_upper(), String(entry.get("facts", ""))])
+	var left_quote := String(record.get("summary", "A matter requires professional attention."))
+	var employer := world.get_person(StringName(record.get("employer_id", "")))
+	var right_quote := "The record is incomplete. Examine it, hear the responsible official, and inspect the source before making your assessment."
+	var payload := {
+		"title": String(record.get("title", "ASSIGNMENT")),
+		"left_card": {"title": "WORLD SITUATION / %s" % String(record.get("kind", "work")).to_upper(), "speaker_id": &"", "quote": left_quote, "facts": "SOURCE: %s\nOPENED: PERIOD %d" % [String(record.get("source_id", "")), int(record.get("started_period", world.current_period_index()))]},
+		"right_card": {"title": "RESPONSIBLE OFFICE", "speaker_id": employer.id if employer != null else &"", "quote": right_quote, "facts": "INVESTIGATIONS RECORDED: %d / 3\n\n%s" % [actions.size(), "\n\n".join(evidence_lines)]},
+		"prompt": "Investigate the situation. Your skills affect what you can establish; your judgment determines what is entered.",
+		"choices": []
+	}
+	var callbacks: Array[Callable] = []
+	for action in AssignmentPipeline.INVESTIGATION_ACTIONS:
+		var action_id: StringName = action.id
+		var done := actions.has(action_id)
+		payload.choices.append({"label": String(action.label) + (" / RECORDED" if done else "")})
+		callbacks.append(_world_assignment_action.bind(action_id))
+	_render_docket_payload(payload, callbacks)
+	if actions.size() >= 2:
+		match StringName(record.get("kind", "")):
+			&"form":
+				_add_choice("Certify and close the form", _resolve_world_assignment.bind(&"certify"))
+				_add_choice("Refer the matter for senior review", _resolve_world_assignment.bind(&"refer"))
+				_add_choice("Defer the assessment", _resolve_world_assignment.bind(&"defer"))
+			&"hazard":
+				_add_choice("Allocate three labor and repair", _resolve_world_assignment.bind(&"repair"), world.get_resource(&"labor", "institution", "", &"eanna_household") < 3)
+				_add_choice("Record the loss and defer repair", _resolve_world_assignment.bind(&"defer"))
+			_:
+				_add_choice("File the verified account", _resolve_world_assignment.bind(&"record"))
+	_add_choice("Set this work aside", _abandon_world_assignment)
+	_refresh_compound()
+
+func _world_assignment_action(action_id: StringName) -> void:
+	if phase != "world_engagement":
+		return
+	var result := AssignmentPipeline.perform_action(world, actor, active_world_assignment_id, action_id)
+	if not bool(result.get("success", false)):
+		status_label.text = String(result.get("message", "Action could not be recorded."))
+		return
+	AudioManager.play_stylus_mark()
+	_show_world_engagement()
+
+func _resolve_world_assignment(verdict: StringName) -> void:
+	if phase != "world_engagement":
+		return
+	var result := AssignmentPipeline.resolve(world, actor, active_world_assignment_id, verdict)
+	if not bool(result.get("success", false)):
+		status_label.text = String(result.get("message", "Assessment could not be filed."))
+		_show_world_engagement()
+		return
+	active_world_assignment_id = &""
+	procedural_assignment.clear()
+	_show_procedural_result("ASSESSMENT SEALED", String(result.get("message", "The work is entered into the record.")))
+
+func _abandon_world_assignment() -> void:
+	if active_world_assignment_id == &"" or not world.assignments.has(active_world_assignment_id):
+		return
+	var record: Dictionary = world.assignments[active_world_assignment_id]
+	record["status"] = "abandoned"
+	world.assignments[active_world_assignment_id] = record
+	active_world_assignment_id = &""
+	_show_procedural_result("WORK SET ASIDE", "The matter remains in the world. No penalty is recorded for declining it.")
+
+func _decline_opportunities() -> void:
+	if phase != "opportunity_board":
+		return
+	_show_procedural_result("THE DESK IS PASSED", "No work is accepted this period. The world continues without waiting for your seal.")
+
 func _show_case() -> void:
 	_clear_stamp_history()
 	_clear_choices()
@@ -1199,6 +1336,8 @@ func _show_result(outcome: EventOutcome) -> void:
 func _advance_period() -> void:
 	if phase != "result" and phase != "end_of_queue":
 		return
+	assignment_opportunities.clear()
+	active_world_assignment_id = &""
 	_clear_stamp_history()
 	world_simulator.advance_period(world)
 	if world.get_hazard_total_lost(&"north_bay", &"roof_leak") >= 3:
