@@ -620,8 +620,20 @@ func _show_case() -> void:
 		evidence_right_quote.text = "“The gate tally reads twenty-three. I will answer for the count I witnessed.”"
 		_set_evidence_facts("𒂍  DISPATCH TABLET\n24 measures barley\nSealed at the river.", "𒂍  THRESHOLD TALLY\n23 measures barley\nCUSTODY: No witness at loading, transit, or unloading.")
 	elif active_event.id == CASE_01_ID:
+		evidence_left_title.text = "RIVER QUAYS  /  PIERCED TAG"
+		evidence_left_speaker.text = "ENLIL-KISU"
+		evidence_left_portrait.texture = _load_character_portrait(&"enlil_kisu")
+		evidence_right_title.text = "SOUTH COURT  /  RECEIPT"
+		evidence_right_speaker.text = "UTU-MANSUM"
+		evidence_right_portrait.texture = _load_character_portrait(&"utu_mansum")
 		_set_evidence_facts("𒂍  PIERCED TAG\n4 jars oil · 6 linen bundles\nSender’s seal intact on tag.", "𒂍  COURT MAT\n4 jars present · 6 bundles present\nSmallest oil jar seal cracked. CARRIER: road was rough; Enlil-kisu says the jar was never unstoppered.")
 	elif active_event.id == CASE_02_ID:
+		evidence_left_title.text = "BREWING HOUSE  /  ACCOUNT"
+		evidence_left_speaker.text = "NIN-KASI"
+		evidence_left_portrait.texture = _load_character_portrait(&"nin_kasi")
+		evidence_right_title.text = "ARCHIVE COPY  /  MALT & SIGN"
+		evidence_right_speaker.text = "CLERK'S COPY"
+		evidence_right_portrait.texture = _make_seal_placeholder()
 		_set_evidence_facts("𒂍  GRAIN ENTRIES\n6 + 8 + 4 = 18\nSubtotal written: 17.", "𒂍  MALT ENTRY · 3 baskets malt\nMalted spelt recorded below the dividing line.\n𒂍  BLURRED SIGN\nMoisture-damaged; allocation between libation and worker bread cannot be established.")
 	prompt_label.text = "What mark will you leave?"
 	for index in range(active_event.outcomes.size()):
