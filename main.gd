@@ -30,6 +30,9 @@ var assignment_card: Button
 var phase_before_assignment: String = ""
 var last_resolved_outcome: EventOutcome
 var selected_path: StringName = &""
+var creation_catalog: Dictionary = {}
+var creation_selections := CharacterCreationSelections.new()
+var creation_screen: int = 0
 var phase := "case"
 var last_opinion_deltas: Dictionary[StringName, int] = {}
 
@@ -552,7 +555,8 @@ func _start_world() -> void:
 	scheduler = EventScheduler.new(runner)
 	world_simulator = WorldSimulator.new()
 	world = WorldState.new()
-	actor = UrukSeeder.seed_campaign(world, CAMPAIGN_SEED)
+	actor = UrukSeeder.seed_campaign(world, CAMPAIGN_SEED, false)
+	creation_catalog = CharacterCreationResolver.load_catalog("res://data/character_creation/era_1_uruk.json")
 	north_bay_assignment = Registry.get_assignment(NORTH_BAY_ASSIGNMENT_ID)
 	if north_bay_assignment == null or not north_bay_assignment.is_valid():
 		push_warning("Main: North-Bay AssignmentDef is missing or malformed; docket will not be offered")
@@ -564,7 +568,7 @@ func _start_world() -> void:
 	context.era = current_era
 	context.year = world.year
 	_refresh_compound()
-	_show_path_catechism()
+	_show_character_creation_screen(0)
 
 func _schedule_next_case() -> void:
 	_clear_stamp_history()
@@ -585,54 +589,146 @@ func _schedule_next_case() -> void:
 	else:
 		_show_case()
 
-func _show_path_catechism() -> void:
+func _show_character_creation_screen(screen: int) -> void:
+	creation_screen = clampi(screen, 0, 8)
 	_clear_stamp_history()
 	_clear_choices()
-	phase = "catechism_path"
-	case_heading.text = "𒂍  THE FIRST CLAY"
+	phase = "character_creation"
+	case_heading.text = "𒂍  A LIFE IN THE MAKING  /  %02d" % creation_screen
 	case_heading.add_theme_font_size_override("font_size", 20)
+	dossier.visible = true
 	dossier.text = ""
-	dossier.visible = false
 	_set_evidence_facts("", "")
 	_set_evidence_tension(0, 0)
-	prompt_label.text = "Where were you taught the city's marks?"
-	_add_choice("The Granary Terraces — Temple Path", _choose_path.bind(&"path_temple"))
-	_add_choice("The River Quays — Landing Path", _choose_path.bind(&"path_landing"))
-	status_label.text = "TWO QUESTIONS BEFORE THE FIRST CLAY"
 
-func _choose_path(path: StringName) -> void:
-	if phase != "catechism_path":
+	var nav := HFlowContainer.new()
+	nav.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	nav.add_theme_constant_override("h_separation", 3)
+	nav.add_theme_constant_override("v_separation", 3)
+	choices.add_child(nav)
+	var nav_labels := ["Origins", "Responsibilities", "Formative", "Entry", "Instruction", "Path", "Identity", "Biography"]
+	for index in range(8):
+		var button := Button.new()
+		button.text = "%d %s%s" % [index + 1, nav_labels[index], " ✓" if _creation_step_complete(index + 1) else ""]
+		button.disabled = creation_screen == index + 1
+		button.pressed.connect(_show_character_creation_screen.bind(index + 1))
+		button.add_theme_font_size_override("font_size", 10)
+		nav.add_child(button)
+
+	if creation_screen == 0:
+		prompt_label.text = "A LIFE ALREADY UNDERWAY"
+		dossier.text = "You are not beginning with an empty slate. You have grown up among other people, learned to be useful, made mistakes, and found your way toward the work of a scribe.\n\nThe choices ahead describe the life that brought you here. They shape the people you know, the work you recognize, and the circumstances in which your career begins.\n\n" + String(creation_catalog.get("display_context", "Current era")) + ""
+		_add_choice("Begin this life", _show_character_creation_screen.bind(1))
 		return
-	selected_path = path
-	if not UrukCatechism.choose_path(world, actor, path):
+
+	if creation_screen >= 1 and creation_screen <= 6:
+		var question: Dictionary = creation_catalog.get("questions", [])[creation_screen - 1]
+		prompt_label.text = String(question.get("prompt", ""))
+		dossier.text = String(question.get("title", ""))
+		for answer in question.get("answers", []):
+			var question_id := StringName(question.get("id", ""))
+			var answer_id := StringName(answer.get("id", ""))
+			var label := String(answer.get("title", ""))
+			if creation_selections.get_answer(question_id) == answer_id:
+				label = "✓  " + label
+			label += "\n" + String(answer.get("description", ""))
+			var availability := CharacterCreationResolver.is_answer_available(creation_catalog, creation_selections, question_id, answer)
+			var unavailable := not bool(availability.get("available", false))
+			if unavailable:
+				label += "\nUnavailable — " + String(availability.get("reason", "Incompatible with an earlier choice."))
+			_add_choice(label, _select_creation_answer.bind(question_id, answer_id), unavailable)
+		_add_creation_back_next()
 		return
+
+	if creation_screen == 7:
+		prompt_label.text = "What should people call you?"
+		dossier.text = "Your starting traits will be chosen here in a later character-design pass.\n\nYour character's ambition will be defined here. It is not an objective or progression track yet."
+		var name_input := LineEdit.new()
+		name_input.placeholder_text = "Character name"
+		name_input.text = creation_selections.character_name if not creation_selections.character_name.is_empty() else actor.display_name
+		name_input.text_changed.connect(_set_creation_name)
+		name_input.custom_minimum_size.y = 38
+		choices.add_child(name_input)
+		creation_selections.set_character_name(name_input.text)
+		_add_choice("Review biography", _show_character_creation_screen.bind(8))
+		_add_creation_back_next()
+		return
+
+	if creation_screen == 8:
+		prompt_label.text = "This is where your story begins."
+		var validation := CharacterCreationResolver.validate(creation_catalog, creation_selections)
+		dossier.text = CharacterCreationResolver.build_biography(creation_catalog, creation_selections)
+		var contact_lines: Dictionary = {}
+		for effect in CharacterCreationResolver.build_effects(creation_catalog, creation_selections):
+			if effect.effect_type != &"set_relationship":
+				continue
+			var contact_id := StringName(effect.parameters.get("other_id", ""))
+			var contact := world.get_person(contact_id)
+			if contact != null:
+				contact_lines[contact_id] = "%s — %s" % [contact.display_name, String(effect.parameters.get("relation_type", "known contact")).replace("_", " ")]
+		dossier.text += "\n\nPEOPLE YOU KNOW\n" + ("\n".join(contact_lines.values()) if not contact_lines.is_empty() else "No personal connections selected.")
+		dossier.text += "\n\nPERSONAL QUALITIES\nReserved for a later character-design pass."
+		dossier.text += "\n\nAMBITION\nReserved for a later character-design pass."
+		if not bool(validation.get("valid", false)):
+			dossier.text += "\n\nBEFORE CONFIRMING\n" + "\n".join(validation.get("errors", []))
+		else:
+			_add_choice("CONFIRM  /  BEGIN CAREER", _confirm_character_creation)
+		_add_creation_back_next()
+		return
+
+func _creation_step_complete(screen: int) -> bool:
+	if screen >= 1 and screen <= 6:
+		var question: Dictionary = creation_catalog.get("questions", [])[screen - 1]
+		return creation_selections.get_answer(StringName(question.get("id", ""))) != &""
+	if screen == 7:
+		return not creation_selections.character_name.strip_edges().is_empty()
+	return false
+
+func _add_creation_back_next() -> void:
+	var row := HBoxContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	choices.add_child(row)
+	if creation_screen > 0:
+		var back := Button.new()
+		back.text = "← BACK"
+		back.pressed.connect(_show_character_creation_screen.bind(creation_screen - 1))
+		row.add_child(back)
+	if creation_screen < 8:
+		var next := Button.new()
+		next.text = "CONTINUE →"
+		var ready := true
+		if creation_screen >= 1 and creation_screen <= 6:
+			var question: Dictionary = creation_catalog.get("questions", [])[creation_screen - 1]
+			ready = creation_selections.get_answer(StringName(question.get("id", ""))) != &""
+		next.disabled = not ready
+		next.pressed.connect(_show_character_creation_screen.bind(creation_screen + 1))
+		row.add_child(next)
+
+func _select_creation_answer(question_id: StringName, answer_id: StringName) -> void:
+	if phase != "character_creation":
+		return
+	if not creation_selections.select_answer(question_id, answer_id):
+		return
+	CharacterCreationResolver.prune_invalid_answers(creation_catalog, creation_selections)
+	_show_character_creation_screen(creation_screen)
+
+func _set_creation_name(value: String) -> void:
+	creation_selections.set_character_name(value)
+
+func _confirm_character_creation() -> void:
+	if phase != "character_creation":
+		return
+	var result := CharacterCreationResolver.commit(creation_catalog, creation_selections, world, actor, current_era, runner.effects)
+	if not bool(result.get("committed", false)):
+		push_warning("Main: character creation could not commit: %s" % str(result.get("errors", [])))
+		_show_character_creation_screen(8)
+		return
+	selected_path = creation_selections.get_answer(&"professional_orientation")
+	if String(creation_catalog.get("era_id", "")) == "uruk_storehouse":
+		UrukSeeder.attach_player(world, actor)
 	_refresh_compound()
-	_show_mentor_catechism()
-
-func _show_mentor_catechism() -> void:
-	_clear_choices()
-	phase = "catechism_mentor"
-	case_heading.text = "𒂍  THE MENTOR'S MARK"
-	case_heading.add_theme_font_size_override("font_size", 20)
-	dossier.text = ""
-	dossier.visible = false
-	_set_evidence_facts("", "")
-	_set_evidence_tension(0, 0)
-	prompt_label.text = "Whose instruction will you carry?"
-	_add_choice("Shuruppak-ilu — +1 Arithmetic; exacting", _choose_mentor.bind(&"shuruppak_ilu"))
-	_add_choice("Utu-mansum — +1 Law; stubborn", _choose_mentor.bind(&"utu_mansum"))
-	_add_choice("Enlil-kisu — +1 Stewardship; protective", _choose_mentor.bind(&"enlil_kisu"))
-	_add_choice("Nin-kasi — +1 Rhetoric; diplomatic", _choose_mentor.bind(&"nin_kasi"))
-
-func _choose_mentor(mentor_id: StringName) -> void:
-	if phase != "catechism_mentor":
-		return
-	if not UrukCatechism.choose_mentor(world, actor, mentor_id):
-		return
 	_offer_north_bay_assignment()
-	_refresh_compound()
 	_schedule_next_case()
-
 
 func _offer_north_bay_assignment() -> void:
 	# This is a world-condition assignment, available to every career path.
@@ -1069,11 +1165,12 @@ func _show_end_of_queue() -> void:
 	_add_choice("End Period", _advance_period)
 	status_label.text = "THE WATER RISES. THE STORES CHANGE. THE CLAY WAITS."
 
-func _add_choice(label_text: String, callback: Callable) -> void:
+func _add_choice(label_text: String, callback: Callable, disabled: bool = false) -> void:
 	var row := HBoxContainer.new()
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_theme_constant_override("separation", 10)
-	row.custom_minimum_size.y = 46
+	var choice_height := 78 if label_text.contains("\n") else 46
+	row.custom_minimum_size.y = choice_height
 	choices.add_child(row)
 	var wedge := Label.new()
 	wedge.text = "𒁹"
@@ -1085,7 +1182,9 @@ func _add_choice(label_text: String, callback: Callable) -> void:
 	row.add_child(wedge)
 	var button := Button.new()
 	button.text = label_text
-	button.custom_minimum_size = Vector2(190, 46)
+	button.disabled = disabled
+	button.custom_minimum_size = Vector2(190, choice_height)
+	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.add_theme_font_size_override("font_size", 16)

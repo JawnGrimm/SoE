@@ -7,6 +7,7 @@ func _init() -> void:
 	_handlers[&"add_trait"] = _add_trait
 	_handlers[&"remove_trait"] = _remove_trait
 	_handlers[&"change_opinion"] = _change_opinion
+	_handlers[&"set_relationship"] = _set_relationship
 	_handlers[&"gain_skill_xp"] = _gain_skill_xp
 	_handlers[&"create_form"] = _create_form
 	_handlers[&"set_flag"] = _set_flag
@@ -50,6 +51,38 @@ func _change_opinion(relative_subject: PersonEntity, p: Dictionary, ctx: EventCo
 		return
 	var delta := int(p.get("amount", 0))
 	subject.change_opinion(other.id, delta, String(p.get("reason", "")), ctx.year)
+
+
+## Establishes a tie in the existing PersonEntity.relationships map.
+## This does not create a parallel social graph or imply positive opinion.
+func _set_relationship(subject: PersonEntity, p: Dictionary, ctx: EventContext) -> void:
+	if subject == null or ctx.world == null:
+		return
+	var other_id := StringName(p.get("other_id", ""))
+	var other := ctx.world.get_person(other_id)
+	if other == null or other == subject:
+		push_warning("EffectExecutor: set_relationship could not resolve person '%s'" % other_id)
+		return
+	var relation_type := StringName(p.get("relation_type", ""))
+	if relation_type == &"":
+		push_warning("EffectExecutor: set_relationship requires relation_type")
+		return
+	var strength := int(p.get("strength", 1))
+	var trust := int(p.get("trust", 0))
+	_write_relationship(subject, other_id, relation_type, strength, trust)
+	if bool(p.get("reciprocal", false)):
+		_write_relationship(other, subject.id, relation_type, strength, trust)
+
+func _write_relationship(source: PersonEntity, target_id: StringName, relation_type: StringName, strength: int, trust: int) -> void:
+	var tie: Dictionary = source.relationships.get(target_id, {}).duplicate(true)
+	tie["type"] = relation_type
+	tie["strength"] = strength
+	tie["trust"] = trust
+	if not tie.has("opinion"):
+		tie["opinion"] = 0
+	if not tie.has("reasons"):
+		tie["reasons"] = []
+	source.relationships[target_id] = tie
 
 func _gain_skill_xp(subject: PersonEntity, p: Dictionary, _ctx: EventContext) -> void:
 	if subject != null:

@@ -345,38 +345,100 @@ func _run() -> void:
 	_check(&"complicit" in follow_up_ctx.actor.traits, "Explicit follow-up bypass should skip ordinary eligibility conditions")
 
 
-	# First Season at Uruk: both catechism answers, mentor bonuses, gated cases, and canal accounting.
-	var temple_world := WorldState.new()
-	var temple_actor := UrukSeeder.seed_campaign(temple_world, 32003200)
-	_check(UrukCatechism.choose_path(temple_world, temple_actor, &"path_temple"), "Temple path should be accepted")
-	_check(temple_actor.has_flag(&"path_temple", temple_world.current_period_index()), "Temple path flag should be permanent on the apprentice")
-	_check(temple_world.get_person(&"ur_nanna").get_opinion(temple_actor.id) == 5, "Temple path should grant Ur-Nanna +5")
-	_check(temple_world.get_person(&"nin_kasi").get_opinion(temple_actor.id) == 3, "Temple path should grant Nin-kasi +3")
-	_check(temple_world.has_pending_form(&"pension_roll"), "Temple path should open the brewery account docket")
-	_check(UrukCatechism.choose_mentor(temple_world, temple_actor, &"nin_kasi"), "Nin-kasi should be a valid mentor")
-	_check(temple_actor.skills.get_level(&"rhetoric") == 1, "Nin-kasi mentorship should add one Rhetoric")
-	_check(&"diplomatic" in temple_actor.traits, "Nin-kasi mentorship should add diplomatic")
-	_check(temple_world.get_person(&"nin_kasi").get_opinion(temple_actor.id) == 8, "Mentor choice should add +5 opinion on top of path standing")
+	# Character creation is draft-first: revisiting choices is harmless; Screen 8 commits once.
+	var creation_catalog := CharacterCreationResolver.load_catalog("res://data/character_creation/era_1_uruk.json")
+	var creation_world := WorldState.new()
+	var creation_actor := UrukSeeder.seed_campaign(creation_world, 32003200, false)
+	_check(not creation_world.people.has(creation_actor.id), "Unconfirmed player must not be inserted into WorldState")
+	_check(not creation_world.institutions[&"eanna_household"].members.has(creation_actor.id), "Unconfirmed player must not enter Eanna household membership during the draft")
+	var orphan_player_tie := false
+	for seeded_person in creation_world.people.values():
+		if seeded_person.relationships.has(creation_actor.id):
+			orphan_player_tie = true
+	_check(not orphan_player_tie, "Unconfirmed player must not leave orphaned NPC relationship records")
+	var creation_draft := CharacterCreationSelections.new()
+	creation_draft.set_character_name("Enlil-barni")
+	creation_draft.select_answer(&"origin", &"origin_provisioning")
+	creation_draft.select_answer(&"responsibility", &"responsibility_count")
+	creation_draft.select_answer(&"formative_experience", &"experience_discrepancy")
+	creation_draft.select_answer(&"entry_into_scribal_work", &"entry_recommendation")
+	creation_draft.select_answer(&"first_instruction", &"instruction_quantities")
+	creation_draft.select_answer(&"professional_orientation", &"path_civil")
+	var draft_people_before := creation_world.people.size()
+	var draft_forms_before := creation_world.pending_forms.size()
+	var draft_opinion_before := creation_world.get_person(&"ur_nanna").get_opinion(creation_actor.id)
+	var draft_validation := CharacterCreationResolver.validate(creation_catalog, creation_draft)
+	_check(bool(draft_validation.get("valid", false)), "A compatible complete draft should validate")
+	_check(creation_catalog.get("questions", []).size() == 6, "Era I catalog should contain the six authored life-history and orientation chapters")
+	var incompatible_draft := CharacterCreationSelections.new()
+	incompatible_draft.set_character_name("Test Scribe")
+	incompatible_draft.select_answer(&"origin", &"origin_exchange")
+	incompatible_draft.select_answer(&"responsibility", &"responsibility_quality")
+	_check(not bool(CharacterCreationResolver.validate(creation_catalog, incompatible_draft).get("valid", false)), "Incompatible origin/responsibility combinations must fail validation")
+	var quality_answer := CharacterCreationResolver._find_answer(creation_catalog.get("questions", [])[1], &"responsibility_quality")
+	_check(not bool(CharacterCreationResolver.is_answer_available(creation_catalog, incompatible_draft, &"responsibility", quality_answer).get("available", false)), "Incompatible answers should be disabled before selection")
+	incompatible_draft.select_answer(&"formative_experience", &"experience_disagreement")
+	var pruned := CharacterCreationResolver.prune_invalid_answers(creation_catalog, incompatible_draft)
+	_check(pruned.has(&"responsibility") and pruned.has(&"formative_experience"), "Changing an earlier answer should clear every invalidated downstream choice")
+	_check(incompatible_draft.get_answer(&"responsibility") == &"" and incompatible_draft.get_answer(&"formative_experience") == &"", "Pruned answers should no longer remain in the draft")
+	_check(CharacterCreationResolver.build_biography(creation_catalog, creation_draft).contains("You grew up around"), "Biography preview should assemble authored fragments")
+	_check(creation_world.people.size() == draft_people_before and creation_world.pending_forms.size() == draft_forms_before, "Preview must not mutate WorldState")
+	_check(creation_world.get_person(&"ur_nanna").get_opinion(creation_actor.id) == draft_opinion_before, "Preview must not change NPC opinions")
+	creation_draft.select_answer(&"professional_orientation", &"path_merchant")
+	creation_draft.select_answer(&"professional_orientation", &"path_civil")
+	var creation_result := CharacterCreationResolver.commit(creation_catalog, creation_draft, creation_world, creation_actor, registry.get_era(&"uruk_storehouse"), runner.effects)
+	_check(bool(creation_result.get("committed", false)), "Screen 8 should commit a valid character draft")
+	_check(creation_world.get_person(creation_actor.id) == creation_actor, "Confirmed player should enter WorldState")
+	UrukSeeder.attach_player(creation_world, creation_actor)
+	var eanna_members: Array = creation_world.institutions[&"eanna_household"].members
+	_check(eanna_members.has(creation_actor.id), "Confirmed player should join the Eanna institutional household")
+	_check(creation_world.get_person(&"geme_tur").relationships.has(creation_actor.id), "Confirmed player should receive the baseline family tie")
+	_check(creation_world.get_person(&"shuruppak_ilu").get_opinion(creation_actor.id) == 5, "Senior scribe should retain the baseline +5 opinion")
+	_check(creation_world.get_person(&"ur_nanna").get_opinion(creation_actor.id) == 0, "Other roster members should receive explicit baseline zero opinions")
+	var eanna_member_count := eanna_members.size()
+	UrukSeeder.attach_player(creation_world, creation_actor)
+	_check(creation_world.institutions[&"eanna_household"].members.size() == eanna_member_count, "Player attachment should be idempotent")
+	_check(creation_actor.has_flag(&"path_civil", creation_world.current_period_index()), "Civic orientation should set its canonical path flag")
+	_check(not creation_actor.has_flag(&"path_merchant", creation_world.current_period_index()), "Revised path choice should not leave the abandoned flag")
+	_check(creation_actor.memory.size() == 1, "Formative experience should enter the character memory through EventEffect")
+	_check(creation_actor.skills.get_level(&"literacy") == 1 and creation_actor.skills.get_level(&"arithmetic") == 1 and creation_actor.skills.get_level(&"law") == 1, "Character creation must preserve clean baseline skills without build-calculator bonuses")
+	_check(creation_actor.traits.is_empty(), "Character creation must not invent traits while the approved trait placeholders remain inactive")
+	_check(creation_actor.relationships.has(&"ur_nanna"), "Recommender should be linked through the canonical relationship map")
+	_check(creation_world.get_person(&"ur_nanna").relationships.has(creation_actor.id), "Relationship should be reciprocal in the existing relationship map")
+	_check(not CharacterCreationResolver.commit(creation_catalog, creation_draft, creation_world, creation_actor, registry.get_era(&"uruk_storehouse"), runner.effects).get("committed", false), "A committed draft must not execute a second time")
+	for path_id in [&"path_religious", &"path_martial", &"path_merchant"]:
+		var path_world := WorldState.new()
+		var path_actor := UrukSeeder.seed_campaign(path_world, 32003200, false)
+		var path_draft := CharacterCreationSelections.new()
+		path_draft.set_character_name("Path Test")
+		path_draft.select_answer(&"origin", &"origin_exchange")
+		path_draft.select_answer(&"responsibility", &"responsibility_deliveries")
+		path_draft.select_answer(&"formative_experience", &"experience_blame")
+		path_draft.select_answer(&"entry_into_scribal_work", &"entry_encounter")
+		path_draft.select_answer(&"first_instruction", &"instruction_records")
+		path_draft.select_answer(&"professional_orientation", path_id)
+		var path_result := CharacterCreationResolver.commit(creation_catalog, path_draft, path_world, path_actor, registry.get_era(&"uruk_storehouse"), runner.effects)
+		_check(bool(path_result.get("committed", false)), "Canonical path %s should commit" % path_id)
+		_check(path_actor.has_flag(path_id, path_world.current_period_index()), "Canonical path flag %s should be set" % path_id)
+		_check(path_actor.flags.keys().filter(func(flag: StringName) -> bool: return flag in [&"path_civil", &"path_religious", &"path_martial", &"path_merchant"]).size() == 1, "Exactly one canonical professional path should be active")
 
 	var brewer_case: EventTemplate = registry.get_event(&"case_02_brewers_reckoning")
 	_check(brewer_case != null, "Registry should load Case 2")
-	var temple_ctx := _make_context(temple_world)
-	temple_ctx.actor = temple_actor
-	temple_ctx.year = temple_world.year
-	temple_ctx.era = registry.get_era(&"uruk_storehouse")
-	_check(runner.is_eligible(brewer_case, temple_ctx), "Case 2 should pass Temple path, office, and docket conditions")
-	runner.resolve_outcome(brewer_case, brewer_case.outcomes[0], temple_ctx)
-	_check(temple_world.get_resource(&"canal_progress") == 5, "Honest brewery arithmetic should advance Canal Cut by five")
-	_check(temple_world.get_person(&"nin_kasi").get_opinion(temple_actor.id) == 14, "Honest brewery arithmetic should improve Nin-kasi by six")
-	_check(temple_world.resolved_forms.back().get("disposition", "") == "rectified_subtotal_allocation_pending", "Honest brewery arithmetic should resolve the pension docket")
+	creation_world.enqueue_form({"form_type": &"pension_roll", "subject_id": &"brewing_house_account", "urgency": 1, "year": creation_world.year})
+	var creation_ctx := _make_context(creation_world)
+	creation_ctx.actor = creation_actor
+	creation_ctx.era = registry.get_era(&"uruk_storehouse")
+	_check(runner.is_eligible(brewer_case, creation_ctx), "Case 2 should be eligible from office and its real pending docket, not a hard-coded path gate")
+	runner.resolve_outcome(brewer_case, brewer_case.outcomes[0], creation_ctx)
+	_check(creation_world.get_resource(&"canal_progress") == 5, "Honest brewery arithmetic should advance Canal Cut by five")
+	_check(creation_world.resolved_forms.back().get("disposition", "") == "rectified_subtotal_allocation_pending", "Honest brewery arithmetic should resolve the pension docket")
 
 	var commingled_world := WorldState.new()
 	var commingled_actor := UrukSeeder.seed_campaign(commingled_world, 32003200)
-	UrukCatechism.choose_path(commingled_world, commingled_actor, &"path_temple")
-	UrukCatechism.choose_mentor(commingled_world, commingled_actor, &"shuruppak_ilu")
 	var commingled_ctx := _make_context(commingled_world)
 	commingled_ctx.actor = commingled_actor
 	commingled_ctx.era = registry.get_era(&"uruk_storehouse")
+	commingled_world.enqueue_form({"form_type": &"pension_roll", "subject_id": &"brewing_house_account", "urgency": 1, "year": commingled_world.year})
 	runner.resolve_outcome(brewer_case, brewer_case.outcomes[1], commingled_ctx)
 	_check(commingled_world.get_resource(&"canal_progress") == 0, "Commingled malt should leave Canal Cut progress unchanged")
 	_check(&"complicit" in commingled_actor.traits, "Commingled malt should mark the apprentice complicit")
@@ -384,11 +446,10 @@ func _run() -> void:
 
 	var harsh_world := WorldState.new()
 	var harsh_actor := UrukSeeder.seed_campaign(harsh_world, 32003200)
-	UrukCatechism.choose_path(harsh_world, harsh_actor, &"path_temple")
-	UrukCatechism.choose_mentor(harsh_world, harsh_actor, &"utu_mansum")
 	var harsh_ctx := _make_context(harsh_world)
 	harsh_ctx.actor = harsh_actor
 	harsh_ctx.era = registry.get_era(&"uruk_storehouse")
+	harsh_world.enqueue_form({"form_type": &"pension_roll", "subject_id": &"brewing_house_account", "urgency": 1, "year": harsh_world.year})
 	runner.resolve_outcome(brewer_case, brewer_case.outcomes[2], harsh_ctx)
 	_check(harsh_world.get_resource(&"canal_progress") == 0, "Harsh brewery closure should not advance Canal Cut")
 	_check(harsh_world.has_flag(&"thirsty_diggers", harsh_world.current_period_index()), "Harsh brewery closure should set thirsty diggers for two periods")
@@ -396,11 +457,7 @@ func _run() -> void:
 
 	var landing_world := WorldState.new()
 	var landing_actor := UrukSeeder.seed_campaign(landing_world, 32003200)
-	UrukCatechism.choose_path(landing_world, landing_actor, &"path_landing")
-	_check(landing_actor.has_flag(&"path_landing", landing_world.current_period_index()), "Landing path flag should be permanent on the apprentice")
-	_check(landing_world.get_person(&"enlil_kisu").get_opinion(landing_actor.id) == 5, "Landing path should grant Enlil-kisu +5")
-	_check(landing_world.get_person(&"geme_inana").get_opinion(landing_actor.id) == 3, "Landing path should grant Geme-Inana +3")
-	_check(landing_world.has_pending_form(&"consignment_receipt"), "Landing path should open the receiving docket")
+	landing_world.enqueue_form({"form_type": &"consignment_receipt", "subject_id": &"temple_consignment", "urgency": 1, "year": landing_world.year})
 	var landing_case_context := _make_context(landing_world)
 	landing_case_context.actor = landing_actor
 	landing_case_context.era = registry.get_era(&"uruk_storehouse")
@@ -411,7 +468,7 @@ func _run() -> void:
 	_check(landing_world.resolved_forms.back().get("disposition", "") == "quarantine_cracked_vessel", "Accepted vessel should resolve the receiving docket")
 	var rejected_world := WorldState.new()
 	var rejected_actor := UrukSeeder.seed_campaign(rejected_world, 32003200)
-	UrukCatechism.choose_path(rejected_world, rejected_actor, &"path_landing")
+	rejected_world.enqueue_form({"form_type": &"consignment_receipt", "subject_id": &"temple_consignment", "urgency": 1, "year": rejected_world.year})
 	rejected_world.modify_resource(&"canal_progress", 5)
 	var rejected_context := _make_context(rejected_world)
 	rejected_context.actor = rejected_actor
@@ -454,27 +511,6 @@ func _run() -> void:
 	runner.resolve_outcome(south_case, south_case.outcomes[2], south_penalty_ctx)
 	_check(south_penalty_world.get_resource(&"canal_progress") == 0, "Docking the carrier crew should leave Canal Cut progress unchanged")
 	_check(south_penalty_world.has_flag(&"canal_crew_slowdown", south_penalty_world.current_period_index()), "Docking the carrier crew should slow canal stone transport for two periods")
-
-	# The four mentor records each add exactly one skill level, the named trait, and five standing.
-	var mentor_cases: Array = [
-		[&"shuruppak_ilu", &"arithmetic", &"exacting", 1, 5],
-		[&"utu_mansum", &"law", &"stubborn", 1, 0],
-		[&"enlil_kisu", &"stewardship", &"protective", 0, 0],
-		[&"nin_kasi", &"rhetoric", &"diplomatic", 0, 0]
-	]
-	for mentor_case in mentor_cases:
-		var mentor_world := WorldState.new()
-		var mentor_actor := UrukSeeder.seed_campaign(mentor_world, 88)
-		var mentor_id: StringName = mentor_case[0]
-		var mentor_skill: StringName = mentor_case[1]
-		var mentor_trait: StringName = mentor_case[2]
-		var starting_level: int = mentor_case[3]
-		var starting_opinion: int = mentor_case[4]
-		_check(UrukCatechism.choose_mentor(mentor_world, mentor_actor, mentor_id), "Each authored mentor should be selectable")
-		_check(mentor_actor.skills.get_level(mentor_skill) == starting_level + 1, "Each mentor should add exactly one level in the named skill")
-		_check(mentor_trait in mentor_actor.traits, "Each mentor should grant the named trait")
-		_check(mentor_world.get_person(mentor_id).get_opinion(mentor_actor.id) == starting_opinion + 5, "Each mentor should gain five opinion of the apprentice")
-
 
 	# Phase 8B: Quayside Stoppage uses the live event condition/scheduler path.
 	var quayside_template: EventTemplate = registry.get_event(&"challenge_quayside_stoppage")

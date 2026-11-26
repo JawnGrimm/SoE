@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="EventTemplate" load_steps=28 format=3]
+[gd_resource type="Resource" script_class="EventTemplate" load_steps=27 format=3]
 
 [ext_resource type="Script" path="res://data/definitions/event_template.gd" id="1"]
 [ext_resource type="Script" path="res://data/definitions/event_outcome.gd" id="2"]
@@ -10,12 +10,6 @@ script = ExtResource("4")
 condition_type = &"in_office"
 target = "actor"
 parameters = {"office_id": &"apprentice_scribe"}
-
-[sub_resource type="Resource" id="condition_2"]
-script = ExtResource("4")
-condition_type = &"flag_set"
-target = "actor"
-parameters = {"flag": &"path_temple", "scope": "actor"}
 
 [sub_resource type="Resource" id="condition_3"]
 script = ExtResource("4")
@@ -137,7 +131,7 @@ description = "Nin-kasi sits beside three dried clay copies of the brewing-house
 era_tags = Array[StringName]([&"uruk"])
 weight = 1.0
 once_per_world = true
-conditions = Array[ExtResource("4")]([SubResource("condition_1"), SubResource("condition_2"), SubResource("condition_3")])
+conditions = Array[ExtResource("4")]([SubResource("condition_1"), SubResource("condition_3")])
 evidence_left_title = "BREWING HOUSE  /  ACCOUNT"
 evidence_right_title = "ARCHIVE COPY  /  MALT & SIGN"
 evidence_left_speaker = "NIN-KASI"

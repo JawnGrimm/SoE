@@ -1,0 +1,78 @@
+{
+  "era_id": "uruk_storehouse",
+  "location_id": "uruk",
+  "display_context": "Uruk · c. 3200 BCE",
+  "questions": [
+    {
+      "id": "origin",
+      "title": "Where did you come from?",
+      "prompt": "Before you learned to work with tablets, what kind of work and people shaped your world?",
+      "answers": [
+        {"id":"origin_provisioning","title":"Food and provisioning","description":"You grew up around the preparation, storage, and movement of food. You learned how much work sits behind an apparently simple allocation.","biography":"You grew up around the preparation, storage, and movement of food.","effects":[{"effect_type":"set_flag","parameters":{"flag":"origin_provisioning","scope":"actor"}},{"effect_type":"set_flag","parameters":{"flag":"familiarity_provisioning","scope":"actor"}}]},
+        {"id":"origin_fields_herds","title":"Fields and herds","description":"Much of the work you knew began beyond the city: fields, animals, seasonal tasks, and bringing produce where it was needed.","biography":"Much of your early life was shaped by fields, herds, seasonal work, and the movement of produce.","effects":[{"effect_type":"set_flag","parameters":{"flag":"origin_fields_herds","scope":"actor"}},{"effect_type":"set_flag","parameters":{"flag":"familiarity_agropastoral","scope":"actor"}}]},
+        {"id":"origin_skilled_making","title":"Skilled making","description":"You grew up around people who shaped useful things, judged materials, and knew how much work a finished object concealed.","biography":"You grew up around skilled making, material judgment, and the work concealed inside finished objects.","effects":[{"effect_type":"set_flag","parameters":{"flag":"origin_skilled_making","scope":"actor"}},{"effect_type":"set_flag","parameters":{"flag":"familiarity_materials","scope":"actor"}}]},
+        {"id":"origin_exchange","title":"Exchange and movement","description":"You knew the work of moving goods: deliveries, routes, quantities, handovers, and the people waiting at the other end.","biography":"You knew the work of moving goods: routes, deliveries, handovers, and the people waiting at the other end.","effects":[{"effect_type":"set_flag","parameters":{"flag":"origin_exchange","scope":"actor"}},{"effect_type":"set_flag","parameters":{"flag":"familiarity_exchange","scope":"actor"}}]}
+      ]
+    },
+    {
+      "id": "responsibility",
+      "title": "What did people rely on you to do?",
+      "prompt": "When you were old enough to be useful, what did people begin to trust you with?",
+      "answers": [
+        {"id":"responsibility_count","title":"Count or measure","description":"You were asked to count, compare, or measure things that someone else needed to account for.","biography":"People began asking you to count, compare, and measure what others needed to account for.","effects":[{"effect_type":"set_flag","parameters":{"flag":"familiarity_quantities","scope":"actor"}}]},
+        {"id":"responsibility_deliveries","title":"Help with deliveries","description":"You learned who was expecting a delivery, what had to travel, and what could go wrong between handover and arrival.","biography":"You learned who was expecting a delivery, what had to travel, and what could go wrong between handover and arrival.","requires":{"origin":["origin_provisioning","origin_fields_herds","origin_exchange"]},"effects":[{"effect_type":"set_flag","parameters":{"flag":"familiarity_deliveries","scope":"actor"}}]},
+        {"id":"responsibility_quality","title":"Judge materials or quality","description":"You learned to notice when material, workmanship, or condition did not match what was expected.","biography":"You learned to notice when material, workmanship, or condition did not match what was expected.","requires":{"origin":["origin_provisioning","origin_fields_herds","origin_skilled_making"]},"effects":[{"effect_type":"set_flag","parameters":{"flag":"familiarity_quality","scope":"actor"}}]},
+        {"id":"responsibility_coordinate","title":"Coordinate a small task","description":"People began relying on you to remember who was doing what and whether the work had been finished.","biography":"People began relying on you to remember who was doing what and whether the work had been finished.","effects":[{"effect_type":"set_flag","parameters":{"flag":"familiarity_coordination","scope":"actor"}}]},
+        {"id":"responsibility_record","title":"Observe a record or seal in use","description":"You watched someone use a mark, seal, token, or tablet to make a transaction or responsibility recognizable.","biography":"You watched someone use a mark, seal, token, or tablet to make a transaction or responsibility recognizable.","requires":{"origin":["origin_provisioning","origin_skilled_making","origin_exchange"]},"effects":[{"effect_type":"set_flag","parameters":{"flag":"familiarity_records_observed","scope":"actor"}}]}
+      ]
+    },
+    {
+      "id": "formative_experience",
+      "title": "What stayed with you?",
+      "prompt": "Was there an experience that changed what you paid attention to?",
+      "answers": [
+        {"id":"experience_discrepancy","title":"A quantity did not match","description":"A quantity everyone relied on turned out not to match what had actually been received or used.","biography":"You remember a quantity that did not match what had actually been received or used.","requires":{"responsibility":["responsibility_count","responsibility_deliveries"]},"effects":[{"effect_type":"add_memory","parameters":{"memory_id":"life_quantity_discrepancy","text":"A quantity everyone relied on did not match what had actually been received or used.","involved":[]}}]},
+        {"id":"experience_blame","title":"You were blamed unfairly","description":"You were held responsible for a mistake you did not believe was yours.","biography":"You were once held responsible for a mistake you did not believe was yours.","effects":[{"effect_type":"add_memory","parameters":{"memory_id":"life_unfair_blame","text":"I was held responsible for a mistake I did not believe was mine.","involved":[]}}]},
+        {"id":"experience_disagreement","title":"You helped settle a disagreement","description":"Two people remembered an agreement differently, and you helped establish what each had actually seen or promised.","biography":"You helped settle a disagreement by establishing what each person had actually seen or promised.","requires":{"responsibility":["responsibility_count","responsibility_deliveries","responsibility_quality"]},"effects":[{"effect_type":"add_memory","parameters":{"memory_id":"life_settled_disagreement","text":"I helped establish what each person had actually seen or promised.","involved":[]}}]},
+        {"id":"experience_trust","title":"You were trusted with an adult responsibility","description":"Someone gave you responsibility before others thought you were ready.","biography":"Someone trusted you with a responsibility before others thought you were ready.","effects":[{"effect_type":"add_memory","parameters":{"memory_id":"life_early_trust","text":"Someone trusted me with an adult responsibility before others thought I was ready.","involved":[]}}]}
+      ]
+    },
+    {
+      "id": "entry_into_scribal_work",
+      "title": "How did you find your way to the tablets?",
+      "prompt": "How did the chance to learn the work of a scribe come to you?",
+      "answers": [
+        {"id":"entry_introduction","title":"Someone introduced you","description":"Someone who knew you or your work introduced you to a person involved in keeping records.","biography":"Someone who knew your work introduced you to the people who kept records.","effects":[{"effect_type":"set_relationship","parameters":{"other_id":"ur_nanna","relation_type":"introducer","strength":1,"trust":0,"reciprocal":true}},{"effect_type":"set_relationship","parameters":{"other_id":"shuruppak_ilu","relation_type":"trainer","strength":1,"trust":0,"reciprocal":true}}]},
+        {"id":"entry_recommendation","title":"Your work earned a recommendation","description":"Someone noticed how you handled a responsibility and recommended that you be given a chance to learn.","biography":"Your handling of practical work earned a recommendation and a chance to learn under supervision.","effects":[{"effect_type":"set_relationship","parameters":{"other_id":"ur_nanna","relation_type":"recommender","strength":1,"trust":0,"reciprocal":true}},{"effect_type":"set_relationship","parameters":{"other_id":"shuruppak_ilu","relation_type":"trainer","strength":1,"trust":0,"reciprocal":true}}]},
+        {"id":"entry_assistant","title":"You were needed as an assistant","description":"A group needed a dependable assistant, and you were brought in to learn by helping.","biography":"A group needed a dependable assistant, and you were brought in to learn by helping under supervision.","effects":[{"effect_type":"set_relationship","parameters":{"other_id":"ur_nanna","relation_type":"work_tie","strength":1,"trust":0,"reciprocal":true}},{"effect_type":"set_relationship","parameters":{"other_id":"shuruppak_ilu","relation_type":"trainer","strength":1,"trust":0,"reciprocal":true}}]},
+        {"id":"entry_encounter","title":"An encounter opened a door","description":"A delivery, disagreement, or other piece of work brought you into contact with someone willing to teach you.","biography":"An encounter during practical work brought you into contact with someone willing to teach you.","effects":[{"effect_type":"set_relationship","parameters":{"other_id":"enlil_kisu","relation_type":"introducer","strength":1,"trust":0,"reciprocal":true}},{"effect_type":"set_relationship","parameters":{"other_id":"shuruppak_ilu","relation_type":"trainer","strength":1,"trust":0,"reciprocal":true}}]}
+      ]
+    },
+    {
+      "id": "first_instruction",
+      "title": "What did you learn first?",
+      "prompt": "Your first instruction did not teach you everything. What part of the work became familiar first?",
+      "answers": [
+        {"id":"instruction_quantities","title":"Quantities and commodity notation","description":"You practiced recording quantities beside the goods they described, and learned that a number only made sense in its proper system.","biography":"Your first instruction concerned quantities, commodity notation, and the measures used in the work around you.","effects":[{"effect_type":"set_flag","parameters":{"flag":"familiarity_commodity_notation","scope":"actor"}}]},
+        {"id":"instruction_tablet_preparation","title":"Clay, stylus, and tablet preparation","description":"You learned how clay behaved, how a tablet was prepared, and how marks had to be made to remain legible.","biography":"You learned how clay behaved, how a tablet was prepared, and how marks had to be made to remain legible.","effects":[{"effect_type":"set_flag","parameters":{"flag":"familiarity_tablet_preparation","scope":"actor"}}]},
+        {"id":"instruction_signs","title":"Signs and category lists","description":"You practiced recognizing and reproducing a limited set of signs and categories used in the work around you.","biography":"You practiced a limited set of signs and categories used in the work around you.","effects":[{"effect_type":"set_flag","parameters":{"flag":"familiarity_sign_categories","scope":"actor"}}]},
+        {"id":"instruction_records","title":"Checking and organizing records","description":"You helped compare entries, keep related information together, and notice when two accounts did not agree.","biography":"You helped compare entries, keep related information together, and notice when two accounts did not agree.","effects":[{"effect_type":"set_flag","parameters":{"flag":"familiarity_record_comparison","scope":"actor"}}]}
+      ]
+    },
+    {
+      "id": "professional_orientation",
+      "title": "What kind of work are you drawn toward?",
+      "prompt": "Scribes serve many kinds of people and institutions. What kind of responsibility do you hope to make your own?",
+      "answers": [
+        {"id":"path_civil","title":"Civic / Government","description":"You are drawn to the work of institutions: organizing resources, keeping responsibilities clear, and helping collective work function. In Uruk, this may bring you into administration associated with storage, distribution, labor, and institutional coordination. It grants no office or authority.","biography":"You are drawn toward civic administration: organizing resources, keeping responsibilities clear, and helping collective work function in Uruk.","effects":[{"effect_type":"set_flag","parameters":{"flag":"path_civil","scope":"actor"}},{"effect_type":"set_relationship","parameters":{"other_id":"ur_nanna","relation_type":"work_tie","strength":1,"trust":0,"reciprocal":true}}]},
+        {"id":"path_religious","title":"Religious","description":"You are drawn to institutions and people whose work is connected with sacred practice, ritual, and the responsibilities that support them. In Uruk, sacred and economic administration may overlap; this grants no priestly title or ritual authority.","biography":"You are drawn toward responsibilities connected with sacred practice and the institutions that support them.","effects":[{"effect_type":"set_flag","parameters":{"flag":"path_religious","scope":"actor"}},{"effect_type":"set_flag","parameters":{"flag":"familiarity_sacred_institutions","scope":"actor"}}]},
+        {"id":"path_martial","title":"Martial / Military","description":"You are drawn to work supporting security, organized movement, and the coordination of people and resources in dangerous circumstances. In Uruk, this is a custody and transport connection, not a military posting or standing army.","biography":"You are drawn toward work involving security, custody, and the safe movement of people and resources.","effects":[{"effect_type":"set_flag","parameters":{"flag":"path_martial","scope":"actor"}},{"effect_type":"set_relationship","parameters":{"other_id":"enlil_kisu","relation_type":"work_tie","strength":1,"trust":0,"reciprocal":true}}]},
+        {"id":"path_merchant","title":"Commercial / Merchant","description":"You are drawn to exchange: moving goods, maintaining relationships between counterparties, and making sure what is promised reaches the people expecting it. In Uruk, this means procurement, exchange, delivery, and movement networks—not a modern merchant house.","biography":"You are drawn toward commercial work: exchange, delivery, and the relationships between people moving and receiving goods.","effects":[{"effect_type":"set_flag","parameters":{"flag":"path_merchant","scope":"actor"}},{"effect_type":"set_relationship","parameters":{"other_id":"geme_inana","relation_type":"work_tie","strength":1,"trust":0,"reciprocal":true}},{"effect_type":"set_relationship","parameters":{"other_id":"enlil_kisu","relation_type":"work_tie","strength":1,"trust":0,"reciprocal":true}}]}
+      ]
+    }
+  ],
+  "identity_placeholders": {
+    "traits": "Your starting traits will be chosen here in a later character-design pass.",
+    "ambition": "Your character's ambition will be defined here. It is not an objective or progression track yet."
+  }
+}
