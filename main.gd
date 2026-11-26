@@ -758,10 +758,19 @@ func _submit_north_bay_assessment(is_accurate: bool) -> void:
 		push_warning("Main: North-Bay employer disappeared before settlement")
 		return
 	var opinion_before := int(steward.get_opinion(actor.id))
+	var silver_before_assignment := world.get_resource(&"silver")
+	var traits_before_assignment: Array[StringName] = actor.traits.duplicate()
 	if not world.complete_assignment(north_bay_assignment, actor.id, assessment, is_accurate):
 		push_warning("Main: North-Bay assessment rejected; required actions or lifecycle state are invalid")
 		return
 	var opinion_delta := steward.get_opinion(actor.id) - opinion_before
+	world.cases_settled += 1
+	var assignment_silver_delta := world.get_resource(&"silver") - silver_before_assignment
+	if assignment_silver_delta > 0:
+		world.silver_earned += assignment_silver_delta
+	for gained_trait in actor.traits:
+		if gained_trait not in traits_before_assignment and gained_trait not in world.traits_gained:
+			world.traits_gained.append(gained_trait)
 	last_opinion_deltas.clear()
 	last_opinion_deltas[north_bay_assignment.employer] = opinion_delta
 	assignment_card.disabled = true
@@ -994,15 +1003,15 @@ func _show_era_completion() -> void:
 	_clear_choices()
 	var standing_total := 0
 	var standing_count := 0
-	for person_id in ROSTER_ORDER:
-		var person := world.get_person(person_id)
+	for person in world.people.values():
 		if person != null and person.id != actor.id:
 			standing_total += person.get_opinion(actor.id)
 			standing_count += 1
 	var standing := int(round(float(standing_total) / maxf(1.0, float(standing_count))))
-	var traits_text := ", ".join(PackedStringArray(world.traits_gained.map(func(value): return String(value))))
-	if traits_text.is_empty():
-		traits_text = "none recorded"
+	var trait_names := PackedStringArray()
+	for trait_id in world.traits_gained:
+		trait_names.append(String(trait_id))
+	var traits_text := ", ".join(trait_names) if not trait_names.is_empty() else "none recorded"
 	var summary := "Year %s / %s\nCases settled: %d\nThe Great Canal Cut: 100 / 100 — BUILT\nSilver earned: %d\nTraits gained: %s\nCompound standing: %+d average opinion" % [CalendarFormatter.format_year(world.year), String(current_era.display_name if current_era != null else "Current Era"), world.cases_settled, world.silver_earned, traits_text, standing]
 	world.cedar_desk_log.append({"year": world.year, "era_id": current_era.id if current_era != null else &"", "title": "THE GREAT CANAL CUT IS FINISHED", "summary": summary, "cases_settled": world.cases_settled, "canal_progress": 100, "silver_earned": world.silver_earned, "traits_gained": world.traits_gained.duplicate(), "standing": standing})
 	case_heading.text = "𒂍  THE GREAT CANAL CUT IS FINISHED"
