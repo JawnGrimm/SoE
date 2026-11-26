@@ -75,9 +75,9 @@ try {
             throw "Could not locate editor_plugins.enabled in project.godot. Plugin files were installed, but automatic enablement was skipped."
         }
 
-        $projectText = [regex]::Replace(
+        $enabledRegex = [regex]::new($enabledPattern)
+        $projectText = $enabledRegex.Replace(
             $projectText,
-            $enabledPattern,
             [System.Text.RegularExpressions.MatchEvaluator]{
                 param($match)
                 return $match.Groups[1].Value + $match.Groups[2].Value + ', ' + $pluginEntry + $match.Groups[3].Value
