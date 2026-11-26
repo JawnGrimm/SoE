@@ -834,12 +834,12 @@ func _run() -> void:
 	# institutional/world silver stockpile.
 	var purse_world := WorldState.new()
 	purse_world.stockpiles[&"silver"] = 100
-	var purse_actor := PersonEntity.new()
-	purse_actor.id = &"purse_test"
-	purse_actor.resources[&"silver"] = 5
+	var regression_silver_actor := PersonEntity.new()
+	regression_silver_actor.id = &"purse_test"
+	regression_silver_actor.resources[&"silver"] = 5
 	var settlement_main = MainSceneScript.new()
 	settlement_main.world = purse_world
-	settlement_main.actor = purse_actor
+	settlement_main.actor = regression_silver_actor
 	var no_traits: Array[StringName] = []
 	settlement_main._record_case_settlement(4, no_traits)
 	_check(purse_world.silver_earned == 1, "Case settlement should count personal purse silver gained")
