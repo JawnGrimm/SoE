@@ -39,7 +39,7 @@ func _run() -> void:
 	_check(registry.has_definition(&"routine_tally_adjustment"), "Registry should index the routine tally event")
 	_check(registry.has_definition(&"origin_side_reply"), "Registry should index the origin reply event")
 	_check(registry.get_definition(&"corrupt_grain_official") is EventTemplate, "Registry lookup should return the loaded event Resource")
-	_check(registry.get_definitions("events").size() == 11, "Registry should expose all eleven event definitions by category")
+	_check(registry.get_definitions("events").size() == 13, "Registry should expose all eleven event definitions by category")
 	var prototype_events_are_era_independent := true
 	for prototype_id in [&"corrupt_grain_official", &"routine_tally_adjustment", &"origin_side_reply"]:
 		var prototype_event := registry.get_event(prototype_id)
@@ -734,6 +734,39 @@ func _run() -> void:
 	_check(generator_deterministic, "Narrative RNG should reproduce procedural docket sequences from the same seed")
 	_check(generator_variety.size() >= 4, "Procedural generation should rotate across at least four archetypes in thirty turns")
 	_check(generator_has_repair, "Active maintenance hazard should produce an actual labor/silver repair choice")
+
+	# Record-seeded Challenges are selected by the scheduler, resolve once, and do not pause the Epic.
+	var ledger_challenge: EventTemplate = registry.get_event(&"challenge_ledger_inquest")
+	var ledger_world := WorldState.new()
+	var ledger_actor := UrukSeeder.seed_campaign(ledger_world, 32003210)
+	ledger_actor.traits.append(&"complicit")
+	ledger_world.set_flag(&"entangled_brewery_accounts", ledger_world.current_period_index() + 8)
+	var ledger_ctx := _make_context(ledger_world)
+	ledger_ctx.actor = ledger_actor
+	ledger_ctx.era = registry.get_era(&"uruk_storehouse")
+	var challenge_scheduler := EventScheduler.new(runner)
+	_check(ledger_challenge != null and runner.is_eligible(ledger_challenge, ledger_ctx), "Ledger Inquest should become eligible from a complicit trait and an entangled-account record")
+	_check(challenge_scheduler.pick_next_event(ledger_world, ledger_actor, [ledger_challenge], ledger_ctx.era) == ledger_challenge, "EventScheduler should surface the eligible Ledger Inquest")
+	if ledger_challenge != null:
+		runner.resolve_outcome(ledger_challenge, ledger_challenge.outcomes[0], ledger_ctx)
+		_check(not runner.is_eligible(ledger_challenge, ledger_ctx), "Ledger Inquest should respect once_per_world after resolution")
+	var canal_before_inquest_period := ledger_world.get_resource(&"canal_progress")
+	WorldSimulator.new().advance_period(ledger_world)
+	_check(ledger_world.get_resource(&"canal_progress") > canal_before_inquest_period, "Resolving a Challenge should not block the autonomous Canal Epic tick")
+
+	var dry_challenge: EventTemplate = registry.get_event(&"challenge_dry_kettles_silt_breach")
+	var dry_world := WorldState.new()
+	var dry_actor := UrukSeeder.seed_campaign(dry_world, 32003211)
+	dry_actor.traits.append(&"severe")
+	dry_world.set_flag(&"blood_on_the_quays", dry_world.current_period_index() + 8)
+	var dry_ctx := _make_context(dry_world)
+	dry_ctx.actor = dry_actor
+	dry_ctx.era = registry.get_era(&"uruk_storehouse")
+	_check(dry_challenge != null and runner.is_eligible(dry_challenge, dry_ctx), "Dry Kettles should become eligible from severe conduct and blood on the quays")
+	_check(challenge_scheduler.pick_next_event(dry_world, dry_actor, [dry_challenge], dry_ctx.era) == dry_challenge, "EventScheduler should surface the eligible Dry Kettles challenge")
+	if dry_challenge != null:
+		runner.resolve_outcome(dry_challenge, dry_challenge.outcomes[0], dry_ctx)
+		_check(not runner.is_eligible(dry_challenge, dry_ctx), "Dry Kettles should respect once_per_world after resolution")
 
 	# Resource ownership and autonomous Epic simulation.
 	var ownership_world := WorldState.new()
