@@ -11,6 +11,8 @@ var flags: Dictionary[StringName, int] = {}
 var opinions: Dictionary[StringName, int] = {}
 var opinion_reasons: Dictionary[StringName, Array] = {}
 var memory: Array[Dictionary] = []
+# Directed social ties keyed by the other person's entity id.
+var relationships: Dictionary[StringName, Dictionary] = {}
 var liege_id: StringName = &""
 var spouse_id: StringName = &""
 var rival_id: StringName = &""
