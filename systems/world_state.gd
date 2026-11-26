@@ -32,6 +32,26 @@ var cedar_desk_log: Array[Dictionary] = []
 var era_completion_started: bool = false
 var _next_form_sequence: int = 1
 
+func record_case_settlement(person: PersonEntity, silver_before: int, traits_before: Array[StringName]) -> void:
+	if person == null:
+		return
+	cases_settled += 1
+	var silver_delta := int(person.resources.get(&"silver", 0)) - silver_before
+	if silver_delta > 0:
+		silver_earned += silver_delta
+	for trait_id in person.traits:
+		if trait_id not in traits_before and trait_id not in traits_gained:
+			traits_gained.append(trait_id)
+
+func reset_epic_for_new_shift(epic_id: StringName, initial_stage: String = "survey") -> void:
+	if epic_id == &"":
+		return
+	var epic_state: Dictionary = epics.get(epic_id, {})
+	epic_state["progress"] = 0
+	epic_state["stage"] = initial_stage
+	epic_state["completed"] = false
+	epics[epic_id] = epic_state
+
 func set_world_seed(new_seed: int) -> void:
 	master_seed = new_seed
 	rng_narrative.seed = new_seed ^ 0x5DEECE66D
