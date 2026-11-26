@@ -625,7 +625,10 @@ func _run() -> void:
 	# Case 15 Outcome 2 must close its grain levy so the simulator can offer a later one.
 	var south_court := registry.get_event(&"case_15_south_court")
 	var south_court_world := _make_world()
+	south_court_world.year = -3200
+	south_court_world.period = 6
 	var south_court_ctx := _make_context(south_court_world)
+	south_court_ctx.era = registry.get_era(&"uruk_storehouse")
 	south_court_ctx.year = south_court_world.year
 	_check(south_court != null and south_court.outcomes.size() >= 2, "Case 15 should expose the Press Seal as 24 outcome")
 	if south_court != null and south_court.outcomes.size() >= 2:
