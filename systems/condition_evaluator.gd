@@ -92,7 +92,7 @@ func _opinion_compare(subject: PersonEntity, p: Dictionary, ctx: EventContext) -
         if other == null:
             return false
         opinion_owner = other
-    var value := int(opinion_owner.opinions.get(ctx.actor.id, 0))
+    var value := opinion_owner.get_opinion(ctx.actor.id)
     var expected := int(p.get("value", 0))
     match String(p.get("comparison", ">=")):
         ">=": return value >= expected
