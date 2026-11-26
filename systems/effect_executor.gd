@@ -118,9 +118,17 @@ func _clear_flag(subject: PersonEntity, p: Dictionary, ctx: EventContext) -> voi
 		"target":
 			if subject != null: subject.flags.erase(flag)
 
-func _modify_resource(_subject: PersonEntity, p: Dictionary, ctx: EventContext) -> void:
-	if ctx.world != null:
-		ctx.world.modify_resource(StringName(p.get("resource", "")), int(p.get("amount", 0)), String(p.get("scope", "world")))
+func _modify_resource(subject: PersonEntity, p: Dictionary, ctx: EventContext) -> void:
+	if ctx.world == null:
+		return
+	var owner_id := subject.id if subject != null else (ctx.actor.id if ctx.actor != null else "")
+	ctx.world.modify_resource(
+		StringName(p.get("resource", "")),
+		int(p.get("amount", 0)),
+		String(p.get("scope", "world")),
+		String(owner_id),
+		StringName(p.get("institution_id", ""))
+	)
 
 func _resolve_form(_subject: PersonEntity, p: Dictionary, ctx: EventContext) -> void:
 	if ctx.world != null:
