@@ -25,6 +25,9 @@ func _simulate_economy(world: WorldState) -> void:
 	_change(world, &"dates", -1)
 	_change(world, &"fish", -2)
 	_change(world, &"labor", -4)
+	# Labor is available labor-days/workforce, not a consumable household good.
+	# Replenish the period's workforce pool before institutional demand is applied.
+	_change(world, &"labor", 6)
 
 	# Seasonal production varies with waterworks progress and the seeded sim stream.
 	# Periods are Uruk's broad agricultural cycle, not a scripted event schedule.
@@ -147,4 +150,5 @@ func _change(world: WorldState, resource_id: StringName, amount: int) -> void:
 		return
 	world.modify_resource(resource_id, amount)
 	if resource_id != &"canal_progress":
-		world.stockpiles[resource_id] = maxi(MIN_STOCK, world.get_resource(resource_id))
+		var upper_bound := 40 if resource_id == &"labor" else 2147483647
+		world.stockpiles[resource_id] = clampi(world.get_resource(resource_id), MIN_STOCK, upper_bound)
