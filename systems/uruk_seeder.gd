@@ -96,7 +96,8 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 	eanna_stockpiles.erase(&"canal_progress")
 	eanna["stockpiles"] = eanna_stockpiles
 	world.institutions[&"eanna_household"] = eanna
-	world.stockpiles = {&"canal_progress": 0}
+	world.stockpiles.clear()
+	world.stockpiles[&"canal_progress"] = 0
 
 	# The North-Bay roof is already leaking; each elapsed period spoils one measure of barley.
 	world.hazards.append({"id": &"roof_leak", "place_id": &"north_bay", "resource": &"barley", "rate": 1, "total_lost": 0, "active": true})
