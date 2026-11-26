@@ -619,6 +619,20 @@ func _run() -> void:
 		_check(authored_case != null, "Registry should load authored Uruk case %s" % event_id)
 		_check(authored_case != null and authored_case.cooldown_years >= 1, "Uruk case %s should use a cooldown" % event_id)
 
+	# Case 15 Outcome 2 must close its grain levy so the simulator can offer a later one.
+	var south_court := registry.get_event(&"case_15_south_court")
+	var south_court_world := _make_world()
+	var south_court_ctx := _make_context(south_court_world)
+	south_court_ctx.year = south_court_world.year
+	_check(south_court != null and south_court.outcomes.size() >= 2, "Case 15 should expose the Press Seal as 24 outcome")
+	if south_court != null and south_court.outcomes.size() >= 2:
+		runner.resolve_outcome(south_court, south_court.outcomes[1], south_court_ctx, true)
+		_check(not south_court_world.has_pending_form(&"grain_levy"), "Case 15 Outcome 2 should remove the resolved grain levy from pending forms")
+		_check(not south_court_world.resolved_forms.is_empty() and String(south_court_world.resolved_forms.back().get("disposition", "")) == "certified_full_dispatch", "Case 15 Outcome 2 should archive certified_full_dispatch")
+		south_court_world.stockpiles[&"barley"] = 0
+		WorldSimulator.new().advance_period(south_court_world)
+		_check(south_court_world.has_pending_form(&"grain_levy"), "WorldSimulator should be able to generate a fresh grain levy after Outcome 2 closes the previous one")
+
 	# Year 1 must produce real, cause-matched work rather than a quiet desk.
 	var year_one_world := WorldState.new()
 	UrukSeeder.seed_campaign(year_one_world, 32003200)
