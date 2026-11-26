@@ -218,6 +218,7 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 				accurate = false
 			var resolved := world.resolve_form({
 				"form_id": String(source_id),
+				"assessment": disposition,
 				"disposition": disposition,
 				"notes": "Assessment by %s after %d investigative actions." % [actor.display_name, actions.size()]
 			}, world.year)
