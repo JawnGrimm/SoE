@@ -547,6 +547,7 @@ func _run() -> void:
 
 	var force_world := WorldState.new()
 	var force_actor := UrukSeeder.seed_campaign(force_world, 32003201)
+	force_actor.resources[&"silver"] = 4
 	force_world.period = 8
 	force_world.set_flag(&"canal_crew_slowdown", force_world.current_period_index() + 11)
 	force_world.enqueue_form({"form_type": &"succession_claim", "subject_id": &"quayside_stoppage"})
@@ -783,6 +784,8 @@ func _run() -> void:
 	_check(ownership_world.get_resource(&"silver", "institution", "", &"eanna_household") == 12, "Personal silver spending must not alter Eanna silver")
 	_check(not ownership_world.modify_resource(&"silver", -2, "actor", String(purse_actor.id)), "Personal purse should fail closed when a spend exceeds available silver")
 	_check(ownership_world.get_resource(&"silver", "institution", "", &"eanna_household") == 12, "Failed personal spend must leave institutional silver untouched")
+	_check(ownership_world.modify_resource(&"silver", -5, "institution", "", &"eanna_household"), "Institutional resource scope should spend Eanna silver")
+	_check(purse_actor.resources[&"silver"] == 1 and ownership_world.get_resource(&"silver", "institution", "", &"eanna_household") == 7, "Institutional spending must not alter the personal purse")
 
 	var epic_high_world := WorldState.new()
 	epic_high_world.year = -3200
