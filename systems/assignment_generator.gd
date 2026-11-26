@@ -281,11 +281,11 @@ static func _generate_path_docket(world: WorldState, actor: PersonEntity, path_i
 	var origin_name := String(PLACE_LABELS.get(geography.origin_id, String(geography.origin_id).replace("_", " ").capitalize()))
 	var destination_name := String(PLACE_LABELS.get(geography.destination_id, String(geography.destination_id).replace("_", " ").capitalize()))
 	var route_line := "ORIGIN: %s  →  DESTINATION: %s" % [origin_name, destination_name]
-	route_line += "\\nTRANSIT: %s" % String(geography.route_mode).capitalize()
+	route_line += "\nTRANSIT: %s" % String(geography.route_mode).capitalize()
 	if geography.has("transit_periods"):
 		route_line += " · %d season%s" % [int(geography.transit_periods), "" if int(geography.transit_periods) == 1 else "s"]
-	payload.left_card.facts = route_line + "\\n" + String(payload.left_card.facts)
-	payload.right_card.facts = route_line + "\\n" + String(payload.right_card.facts)
+	payload.left_card.facts = route_line + "\n" + String(payload.left_card.facts)
+	payload.right_card.facts = route_line + "\n" + String(payload.right_card.facts)
 	return payload
 
 
