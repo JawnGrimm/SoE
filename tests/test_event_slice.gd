@@ -46,7 +46,7 @@ func _run() -> void:
 	no_player_world.people[no_player_clerk.id] = no_player_clerk
 	no_player_world.people[no_player_foreman.id] = no_player_foreman
 	no_player_world.stockpiles[&"labor"] = 0
-	WorldSimulator.new()._simulate_people(no_player_world)
+	WorldSimulator.new(registry)._simulate_people(no_player_world)
 	_check(no_player_clerk.relationships.is_empty() and no_player_foreman.relationships.is_empty(), "World reactions should safely do nothing before character confirmation")
 	var reaction_world := WorldState.new()
 	var reaction_old_player := PersonEntity.new()
@@ -113,6 +113,8 @@ func _run() -> void:
 	registry.load_defaults()
 	_check(registry.has_definition(&"corrupt_grain_official"), "Registry should index the initial grain event")
 	_check(registry.has_definition(&"routine_tally_adjustment"), "Registry should index the routine tally event")
+	_check(registry.get_epic(&"great_canal_cut") != null and registry.all_epics().size() == 1, "Registry should index Epic definitions by ID and category")
+	_check(not FileAccess.get_file_as_string("res://systems/world_simulator.gd").contains("GREAT_CANAL_CUT"), "WorldSimulator must not preload a specific Epic ID")
 	_check(registry.has_definition(&"origin_side_reply"), "Registry should index the origin reply event")
 	_check(registry.get_definition(&"corrupt_grain_official") is EventTemplate, "Registry lookup should return the loaded event Resource")
 	_check(registry.get_definitions("events").size() == 13, "Registry should expose all thirteen event definitions by category")
@@ -872,7 +874,7 @@ func _run() -> void:
 	epic_high_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 128, &"labor": 10}}
 	epic_high_world.stockpiles[&"canal_progress"] = 0
 	WorldSimulator.new().advance_period(epic_high_world)
-	_check(epic_high_world.get_resource(&"canal_progress") == 3, "Canal Epic should autonomously gain three progress at full labor and ration thresholds")
+	_check(epic_high_world.get_resource(&"canal_progress") == 1, "Passive Epic work should advance slowly at full labor and ration thresholds")
 	_check(epic_high_world.get_resource(&"barley", "institution", "", &"eanna_household") == 116, "Full canal progress should consume four institutional barley after household demand")
 	var epic_high_state: Dictionary = epic_high_world.epics.get(&"great_canal_cut", {})
 	_check(int(epic_high_state.get("progress", 0)) == 3 and String(epic_high_state.get("stage", "")) == "survey" and not bool(epic_high_state.get("completed", true)), "Epic runtime state should retain progress, stage, and completion status")
@@ -904,7 +906,47 @@ func _run() -> void:
 		epic_silt_world.people[labor_person.id] = labor_person
 		epic_silt_world.institutions[StringName("labor_institution_%d" % labor_office)] = {"members": [labor_person.id], "stockpiles": {}}
 	WorldSimulator.new().advance_period(epic_silt_world)
-	_check(epic_silt_world.period == 0 and epic_silt_world.get_resource(&"canal_progress") == 6, "Inundation with labor below six should regress the canal by two")
+	_check(epic_silt_world.period == 0 and epic_silt_world.get_resource(&"canal_progress") == 5, "Inundation with labor below eight should regress the canal by three")
+
+	# Epic pacing and fish sustainability are simulation guardrails.
+	var low_labor_epic_world := WorldState.new()
+	low_labor_epic_world.year = -3200
+	low_labor_epic_world.period = 5
+	low_labor_epic_world.stockpiles[&"canal_progress"] = 20
+	low_labor_epic_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 200, &"labor": 7}}
+	var low_labor_sim := WorldSimulator.new(registry)
+	low_labor_sim._simulate_epics(low_labor_epic_world)
+	_check(low_labor_epic_world.get_resource(&"canal_progress") == 20, "Labor below eight must halt passive Epic progress outside inundation")
+
+	var fish_yield_in_range := true
+	for fish_seed in range(100):
+		var fish_test_world := WorldState.new()
+		fish_test_world.period = 2
+		fish_test_world.set_world_seed(fish_seed + 11000)
+		fish_test_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 1000, &"beer": 100, &"dates": 100, &"fish": 100, &"textiles": 100, &"labor": 20, &"wool": 40}}
+		var fish_before := fish_test_world.get_resource(&"fish", "institution", "", &"eanna_household")
+		WorldSimulator.new(registry)._simulate_economy(fish_test_world)
+		var fish_after := fish_test_world.get_resource(&"fish", "institution", "", &"eanna_household")
+		var fish_produced := fish_after - (fish_before - 2)
+		if fish_produced < 2 or fish_produced > 5:
+			fish_yield_in_range = false
+	_check(fish_yield_in_range, "Productive-period fish yield must stay within two to five measures")
+
+	var passive_trials := 100
+	var passive_epic_completions := 0
+	var passive_fish_extinctions := 0
+	for passive_seed in range(passive_trials):
+		var passive_world := WorldState.new()
+		UrukSeeder.seed_campaign(passive_world, 700000 + passive_seed)
+		var passive_simulator := WorldSimulator.new(registry)
+		for passive_period in range(120):
+			passive_simulator.advance_period(passive_world)
+		if passive_world.is_active_epic_complete():
+			passive_epic_completions += 1
+		if passive_world.get_resource(&"fish", "institution", "", &"eanna_household") <= 0:
+			passive_fish_extinctions += 1
+	_check(passive_epic_completions * 100 < passive_trials * 15, "Passive Epic completion must stay below 15 percent across ten simulated years")
+	_check(passive_fish_extinctions * 100 < passive_trials * 5, "Fish should not suffer the former near-certain extinction curve")
 
 	# Career silver is measured from the actor's personal purse, never Eanna's
 	# institutional/world silver stockpile.
