@@ -350,6 +350,11 @@ func _run() -> void:
 	var creation_world := WorldState.new()
 	var creation_actor := UrukSeeder.seed_campaign(creation_world, 32003200, false)
 	_check(not creation_world.people.has(creation_actor.id), "Unconfirmed player must not be inserted into WorldState")
+	var orphan_player_tie := false
+	for seeded_person in creation_world.people.values():
+		if seeded_person.relationships.has(creation_actor.id):
+			orphan_player_tie = true
+	_check(not orphan_player_tie, "Unconfirmed player must not leave orphaned NPC relationship records")
 	var creation_draft := CharacterCreationSelections.new()
 	creation_draft.set_character_name("Enlil-barni")
 	creation_draft.select_answer(&"origin", &"origin_provisioning")

@@ -617,7 +617,7 @@ func _show_character_creation_screen(screen: int) -> void:
 
 	if creation_screen == 0:
 		prompt_label.text = "A LIFE ALREADY UNDERWAY"
-		dossier.text = "You are not beginning with an empty slate. You have grown up among other people, learned to be useful, made mistakes, and found your way toward the work of a scribe.\n\nThe choices ahead describe the life that brought you here. They shape the people you know, the work you recognize, and the circumstances in which your career begins.\n\nERA I  /  " + String(creation_catalog.get("display_context", "Current era")) + ""
+		dossier.text = "You are not beginning with an empty slate. You have grown up among other people, learned to be useful, made mistakes, and found your way toward the work of a scribe.\n\nThe choices ahead describe the life that brought you here. They shape the people you know, the work you recognize, and the circumstances in which your career begins.\n\n" + String(creation_catalog.get("display_context", "Current era")) + ""
 		_add_choice("Begin this life", _show_character_creation_screen.bind(1))
 		return
 
@@ -653,7 +653,15 @@ func _show_character_creation_screen(screen: int) -> void:
 		prompt_label.text = "This is where your story begins."
 		var validation := CharacterCreationResolver.validate(creation_catalog, creation_selections)
 		dossier.text = CharacterCreationResolver.build_biography(creation_catalog, creation_selections)
-		dossier.text += "\n\nPEOPLE ALREADY IN YOUR WORLD\nShuruppak-ilu — senior scribe and common trainer. Other contacts are established by the selected history and orientation."
+		var contact_lines: Dictionary = {}
+		for effect in CharacterCreationResolver.build_effects(creation_catalog, creation_selections):
+			if effect.effect_type != &"set_relationship":
+				continue
+			var contact_id := StringName(effect.parameters.get("other_id", ""))
+			var contact := world.get_person(contact_id)
+			if contact != null:
+				contact_lines[contact_id] = "%s — %s" % [contact.display_name, String(effect.parameters.get("relation_type", "known contact")).replace("_", " ")]
+		dossier.text += "\n\nPEOPLE YOU KNOW\n" + ("\n".join(contact_lines.values()) if not contact_lines.is_empty() else "No personal connections selected.")
 		dossier.text += "\n\nPERSONAL QUALITIES\nReserved for a later character-design pass."
 		dossier.text += "\n\nAMBITION\nReserved for a later character-design pass."
 		if not bool(validation.get("valid", false)):
@@ -1152,7 +1160,8 @@ func _add_choice(label_text: String, callback: Callable) -> void:
 	var row := HBoxContainer.new()
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_theme_constant_override("separation", 10)
-	row.custom_minimum_size.y = 46
+	var choice_height := 78 if label_text.contains("\n") else 46
+	row.custom_minimum_size.y = choice_height
 	choices.add_child(row)
 	var wedge := Label.new()
 	wedge.text = "𒁹"
@@ -1164,7 +1173,8 @@ func _add_choice(label_text: String, callback: Callable) -> void:
 	row.add_child(wedge)
 	var button := Button.new()
 	button.text = label_text
-	button.custom_minimum_size = Vector2(190, 46)
+	button.custom_minimum_size = Vector2(190, choice_height)
+	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.add_theme_font_size_override("font_size", 16)
