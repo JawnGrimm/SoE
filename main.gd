@@ -77,6 +77,10 @@ var choice_locked := false
 func _ready() -> void:
 	_build_interface()
 	_start_world()
+	if SaveManager.consume_load_on_start():
+		var load_result := load_game()
+		if not bool(load_result.get("success", false)):
+			status_label.text = "LOAD FAILED / " + String(load_result.get("error", "Unknown error"))
 	MusicDirector.play_for_phase(phase)
 
 func _open_pause_menu() -> void:
@@ -593,6 +597,59 @@ func _start_world() -> void:
 	context.year = world.year
 	_refresh_compound()
 	_show_character_creation_screen(0)
+
+func can_save_game() -> bool:
+	return world != null and world.get_player() != null and phase == "case" and (active_event != null or not procedural_assignment.is_empty())
+
+func save_game() -> Dictionary:
+	if not can_save_game():
+		return {"success": false, "error": "Save is available while a docket is open."}
+	var session := {
+		"phase": "case",
+		"active_event_id": String(active_event.id) if active_event != null else "",
+		"procedural_assignment": procedural_assignment.duplicate(true),
+		"selected_path": String(selected_path),
+	}
+	var result := SaveManager.save_game(world, session)
+	status_label.text = "SAVE SEALED / CAMPAIGN RECORDED" if bool(result.get("success", false)) else "SAVE FAILED / " + String(result.get("error", "Unknown error"))
+	return result
+
+func load_game() -> Dictionary:
+	var result := SaveManager.load_game()
+	if not bool(result.get("success", false)):
+		status_label.text = "LOAD FAILED / " + String(result.get("error", "Unknown error"))
+		return result
+	var restored_world: WorldState = result.world
+	var restored_actor := restored_world.get_player()
+	if restored_actor == null:
+		return {"success": false, "error": "The save has no current player."}
+	world = restored_world
+	actor = restored_actor
+	current_era = Registry.get_era_for_year(world.year)
+	context = EventContext.new()
+	context.world = world
+	context.actor = actor
+	context.era = current_era
+	context.year = world.year
+	active_event = null
+	procedural_assignment.clear()
+	last_resolved_outcome = null
+	last_opinion_deltas.clear()
+	var session: Dictionary = result.get("session", {})
+	var saved_event_id := StringName(session.get("active_event_id", ""))
+	if saved_event_id != &"":
+		active_event = Registry.get_event(saved_event_id)
+	var saved_assignment: Variant = session.get("procedural_assignment", {})
+	if saved_assignment is Dictionary:
+		procedural_assignment = saved_assignment.duplicate(true)
+	selected_path = StringName(session.get("selected_path", ""))
+	if active_event == null and procedural_assignment.is_empty():
+		_schedule_next_case()
+	else:
+		_show_case()
+	_refresh_compound()
+	status_label.text = "CAMPAIGN RESTORED / RECORD RESUMED"
+	return {"success": true}
 
 func _schedule_next_case() -> void:
 	_clear_stamp_history()

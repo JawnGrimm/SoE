@@ -6,6 +6,8 @@ var registry: DefinitionRegistry
 var _finished := false
 
 const AssignmentGeneratorScript = preload("res://systems/assignment_generator.gd")
+const SaveCodecScript = preload("res://systems/save_codec.gd")
+const SaveManagerScript = preload("res://autoloads/save_manager.gd")
 const ROUTINE_CASE: EventTemplate = preload("res://data/events/routine_tally_adjustment.tres")
 const ORIGIN_REPLY_CASE: EventTemplate = preload("res://data/events/origin_side_reply.tres")
 
@@ -111,6 +113,53 @@ func _run() -> void:
 	# --script does not inject project autoloads. Exercise the standalone registry directly.
 	registry = DefinitionRegistry.new()
 	registry.load_defaults()
+
+	# Versioned Save/Load v1 round-trips runtime state and RNG streams.
+	var save_roundtrip_world := WorldState.new()
+	var save_roundtrip_player := UrukSeeder.seed_campaign(save_roundtrip_world, 918273)
+	save_roundtrip_world.year = -3198
+	save_roundtrip_world.period = 7
+	save_roundtrip_world.set_flag(&"save_test_flag", save_roundtrip_world.current_period_index() + 4)
+	save_roundtrip_player.skills.add_xp(&"law", 37)
+	save_roundtrip_player.memory.append({"memory_id": &"save_test_memory", "text": "The ink remembers.", "year": save_roundtrip_world.year, "involved": [&"ur_nanna"]})
+	save_roundtrip_player.resources[&"silver"] = 17
+	save_roundtrip_world.pending_forms.append({"id": &"save_pending_1", "form_type": &"travel_pass", "status": "overdue", "due_period": save_roundtrip_world.current_period_index() - 1})
+	save_roundtrip_world.epics[&"great_canal_cut"] = {"active": true, "progress": 41, "progress_resource": &"canal_progress", "target": 100, "stage": "cutting", "completed": false}
+	save_roundtrip_world.stockpiles[&"canal_progress"] = 41
+	save_roundtrip_world.rng_narrative.randi()
+	save_roundtrip_world.rng_sim.randi()
+	save_roundtrip_world.rng_people.randi()
+	var saved_narrative_state := save_roundtrip_world.rng_narrative.state
+	var saved_simulation_state := save_roundtrip_world.rng_sim.state
+	var saved_people_state := save_roundtrip_world.rng_people.state
+	var save_session := {"active_event_id": "routine_tally_adjustment", "procedural_assignment": {}, "selected_path": "government_scribe"}
+	var save_payload := SaveCodecScript.encode_world(save_roundtrip_world, save_session)
+	var json_payload: Variant = JSON.parse_string(JSON.stringify(save_payload))
+	var decoded_save := SaveCodecScript.decode_save(json_payload)
+	_check(bool(decoded_save.get("success", false)), "SaveCodec should decode a valid version 1 campaign")
+	if bool(decoded_save.get("success", false)):
+		var restored_world: WorldState = decoded_save.world
+		var restored_player := restored_world.get_player()
+		_check(restored_world.year == -3198 and restored_world.period == 7, "SaveCodec should restore exact calendar position")
+		_check(restored_world.player_id == save_roundtrip_world.player_id and restored_player.display_name == save_roundtrip_player.display_name, "SaveCodec should preserve player pointer and identity")
+		_check(restored_player.resources.get(&"silver", 0) == 17 and restored_player.skills.xp.get(&"law", 0) == save_roundtrip_player.skills.xp.get(&"law", 0), "SaveCodec should preserve purse and skill XP")
+		_check(restored_player.memory.size() == save_roundtrip_player.memory.size() and restored_player.memory.back().get("memory_id", &"") == &"save_test_memory", "SaveCodec should preserve personal memory")
+		_check(restored_world.get_resource(&"canal_progress") == 41 and restored_world.epics[&"great_canal_cut"].get("stage", "") == "cutting", "SaveCodec should preserve Epic progress and stage")
+		_check(restored_world.has_flag(&"save_test_flag", restored_world.current_period_index()), "SaveCodec should preserve expiring flags")
+		_check(restored_world.pending_forms.size() == save_roundtrip_world.pending_forms.size() and restored_world.hazards.size() == save_roundtrip_world.hazards.size(), "SaveCodec should preserve forms and hazards")
+		_check(restored_world.rng_narrative.state == saved_narrative_state and restored_world.rng_sim.state == saved_simulation_state and restored_world.rng_people.state == saved_people_state, "SaveCodec should preserve all three RNG streams")
+		_check(String(decoded_save.session.get("active_event_id", "")) == "routine_tally_adjustment", "SaveCodec should preserve active docket session")
+	var unsupported_save := save_payload.duplicate(true)
+	unsupported_save["version"] = 999
+	_check(not bool(SaveCodecScript.decode_save(unsupported_save).get("success", false)), "SaveCodec should reject unsupported future versions")
+	var save_service := SaveManagerScript.new()
+	var disk_save_result := save_service.save_game(save_roundtrip_world, save_session)
+	var disk_load_result := save_service.load_game()
+	_check(bool(disk_save_result.get("success", false)) and bool(disk_load_result.get("success", false)), "SaveManager should write and load the versioned slot")
+	if bool(disk_load_result.get("success", false)):
+		_check(disk_load_result.world.get_player() != null and disk_load_result.world.year == save_roundtrip_world.year, "SaveManager disk round-trip should restore a playable campaign")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(SaveManagerScript.SAVE_PATH))
+
 	_check(registry.has_definition(&"corrupt_grain_official"), "Registry should index the initial grain event")
 	_check(registry.has_definition(&"routine_tally_adjustment"), "Registry should index the routine tally event")
 	_check(registry.get_epic(&"great_canal_cut") != null and registry.all_epics().size() == 1, "Registry should index Epic definitions by ID and category")
