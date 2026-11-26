@@ -673,6 +673,12 @@ func _show_north_bay_activity() -> void:
 		"prompt": "Consult the steward and inspect the beams before submitting an assessment.",
 		"choices": []
 	}
+	if actions.has(&"consult_steward"):
+		payload.left_card.quote = "“I ordered the north side patched. I cannot swear the beam sockets are dry.”"
+		payload.left_card.facts = "REPORTED BY UR-NANNA\nPatch order confirmed; sockets unverified."
+	if actions.has(&"inspect_beams"):
+		payload.right_card.quote = "A slow drop falls from the north beam socket. Timber is dark and softened around the joint."
+		payload.right_card.facts = "DIRECT OBSERVATION\nWater ingress: %s\nIntegrity index: %d / 100" % ["CONFIRMED" if world.has_active_hazard(&"north_bay", &"roof_leak") else "NOT OBSERVED", int(world.get_person(&"ur_nanna").vulnerabilities.get(&"granary_roof_integrity", 0))]
 	var callbacks: Array = []
 	if actions.has(&"consult_steward"):
 		payload.choices.append({"label": "Consult Steward / RECORDED", "result_title": "", "result_text": "", "effects": {}})
@@ -691,18 +697,7 @@ func _show_north_bay_activity() -> void:
 	_render_docket_payload(payload, callbacks)
 
 func _refresh_north_bay_actions() -> void:
-	_clear_choices()
-	var state := world.get_assignment_state(NORTH_BAY_ASSIGNMENT_ID)
-	var actions: Dictionary = state.get("actions", {})
-	if actions.has(&"consult_steward"):
-		_add_choice("Consult Steward  /  RECORDED", _north_bay_action_already_recorded.bind("Consult Steward"))
-	else:
-		_add_choice("Consult Steward", _north_bay_consult_steward)
-	if actions.has(&"inspect_beams"):
-		_add_choice("Inspect Beams  /  RECORDED", _north_bay_action_already_recorded.bind("Inspect Beams"))
-	else:
-		_add_choice("Inspect Beams", _north_bay_inspect_beams)
-	_add_choice("Submit Assessment", _begin_north_bay_assessment)
+	_show_north_bay_activity()
 
 func _north_bay_action_already_recorded(action_label: String) -> void:
 	prompt_label.text = "%s has already been recorded in this docket." % action_label
