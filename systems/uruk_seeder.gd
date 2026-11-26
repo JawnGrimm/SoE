@@ -11,7 +11,6 @@ static func seed_campaign(world: WorldState, seed: int) -> PersonEntity:
 	world.places.clear()
 	world.institutions.clear()
 	world.social_groups.clear()
-	world.relationships.clear()
 	world.assignments.clear()
 	world.pending_forms.clear()
 	world.resolved_forms.clear()
@@ -24,7 +23,7 @@ static func seed_campaign(world: WorldState, seed: int) -> PersonEntity:
 	var player := _person(&"player_apprentice", "Enlil-barni", &"apprentice_scribe", {"literacy": 1, "arithmetic": 1, "law": 1}, [])
 	world.people[player.id] = player
 	var senior := _person(&"shuruppak_ilu", "Shuruppak-ilu", &"archive_keeper", {"literacy": 4, "arithmetic": 4, "law": 3, "rhetoric": 2, "intrigue": 2, "stewardship": 3}, [&"patient", &"exacting"])
-	senior.opinions[PLAYER_ID] = 5
+	senior.set_opinion(PLAYER_ID, 5)
 	senior.vulnerabilities[&"patience_remaining"] = 3 + world.rng_people.randi_range(0, 2)
 	world.people[senior.id] = senior
 	var steward := _person(&"ur_nanna", "Ur-Nanna", &"grain_clerk", {"stewardship": 4, "law": 2, "arithmetic": 3}, [&"cautious", &"weather_watcher"])
@@ -135,15 +134,15 @@ static func _link(world: WorldState, source_id: StringName, target_id: StringNam
 		return
 	var tie := {"type": relation_type, "strength": strength, "trust": trust}
 	source.relationships[target_id] = tie
-	world.relationships.append({"source_id": source_id, "target_id": target_id, "type": relation_type, "strength": strength, "trust": trust})
+	tie["opinion"] = strength
+	tie["reasons"] = []
+	source.relationships[target_id] = tie
 
 static func _person(id: StringName, display_name: String, office: StringName, values: Dictionary, person_traits: Array) -> PersonEntity:
 	var person := PersonEntity.new()
 	person.id = id
 	person.display_name = display_name
 	person.office_id = office
-	if id != PLAYER_ID:
-		person.opinions[PLAYER_ID] = 0
 	person.traits.assign(person_traits)
 	for skill in person.skills.levels.keys():
 		person.skills.levels[skill] = int(values.get(String(skill), 0))
