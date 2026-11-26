@@ -431,12 +431,16 @@ func modify_resource(resource_id: StringName, amount: int, scope: String = "worl
 		institutions[resolved_id] = institution
 		return true
 	var next_value := int(stockpiles.get(resource_id, 0)) + amount
-	if String(resource_id).ends_with("_progress"):
-		var progress_target := 100
-		for epic_state in epics.values():
-			if StringName(epic_state.get("progress_resource", "")) == resource_id:
-				progress_target = int(epic_state.get("target", 100))
-				break
+	var is_epic_progress := String(resource_id).ends_with("_progress")
+	var progress_target := 100
+	for epic_state in epics.values():
+		if StringName(epic_state.get("progress_resource", "")) != resource_id:
+			continue
+		is_epic_progress = true
+		if bool(epic_state.get("active", false)):
+			progress_target = int(epic_state.get("target", 100))
+			break
+	if is_epic_progress:
 		next_value = clampi(next_value, 0, progress_target)
 	stockpiles[resource_id] = next_value
 	return true
