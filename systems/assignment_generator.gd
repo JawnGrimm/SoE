@@ -2,6 +2,7 @@ class_name AssignmentGenerator
 extends RefCounted
 
 const GOODS: Array[StringName] = [&"barley", &"dates", &"fish", &"beer", &"wool", &"textiles", &"timber", &"copper"]
+const DAMAGED_GOODS: Array[StringName] = [&"beer", &"wool", &"textiles"]
 const ARCHETYPES: Array[StringName] = [&"delivery_mismatch", &"damaged_consignment", &"subtotal_claim", &"goods_unreturned", &"hazard_check"]
 
 static func generate(world: WorldState, actor: PersonEntity) -> Dictionary:
@@ -102,6 +103,11 @@ static func generate(world: WorldState, actor: PersonEntity) -> Dictionary:
 			payload.right_card.facts = "RECEIVED: %d\nUNASSIGNED DIFFERENCE: %d" % [received, dispatched - received]
 			payload.choices = [_choice("Record discrepancy", "The unassigned difference is entered.", good, -1, 1, 1, "arithmetic", 12, "", 1), _choice("Force acceptance on paper", "The docket balances; the missing goods do not.", good, 2, -2, 2, "law", 8, "complicit", 2), _choice("Dock the carrier", "The carrier bears the shortage pending review.", good, 1, 2, -2, "stewardship", 10, "severe", 1)]
 		&"damaged_consignment":
+			good = DAMAGED_GOODS[world.rng_narrative.randi_range(0, DAMAGED_GOODS.size() - 1)]
+			good_name = String(good).replace("_", " ")
+			amount = maxi(1, world.get_resource(good))
+			payload.resource_id = good
+			payload.amount = amount
 			var damaged := maxi(1, int(round(float(amount) * 0.2)))
 			payload.title = "DAMAGED CONSIGNMENT"
 			payload.left_card.quote = "%s reports %s stored at %s." % [left.display_name, good_name, place_name]
