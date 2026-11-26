@@ -24,6 +24,7 @@ func _simulate_economy(world: WorldState) -> void:
 	_change(world, &"beer", -2)
 	_change(world, &"dates", -1)
 	_change(world, &"fish", -2)
+	_change(world, &"textiles", -1)
 	_change(world, &"labor", -4)
 	# Labor is available labor-days/workforce, not a consumable household good.
 	# Replenish the period's workforce pool before institutional demand is applied.
