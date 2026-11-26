@@ -16,6 +16,11 @@ var resolved_forms: Array[Dictionary] = []
 var event_history: Array[Dictionary] = []
 var character_event_history: Dictionary[StringName, Array] = {}
 var people: Dictionary[StringName, PersonEntity] = {}
+# Seeded world graph. These are runtime records, not shared definition Resources.
+var places: Dictionary[StringName, Dictionary] = {}
+var institutions: Dictionary[StringName, Dictionary] = {}
+var social_groups: Dictionary[StringName, Dictionary] = {}
+var relationships: Array[Dictionary] = []
 var assignments: Dictionary[StringName, Dictionary] = {}
 var north_bay_roof_leak_active: bool = false
 var north_bay_roof_leak_rate: int = 1
