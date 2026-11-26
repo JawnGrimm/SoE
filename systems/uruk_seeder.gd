@@ -17,7 +17,7 @@ static func seed_campaign(world: WorldState, seed: int) -> PersonEntity:
 	world.resolved_forms.clear()
 	world.event_history.clear()
 	world.character_event_history.clear()
-	world.north_bay_roof_total_spoiled = 0
+	world.hazards.clear()
 	world._next_form_sequence = 1
 
 	# The original eight remain the center of the first playable slice.
@@ -75,8 +75,7 @@ static func seed_campaign(world: WorldState, seed: int) -> PersonEntity:
 	world.stockpiles[&"labor"] = 25 + world.rng_sim.randi_range(-5, 5)
 
 	# The North-Bay roof is already leaking; each elapsed period spoils one measure of barley.
-	world.north_bay_roof_leak_active = true
-	world.north_bay_roof_leak_rate = 1
+	world.hazards.append({"id": &"roof_leak", "place_id": &"north_bay", "resource": &"barley", "rate": 1, "total_lost": 0, "active": true})
 	world.enqueue_form({"form_type": &"grain_levy", "subject_id": &"south_court_storehouse", "urgency": 1, "year": world.year})
 	return player
 
