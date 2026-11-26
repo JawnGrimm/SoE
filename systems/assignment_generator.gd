@@ -12,12 +12,24 @@ static func generate(world: WorldState, actor: PersonEntity) -> Dictionary:
 		if world.recent_archetypes.is_empty() or StringName(world.recent_archetypes.back()) != item:
 			archetypes.append(item)
 	var archetype: StringName = archetypes[world.rng_narrative.randi_range(0, archetypes.size() - 1)]
+	if archetype == &"hazard_check":
+		var active_hazard := false
+		for hazard_record in world.hazards:
+			if bool(hazard_record.get("active", false)):
+				active_hazard = true
+				break
+		var shortage_pressure := world.get_resource(&"barley") < 100 or world.get_resource(&"labor") < 8
+		if not active_hazard and not shortage_pressure:
+			archetype = &"delivery_mismatch"
 	world.recent_archetypes.append(archetype)
 	while world.recent_archetypes.size() > 6:
 		world.recent_archetypes.pop_front()
 	var people: Array[PersonEntity] = []
 	for person in world.people.values():
-		if person != null and person.id != actor.id:
+		if person == null or person.id == actor.id:
+			continue
+		var office := String(person.office_id).to_lower()
+		if office.contains("carrier") or office.contains("steward") or office.contains("trader") or office.contains("brewer") or office.contains("builder") or office.contains("grain_clerk") or office.contains("storehouse") or office.contains("clerk"):
 			people.append(person)
 	if people.size() < 2:
 		return {}
@@ -27,9 +39,11 @@ static func generate(world: WorldState, actor: PersonEntity) -> Dictionary:
 		right = people[world.rng_narrative.randi_range(0, people.size() - 1)]
 		if right.id != left.id and not world.recent_npc_pairs.has("%s|%s" % [left.id, right.id]) and not world.recent_npc_pairs.has("%s|%s" % [right.id, left.id]):
 			break
-	if right.id == left.id:
+	if right.id == left.id or world.recent_npc_pairs.has("%s|%s" % [left.id, right.id]) or world.recent_npc_pairs.has("%s|%s" % [right.id, left.id]):
 		for candidate in people:
-			if candidate.id != left.id:
+			var candidate_pair := "%s|%s" % [left.id, candidate.id]
+			var reverse_pair := "%s|%s" % [candidate.id, left.id]
+			if candidate.id != left.id and not world.recent_npc_pairs.has(candidate_pair) and not world.recent_npc_pairs.has(reverse_pair):
 				right = candidate
 				break
 	var pair := "%s|%s" % [left.id, right.id]
