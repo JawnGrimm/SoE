@@ -172,17 +172,18 @@ func _run() -> void:
 	uruk_ctx.actor = uruk_player_a
 	uruk_ctx.year = uruk_a.year
 	uruk_ctx.era = registry.get_era(&"uruk_storehouse")
-	_check(runner.is_eligible(case15, uruk_ctx), "Case 15 should be eligible at campaign start")
+	_check(not runner.is_eligible(case15, uruk_ctx), "Case 15 should not be eligible before Harvest")
+	uruk_a.period = 6
+	var case15_pool: Array[EventTemplate] = [case15]
+	_check(runner.is_eligible(case15, uruk_ctx), "Case 15 should be eligible during Harvest with a pending grain levy")
+	_check(scheduler.pick_next_event(uruk_a, uruk_player_a, case15_pool, uruk_ctx.era, uruk_a.rng_narrative) == case15, "Case 15 should return to the desk during Harvest when a levy is pending")
 	runner.resolve_outcome(case15, case15.outcomes[0], uruk_ctx)
 	_check(uruk_a.get_person(&"utu_mansum").get_opinion(uruk_player_a.id) == 2, "Case 15 should shift Utu-mansum's opinion of the apprentice")
 	_check(uruk_a.get_person(&"enlil_kisu").get_opinion(uruk_player_a.id) == 2, "Case 15 should shift Enlil-kisu's opinion of the apprentice")
 	_check(uruk_a.get_person(&"shuruppak_ilu").get_opinion(uruk_player_a.id) == 10, "Case 15 should shift Shuruppak-ilu's opinion of the apprentice")
 	_check(uruk_a.get_resource(&"barley") >= 443, "Case 15 should enter 23 measures of barley")
 	_check(uruk_a.resolved_forms.size() == 1, "Case 15 should resolve the opening grain levy")
-	uruk_a.period = 6
-	uruk_a.enqueue_form({"form_type": &"grain_levy"})
-	var case15_pool: Array[EventTemplate] = [case15]
-	_check(scheduler.pick_next_event(uruk_a, uruk_player_a, case15_pool, uruk_ctx.era, uruk_a.rng_narrative) == case15, "Case 15 should return to the desk during Harvest when a levy is pending")
+
 
 	# Case 1 may arrive from a receipt in any season, or from the Harvest/Stores desk pool.
 	var sealed_case := registry.get_event(&"case_01_sealed_vessel")
