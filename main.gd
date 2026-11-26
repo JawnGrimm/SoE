@@ -17,6 +17,7 @@ class CylinderSealProp extends Control:
 
 var runner: EventRunner
 var scheduler: EventScheduler
+var world_simulator: WorldSimulator
 var world: WorldState
 var actor: PersonEntity
 var active_event: EventTemplate
@@ -541,6 +542,7 @@ func _panel_style(fill: String, border: String) -> StyleBoxFlat:
 func _start_world() -> void:
 	runner = EventRunner.new()
 	scheduler = EventScheduler.new(runner)
+	world_simulator = WorldSimulator.new()
 	world = WorldState.new()
 	actor = UrukSeeder.seed_campaign(world, CAMPAIGN_SEED)
 	north_bay_assignment = Registry.get_assignment(NORTH_BAY_ASSIGNMENT_ID)
@@ -622,6 +624,8 @@ func _choose_mentor(mentor_id: StringName) -> void:
 
 
 func _offer_north_bay_assignment() -> void:
+	# This is a world-condition assignment, available to every career path.
+	# Do not gate it on the temple/civil catechism choice.
 	if north_bay_assignment == null:
 		return
 	if world.get_hazard_total_lost(&"north_bay", &"roof_leak") < 3:
@@ -854,28 +858,11 @@ func _advance_period() -> void:
 	if phase != "result" and phase != "end_of_queue":
 		return
 	_clear_stamp_history()
-	world.advance_period()
-	_prepare_seasonal_forms()
+	world_simulator.advance_period(world)
 	if world.get_hazard_total_lost(&"north_bay", &"roof_leak") >= 3:
 		_offer_north_bay_assignment()
 	last_opinion_deltas.clear()
 	_schedule_next_case()
-
-func _prepare_seasonal_forms() -> void:
-	# The Labor Tally arrives in Sowing (Period 3).
-	if world.period == 3 and not world.has_pending_form(&"pension_roll"):
-		world.enqueue_form({"form_type": &"pension_roll", "subject_id": &"ditch_labor_tally", "urgency": 1, "year": world.year})
-	# Held barley and competing load claims enter at Harvest (Period 6).
-	if world.period == 6 and not world.has_pending_form(&"held_barley"):
-		world.enqueue_form({"form_type": &"held_barley", "subject_id": &"bay_4", "urgency": 2, "year": world.year})
-	if world.period == 6 and not world.has_pending_form(&"load_claim"):
-		world.enqueue_form({"form_type": &"load_claim", "subject_id": &"harvest_load", "urgency": 1, "year": world.year})
-	# Harvest also opens the South Court barley docket and receiving docket.
-	if world.period == 6 and not world.has_pending_form(&"grain_levy"):
-		world.enqueue_form({"form_type": &"grain_levy", "subject_id": &"south_court_storehouse", "urgency": 1, "year": world.year})
-	if world.period == 6 or world.period == 9:
-		if not world.has_pending_form(&"consignment_receipt"):
-			world.enqueue_form({"form_type": &"consignment_receipt", "subject_id": &"temple_consignment", "urgency": 1, "year": world.year})
 
 func _show_end_of_queue() -> void:
 	_clear_choices()
