@@ -1,0 +1,66 @@
+[gd_resource type="Resource" script_class="EventTemplate" load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/event_template.gd" id="1"]
+[ext_resource type="Script" path="res://data/definitions/event_outcome.gd" id="2"]
+[ext_resource type="Script" path="res://data/definitions/event_effect.gd" id="3"]
+[ext_resource type="Script" path="res://data/definitions/event_condition.gd" id="4"]
+
+[sub_resource type="Resource" id="ConditionForm"]
+script = ExtResource("4")
+condition_type = &"has_pending_form"
+target = "actor"
+parameters = {"form_type": &"labor_tally"}
+
+[sub_resource type="Resource" id="EffectCreditLabor"]
+script = ExtResource("3")
+effect_type = &"modify_resource"
+parameters = {"resource": &"labor", "amount": 2, "scope": "world"}
+
+[sub_resource type="Resource" id="EffectCreditMemory"]
+script = ExtResource("3")
+effect_type = &"add_memory"
+parameters = {"memory_id": &"labor_tally_credited", "text": "I credited the crew's labor tally after checking the work against the recorded days.", "involved": [&"enlil_kisu"]}
+
+[sub_resource type="Resource" id="EffectShortLabor"]
+script = ExtResource("3")
+effect_type = &"modify_resource"
+parameters = {"resource": &"labor", "amount": -2, "scope": "world"}
+
+[sub_resource type="Resource" id="EffectShortMemory"]
+script = ExtResource("3")
+effect_type = &"add_memory"
+parameters = {"memory_id": &"labor_tally_shortened", "text": "I shortened the labor tally to satisfy the storehouse allocation.", "involved": [&"enlil_kisu"]}
+
+[sub_resource type="Resource" id="OutcomeCredit"]
+script = ExtResource("2")
+label = "Credit the days worked"
+title_override = "THE LABOR IS ENTERED"
+description_override = "The tally is accepted at the full count. The crew receives its recorded credit, and the storehouse must find the barley to meet it."
+effects = Array[ExtResource("3")]([SubResource("EffectCreditLabor"), SubResource("EffectCreditMemory")])
+
+[sub_resource type="Resource" id="OutcomeShort"]
+script = ExtResource("2")
+label = "Reduce the tally to the storehouse allowance"
+title_override = "THE DAYS ARE CUT"
+description_override = "The tally is reduced before it reaches the archive. The storehouse balance improves; the crew's account does not."
+effects = Array[ExtResource("3")]([SubResource("EffectShortLabor"), SubResource("EffectShortMemory")])
+
+[resource]
+script = ExtResource("1")
+id = &"case_12_labor_tally"
+title = "The Labor Tally"
+description = "Enlil-kisu brings a labor tally for the canal crew. The marks record days of hauling and carrying, but the storehouse allowance is smaller than the total entered. The crew waits for the clerk's mark before its credit is carried forward."
+era_tags = Array[StringName]([&"uruk"])
+weight = 8.0
+cooldown_years = 1
+conditions = Array[ExtResource("4")]([SubResource("ConditionForm")])
+evidence_left_title = "CANAL WORKSITE  /  CREW TALLY"
+evidence_right_title = "STOREHOUSE  /  ALLOWANCE"
+evidence_left_speaker = "ENLIL-KISU"
+evidence_right_speaker = "UR-NANNA"
+evidence_left_quote = "My people carried what was assigned. The days are marked here."
+evidence_right_quote = "The allowance is smaller. I cannot issue what the stores do not hold."
+evidence_left_portrait = &"enlil_kisu"
+evidence_right_portrait = &"ur_nanna"
+records = Array[Dictionary]([{"label": "CREW TALLY", "value": "Labor-days entered: 12", "note": "Crew marks agree with the foreman's count."}, {"label": "STOREHOUSE ALLOWANCE", "value": "Labor-days allowed: 10", "note": "Two days remain disputed."}])
+outcomes = Array[ExtResource("2")]([SubResource("OutcomeCredit"), SubResource("OutcomeShort")])
