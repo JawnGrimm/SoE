@@ -676,6 +676,8 @@ func _run() -> void:
 			_check(choice_data.has("label") and choice_data.has("result_title") and choice_data.has("result_text") and choice_data.has("effects"), "Generated choice should include the common result/effects shape")
 		if archetype_id == &"hazard_check" and bool(choices_a[0].effects.get("repair_hazard", false)):
 			generator_has_repair = true
+		if archetype_id == &"damaged_consignment":
+			_check(StringName(docket_a.get("resource_id", "")) in [&"beer", &"wool", &"textiles"], "Damaged consignment should select beer, wool, or textiles")
 	_check(generator_deterministic, "Narrative RNG should reproduce procedural docket sequences from the same seed")
 	_check(generator_variety.size() >= 4, "Procedural generation should rotate across at least four archetypes in thirty turns")
 	_check(generator_has_repair, "Active maintenance hazard should produce an actual labor/silver repair choice")
