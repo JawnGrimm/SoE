@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="EventTemplate" load_steps=32 format=3]
+[gd_resource type="Resource" script_class="EventTemplate" load_steps=33 format=3]
 
 [ext_resource type="Script" path="res://data/definitions/event_template.gd" id="1"]
 [ext_resource type="Script" path="res://data/definitions/event_outcome.gd" id="2"]
@@ -11,6 +11,12 @@ script = ExtResource("4")
 condition_type = &"has_pending_form"
 target = "actor"
 parameters = {"form_type": &"grain_levy"}
+
+[sub_resource type="Resource" id="condition_harvest"]
+script = ExtResource("4")
+condition_type = &"period_in_range"
+target = "actor"
+parameters = {"min": 6, "max": 6}
 
 
 [sub_resource type="Resource" id="fx_1"]
@@ -161,6 +167,6 @@ description = "The dispatch tablet in Enlil-kisu's name says twenty-four measure
 era_tags = Array[StringName]([&"uruk"])
 weight = 100.0
 once_per_world = true
-conditions = Array[ExtResource("4")]([SubResource("condition_1")])
+conditions = Array[ExtResource("4")]([SubResource("condition_1"), SubResource("condition_harvest")])
 records = Array[Dictionary]([{"label": "DISPATCH TABLET", "value": "24 measures barley", "note": "Sealed at the river."}, {"label": "THRESHOLD TALLY", "value": "23 measures barley", "note": "No witness at loading, transit, or unloading."}])
 outcomes = Array[ExtResource("2")]([SubResource("outcome_1"), SubResource("outcome_2"), SubResource("outcome_3")])
