@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="EventTemplate" load_steps=12 format=3]
+[gd_resource type="Resource" script_class="EventTemplate" load_steps=16 format=3]
 
 [ext_resource type="Script" path="res://data/definitions/event_template.gd" id="1"]
 [ext_resource type="Script" path="res://data/definitions/event_outcome.gd" id="2"]
@@ -11,56 +11,94 @@ condition_type = &"has_pending_form"
 target = "actor"
 parameters = {"form_type": &"held_barley"}
 
-[sub_resource type="Resource" id="EffectRelease"]
+[sub_resource type="Resource" id="ConditionHarvest"]
+script = ExtResource("4")
+condition_type = &"period_in_range"
+target = "actor"
+parameters = {"min": 6, "max": 6}
+
+[sub_resource type="Resource" id="FxReleaseFive"]
 script = ExtResource("3")
 effect_type = &"modify_resource"
-parameters = {"resource": &"barley", "amount": -6, "scope": "world"}
+parameters = {"resource": &"barley", "amount": -5, "scope": "world"}
 
-[sub_resource type="Resource" id="EffectReleaseMemory"]
+[sub_resource type="Resource" id="FxMemoryFive"]
 script = ExtResource("3")
 effect_type = &"add_memory"
-parameters = {"memory_id": &"held_barley_released", "text": "I released six measures of held barley against the household claim.", "involved": [&"ama_edin", &"ur_nanna"]}
+parameters = {"memory_id": &"held_barley_partial_release", "text": "Released five dry jars of Bay 4 barley and quarantined the two wet-stained jars.", "involved": [&"ur_nanna", &"nin_kasi"]}
 
-[sub_resource type="Resource" id="EffectRetain"]
+[sub_resource type="Resource" id="FxResolveFive"]
+script = ExtResource("3")
+effect_type = &"resolve_form"
+parameters = {"form_type": &"held_barley", "disposition": "five_released_two_quarantined"}
+
+[sub_resource type="Resource" id="FxReleaseAll"]
 script = ExtResource("3")
 effect_type = &"modify_resource"
-parameters = {"resource": &"barley", "amount": 6, "scope": "world"}
+parameters = {"resource": &"barley", "amount": -7, "scope": "world"}
 
-[sub_resource type="Resource" id="EffectRetainMemory"]
+[sub_resource type="Resource" id="FxMemoryAll"]
 script = ExtResource("3")
 effect_type = &"add_memory"
-parameters = {"memory_id": &"held_barley_retained", "text": "I kept six measures of barley under storehouse hold until the claim is settled.", "involved": [&"ama_edin", &"ur_nanna"]}
+parameters = {"memory_id": &"held_barley_all_released", "text": "Released all seven Bay 4 jars, including the two wet-stained jars.", "involved": [&"ur_nanna", &"nin_kasi"]}
 
-[sub_resource type="Resource" id="OutcomeRelease"]
-script = ExtResource("2")
-label = "Release the held barley to the household"
-title_override = "THE BARLEY IS RELEASED"
-description_override = "The household receives the held measures. The storehouse must account for the release in its next balance."
-effects = Array[ExtResource("3")]([SubResource("EffectRelease"), SubResource("EffectReleaseMemory")])
+[sub_resource type="Resource" id="FxResolveAll"]
+script = ExtResource("3")
+effect_type = &"resolve_form"
+parameters = {"form_type": &"held_barley", "disposition": "all_seven_released"}
 
-[sub_resource type="Resource" id="OutcomeRetain"]
+[sub_resource type="Resource" id="FxCondemn"]
+script = ExtResource("3")
+effect_type = &"modify_resource"
+parameters = {"resource": &"barley", "amount": -7, "scope": "world"}
+
+[sub_resource type="Resource" id="FxMemoryCondemn"]
+script = ExtResource("3")
+effect_type = &"add_memory"
+parameters = {"memory_id": &"held_barley_condemned", "text": "Condemned and broke the seals on all seven Bay 4 jars.", "involved": [&"ur_nanna", &"nin_kasi"]}
+
+[sub_resource type="Resource" id="FxResolveCondemn"]
+script = ExtResource("3")
+effect_type = &"resolve_form"
+parameters = {"form_type": &"held_barley", "disposition": "all_seals_broken"}
+
+[sub_resource type="Resource" id="OutcomeFive"]
 script = ExtResource("2")
-label = "Keep the barley under storehouse hold"
-title_override = "THE HOLD REMAINS"
-description_override = "The measures remain in storage pending a settled claim. The household leaves without the barley."
-effects = Array[ExtResource("3")]([SubResource("EffectRetain"), SubResource("EffectRetainMemory")])
+label = "Release five dry jars; quarantine two wet-stained"
+title_override = "FIVE JARS ARE RELEASED"
+description_override = "Five dry jars are released for prime seed-corn. The two wet-stained jars remain sealed under quarantine for inspection."
+effects = Array[ExtResource("3")]([SubResource("FxReleaseFive"), SubResource("FxMemoryFive"), SubResource("FxResolveFive")])
+
+[sub_resource type="Resource" id="OutcomeAll"]
+script = ExtResource("2")
+label = "Release all seven jars to the brewer's feed"
+title_override = "ALL SEVEN JARS ARE RELEASED"
+description_override = "All seven jars are released as brewer's feed. The two wet-stained jars leave Bay 4 with the dry grain."
+effects = Array[ExtResource("3")]([SubResource("FxReleaseAll"), SubResource("FxMemoryAll"), SubResource("FxResolveAll")])
+
+[sub_resource type="Resource" id="OutcomeCondemn"]
+script = ExtResource("2")
+label = "Condemn the lot; break all seals"
+title_override = "THE SEALS ARE BROKEN"
+description_override = "All seven jars are condemned and their seals broken. Neither seed-corn nor brewer's feed is issued from this lot."
+effects = Array[ExtResource("3")]([SubResource("FxCondemn"), SubResource("FxMemoryCondemn"), SubResource("FxResolveCondemn")])
 
 [resource]
 script = ExtResource("1")
 id = &"case_14_held_barley"
 title = "The Held Barley"
-description = "Ama-edin's household has been denied six measures of barley pending a storehouse review. Ur-Nanna says the hold protects the reserve. The household says the measures were already assigned. The barley is present; the question is whose record governs its release."
+description = "After the storm, Ur-Nanna reports seven jars in Bay 4: five remain dry, while two are wet-stained. The rolls disagree over whether the lot is prime seed-corn or brewer's feed. Shuruppak-ilu cautions that a sealed jar cannot be judged from its outer mark alone."
 era_tags = Array[StringName]([&"uruk"])
-weight = 8.0
+weight = 12.0
 cooldown_years = 1
-conditions = Array[ExtResource("4")]([SubResource("ConditionForm")])
-evidence_left_title = "HOUSEHOLD  /  CLAIM"
-evidence_right_title = "STOREHOUSE  /  HOLD"
-evidence_left_speaker = "AMA-EDIN"
-evidence_right_speaker = "UR-NANNA"
-evidence_left_quote = "Those measures were entered for our household before the hold was placed."
-evidence_right_quote = "The reserve was short. I held the barley until the account could be checked."
-evidence_left_portrait = &"ama_edin"
-evidence_right_portrait = &"ur_nanna"
-records = Array[Dictionary]([{"label": "HOUSEHOLD CLAIM", "value": "6 measures barley assigned", "note": "Claim refers to the prior allocation."}, {"label": "STOREHOUSE HOLD", "value": "6 measures retained", "note": "No release mark appears on the current tablet."}])
-outcomes = Array[ExtResource("2")]([SubResource("OutcomeRelease"), SubResource("OutcomeRetain")])
+conditions = Array[ExtResource("4")]([SubResource("ConditionForm"), SubResource("ConditionHarvest")])
+evidence_left_title = "BAY 4  /  STOREHOUSE INSPECTION"
+evidence_right_title = "ROLLS  /  CLAIMS"
+evidence_left_speaker = "UR-NANNA"
+evidence_right_speaker = "SHURUPPAK-ILU"
+evidence_left_quote = "Five jars are dry. Two are wet-stained. The lot must be accounted for before it leaves the bay."
+evidence_right_quote = "The rolls name seed-corn and brewer's feed. The seal does not tell us what lies inside."
+evidence_left_portrait = &"ur_nanna"
+evidence_right_portrait = &"shuruppak_ilu"
+records = Array[Dictionary]([{"label": "BAY 4", "value": "7 jars total · 5 dry · 2 wet-stained", "note": "Post-storm inspection."}, {"label": "STOREHOUSE ROLL", "value": "Prime seed-corn", "note": "One claim for the lot."}, {"label": "BREWER'S ROLL", "value": "Brewer's feed", "note": "Conflicting use recorded."}])
+outcomes = Array[ExtResource("2")]([SubResource("OutcomeFive"), SubResource("OutcomeAll"), SubResource("OutcomeCondemn")])
