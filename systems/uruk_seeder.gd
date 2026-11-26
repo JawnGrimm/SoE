@@ -121,7 +121,6 @@ static func attach_player(world: WorldState, player: PersonEntity) -> void:
 	# was held outside WorldState during the creation draft.
 	_link(world, &"shuruppak_ilu", player.id, &"mentor", 7, 8)
 	_link(world, &"geme_tur", player.id, &"family", 8, 9)
-	_link(world, player.id, &"geme_tur", &"family", 8, 9)
 
 static func _seed_places(world: WorldState) -> void:
 	world.places = {

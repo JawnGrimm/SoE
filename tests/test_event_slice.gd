@@ -375,7 +375,7 @@ func _run() -> void:
 	incompatible_draft.select_answer(&"origin", &"origin_exchange")
 	incompatible_draft.select_answer(&"responsibility", &"responsibility_quality")
 	_check(not bool(CharacterCreationResolver.validate(creation_catalog, incompatible_draft).get("valid", false)), "Incompatible origin/responsibility combinations must fail validation")
-	var quality_answer := CharacterCreationResolver._find_answer(creation_catalog.questions[1], &"responsibility_quality")
+	var quality_answer := CharacterCreationResolver._find_answer(creation_catalog.get("questions", [])[1], &"responsibility_quality")
 	_check(not bool(CharacterCreationResolver.is_answer_available(creation_catalog, incompatible_draft, &"responsibility", quality_answer).get("available", false)), "Incompatible answers should be disabled before selection")
 	incompatible_draft.select_answer(&"formative_experience", &"experience_disagreement")
 	var pruned := CharacterCreationResolver.prune_invalid_answers(creation_catalog, incompatible_draft)
