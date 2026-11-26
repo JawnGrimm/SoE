@@ -169,7 +169,7 @@ func _build_interface() -> void:
 	var upper_workspace := VBoxContainer.new()
 	upper_workspace.custom_minimum_size.y = 0
 	upper_workspace.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	upper_workspace.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	upper_workspace.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	upper_workspace.add_theme_constant_override("separation", 6)
 	desk_box.add_child(upper_workspace)
 	var evidence_row := HBoxContainer.new()
