@@ -64,7 +64,7 @@ func _run() -> void:
 	reaction_world.set_player(reaction_old_player)
 	reaction_world.set_player(reaction_player)
 	reaction_world.stockpiles[&"labor"] = 0
-	WorldSimulator.new()._simulate_people(reaction_world)
+	WorldSimulator.new(registry)._simulate_people(reaction_world)
 	_check(reaction_foreman.get_opinion(reaction_player.id) == -1 and reaction_foreman.get_opinion(reaction_old_player.id) == 0, "WorldSimulator reactions should follow the successor, not the former character")
 	var opinion_before_actor_effect := reaction_senior.get_opinion(reaction_player.id)
 	var actor_opinion_effect := _effect(&"change_opinion", {"subject": &"shuruppak_ilu", "other": &"actor", "amount": 2, "reason": "current player test"})
@@ -719,13 +719,13 @@ func _run() -> void:
 		_check(not south_court_world.has_pending_form(&"grain_levy"), "Case 15 Outcome 2 should remove the resolved grain levy from pending forms")
 		_check(not south_court_world.resolved_forms.is_empty() and String(south_court_world.resolved_forms.back().get("disposition", "")) == "certified_full_dispatch", "Case 15 Outcome 2 should archive certified_full_dispatch")
 		south_court_world.stockpiles[&"barley"] = 0
-		WorldSimulator.new().advance_period(south_court_world)
+		WorldSimulator.new(registry).advance_period(south_court_world)
 		_check(south_court_world.has_pending_form(&"grain_levy"), "WorldSimulator should be able to generate a fresh grain levy after Outcome 2 closes the previous one")
 
 	# Year 1 must produce real, cause-matched work rather than a quiet desk.
 	var year_one_world := WorldState.new()
 	UrukSeeder.seed_campaign(year_one_world, 32003200)
-	var year_one_sim := WorldSimulator.new()
+	var year_one_sim := WorldSimulator.new(registry)
 	for year_one_period in range(12):
 		year_one_sim.advance_period(year_one_world)
 	var year_one_generated_types: Dictionary = {}
@@ -749,7 +749,7 @@ func _run() -> void:
 	load_claim_world.pending_forms.clear()
 	load_claim_world.stockpiles[&"barley"] = 100
 	load_claim_world.stockpiles[&"labor"] = 12
-	var load_claim_sim := WorldSimulator.new()
+	var load_claim_sim := WorldSimulator.new(registry)
 	load_claim_sim._generate_forms(load_claim_world)
 	var load_claim_generated := false
 	for generated_form in load_claim_world.pending_forms:
@@ -763,8 +763,8 @@ func _run() -> void:
 	UrukSeeder.seed_campaign(sim_world_a, 24680)
 	UrukSeeder.seed_campaign(sim_world_b, 24680)
 	var initial_sim_barley := sim_world_a.get_resource(&"barley")
-	var sim_a := WorldSimulator.new()
-	var sim_b := WorldSimulator.new()
+	var sim_a := WorldSimulator.new(registry)
+	var sim_b := WorldSimulator.new(registry)
 	for sim_period in range(48):
 		sim_world_a.rng_narrative.randi()
 		sim_a.advance_period(sim_world_a)
@@ -837,7 +837,7 @@ func _run() -> void:
 		runner.resolve_outcome(ledger_challenge, ledger_challenge.outcomes[0], ledger_ctx)
 		_check(not runner.is_eligible(ledger_challenge, ledger_ctx), "Ledger Inquest should respect once_per_world after resolution")
 	var canal_before_inquest_period := ledger_world.get_resource(&"canal_progress")
-	WorldSimulator.new().advance_period(ledger_world)
+	WorldSimulator.new(registry).advance_period(ledger_world)
 	_check(ledger_world.get_resource(&"canal_progress") > canal_before_inquest_period, "Resolving a Challenge should not block the autonomous Canal Epic tick")
 
 	var dry_challenge: EventTemplate = registry.get_event(&"challenge_dry_kettles_silt_breach")
@@ -873,7 +873,7 @@ func _run() -> void:
 	epic_high_world.year = -3200
 	epic_high_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 128, &"labor": 10}}
 	epic_high_world.stockpiles[&"canal_progress"] = 0
-	WorldSimulator.new().advance_period(epic_high_world)
+	WorldSimulator.new(registry).advance_period(epic_high_world)
 	_check(epic_high_world.get_resource(&"canal_progress") == 1, "Passive Epic work should advance slowly at full labor and ration thresholds")
 	_check(epic_high_world.get_resource(&"barley", "institution", "", &"eanna_household") == 116, "Full canal progress should consume four institutional barley after household demand")
 	var epic_high_state: Dictionary = epic_high_world.epics.get(&"great_canal_cut", {})
@@ -882,7 +882,7 @@ func _run() -> void:
 	var epic_partial_world := WorldState.new()
 	epic_partial_world.year = -3200
 	epic_partial_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 70, &"labor": 7}}
-	WorldSimulator.new().advance_period(epic_partial_world)
+	WorldSimulator.new(registry).advance_period(epic_partial_world)
 	_check(epic_partial_world.get_resource(&"canal_progress") == 1, "Canal Epic should make partial progress at labor 6–9 with adequate barley")
 	_check(epic_partial_world.get_resource(&"barley", "institution", "", &"eanna_household") == 60, "Partial canal progress should consume two institutional barley after household demand")
 
@@ -890,7 +890,7 @@ func _run() -> void:
 	epic_stall_world.year = -3200
 	epic_stall_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 128, &"labor": 10}}
 	epic_stall_world.set_flag(&"canal_crew_slowdown", epic_stall_world.current_period_index() + 10)
-	WorldSimulator.new().advance_period(epic_stall_world)
+	WorldSimulator.new(registry).advance_period(epic_stall_world)
 	_check(epic_stall_world.get_resource(&"canal_progress") == 0, "Active canal disruption should stall autonomous progress")
 	_check(epic_stall_world.get_resource(&"barley", "institution", "", &"eanna_household") == 120, "Stalled canal crews should not consume Epic rations")
 
@@ -905,7 +905,7 @@ func _run() -> void:
 		labor_person.office_id = &"labor_office"
 		epic_silt_world.people[labor_person.id] = labor_person
 		epic_silt_world.institutions[StringName("labor_institution_%d" % labor_office)] = {"members": [labor_person.id], "stockpiles": {}}
-	WorldSimulator.new().advance_period(epic_silt_world)
+	WorldSimulator.new(registry).advance_period(epic_silt_world)
 	_check(epic_silt_world.period == 0 and epic_silt_world.get_resource(&"canal_progress") == 5, "Inundation with labor below eight should regress the canal by three")
 
 	# Epic pacing and fish sustainability are simulation guardrails.
@@ -978,7 +978,7 @@ func _run() -> void:
 	var reset_epic_state: Dictionary = epic_reset_world.epics[&"great_canal_cut"]
 	_check(int(reset_epic_state.get("progress", -1)) == 0 and String(reset_epic_state.get("stage", "")) == "survey" and not bool(reset_epic_state.get("completed", true)), "New shift should reset the completed canal Epic state")
 	epic_reset_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 128, &"labor": 10}}
-	WorldSimulator.new().advance_period(epic_reset_world)
+	WorldSimulator.new(registry).advance_period(epic_reset_world)
 	_check(epic_reset_world.get_resource(&"canal_progress") > 0, "Canal Epic should resume autonomous progress after its new-shift reset")
 
 	_finish()
