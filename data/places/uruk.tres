@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="PlaceDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/place_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"uruk"
+display_name = "Uruk"
+place_type = &"metropolis"
+region = &"lower_mesopotamia"
+political_relation = &"sovereign_core"
+exports = Array[StringName]([&"textiles", &"beer", &"grain", &"administrative_tablets"])
+imports = Array[StringName]([&"timber", &"copper", &"bitumen"])
+connected_to = Array[StringName]([&"eanna_precinct", &"anu_precinct", &"agricultural_hinterland", &"ur", &"umma", &"nippur", &"habuba_kabira", &"hacinebi", &"susa"])
+era_id = &"uruk_storehouse"
