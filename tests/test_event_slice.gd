@@ -130,14 +130,18 @@ func _run() -> void:
 	_check(uruk_a.places.size() == 9, "Uruk seed should establish nine local and connected places")
 	_check(uruk_a.institutions.size() == 3, "Uruk seed should establish three institutions and exchange networks")
 	_check(uruk_a.social_groups.size() == 5, "Uruk seed should establish five working and household groups")
-	_check(uruk_a.relationships.size() == 19, "Uruk seed should establish nineteen directed social and economic ties")
+	var seeded_tie_count := 0
+	for person in uruk_a.people.values():
+		seeded_tie_count += person.relationships.size()
+	_check(seeded_tie_count == 19, "Uruk seed should establish nineteen directed social and economic ties across PersonEntity relationships")
 	_check(uruk_a.get_person(&"geme_tur").relationships.has(uruk_player_a.id), "The player's household member should have an explicit family tie")
 	_check(uruk_a.get_person(&"ur_gula").relationships.has(&"nin_dada"), "Pastoral wool supply should connect to textile production")
 	_check(uruk_a.places.has(&"susa") and uruk_a.places.has(&"habuba_kabira"), "Uruk seed should include both external exchange settlements")
 	var world_graph_is_closed := true
-	for edge in uruk_a.relationships:
-		if uruk_a.get_person(edge["source_id"]) == null or uruk_a.get_person(edge["target_id"]) == null:
-			world_graph_is_closed = false
+	for person in uruk_a.people.values():
+		for other_id in person.relationships:
+			if uruk_a.get_person(other_id) == null:
+				world_graph_is_closed = false
 	_check(world_graph_is_closed, "Every seeded person-to-person relationship should resolve both endpoints")
 	for resource_id in [&"barley", &"dates", &"sheep", &"goats", &"cattle", &"fish", &"beer", &"wool", &"textiles", &"clay", &"reeds", &"bitumen", &"timber", &"copper", &"silver"]:
 		_check(uruk_a.stockpiles.has(resource_id), "Uruk seed should initialize commodity %s" % resource_id)
