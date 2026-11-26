@@ -1,8 +1,15 @@
-[gd_resource type="Resource" script_class="EventTemplate" load_steps=17 format=3]
+[gd_resource type="Resource" script_class="EventTemplate" load_steps=19 format=3]
 
 [ext_resource type="Script" path="res://data/definitions/event_template.gd" id="1"]
 [ext_resource type="Script" path="res://data/definitions/event_outcome.gd" id="2"]
 [ext_resource type="Script" path="res://data/definitions/event_effect.gd" id="3"]
+[ext_resource type="Script" path="res://data/definitions/event_condition.gd" id="4"]
+
+[sub_resource type="Resource" id="condition_receipt"]
+script = ExtResource("4")
+condition_type = &"has_pending_form"
+target = "actor"
+parameters = {"form_type": &"consignment_receipt"}
 
 [sub_resource type="Resource" id="fx_1"]
 script = ExtResource("3")
@@ -80,5 +87,6 @@ title = "The Sealed Vessel and the Textile Bundles"
 description = "A consignment of oil jars and linen bundles sits on the reed mat as the receiving court prepares to close. The carriers are gray with dust. On the clay tag pierced to the bundle, four jars and six cloths are marked. On the mat sit four jars, but the seal on the smallest vessel is cracked and smeared with dry mud. Utu-mansum will not touch the cracked jar without an apprentice's mark."
 era_tags = Array[StringName]([&"uruk"])
 weight = 1.0
+conditions = Array[ExtResource("4")]([SubResource("condition_receipt")])
 records = Array[Dictionary]([{"label": "PIERCED TAG", "value": "4 jars oil · 6 linen bundles", "note": "Sender’s seal intact on tag."}, {"label": "COURT MAT", "value": "4 jars present · 6 bundles present", "note": "Smallest oil jar seal cracked; carrier says road was rough."}])
 outcomes = Array[ExtResource("2")]([SubResource("outcome_1"), SubResource("outcome_2")])
