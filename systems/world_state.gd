@@ -78,6 +78,22 @@ func get_hazard_total_lost(place_id: StringName = &"", hazard_id: StringName = &
 		total += int(hazard.get("total_lost", 0))
 	return total
 
+func repair_hazard(place_id: StringName, hazard_id: StringName) -> bool:
+	if place_id == &"" or hazard_id == &"":
+		return false
+	for index in range(hazards.size()):
+		var hazard: Dictionary = hazards[index]
+		if StringName(hazard.get("place_id", "")) != place_id:
+			continue
+		if StringName(hazard.get("id", "")) != hazard_id:
+			continue
+		if not bool(hazard.get("active", false)):
+			return false
+		hazard["active"] = false
+		hazards[index] = hazard
+		return true
+	return false
+
 func offer_assignment(assignment_id: StringName, employer_id: StringName) -> bool:
 	if assignment_id == &"" or employer_id == &"" or assignments.has(assignment_id):
 		return false
@@ -160,6 +176,8 @@ func complete_assignment(assignment: AssignmentDef, actor_id: StringName, assess
 	entry["completed_period"] = current_period_index()
 	entry["rewarded"] = is_accurate
 	assignments[assignment_id] = entry
+	if is_accurate and has_active_hazard(&"north_bay", &"roof_leak"):
+		enqueue_form({"form_type": &"north_bay_roof_repair", "subject_id": &"north_bay", "urgency": 2, "year": year})
 	return true
 
 func get_assignment_state(assignment_id: StringName) -> Dictionary:
