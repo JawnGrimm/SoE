@@ -103,10 +103,11 @@ func _flag_set(subject: PersonEntity, p: Dictionary, ctx: EventContext) -> bool:
 func _resource_compare(subject: PersonEntity, p: Dictionary, ctx: EventContext) -> bool:
     if ctx.world == null:
         return false
-    var owner_id := subject.id if subject != null else (ctx.actor.id if ctx.actor != null else "")
+    var scope := String(p.get("scope", "world"))
+    var owner_id := ctx.actor.id if ctx.actor != null and scope in ["actor", "office", "institution"] else (subject.id if subject != null else "")
     var actual := ctx.world.get_resource(
         StringName(p.get("resource", "")),
-        String(p.get("scope", "world")),
+        scope,
         String(owner_id),
         StringName(p.get("institution_id", ""))
     )
