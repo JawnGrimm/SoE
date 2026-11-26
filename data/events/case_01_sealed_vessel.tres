@@ -80,4 +80,5 @@ title = "The Sealed Vessel and the Textile Bundles"
 description = "A consignment of oil jars and linen bundles sits on the reed mat as the receiving court prepares to close. The carriers are gray with dust. On the clay tag pierced to the bundle, four jars and six cloths are marked. On the mat sit four jars, but the seal on the smallest vessel is cracked and smeared with dry mud. Utu-mansum will not touch the cracked jar without an apprentice's mark."
 era_tags = Array[StringName]([&"uruk"])
 weight = 1.0
+records = Array[Dictionary]([{"label": "PIERCED TAG", "value": "4 jars oil · 6 linen bundles", "note": "Sender’s seal intact on tag."}, {"label": "COURT MAT", "value": "4 jars present · 6 bundles present", "note": "Smallest oil jar seal cracked; carrier says road was rough."}])
 outcomes = Array[ExtResource("2")]([SubResource("outcome_1"), SubResource("outcome_2")])
