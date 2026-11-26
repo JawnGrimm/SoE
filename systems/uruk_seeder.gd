@@ -122,7 +122,7 @@ static func _seed_relationships(world: WorldState) -> void:
 	_link(world, &"ama_edin", &"ur_nanna", &"grain_obligation", -1, 3)
 	_link(world, &"ur_gula", &"nin_dada", &"wool_supply", 4, 6)
 	_link(world, &"lu_uru", &"ab_kala", &"materials_exchange", 3, 5)
-	_link(world, &"ab_kala", &"eanna_household", &"institutional_supplier", 2, 5)
+	_link(world, &"ab_kala", &"ur_nanna", &"institutional_supplier", 2, 5)
 	_link(world, &"nin_dada", &"geme_inana", &"textile_trade", 3, 5)
 	_link(world, &"nin_azu", &"nin_kasi", &"cultic_and_workplace_tie", 2, 5)
 	_link(world, &"geme_tur", &"player_apprentice", &"family", 8, 9)
