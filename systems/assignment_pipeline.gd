@@ -294,6 +294,8 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 	var location_id := StringName(source_data.get("place_id", source_data.get("subject_id", "")))
 	if location_id == &"" and institution_id != &"":
 		location_id = StringName(world.institutions.get(institution_id, {}).get("place_id", ""))
+	if institution_id == &"":
+		institution_id = _institution_for_location(world, location_id)
 	var commodity_id := StringName(source_data.get("resource", source_data.get("commodity_id", "")))
 	var npc_ids: Array[StringName] = []
 	if employer_id != &"":
@@ -315,7 +317,11 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 		"decision": String(verdict),
 		"outcome": result_text,
 		"details": work_details,
-		"relationship_delta": opinion_delta
+		"relationship_delta": opinion_delta,
+		"silver_awarded": 2 if accurate else 1,
+		"skill_awarded": "law" if accurate else "arithmetic",
+		"skill_xp": 12 if accurate else 6,
+		"path_id": String(record.get("path_id", ""))
 	})
 	actor.memory.append({
 		"memory_id": &"assignment_assessment",
@@ -382,6 +388,18 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 			facts += "\nRECORDED TRUST: %d / RELATIONSHIP: %s" % [int(tie.get("trust", 0)), String(tie.get("type", "unknown"))]
 	facts += "\nCAPABILITY APPLIED: %s / LEVEL %d" % [String(action_id).replace("_", " ").to_upper(), skill_level]
 	return {"summary": summary, "facts": facts, "skill_level": skill_level}
+
+static func _institution_for_location(world: WorldState, location_id: StringName) -> StringName:
+	if location_id == &"":
+		return &""
+	var place: Dictionary = world.places.get(location_id, {})
+	var parent_id := StringName(place.get("parent", ""))
+	for institution_id in world.institutions.keys():
+		var institution: Dictionary = world.institutions[institution_id]
+		var institution_place := StringName(institution.get("place_id", ""))
+		if institution_place == location_id or (parent_id != &"" and institution_place == parent_id):
+			return StringName(institution_id)
+	return &""
 
 static func _form_employer(world: WorldState, form_type: StringName) -> StringName:
 	var preferred_id: StringName = &"shuruppak_ilu"
