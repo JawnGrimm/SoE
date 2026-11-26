@@ -22,17 +22,17 @@ parameters = {"min": 6, "max": 6}
 [sub_resource type="Resource" id="fx_1"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
-parameters = {"subject": &"utu_mansum", "other": &"player_apprentice", "amount": 2, "reason": "Fair recording of threshold count"}
+parameters = {"subject": &"utu_mansum", "other": &"actor", "amount": 2, "reason": "Fair recording of threshold count"}
 
 [sub_resource type="Resource" id="fx_2"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
-parameters = {"subject": &"enlil_kisu", "other": &"player_apprentice", "amount": 2, "reason": "Crew not blamed for transit loss"}
+parameters = {"subject": &"enlil_kisu", "other": &"actor", "amount": 2, "reason": "Crew not blamed for transit loss"}
 
 [sub_resource type="Resource" id="fx_3"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
-parameters = {"subject": &"shuruppak_ilu", "other": &"player_apprentice", "amount": 5, "reason": "Honest report of limits"}
+parameters = {"subject": &"shuruppak_ilu", "other": &"actor", "amount": 5, "reason": "Honest report of limits"}
 
 [sub_resource type="Resource" id="fx_4"]
 script = ExtResource("3")
@@ -57,17 +57,17 @@ parameters = {"form_type": &"grain_levy", "disposition": "custody_accepted_with_
 [sub_resource type="Resource" id="fx_8"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
-parameters = {"subject": &"enlil_kisu", "other": &"player_apprentice", "amount": 8, "reason": "Vouched for carrier tally"}
+parameters = {"subject": &"enlil_kisu", "other": &"actor", "amount": 8, "reason": "Vouched for carrier tally"}
 
 [sub_resource type="Resource" id="fx_9"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
-parameters = {"subject": &"utu_mansum", "other": &"player_apprentice", "amount": -12, "reason": "Overrode threshold tally"}
+parameters = {"subject": &"utu_mansum", "other": &"actor", "amount": -12, "reason": "Overrode threshold tally"}
 
 [sub_resource type="Resource" id="fx_10"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
-parameters = {"subject": &"shuruppak_ilu", "other": &"player_apprentice", "amount": -5, "reason": "Falsified count to appease carrier"}
+parameters = {"subject": &"shuruppak_ilu", "other": &"actor", "amount": -5, "reason": "Falsified count to appease carrier"}
 
 [sub_resource type="Resource" id="fx_11"]
 script = ExtResource("3")
@@ -87,12 +87,12 @@ parameters = {"trait_id": &"pliable"}
 [sub_resource type="Resource" id="fx_14"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
-parameters = {"subject": &"utu_mansum", "other": &"player_apprentice", "amount": 6, "reason": "Upheld threshold authority"}
+parameters = {"subject": &"utu_mansum", "other": &"actor", "amount": 6, "reason": "Upheld threshold authority"}
 
 [sub_resource type="Resource" id="fx_15"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
-parameters = {"subject": &"enlil_kisu", "other": &"player_apprentice", "amount": -15, "reason": "Docked crew rations without proof"}
+parameters = {"subject": &"enlil_kisu", "other": &"actor", "amount": -15, "reason": "Docked crew rations without proof"}
 
 [sub_resource type="Resource" id="fx_16"]
 script = ExtResource("3")
