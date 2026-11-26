@@ -986,7 +986,7 @@ func _resolve_choice(index: int) -> void:
 		return
 	if active_event == null:
 		return
-	var silver_before := world.get_resource(&"silver")
+	var silver_before := int(actor.resources.get(&"silver", 0))
 	var traits_before: Array[StringName] = actor.traits.duplicate()
 	var before: Dictionary[StringName, int] = {}
 	for person_id in ROSTER_ORDER:
@@ -1011,7 +1011,7 @@ func _resolve_procedural_choice(index: int, choice: Dictionary) -> void:
 	var pair_parts := String(procedural_assignment.get("npc_pair", "")).split("|")
 	var left := world.get_person(StringName(pair_parts[0])) if pair_parts.size() > 0 else null
 	var right := world.get_person(StringName(pair_parts[1])) if pair_parts.size() > 1 else null
-	var silver_before := world.get_resource(&"silver")
+	var silver_before := int(actor.resources.get(&"silver", 0))
 	var traits_before: Array[StringName] = actor.traits.duplicate()
 	last_opinion_deltas.clear()
 	var left_delta := int(effects.get("opinion_left", 0))
@@ -1056,13 +1056,7 @@ func _resolve_procedural_choice(index: int, choice: Dictionary) -> void:
 	_show_procedural_result(result_title, result_text)
 
 func _record_case_settlement(silver_before: int, traits_before: Array[StringName]) -> void:
-	world.cases_settled += 1
-	var silver_delta := world.get_resource(&"silver") - silver_before
-	if silver_delta > 0:
-		world.silver_earned += silver_delta
-	for trait_id in actor.traits:
-		if trait_id not in traits_before and trait_id not in world.traits_gained:
-			world.traits_gained.append(trait_id)
+	world.record_case_settlement(actor, silver_before, traits_before)
 
 func _play_outcome_foley(index: int) -> void:
 	match index:
@@ -1155,6 +1149,7 @@ func _begin_next_shift() -> void:
 	world.year = next_year
 	world.period = 0
 	world.stockpiles[&"canal_progress"] = 0
+	world.reset_epic_for_new_shift(&"great_canal_cut")
 	world.era_completion_started = false
 	world.cedar_desk_log.append({"year": world.year, "title": "NEW SHIFT BEGUN", "summary": "The scribe leaves the completed canal on the record and begins the next shift."})
 	current_era = Registry.get_era_for_year(world.year)

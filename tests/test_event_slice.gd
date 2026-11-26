@@ -829,6 +829,39 @@ func _run() -> void:
 	WorldSimulator.new().advance_period(epic_silt_world)
 	_check(epic_silt_world.period == 0 and epic_silt_world.get_resource(&"canal_progress") == 6, "Inundation with labor below six should regress the canal by two")
 
+	# Career silver is measured from the actor's personal purse, never Eanna's
+	# institutional/world silver stockpile.
+	var purse_world := WorldState.new()
+	purse_world.stockpiles[&"silver"] = 100
+	var regression_silver_actor := PersonEntity.new()
+	regression_silver_actor.id = &"purse_test"
+	regression_silver_actor.resources[&"silver"] = 5
+	var no_traits: Array[StringName] = []
+	purse_world.record_case_settlement(regression_silver_actor, 4, no_traits)
+	_check(purse_world.silver_earned == 1, "Case settlement should count personal purse silver gained")
+	purse_world.stockpiles[&"silver"] = 110
+	purse_world.record_case_settlement(regression_silver_actor, 5, no_traits)
+	_check(purse_world.silver_earned == 1, "Institutional/world silver must not inflate personal silver earned")
+
+	# A completed Epic must be re-armed for a new shift, otherwise the
+	# simulator's completed guard freezes progress at zero.
+	var epic_reset_world := WorldState.new()
+	epic_reset_world.year = -3200
+	epic_reset_world.stockpiles[&"canal_progress"] = 0
+	epic_reset_world.epics[&"great_canal_cut"] = {
+		"progress": 100,
+		"stage": "completed",
+		"completed": true,
+		"scandal_flags": [],
+		"history_notes": []
+	}
+	epic_reset_world.reset_epic_for_new_shift(&"great_canal_cut")
+	var reset_epic_state: Dictionary = epic_reset_world.epics[&"great_canal_cut"]
+	_check(int(reset_epic_state.get("progress", -1)) == 0 and String(reset_epic_state.get("stage", "")) == "survey" and not bool(reset_epic_state.get("completed", true)), "New shift should reset the completed canal Epic state")
+	epic_reset_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 128, &"labor": 10}}
+	WorldSimulator.new().advance_period(epic_reset_world)
+	_check(epic_reset_world.get_resource(&"canal_progress") > 0, "Canal Epic should resume autonomous progress after its new-shift reset")
+
 	_finish()
 
 func _check(cond: bool, msg: String) -> bool:

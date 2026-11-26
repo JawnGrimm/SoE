@@ -9,3 +9,10 @@
 script = ExtResource("2_ub2bi")
 options_packed_scene = ExtResource("3_x31ro")
 credits_packed_scene = ExtResource("4_0jpat")
+game_scene_path = "res://main.tscn"
+
+[node name="BackgroundMusicPlayer" parent="." index="0"]
+autoplay = false
+
+[node name="SubTitleLabel" parent="MenuContainer/SubTitleMargin/SubTitleContainer" index="0"]
+text = "History is paperwork with better hats."
