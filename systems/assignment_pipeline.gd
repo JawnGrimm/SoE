@@ -31,7 +31,7 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			"source_id": form_id,
 			"title": _form_title(form_type),
 			"summary": "%s requires an assessment at %s." % [_form_title(form_type), subject_name],
-			"priority": urgency + (3 if overdue else 0),
+			"priority": urgency + (3 if overdue else 0) + _career_bonus(selected_path, form_type),
 			"employer_id": &"ur_nanna" if world.get_person(&"ur_nanna") != null else &"",
 			"source_data": form.duplicate(true),
 			"path_id": selected_path
@@ -48,7 +48,7 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			"source_id": hazard_id,
 			"title": "Inspect %s" % _place_name(world, place_id),
 			"summary": "An active %s continues to damage institutional stores." % String(hazard_id).replace("_", " "),
-			"priority": 4 + int(hazard.get("rate", 0)),
+			"priority": 4 + int(hazard.get("rate", 0)) + _career_bonus(selected_path, &"hazard"),
 			"employer_id": &"ur_nanna" if world.get_person(&"ur_nanna") != null else &"",
 			"source_data": hazard.duplicate(true),
 			"path_id": selected_path
@@ -65,7 +65,7 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			"source_id": StringName(institution_id),
 			"title": "%s / Resource Pressure" % String(institution.get("name", institution_id)),
 			"summary": "The institution reports a pressure index of %d. Its current stockpiles need review." % pressure,
-			"priority": 2 + pressure,
+			"priority": 2 + pressure + _career_bonus(selected_path, &"pressure"),
 			"employer_id": &"shuruppak_ilu" if world.get_person(&"shuruppak_ilu") != null else &"",
 			"source_data": {"institution_id": StringName(institution_id), "pressure": pressure},
 			"path_id": selected_path
@@ -87,7 +87,7 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			"source_id": StringName(epic_id),
 			"title": "%s / Progress Review" % String(epic.get("title", epic_id)),
 			"summary": "The active public work stands at %d of %d. Its current labor and provisioning position requires review." % [progress, target],
-			"priority": 2,
+			"priority": 2 + _career_bonus(selected_path, &"project"),
 			"employer_id": &"shuruppak_ilu" if world.get_person(&"shuruppak_ilu") != null else &"",
 			"source_data": epic.duplicate(true),
 			"path_id": selected_path
@@ -102,7 +102,7 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			"source_id": StringName(institution_id),
 			"title": "%s / Periodic Account" % String(institution.get("name", institution_id)),
 			"summary": "Reconcile the institution's current stockpiles and record the period's actual position.",
-			"priority": 1,
+			"priority": (2 if StringName(institution_id) == &"eanna_household" else 1) + _career_bonus(selected_path, &"ledger"),
 			"employer_id": &"shuruppak_ilu" if world.get_person(&"shuruppak_ilu") != null else &"",
 			"source_data": {"institution_id": StringName(institution_id)},
 			"path_id": selected_path
@@ -226,6 +226,8 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 			var place_id := StringName(hazard.get("place_id", ""))
 			if verdict == &"repair":
 				var labor_cost := 3
+				if not world.has_active_hazard(place_id, source_id):
+					return {"success": false, "message": "The hazard has already been repaired by someone else."}
 				if world.get_resource(&"labor", "institution", "", &"eanna_household") < labor_cost:
 					return {"success": false, "message": "The institution cannot spare the required labor. The hazard remains active."}
 				if not world.modify_resource(&"labor", -labor_cost, "institution", "", &"eanna_household"):
@@ -356,6 +358,18 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 			facts += "\nRECORDED TRUST: %d / RELATIONSHIP: %s" % [int(tie.get("trust", 0)), String(tie.get("type", "unknown"))]
 	facts += "\nCAPABILITY APPLIED: %s / LEVEL %d" % [String(action_id).replace("_", " ").to_upper(), skill_level]
 	return {"summary": summary, "facts": facts, "skill_level": skill_level}
+
+static func _career_bonus(path_id: StringName, work_kind: StringName) -> int:
+	match path_id:
+		&"path_civil":
+			return 2 if work_kind in [&"form", &"pressure", &"ledger"] else 0
+		&"path_religious":
+			return 2 if work_kind in [&"form", &"ledger"] else 0
+		&"path_martial":
+			return 2 if work_kind in [&"hazard", &"pressure", &"project"] else 0
+		&"path_merchant":
+			return 2 if work_kind in [&"ledger", &"pressure"] else 0
+	return 0
 
 static func _form_title(form_type: StringName) -> String:
 	var labels := {
