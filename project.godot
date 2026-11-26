@@ -18,14 +18,34 @@ config/name="Scribe of Eras - First Event Slice"
 run/main_scene="res://main.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
+[audio]
+
+buses/default_bus_layout="uid://bjisv1wh7436x"
+
 [autoload]
 
 Registry="*res://autoloads/registry.gd"
 AudioManager="*res://autoloads/audio_manager.gd"
+MusicController="*uid://r5t485lr3p7t"
 
 [display]
 
 window/stretch/mode="canvas_items"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/godot-resource-database/plugin.cfg", "res://addons/maaacks_music_controller/plugin.cfg", "res://addons/plugin_updater/plugin.cfg", "res://addons/save_value_viewer/plugin.cfg")
+
+[maaacks_music_controller]
+
+disable_install_audio_busses=true
+
+[plugin_updater]
+
+plugins={
+"res://addons/maaacks_music_controller/": "https://github.com/Maaack/Godot-Music-Controller",
+"res://addons/plugin_updater/": "https://github.com/Maaack/Godot-Plugin-Updater"
+}
 
 [rendering]
 

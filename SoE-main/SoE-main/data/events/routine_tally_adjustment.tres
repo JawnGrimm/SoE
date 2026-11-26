@@ -1,0 +1,54 @@
+[gd_resource type="Resource" script_class="EventTemplate" format=3 uid="uid://dkgqs6l6umtq1"]
+
+[ext_resource type="Script" uid="uid://cu1doop675avl" path="res://data/definitions/event_template.gd" id="1"]
+[ext_resource type="Script" uid="uid://dn3vosyim7ss3" path="res://data/definitions/event_condition.gd" id="2"]
+[ext_resource type="Script" uid="uid://c8yvb5uql0l22" path="res://data/definitions/event_effect.gd" id="3"]
+[ext_resource type="Script" uid="uid://rftfpp5ciyrb" path="res://data/definitions/event_outcome.gd" id="4"]
+
+[sub_resource type="Resource" id="ConditionComplicit"]
+script = ExtResource("2")
+condition_type = &"has_trait"
+parameters = {
+"trait_id": &"complicit"
+}
+
+[sub_resource type="Resource" id="EffectRoutineMemory"]
+script = ExtResource("3")
+effect_type = &"add_memory"
+parameters = {
+"involved": [],
+"memory_id": &"routine_tally_certified",
+"text": "I certified a routine tally whose figures had been quietly adjusted before they reached my desk."
+}
+
+[sub_resource type="Resource" id="OutcomeCertifyRoutine"]
+script = ExtResource("4")
+label = "Certify the routine tally"
+title_override = "The routine tally is entered."
+description_override = "The figures pass into the monthly account. No one asks why the ink is fresher on one line."
+effects = Array[ExtResource("3")]([SubResource("EffectRoutineMemory")])
+
+[sub_resource type="Resource" id="EffectRoutineHeldMemory"]
+script = ExtResource("3")
+effect_type = &"add_memory"
+parameters = {
+"involved": [],
+"memory_id": &"routine_tally_held",
+"text": "I held a routine tally for review. The office will remember the delay."
+}
+
+[sub_resource type="Resource" id="OutcomeHoldRoutine"]
+script = ExtResource("4")
+label = "Hold it for review"
+title_override = "The tally is held."
+description_override = "The figures remain outside the account pending clarification. Someone will ask who authorized the delay."
+effects = Array[ExtResource("3")]([SubResource("EffectRoutineHeldMemory")])
+
+[resource]
+script = ExtResource("1")
+id = &"routine_tally_adjustment"
+title = "A Routine Adjustment"
+description = "A routine monthly tally arrives with a quiet discrepancy: one line has been amended after the countersignature. The figures are small. The habit is not."
+once_per_world = true
+conditions = Array[ExtResource("2")]([SubResource("ConditionComplicit")])
+outcomes = Array[ExtResource("4")]([SubResource("OutcomeCertifyRoutine"), SubResource("OutcomeHoldRoutine")])
