@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="PlaceDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/place_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"hacinebi"
+display_name = "Hacinebi"
+place_type = &"trade_enclave"
+region = &"upper_euphrates"
+political_relation = &"foreign_enclave"
+exports = Array[StringName]([&"copper", &"silver"])
+imports = Array[StringName]([&"textiles", &"grain", &"beer"])
+connected_to = Array[StringName]([&"uruk"])
+era_id = &"uruk_storehouse"
