@@ -143,6 +143,7 @@ func _run() -> void:
 			&"form": form_opportunity = opportunity
 			&"hazard": hazard_opportunity = opportunity
 			&"ledger": ledger_opportunity = opportunity
+	_check(StringName(form_opportunity.get("employer_id", "")) == &"ur_nanna", "Grain levy work should route to the grain clerk responsible for the source office")
 	_check(AssignmentPipeline.begin(assignment_world, form_opportunity, assignment_actor), "A selected world opportunity should enter the active assignment lifecycle")
 	var form_assignment_id := StringName(form_opportunity.get("id", ""))
 	var other_scribe := PersonEntity.new()
