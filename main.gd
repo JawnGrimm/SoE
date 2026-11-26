@@ -627,6 +627,19 @@ func _show_case() -> void:
 		evidence_right_speaker.text = "UTU-MANSUM"
 		evidence_right_portrait.texture = _load_character_portrait(&"utu_mansum")
 		_set_evidence_facts("𒂍  PIERCED TAG\n4 jars oil · 6 linen bundles\nSender’s seal intact on tag.", "𒂍  COURT MAT\n4 jars present · 6 bundles present\nSmallest oil jar seal cracked. CARRIER: road was rough; Enlil-kisu says the jar was never unstoppered.")
+	elif active_event.id == &"challenge_quayside_stoppage":
+		case_heading.text = "𒂍  THE RIVER WALL WAITS"
+		evidence_left_title.text = "RIVER QUAYS  /  THE LANDING"
+		evidence_left_speaker.text = "ENLIL-KISU"
+		evidence_left_portrait.texture = _load_character_portrait(&"enlil_kisu")
+		evidence_left_quote.text = "“A boatman cannot haul stone on an empty belly, Scribe. Your clay tally settled our rations, and our hunger has settled our oars.”"
+		evidence_right_title.text = "TEMPLE CELLARS  /  STOREHOUSE WARNING"
+		evidence_right_speaker.text = "UR-NANNA"
+		evidence_right_portrait.texture = _load_character_portrait(&"ur_nanna")
+		evidence_right_quote.text = "“If the canal revetment is not laid before the Inundation crests, the flood will take the granary. Fix this dispute, apprentice, or find a new trade.”"
+		_set_evidence_facts("𒂍  QUAYSIDE\nLanding barges stranded in silt\nStone blocks and reed-fascines\nBoatmen refuse the oars.", "𒂍  TEMPLE CELLARS\nFlood expected in thirty days\nGranary foundations exposed\nCanal revetment unfinished.")
+		dossier.text = "The Euphrates winds low and cold against the mud-brick quays. The final stone blocks and bundles of reed-fascines meant for the Great Canal embankment lie stranded on the landing barges, half-submerged in silt. Enlil-kisu’s boatmen sit on the mooring posts with their arms crossed, silent and unmoving. Enlil-kisu stands at the edge of the wharf, watching the water rise toward the storehouse foundations. The flood is thirty days away. He does not spit when you approach; he simply points to the empty bread-line tally you scored against his crew three seasons ago."
+		dossier.visible = true
 	elif active_event.id == CASE_02_ID:
 		evidence_left_title.text = "BREWING HOUSE  /  ACCOUNT"
 		evidence_left_speaker.text = "NIN-KASI"
@@ -701,6 +714,23 @@ func _show_result(outcome: EventOutcome) -> void:
 	_add_choice("End Period", _advance_period)
 	_refresh_compound()
 
+func _try_schedule_quayside_challenge() -> bool:
+	if world.period < 8 or world.period > 10:
+		return false
+	var challenge := Registry.get_event(&"challenge_quayside_stoppage")
+	if challenge == null:
+		return false
+	context.year = world.year
+	context.era = Registry.get_era_for_year(world.year)
+	if not scheduler._quayside_challenge_is_eligible(world, actor, context.era):
+		return false
+	if not world.has_pending_form(&"succession_claim"):
+		world.enqueue_form({"form_type": &"succession_claim", "subject_id": &"quayside_stoppage", "urgency": 3, "year": world.year})
+	active_event = challenge
+	_refresh_compound()
+	_show_case()
+	return true
+
 func _advance_period() -> void:
 	if phase != "result" and phase != "end_of_queue":
 		return
@@ -714,6 +744,8 @@ func _advance_period() -> void:
 		active_event = Registry.get_event(CASE_02_ID if selected_path == &"path_temple" else CASE_01_ID)
 		_refresh_compound()
 		_show_case()
+	elif _try_schedule_quayside_challenge():
+		return
 	elif arc_complete:
 		_show_end_of_queue()
 	else:
