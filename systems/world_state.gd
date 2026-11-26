@@ -174,7 +174,7 @@ func complete_assignment(assignment: AssignmentDef, actor_id: StringName, assess
 	var opinion_delta := assignment.opinion_penalty
 	if is_accurate:
 		opinion_delta = assignment.opinion_reward
-		modify_resource(assignment.compensation_resource, assignment.compensation_amount)
+		actor.resources[assignment.compensation_resource] = int(actor.resources.get(assignment.compensation_resource, 0)) + assignment.compensation_amount
 		actor.skills.add_xp(&"law", assignment.law_xp)
 	employer.change_opinion(actor_id, opinion_delta, "North-Bay roof inspection assessment: %s" % ("accurate and supported" if is_accurate else "unsupported; contradicted by physical inspection"), year)
 
