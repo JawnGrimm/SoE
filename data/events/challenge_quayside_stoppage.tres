@@ -11,6 +11,12 @@ condition_type = &"in_office"
 target = "actor"
 parameters = {"office_id": &"apprentice_scribe"}
 
+[sub_resource type="Resource" id="condition_consequence"]
+script = ExtResource("4")
+condition_type = &"flag_set"
+target = "actor"
+parameters = {"flag": &"canal_crew_slowdown", "scope": "world"}
+
 [sub_resource type="Resource" id="condition_year"]
 script = ExtResource("4")
 condition_type = &"year_in_range"
@@ -166,5 +172,5 @@ description = "The Euphrates winds low and cold against the mud-brick quays. The
 era_tags = Array[StringName]([&"uruk"])
 weight = 10.0
 once_per_world = true
-conditions = Array[ExtResource("4")]([SubResource("condition_office"), SubResource("condition_year")])
+conditions = Array[ExtResource("4")]([SubResource("condition_office"), SubResource("condition_year"), SubResource("condition_consequence")])
 outcomes = Array[ExtResource("2")]([SubResource("outcome_silver"), SubResource("outcome_recant"), SubResource("outcome_force")])
