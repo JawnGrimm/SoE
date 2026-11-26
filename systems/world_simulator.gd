@@ -1,6 +1,6 @@
 class_name WorldSimulator
 extends RefCounted
-## Autonomous period simulation for the Uruk prototype.
+## Autonomous period simulation for the Uruk campaign.
 ## WorldState owns the calendar/deadline/hazard step; this class owns ongoing
 ## economy, institutional activity, and condition-driven docket generation.
 
@@ -150,12 +150,6 @@ func _generate_forms(world: WorldState) -> void:
 		_offer_if_ready(world, &"consignment_receipt", &"textile_workshop", 2, &"wool_backlog")
 	if world.get_resource(&"beer") <= 4 and barley >= 40:
 		_offer_if_ready(world, &"consignment_receipt", &"brewery_delivery", 1, &"beer_shortage")
-
-func _total_institution_pressure(world: WorldState) -> int:
-	var total := 0
-	for institution in world.institutions.values():
-		total += int(institution.get("resource_pressure", 0))
-	return total
 
 func _offer_if_ready(world: WorldState, form_type: StringName, subject_id: StringName, urgency: int, reason: StringName) -> void:
 	if world.has_pending_form(form_type):
