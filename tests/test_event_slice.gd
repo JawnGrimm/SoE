@@ -66,6 +66,7 @@ func _run() -> void:
 	reaction_world.stockpiles[&"labor"] = 0
 	WorldSimulator.new()._simulate_people(reaction_world)
 	_check(reaction_foreman.get_opinion(reaction_player.id) == -1 and reaction_foreman.get_opinion(reaction_old_player.id) == 0, "WorldSimulator reactions should follow the successor, not the former character")
+	var opinion_before_actor_effect := reaction_senior.get_opinion(reaction_player.id)
 	var actor_opinion_effect := _effect(&"change_opinion", {"subject": &"shuruppak_ilu", "other": &"actor", "amount": 2, "reason": "current player test"})
 	var actor_opinion_context := EventContext.new()
 	actor_opinion_context.world = reaction_world
@@ -73,7 +74,7 @@ func _run() -> void:
 	actor_opinion_context.year = reaction_world.year
 	var identity_runner := EventRunner.new()
 	identity_runner.effects.execute_all([actor_opinion_effect], actor_opinion_context)
-	_check(reaction_senior.get_opinion(reaction_player.id) == 2, "Authored opinion effects using the actor role should target the current player")
+	_check(reaction_senior.get_opinion(reaction_player.id) == opinion_before_actor_effect + 2, "Authored opinion effects using the actor role should target the current player")
 	var authored_player_refs_clean := true
 	var authored_event_directory := DirAccess.open("res://data/events")
 	if authored_event_directory == null:
@@ -93,6 +94,8 @@ func _run() -> void:
 	_check(seeded_player.id == &"character_0001", "Uruk seed should create a generated player identity")
 	_check(identity_seed_world.player_id == &"" and identity_seed_world.get_player() == null, "Unconfirmed character draft should not be the world's player")
 	_check(not identity_seed_world.people.has(seeded_player.id), "Unconfirmed character draft should remain outside the world roster")
+	_check(identity_seed_world.get_person(&"ur_nanna").relationships.has(&"shuruppak_ilu"), "Seed campaign should invoke the NPC relationship seeding method")
+	_check(not identity_seed_world.get_person(&"ur_nanna").relationships.has(seeded_player.id), "Unconfirmed player draft should not receive authored NPC ties")
 	_check(ResourceLoader.exists("res://assets/desk/desk_tabletop.png"), "Cedar tabletop texture should be present")
 	_check(ResourceLoader.exists("res://assets/desk/clay_docket.png"), "Clay docket texture should be present")
 	_check(ResourceLoader.exists("res://assets/desk/archive_stack.png"), "Archive stack texture should be present")
