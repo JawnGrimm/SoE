@@ -20,7 +20,6 @@ var people: Dictionary[StringName, PersonEntity] = {}
 var places: Dictionary[StringName, Dictionary] = {}
 var institutions: Dictionary[StringName, Dictionary] = {}
 var social_groups: Dictionary[StringName, Dictionary] = {}
-var relationships: Array[Dictionary] = []
 var assignments: Dictionary[StringName, Dictionary] = {}
 var hazards: Array[Dictionary] = []
 var _next_form_sequence: int = 1
@@ -153,14 +152,7 @@ func complete_assignment(assignment: AssignmentDef, actor_id: StringName, assess
 		opinion_delta = assignment.opinion_reward
 		modify_resource(assignment.compensation_resource, assignment.compensation_amount)
 		actor.skills.add_xp(&"law", assignment.law_xp)
-	employer.opinions[actor_id] = int(employer.opinions.get(actor_id, 0)) + opinion_delta
-	var reasons: Array = employer.opinion_reasons.get(actor_id, [])
-	reasons.append({
-		"year": year,
-		"amount": opinion_delta,
-		"reason": "North-Bay roof inspection assessment: %s" % ("accurate and supported" if is_accurate else "unsupported; contradicted by physical inspection"),
-	})
-	employer.opinion_reasons[actor_id] = reasons
+	employer.change_opinion(actor_id, opinion_delta, "North-Bay roof inspection assessment: %s" % ("accurate and supported" if is_accurate else "unsupported; contradicted by physical inspection"), year)
 
 	entry["status"] = "completed"
 	entry["assessment"] = assessment
