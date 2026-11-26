@@ -57,12 +57,9 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 	world.people[&"nin_azu"] = _person(&"nin_azu", "Nin-azu", &"precinct_attendant", {"literacy": 2, "rhetoric": 2}, [&"devout", &"ambitious"])
 	world.people[&"geme_tur"] = _person(&"geme_tur", "Geme-tur", &"player_household", {"stewardship": 2}, [&"practical", &"blunt"])
 
-	if add_player_to_world:
-		for person in world.people.values():
-			if person.id != world.player_id and not person.relationships.has(world.player_id):
-				person.set_opinion(player.id, 0)
 	_seed_places(world)
 	_seed_institutions_and_groups(world)
+	_seed_relationships(world)
 	if add_player_to_world:
 		attach_player(world, player)
 
@@ -158,6 +155,11 @@ static func _seed_institutions_and_groups(world: WorldState) -> void:
 		&"transport_crews": {"name": "Transport Crews", "kind": &"work_group", "place_id": &"uruk", "members": [&"enlil_kisu", &"ur_amas"], "resources": [&"labor", &"barley", &"beer"]},
 		&"brewers": {"name": "Brewers", "kind": &"craft_group", "place_id": &"uruk", "members": [&"nin_kasi"], "resources": [&"barley", &"beer"]}
 	}
+
+
+static func _seed_relationships(world: WorldState) -> void:
+	## Seeds authored NPC-to-NPC ties. Player-relative ties are added only when
+	## the character is confirmed through attach_player().
 
 	_link(world, &"ur_nanna", &"shuruppak_ilu", &"professional_respect", 4, 6)
 	_link(world, &"ur_nanna", &"enlil_kisu", &"resource_dependency", 3, 5)
