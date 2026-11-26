@@ -14,7 +14,7 @@ The game is built around one idea:
 
 ## The game
 
-The player's career and the wider historical world are connected, but they are not the same thing. Character creation establishes where the player enters that world. Ordinary work builds a record of their actions. Challenges respond to that record. Historical Works develop on their own timelines, with or without the player's involvement.
+The player's career and the wider historical world are connected, but they are not the same thing. Character creation establishes where the player enters that world. Ordinary work builds a record of their actions. Challenges respond to that record. Epics develop on their own timelines, with or without the player's involvement.
 
 ~~~mermaid
 flowchart TD
@@ -45,7 +45,7 @@ flowchart TD
     K --> H
     K --> W
 
-    W --> L["HISTORICAL WORKS / EPICS"]
+    W --> L["EPICS"]
     L --> M["Historical actors, institutions, resources & events"]
     M --> N["Development continues with or without the player"]
     W -. "Player may contribute" .-> L
@@ -57,7 +57,7 @@ flowchart TD
     R --> F
 ~~~
 
-The diagram is a relationship map, not a mandatory quest chain. Challenges can seed or be seeded by historical developments. The player's actions can affect a Work's conditions, but the player is never required to be the famous person at its center.
+The diagram is a relationship map, not a mandatory quest chain. Challenges can seed or be seeded by historical developments. The player's actions can affect an Epic's conditions, but the player is never required to be the famous person at its center.
 
 ## Core systems
 
@@ -92,9 +92,9 @@ A Challenge might arise because of a previous decision, a damaged relationship, 
 
 Challenges are authored situations assembled and contextualized against the player's history—not arbitrary procedural stories.
 
-### Works / Epics
+### Epics
 
-Works (or Epics) are major historical developments: inventions, texts, buildings, reforms, trade networks, conflicts, discoveries, and other events that shape the passage from one era to another.
+Epics are major historical developments: inventions, texts, buildings, reforms, trade networks, conflicts, discoveries, and other events that shape the passage from one era to another.
 
 They have their own actors, institutions, needs, resources, obstacles, and timelines. They continue whether or not the player gets involved.
 
@@ -102,7 +102,7 @@ The player may contribute directly, indirectly, or not at all. A printing press 
 
 The historical figure may be remembered. The people who made the work possible usually are not. The player gets to occupy one of those places.
 
-Works provide the historical milestones that can move the campaign into a new era. Era progression is therefore tied to developments in the world, not simply to the calendar advancing or the player filling an experience bar.
+Epics provide the historical milestones that can move the campaign into a new era. Era progression is therefore tied to developments in the world, not simply to the calendar advancing or the player filling an experience bar.
 
 ## Historical approach
 
