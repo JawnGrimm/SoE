@@ -1072,6 +1072,11 @@ func _resolve_procedural_choice(index: int, choice: Dictionary) -> void:
 	if epic_progress != 0:
 		var active_epic_id := world.get_active_epic_id()
 		var active_epic_def := Registry.get_epic(active_epic_id)
+		if active_epic_def == null and current_era != null:
+			for epic_definition in Registry.all_epics():
+				if epic_definition.era_id == current_era.id:
+					active_epic_def = epic_definition
+					break
 		if active_epic_def != null:
 			world.modify_resource(active_epic_def.progress_resource, epic_progress, "world")
 	actor.memory.append({"memory_id": &"procedural_docket", "text": String(procedural_assignment.get("title", "")) + ": " + result_text, "year": world.year, "involved": pair_parts})
@@ -1183,8 +1188,13 @@ func _begin_next_shift() -> void:
 	if current_era != null:
 		var previous_epic_id := world.get_active_epic_id()
 		var previous_epic_def := Registry.get_epic(previous_epic_id)
-		if previous_epic_def != null and previous_epic_def.era_id == current_era.id:
-			world.reset_epic_for_new_shift(previous_epic_id)
+		if previous_epic_def != null:
+			if previous_epic_def.era_id == current_era.id:
+				world.reset_epic_for_new_shift(previous_epic_id)
+			else:
+				var previous_epic_state: Dictionary = world.epics.get(previous_epic_id, {})
+				previous_epic_state["active"] = false
+				world.epics[previous_epic_id] = previous_epic_state
 	if current_era == null:
 		current_era = previous_era
 	context.era = current_era
