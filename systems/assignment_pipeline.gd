@@ -6,6 +6,7 @@ extends RefCounted
 const BOARD_SIZE := 3
 const INVESTIGATION_ACTIONS := [
 	{"id": &"examine_records", "label": "Examine the written record", "skill": &"literacy", "xp": 8},
+	{"id": &"reconcile_accounts", "label": "Reconcile the figures", "skill": &"arithmetic", "xp": 8},
 	{"id": &"consult_official", "label": "Consult the responsible official", "skill": &"rhetoric", "xp": 8},
 	{"id": &"inspect_source", "label": "Inspect the goods, stores, or site", "skill": &"stewardship", "xp": 8}
 ]
@@ -72,6 +73,26 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 
 	# Routine reconciliation is real work against each institution's actual
 	# stockpile record. It is not a fabricated shortage or a scripted dispute.
+	for epic_id in world.epics.keys():
+		var epic: Dictionary = world.epics[epic_id]
+		if not bool(epic.get("active", false)) or bool(epic.get("completed", false)):
+			continue
+		var progress := world.get_resource(StringName(epic.get("progress_resource", "")))
+		var target := int(epic.get("target", 100))
+		if target <= 0 or progress >= target:
+			continue
+		candidates.append({
+			"id": StringName("work_project_%s_%d" % [epic_id, world.current_period_index()]),
+			"kind": &"project_review",
+			"source_id": StringName(epic_id),
+			"title": "%s / Progress Review" % String(epic.get("title", epic_id)),
+			"summary": "The active public work stands at %d of %d. Its current labor and provisioning position requires review." % [progress, target],
+			"priority": 2,
+			"employer_id": &"shuruppak_ilu" if world.get_person(&"shuruppak_ilu") != null else &"",
+			"source_data": epic.duplicate(true),
+			"path_id": selected_path
+		})
+
 	for institution_id in world.institutions.keys():
 		var institution: Dictionary = world.institutions[institution_id]
 		var routine_id := StringName("work_ledger_%s_%d" % [institution_id, world.current_period_index()])
@@ -214,6 +235,20 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 			else:
 				accurate = false
 				result_text = "The condition is recorded without repair. Its losses continue into the next period."
+		&"project_review":
+			var project: Dictionary = record.get("source_data", {})
+			var progress_resource := StringName(project.get("progress_resource", ""))
+			var progress := world.get_resource(progress_resource)
+			var target := int(project.get("target", 100))
+			var project_state: Dictionary = world.epics.get(source_id, {})
+			var notes: Array = project_state.get("history_notes", [])
+			world.cedar_desk_log.append({
+				"year": world.year,
+				"period": world.period,
+				"title": "PUBLIC WORK PROGRESS REVIEW / %s" % String(project.get("title", source_id)),
+				"summary": "Progress %d / %d. Current stage: %s. Recorded simulation entries: %d." % [progress, target, String(project_state.get("stage", "unrecorded")), notes.size()]
+			})
+			result_text = "The project's actual progress, stage, and recorded interruptions are entered in the archive. The crews continue their work independently."
 		&"pressure":
 			var institution_id := StringName(record.get("source_data", {}).get("institution_id", source_id))
 			var institution: Dictionary = world.institutions.get(institution_id, {})
@@ -271,6 +306,21 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 	var summary := ""
 	var facts := ""
 	match action_id:
+		&"reconcile_accounts":
+			var institution_id := StringName(data.get("institution_id", &"eanna_household"))
+			var institution: Dictionary = world.institutions.get(institution_id, {})
+			var stock: Dictionary = institution.get("stockpiles", {})
+			var total := 0
+			for amount in stock.values():
+				total += int(amount)
+			if kind == &"form":
+				summary = "The source form is reconciled against the institution's current records."
+				facts = "FORM: %s\nURGENCY: %d\nINSTITUTIONAL STOCK TOTAL: %d" % [String(data.get("form_type", "")), int(data.get("urgency", 0)), total]
+			else:
+				summary = "The institution's recorded quantities are totalled from its current stockpile dictionary."
+				facts = "INSTITUTION: %s\nRECORDED STOCK TOTAL: %d\nRESOURCE LINES: %d" % [String(institution.get("name", institution_id)), total, stock.size()]
+			if skill_level >= 2:
+				facts += "\nARITHMETIC CHECK: SECOND-LEVEL RECONCILIATION AVAILABLE"
 		&"examine_records":
 			if kind == &"form":
 				summary = "The form's origin and urgency are confirmed against the pending register."
