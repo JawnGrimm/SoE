@@ -105,16 +105,19 @@ func _simulate_epic(world: WorldState, definition: EpicDef, state: Dictionary) -
 	var previous_progress := progress
 	var note := ""
 	var inundation := world.period >= definition.inundation_period_min and world.period <= definition.inundation_period_max
-	if disruption:
+	var work_stalled := disruption or labor < definition.regression_labor_below or barley < definition.partial_barley
+	if inundation and work_stalled:
+		progress = maxi(0, progress - definition.regression_amount)
+		if disruption:
+			note = "Inundation silt reclaimed part of the cut during a crew disruption."
+		elif labor < definition.regression_labor_below:
+			note = "Inundation silt reclaimed part of the cut while labor was below minimum."
+		else:
+			note = "Inundation silt reclaimed part of the cut while barley rations were insufficient."
+	elif disruption:
 		note = "Epic crews stalled by an active disruption."
-		if inundation and labor < definition.regression_labor_below:
-			progress = maxi(0, progress - definition.regression_amount)
-			note = "Inundation silt reclaimed part of the cut during disruption and labor shortage."
 	elif labor < definition.regression_labor_below:
 		note = "Work crews stood down below the minimum labor threshold."
-		if inundation:
-			progress = maxi(0, progress - definition.regression_amount)
-			note = "Inundation silt reclaimed part of the cut while labor was below minimum."
 	elif labor >= definition.strong_labor and barley >= definition.strong_barley:
 		if world.modify_resource(&"barley", -definition.strong_barley_cost, "institution", "", definition.sponsor_institution):
 			progress += definition.strong_progress
@@ -140,6 +143,7 @@ func _simulate_epic(world: WorldState, definition: EpicDef, state: Dictionary) -
 			history.pop_front()
 		state["history_notes"] = history
 	world.epics[definition.id] = state
+	world.stockpiles[resource_id] = progress
 
 func _simulate_economy(world: WorldState) -> void:
 	var p := world.period

@@ -881,10 +881,11 @@ func _run() -> void:
 
 	var epic_partial_world := WorldState.new()
 	epic_partial_world.year = -3200
+	epic_partial_world.stockpiles[&"canal_progress"] = 12
 	epic_partial_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 70, &"labor": 7}}
 	WorldSimulator.new(registry).advance_period(epic_partial_world)
-	_check(epic_partial_world.get_resource(&"canal_progress") == 1, "Canal Epic should make partial progress at labor 6–9 with adequate barley")
-	_check(epic_partial_world.get_resource(&"barley", "institution", "", &"eanna_household") == 60, "Partial canal progress should consume two institutional barley after household demand")
+	_check(epic_partial_world.get_resource(&"canal_progress") == 12, "Partial rations should hold Epic progress steady rather than advance it")
+	_check(epic_partial_world.get_resource(&"barley", "institution", "", &"eanna_household") == 60, "Partial rations should consume two institutional barley after household demand")
 
 	var epic_stall_world := WorldState.new()
 	epic_stall_world.year = -3200
@@ -912,16 +913,20 @@ func _run() -> void:
 	disrupted_silt_world.year = -3200
 	disrupted_silt_world.period = 11
 	disrupted_silt_world.stockpiles[&"canal_progress"] = 8
-	disrupted_silt_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 20, &"labor": 0}}
-	for disrupted_labor_office in range(4):
-		var disrupted_labor_person := PersonEntity.new()
-		disrupted_labor_person.id = StringName("disrupted_labor_test_%d" % disrupted_labor_office)
-		disrupted_labor_person.office_id = &"labor_office"
-		disrupted_silt_world.people[disrupted_labor_person.id] = disrupted_labor_person
-		disrupted_silt_world.institutions[StringName("disrupted_labor_institution_%d" % disrupted_labor_office)] = {"members": [disrupted_labor_person.id], "stockpiles": {}}
-	disrupted_silt_world.set_flag(&"canal_crew_slowdown", -1)
+	disrupted_silt_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 1000, &"labor": 10}}
+	disrupted_silt_world.set_flag(&"canal_crew_slowdown", disrupted_silt_world.current_period_index() + 10)
 	WorldSimulator.new(registry).advance_period(disrupted_silt_world)
-	_check(disrupted_silt_world.get_resource(&"canal_progress") == 5, "Silt regression should still apply when a disruption and low labor overlap")
+	_check(disrupted_silt_world.get_resource(&"labor", "institution", "", &"eanna_household") >= 8, "Disruption silt regression test should retain a full labor roster")
+	_check(disrupted_silt_world.get_resource(&"canal_progress") == 5, "Inundation silt regression should apply to a strike even with labor at or above eight")
+
+	var barley_silt_world := WorldState.new()
+	barley_silt_world.year = -3200
+	barley_silt_world.period = 11
+	barley_silt_world.stockpiles[&"canal_progress"] = 8
+	barley_silt_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 20, &"labor": 10}}
+	WorldSimulator.new(registry).advance_period(barley_silt_world)
+	_check(barley_silt_world.get_resource(&"labor", "institution", "", &"eanna_household") >= 8, "Barley shortage silt regression test should retain a full labor roster")
+	_check(barley_silt_world.get_resource(&"canal_progress") == 5, "Inundation silt regression should apply when barley rations are insufficient despite adequate labor")
 
 	var generic_progress_world := WorldState.new()
 	generic_progress_world.epics[&"epic_two"] = {"active": true, "progress_resource": &"epic_two_progress", "target": 40}
