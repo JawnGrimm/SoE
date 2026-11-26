@@ -30,7 +30,7 @@ The test covers both first-case outcomes, archived assessments, persistence acro
    - Origin-side dispatch count or handling requires verification
 3. Choose whether to certify the tally or open a formal inquiry.
 4. Select **End Period** to advance the monthly desk turn.
-5. The EventScheduler evaluates the available `.tres` cases against the current actor and world state.
+5. The EventScheduler evaluates the available `.tres` cases against the current actor and world state. The North-Bay Roof Inspection is offered from the temple path as a separate cedar-desk docket; consult Ur-Nanna, inspect the beams, and submit a supported assessment.
    - The `complicit` trait makes **A Routine Adjustment** eligible.
    - The `grain_scandal` flag plus a pending `inquiry` form makes **The Origin-Side Reply** eligible. Its case text quotes the assessment stored on the archived grain levy.
 6. When no event is eligible, the desk displays **END OF QUEUE / All cases filed for now**. The player may continue advancing periods; the scheduler checks again each time.
@@ -45,6 +45,8 @@ The clock uses 12 periods per year. `WorldState.current_period_index()` provides
 - Persistent 12-period clock
 - Pending and archived form records, including assessment and disposition
 - Three data-driven case definitions: the missing measures, routine tally adjustment, and origin-side reply
+- Resource-driven North-Bay assignment offer, consultation and inspection records, and assessment settlement
+- Persistent North-Bay roof leak that spoils one measure of barley per elapsed period
 - Case-file UI with an explicit end-of-queue state
 
 ## Not included yet
