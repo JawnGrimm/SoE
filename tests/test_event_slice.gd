@@ -908,6 +908,15 @@ func _run() -> void:
 	WorldSimulator.new(registry).advance_period(epic_silt_world)
 	_check(epic_silt_world.period == 0 and epic_silt_world.get_resource(&"canal_progress") == 5, "Inundation with labor below eight should regress the canal by three")
 
+	var disrupted_silt_world := WorldState.new()
+	disrupted_silt_world.year = -3200
+	disrupted_silt_world.period = 11
+	disrupted_silt_world.stockpiles[&"canal_progress"] = 8
+	disrupted_silt_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 20, &"labor": 0}}
+	disrupted_silt_world.set_flag(&"canal_crew_slowdown", disrupted_silt_world.current_period_index() + 10)
+	WorldSimulator.new(registry).advance_period(disrupted_silt_world)
+	_check(disrupted_silt_world.get_resource(&"canal_progress") == 5, "Silt regression should still apply when a disruption and low labor overlap")
+
 	var generic_progress_world := WorldState.new()
 	generic_progress_world.epics[&"epic_two"] = {"active": true, "progress_resource": &"epic_two_progress", "target": 40}
 	generic_progress_world.modify_resource(&"epic_two_progress", 100, "world")
