@@ -47,7 +47,7 @@ func _run() -> void:
 	no_player_world.people[no_player_foreman.id] = no_player_foreman
 	no_player_world.stockpiles[&"labor"] = 0
 	WorldSimulator.new()._simulate_people(no_player_world)
-	_check(no_player_clerk.get_opinion(&"") == 0 and no_player_foreman.get_opinion(&"") == 0, "World reactions should safely do nothing before character confirmation")
+	_check(no_player_clerk.relationships.is_empty() and no_player_foreman.relationships.is_empty(), "World reactions should safely do nothing before character confirmation")
 	var reaction_world := WorldState.new()
 	var reaction_old_player := PersonEntity.new()
 	reaction_old_player.id = &"former_character"
@@ -82,6 +82,7 @@ func _run() -> void:
 	var seeded_player := UrukSeeder.seed_campaign(identity_seed_world, 32003200, false)
 	_check(seeded_player.id == &"character_0001", "Uruk seed should create a generated player identity")
 	_check(identity_seed_world.player_id == &"" and identity_seed_world.get_player() == null, "Unconfirmed character draft should not be the world's player")
+	_check(not identity_seed_world.people.has(seeded_player.id), "Unconfirmed character draft should remain outside the world roster")
 	_check(ResourceLoader.exists("res://assets/desk/desk_tabletop.png"), "Cedar tabletop texture should be present")
 	_check(ResourceLoader.exists("res://assets/desk/clay_docket.png"), "Clay docket texture should be present")
 	_check(ResourceLoader.exists("res://assets/desk/archive_stack.png"), "Archive stack texture should be present")
