@@ -171,8 +171,8 @@ func _run() -> void:
 	_check(runner.is_eligible(case15, uruk_ctx), "Case 15 should be eligible at campaign start")
 	runner.resolve_outcome(case15, case15.outcomes[0], uruk_ctx)
 	_check(uruk_a.get_person(&"utu_mansum").get_opinion(uruk_player_a.id) == 2, "Case 15 should shift Utu-mansum's opinion of the apprentice")
-	_check(uruk_a.get_person(&"enlil_kisu").set_opinion(uruk_player_a.id, = 2, "Case 15 should shift Enlil-kisu's opinion of the apprentice"))
-	_check(uruk_a.get_person(&"shuruppak_ilu").set_opinion(uruk_player_a.id, = 10, "Case 15 should shift Shuruppak-ilu's opinion of the apprentice"))
+	_check(uruk_a.get_person(&"enlil_kisu").get_opinion(uruk_player_a.id) == 2, "Case 15 should shift Enlil-kisu's opinion of the apprentice"))
+	_check(uruk_a.get_person(&"shuruppak_ilu").get_opinion(uruk_player_a.id) == 10, "Case 15 should shift Shuruppak-ilu's opinion of the apprentice"))
 	_check(uruk_a.get_resource(&"barley") >= 443, "Case 15 should enter 23 measures of barley")
 	_check(uruk_a.resolved_forms.size() == 1, "Case 15 should resolve the opening grain levy")
 	uruk_a.period = 6
@@ -206,8 +206,8 @@ func _run() -> void:
 	sealed_form_context.year = sealed_world.year
 	sealed_form_context.era = sealed_context.era
 	runner.resolve_outcome(sealed_case, sealed_case.outcomes[0], sealed_form_context)
-	_check(sealed_world.get_person(&"utu_mansum").set_opinion(sealed_player.id, = 3, "Case 1 should record Utu-mansum's opinion of the apprentice"))
-	_check(sealed_world.get_person(&"enlil_kisu").set_opinion(sealed_player.id, = 1, "Case 1 should record Enlil-kisu's opinion of the apprentice"))
+	_check(sealed_world.get_person(&"utu_mansum").get_opinion(sealed_player.id) == 3, "Case 1 should record Utu-mansum's opinion of the apprentice"))
+	_check(sealed_world.get_person(&"enlil_kisu").get_opinion(sealed_player.id) == 1, "Case 1 should record Enlil-kisu's opinion of the apprentice"))
 	_check(sealed_world.get_resource(&"clay_reeds") >= 49, "Case 1 should consume one clay and reed unit")
 	_check(sealed_world.resolved_forms.back()["disposition"] == "quarantine_cracked_vessel", "Case 1 should resolve the receipt with its authored disposition")
 
@@ -349,7 +349,7 @@ func _run() -> void:
 	_check(UrukCatechism.choose_mentor(temple_world, temple_actor, &"nin_kasi"), "Nin-kasi should be a valid mentor")
 	_check(temple_actor.skills.get_level(&"rhetoric") == 1, "Nin-kasi mentorship should add one Rhetoric")
 	_check(&"diplomatic" in temple_actor.traits, "Nin-kasi mentorship should add diplomatic")
-	_check(temple_world.get_person(&"nin_kasi").set_opinion(temple_actor.id, = 8, "Mentor choice should add +5 opinion on top of path standing"))
+	_check(temple_world.get_person(&"nin_kasi").get_opinion(temple_actor.id) == 8, "Mentor choice should add +5 opinion on top of path standing"))
 
 	var brewer_case: EventTemplate = registry.get_event(&"case_02_brewers_reckoning")
 	_check(brewer_case != null, "Registry should load Case 2")
@@ -360,7 +360,7 @@ func _run() -> void:
 	_check(runner.is_eligible(brewer_case, temple_ctx), "Case 2 should pass Temple path, office, and docket conditions")
 	runner.resolve_outcome(brewer_case, brewer_case.outcomes[0], temple_ctx)
 	_check(temple_world.get_resource(&"canal_progress") == 5, "Honest brewery arithmetic should advance Canal Cut by five")
-	_check(temple_world.get_person(&"nin_kasi").set_opinion(temple_actor.id, = 14, "Honest brewery arithmetic should improve Nin-kasi by six"))
+	_check(temple_world.get_person(&"nin_kasi").get_opinion(temple_actor.id) == 14, "Honest brewery arithmetic should improve Nin-kasi by six"))
 	_check(temple_world.resolved_forms.back().get("disposition", "") == "rectified_subtotal_allocation_pending", "Honest brewery arithmetic should resolve the pension docket")
 
 	var commingled_world := WorldState.new()
@@ -391,8 +391,8 @@ func _run() -> void:
 	var landing_actor := UrukSeeder.seed_campaign(landing_world, 32003200)
 	UrukCatechism.choose_path(landing_world, landing_actor, &"path_landing")
 	_check(landing_actor.has_flag(&"path_landing", landing_world.current_period_index()), "Landing path flag should be permanent on the apprentice")
-	_check(landing_world.get_person(&"enlil_kisu").set_opinion(landing_actor.id, = 5, "Landing path should grant Enlil-kisu +5"))
-	_check(landing_world.get_person(&"geme_inana").set_opinion(landing_actor.id, = 3, "Landing path should grant Geme-Inana +3"))
+	_check(landing_world.get_person(&"enlil_kisu").get_opinion(landing_actor.id) == 5, "Landing path should grant Enlil-kisu +5"))
+	_check(landing_world.get_person(&"geme_inana").get_opinion(landing_actor.id) == 3, "Landing path should grant Geme-Inana +3"))
 	_check(landing_world.has_pending_form(&"consignment_receipt"), "Landing path should open the receiving docket")
 	var landing_case_context := _make_context(landing_world)
 	landing_case_context.actor = landing_actor
@@ -463,7 +463,7 @@ func _run() -> void:
 		_check(UrukCatechism.choose_mentor(mentor_world, mentor_actor, mentor_id), "Each authored mentor should be selectable")
 		_check(mentor_actor.skills.get_level(mentor_skill) == starting_level + 1, "Each mentor should add exactly one level in the named skill")
 		_check(mentor_trait in mentor_actor.traits, "Each mentor should grant the named trait")
-		_check(mentor_world.get_person(mentor_id).set_opinion(mentor_actor.id, = starting_opinion + 5, "Each mentor should gain five opinion of the apprentice"))
+		_check(mentor_world.get_person(mentor_id).get_opinion(mentor_actor.id) == starting_opinion + 5, "Each mentor should gain five opinion of the apprentice"))
 
 
 	# Phase 8B: Quayside Stoppage is gated by the player's carrier history.
@@ -495,7 +495,7 @@ func _run() -> void:
 	runner.resolve_outcome(quayside_template, quayside_template.outcomes[0], quayside_ctx)
 	_check(quayside_world.get_resource(&"silver") == silver_before - 4, "Silver conciliation should cost four shekels")
 	_check(quayside_world.get_resource(&"canal_progress") == 25, "Silver conciliation should add 25 canal progress")
-	_check(quayside_world.get_person(&"enlil_kisu").set_opinion(quayside_actor.id, = -3, "Silver conciliation should improve Enlil-kisu's standing by twelve"))
+	_check(quayside_world.get_person(&"enlil_kisu").get_opinion(quayside_actor.id) == -3, "Silver conciliation should improve Enlil-kisu's standing by twelve"))
 	_check(not quayside_world.world_flags.has(&"canal_crew_slowdown"), "Silver conciliation should clear the slowdown")
 	_check(quayside_world.resolved_forms.back().get("disposition", "") == "strike_settled_privately", "Silver conciliation should close the challenge docket")
 
@@ -510,7 +510,7 @@ func _run() -> void:
 	_check(force_world.get_resource(&"canal_progress") == 30, "Temple Guard outcome should add 30 canal progress")
 	_check(force_world.has_flag(&"blood_on_the_quays", force_world.current_period_index()), "Temple Guard outcome should leave the twelve-period blood flag")
 	_check(&"severe" in force_actor.traits, "Temple Guard outcome should mark the apprentice severe")
-	_check(force_world.get_person(&"enlil_kisu").set_opinion(force_actor.id, = -30, "Temple Guard outcome should create lasting carrier hatred"))
+	_check(force_world.get_person(&"enlil_kisu").get_opinion(force_actor.id) == -30, "Temple Guard outcome should create lasting carrier hatred"))
 
 	# North-Bay assignment: definition loading, fail-closed lifecycle, and a real leaking roof.
 	var roof_assignment := registry.get_assignment(&"north_bay_roof")
@@ -540,13 +540,13 @@ func _run() -> void:
 	_check(roof_consultations.size() == 1 and roof_consultations[0]["person_id"] == &"ur_nanna", "Consultation log should preserve the consulted NPC and period")
 	var roof_silver_before := roof_world.get_resource(&"silver")
 	var roof_law_xp_before := int(roof_actor.skills.xp.get(&"law", 0))
-	var roof_opinion_before := int(roof_world.get_person(&"ur_nanna").get_opinion(roof_actor.id, 0))
+	var roof_opinion_before := int(roof_world.get_person(&"ur_nanna").get_opinion(roof_actor.id))
 	_check(not roof_world.complete_assignment(roof_assignment, roof_actor.id, &"leak_confirmed_repair_required", true), "Submission should fail until the physical inspection is recorded")
 	_check(roof_world.record_assignment_action(&"north_bay_roof", &"inspect_beams"), "Physical inspection should be recorded")
 	_check(roof_world.complete_assignment(roof_assignment, roof_actor.id, &"leak_confirmed_repair_required", true), "Complete evidence should allow assessment submission")
 	_check(roof_world.get_resource(&"silver") == roof_silver_before + 5, "Accurate assessment should pay five silver")
 	_check(int(roof_actor.skills.xp.get(&"law", 0)) == roof_law_xp_before + 25, "Accurate assessment should award 25 Law XP")
-	_check(int(roof_world.get_person(&"ur_nanna").get_opinion(roof_actor.id, 0)) == roof_opinion_before + 5, "Accurate assessment should improve Ur-Nanna's opinion by five")
+	_check(int(roof_world.get_person(&"ur_nanna").get_opinion(roof_actor.id)) == roof_opinion_before + 5, "Accurate assessment should improve Ur-Nanna's opinion by five")
 	_check(bool(roof_world.get_assignment_state(&"north_bay_roof").get("rewarded", false)), "Assignment settlement should record that its reward was paid")
 	_check(not roof_world.complete_assignment(roof_assignment, roof_actor.id, &"leak_confirmed_repair_required", true), "Completed assignment should not be settled twice")
 	_check(String(roof_world.get_assignment_state(&"north_bay_roof").get("status", "")) == "completed", "Assignment lifecycle should retain its completed state")
