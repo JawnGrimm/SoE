@@ -24,10 +24,12 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 	world.traits_gained.clear()
 	world.cedar_desk_log.clear()
 	world.era_completion_started = false
+	world.epics.clear()
 	world._next_form_sequence = 1
 
 	# The original eight remain the center of the first playable slice.
 	var player := _person(&"player_apprentice", "Enlil-barni", &"apprentice_scribe", {"literacy": 1, "arithmetic": 1, "law": 1}, [])
+	player.resources[&"silver"] = 2
 	if add_player_to_world:
 		world.people[player.id] = player
 	var senior := _person(&"shuruppak_ilu", "Shuruppak-ilu", &"archive_keeper", {"literacy": 4, "arithmetic": 4, "law": 3, "rhetoric": 2, "intrigue": 2, "stewardship": 3}, [&"patient", &"exacting"])
@@ -87,6 +89,14 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 	# Keep the old combined key until the first-slice UI and sealed-vessel event migrate.
 	world.stockpiles[&"clay_reeds"] = world.get_resource(&"clay") + world.get_resource(&"reeds")
 	world.stockpiles[&"labor"] = 25 + world.rng_sim.randi_range(-5, 5)
+	# All compound commodities belong to the Eanna institution, not the world
+	# or the apprentice's personal purse.
+	var eanna: Dictionary = world.institutions.get(&"eanna_household", {})
+	var eanna_stockpiles := world.stockpiles.duplicate(true)
+	eanna_stockpiles.erase(&"canal_progress")
+	eanna["stockpiles"] = eanna_stockpiles
+	world.institutions[&"eanna_household"] = eanna
+	world.stockpiles = {&"canal_progress": 0}
 
 	# The North-Bay roof is already leaking; each elapsed period spoils one measure of barley.
 	world.hazards.append({"id": &"roof_leak", "place_id": &"north_bay", "resource": &"barley", "rate": 1, "total_lost": 0, "active": true})
