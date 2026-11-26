@@ -63,6 +63,11 @@ func register_definition(definition: Resource, category: String) -> bool:
 	if not _has_id_property(definition):
 		_warn("DefinitionRegistry: resource has no 'id' property")
 		return false
+	if category == "assignments":
+		var assignment := definition as AssignmentDef
+		if assignment == null or not assignment.is_valid():
+			_warn("DefinitionRegistry: rejected malformed AssignmentDef")
+			return false
 
 	var definition_id := StringName(str(definition.get("id")))
 	if definition_id == &"":
