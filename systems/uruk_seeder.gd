@@ -28,6 +28,7 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 
 	# The original eight remain the center of the first playable slice.
 	var player := _person(&"player_apprentice", "Enlil-barni", &"apprentice_scribe", {"literacy": 1, "arithmetic": 1, "law": 1}, [])
+	player.personal_stockpiles[&"silver"] = 8 + world.rng_sim.randi_range(0, 4)
 	if add_player_to_world:
 		world.people[player.id] = player
 	var senior := _person(&"shuruppak_ilu", "Shuruppak-ilu", &"archive_keeper", {"literacy": 4, "arithmetic": 4, "law": 3, "rhetoric": 2, "intrigue": 2, "stewardship": 3}, [&"patient", &"exacting"])
@@ -69,27 +70,22 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 
 	world.stockpiles.clear()
 	world.stockpiles[&"canal_progress"] = 0
-	world.stockpiles[&"barley"] = 450 + world.rng_sim.randi_range(-30, 50)
-	world.stockpiles[&"dates"] = 90 + world.rng_sim.randi_range(-10, 15)
-	world.stockpiles[&"sheep"] = 34 + world.rng_sim.randi_range(-4, 6)
-	world.stockpiles[&"goats"] = 18 + world.rng_sim.randi_range(-3, 4)
-	world.stockpiles[&"cattle"] = 7 + world.rng_sim.randi_range(-1, 2)
-	world.stockpiles[&"fish"] = 24 + world.rng_sim.randi_range(-5, 5)
-	world.stockpiles[&"beer"] = 36 + world.rng_sim.randi_range(-6, 8)
-	world.stockpiles[&"wool"] = 22 + world.rng_sim.randi_range(-4, 6)
-	world.stockpiles[&"textiles"] = 12 + world.rng_sim.randi_range(-2, 4)
-	world.stockpiles[&"clay"] = 80 + world.rng_sim.randi_range(-10, 15)
-	world.stockpiles[&"reeds"] = 55 + world.rng_sim.randi_range(-8, 12)
-	world.stockpiles[&"bitumen"] = 16 + world.rng_sim.randi_range(-3, 4)
-	world.stockpiles[&"timber"] = 8 + world.rng_sim.randi_range(-2, 3)
-	world.stockpiles[&"copper"] = 5 + world.rng_sim.randi_range(-1, 2)
-	world.stockpiles[&"silver"] = 8 + world.rng_sim.randi_range(0, 4)
-	# Keep the old combined key until the first-slice UI and sealed-vessel event migrate.
-	world.stockpiles[&"clay_reeds"] = world.get_resource(&"clay") + world.get_resource(&"reeds")
-	world.stockpiles[&"labor"] = 25 + world.rng_sim.randi_range(-5, 5)
-
+	var eanna_stores: Dictionary[StringName, int] = {
+		&"barley": 450 + world.rng_sim.randi_range(-30, 50), &"dates": 90 + world.rng_sim.randi_range(-10, 15),
+		&"sheep": 34 + world.rng_sim.randi_range(-4, 6), &"goats": 18 + world.rng_sim.randi_range(-3, 4),
+		&"cattle": 7 + world.rng_sim.randi_range(-1, 2), &"fish": 24 + world.rng_sim.randi_range(-5, 5),
+		&"beer": 36 + world.rng_sim.randi_range(-6, 8), &"wool": 22 + world.rng_sim.randi_range(-4, 6),
+		&"textiles": 12 + world.rng_sim.randi_range(-2, 4), &"clay": 80 + world.rng_sim.randi_range(-10, 15),
+		&"reeds": 55 + world.rng_sim.randi_range(-8, 12), &"bitumen": 16 + world.rng_sim.randi_range(-3, 4),
+		&"timber": 8 + world.rng_sim.randi_range(-2, 3), &"copper": 5 + world.rng_sim.randi_range(-1, 2),
+		&"silver": 8 + world.rng_sim.randi_range(0, 4), &"labor": 25 + world.rng_sim.randi_range(-5, 5),
+	}
+	eanna_stores[&"clay_reeds"] = eanna_stores[&"clay"] + eanna_stores[&"reeds"]
+	var eanna_household: Dictionary = world.institutions.get(&"eanna_household", {})
+	eanna_household["stockpiles"] = eanna_stores
+	world.institutions[&"eanna_household"] = eanna_household
 	# The North-Bay roof is already leaking; each elapsed period spoils one measure of barley.
-	world.hazards.append({"id": &"roof_leak", "place_id": &"north_bay", "resource": &"barley", "rate": 1, "total_lost": 0, "active": true})
+	world.hazards.append({"id": &"roof_leak", "place_id": &"north_bay", "resource": &"barley", "scope": "institution", "institution_id": &"eanna_household", "rate": 1, "total_lost": 0, "active": true})
 	world.enqueue_form({"form_type": &"grain_levy", "subject_id": &"south_court_storehouse", "urgency": 1, "year": world.year})
 	return player
 

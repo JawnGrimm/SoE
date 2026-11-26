@@ -33,7 +33,7 @@ parameters = {"trait_id": &"complicit"}
 [sub_resource type="Resource" id="EffectGrain"]
 script = ExtResource("3")
 effect_type = &"modify_resource"
-parameters = {"resource": &"grain", "amount": 2, "scope": "world"}
+parameters = {"resource": &"barley", "amount": 2, "scope": "institution"}
 
 [sub_resource type="Resource" id="EffectLookAwayMemory"]
 script = ExtResource("3")

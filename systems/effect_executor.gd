@@ -120,7 +120,7 @@ func _clear_flag(subject: PersonEntity, p: Dictionary, ctx: EventContext) -> voi
 
 func _modify_resource(_subject: PersonEntity, p: Dictionary, ctx: EventContext) -> void:
 	if ctx.world != null:
-		ctx.world.modify_resource(StringName(p.get("resource", "")), int(p.get("amount", 0)), String(p.get("scope", "world")))
+		ctx.world.modify_resource(StringName(p.get("resource", "")), int(p.get("amount", 0)), String(p.get("scope", "world")), ctx.actor.id if ctx.actor != null else &"", StringName(p.get("institution_id", "eanna_household")))
 
 func _resolve_form(_subject: PersonEntity, p: Dictionary, ctx: EventContext) -> void:
 	if ctx.world != null:

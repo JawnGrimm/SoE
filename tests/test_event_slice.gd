@@ -145,13 +145,13 @@ func _run() -> void:
 				world_graph_is_closed = false
 	_check(world_graph_is_closed, "Every seeded person-to-person relationship should resolve both endpoints")
 	for resource_id in [&"barley", &"dates", &"sheep", &"goats", &"cattle", &"fish", &"beer", &"wool", &"textiles", &"clay", &"reeds", &"bitumen", &"timber", &"copper", &"silver"]:
-		_check(uruk_a.stockpiles.has(resource_id), "Uruk seed should initialize commodity %s" % resource_id)
+		_check(uruk_a.institutions[&"eanna_household"].stockpiles.has(resource_id), "Eanna Storehouse should initialize commodity %s" % resource_id)
 	_check(uruk_player_a.id == &"player_apprentice", "Uruk seeder should return the apprentice")
 	_check(uruk_a.get_person(&"shuruppak_ilu").get_opinion(uruk_player_a.id) == 5, "Senior scribe should begin at +5 opinion")
 	for resident_id in [&"ur_nanna", &"utu_mansum", &"enlil_kisu", &"lu_nanshe", &"nin_kasi", &"geme_inana"]:
 		_check(uruk_a.get_person(resident_id).relationships.has(uruk_player_a.id) and uruk_a.get_person(resident_id).get_opinion(uruk_player_a.id) == 0, "Every other resident should store an explicit zero opinion")
 	_check(uruk_a.get_person(&"shuruppak_ilu").vulnerabilities[&"patience_remaining"] == uruk_b.get_person(&"shuruppak_ilu").vulnerabilities[&"patience_remaining"], "People jitter should reproduce from the same seed")
-	_check(uruk_a.stockpiles == uruk_b.stockpiles, "Simulation stockpiles should reproduce from the same seed")
+	_check(uruk_a.stockpiles == uruk_b.stockpiles and uruk_a.institutions[&"eanna_household"].stockpiles == uruk_b.institutions[&"eanna_household"].stockpiles, "World and institutional stockpiles should reproduce from the same seed")
 	var stream_a := WorldState.new()
 	var stream_b := WorldState.new()
 	stream_a.set_world_seed(77)
@@ -182,7 +182,7 @@ func _run() -> void:
 	_check(uruk_a.get_person(&"utu_mansum").get_opinion(uruk_player_a.id) == 2, "Case 15 should shift Utu-mansum's opinion of the apprentice")
 	_check(uruk_a.get_person(&"enlil_kisu").get_opinion(uruk_player_a.id) == 2, "Case 15 should shift Enlil-kisu's opinion of the apprentice")
 	_check(uruk_a.get_person(&"shuruppak_ilu").get_opinion(uruk_player_a.id) == 10, "Case 15 should shift Shuruppak-ilu's opinion of the apprentice")
-	_check(uruk_a.get_resource(&"barley") >= 443, "Case 15 should enter 23 measures of barley")
+	_check(uruk_a.get_resource(&"barley", "institution", &"", &"eanna_household") >= 443, "Case 15 should enter 23 measures of barley")
 	_check(uruk_a.resolved_forms.size() == 1, "Case 15 should resolve the opening grain levy")
 
 
@@ -215,7 +215,7 @@ func _run() -> void:
 	runner.resolve_outcome(sealed_case, sealed_case.outcomes[0], sealed_form_context)
 	_check(sealed_world.get_person(&"utu_mansum").get_opinion(sealed_player.id) == 3, "Case 1 should record Utu-mansum's opinion of the apprentice")
 	_check(sealed_world.get_person(&"enlil_kisu").get_opinion(sealed_player.id) == 1, "Case 1 should record Enlil-kisu's opinion of the apprentice")
-	_check(sealed_world.get_resource(&"clay_reeds") >= 49, "Case 1 should consume one clay and reed unit")
+	_check(sealed_world.get_resource(&"clay_reeds", "institution", &"", &"eanna_household") >= 49, "Case 1 should consume one clay and reed unit")
 	_check(sealed_world.resolved_forms.back()["disposition"] == "quarantine_cracked_vessel", "Case 1 should resolve the receipt with its authored disposition")
 
 	var bce_clock := WorldState.new()
@@ -536,9 +536,9 @@ func _run() -> void:
 	_check(not runner.is_eligible(quayside_template, quayside_ctx), "Quayside challenge must stop being eligible after Period 10")
 	quayside_world.period = 8
 	quayside_world.enqueue_form({"form_type": &"succession_claim", "subject_id": &"quayside_stoppage"})
-	var silver_before := quayside_world.get_resource(&"silver")
+	var silver_before := quayside_actor.get_personal_resource(&"silver")
 	runner.resolve_outcome(quayside_template, quayside_template.outcomes[0], quayside_ctx)
-	_check(quayside_world.get_resource(&"silver") == silver_before - 4, "Silver conciliation should cost four shekels")
+	_check(quayside_actor.get_personal_resource(&"silver") == silver_before - 4, "Silver conciliation should cost four personal shekels")
 	_check(quayside_world.get_resource(&"canal_progress") == 25, "Silver conciliation should add 25 canal progress")
 	_check(quayside_world.get_person(&"enlil_kisu").get_opinion(quayside_actor.id) == -3, "Silver conciliation should improve Enlil-kisu's standing by twelve")
 	_check(not quayside_world.world_flags.has(&"canal_crew_slowdown"), "Silver conciliation should clear the slowdown")
@@ -572,10 +572,17 @@ func _run() -> void:
 
 	var roof_world := WorldState.new()
 	var roof_actor := UrukSeeder.seed_campaign(roof_world, 32003200)
-	var barley_before_leak := roof_world.get_resource(&"barley")
+	var barley_before_leak := roof_world.get_resource(&"barley", "institution", &"", &"eanna_household")
+	var eanna_silver_before_scope_test := roof_world.get_resource(&"silver", "institution", &"", &"eanna_household")
+	var purse_before_scope_test := roof_actor.get_personal_resource(&"silver")
+	roof_world.modify_resource(&"silver", 1, "actor", roof_actor.id)
+	_check(roof_actor.get_personal_resource(&"silver") == purse_before_scope_test + 1, "Actor scope should change only the player's purse")
+	_check(roof_world.get_resource(&"silver", "institution", &"", &"eanna_household") == eanna_silver_before_scope_test, "Actor scope must not debit or credit institutional silver")
+	roof_world.modify_resource(&"silver", -1, "actor", roof_actor.id)
 	_check(roof_world.has_active_hazard(&"north_bay", &"roof_leak"), "Uruk seeding should establish the active North-Bay leak")
 	roof_world.advance_period()
-	_check(roof_world.get_resource(&"barley") == barley_before_leak - 1, "An elapsed period should spoil one measure of barley through the roof leak")
+	_check(roof_world.stockpiles[&"canal_progress"] == 0 and roof_world.institutions[&"eanna_household"].stockpiles.has(&"barley"), "Eanna commodities must not be stored in WorldState world stockpiles")
+	_check(roof_world.get_resource(&"barley", "institution", &"", &"eanna_household") == barley_before_leak - 1, "An elapsed period should spoil one measure of barley through the roof leak")
 	_check(roof_world.get_hazard_total_lost(&"north_bay", &"roof_leak") == 1, "WorldState should retain cumulative barley lost to the leak")
 	_check(roof_world.offer_assignment(&"north_bay_roof", &"ur_nanna"), "WorldState should offer the North-Bay assignment to the existing steward")
 	_check(not roof_world.offer_assignment(&"north_bay_roof", &"ur_nanna"), "WorldState should prevent duplicate assignment offers")
@@ -585,13 +592,13 @@ func _run() -> void:
 	var roof_progress := roof_world.get_assignment_state(&"north_bay_roof")
 	var roof_consultations: Array = roof_progress.get("consultations", [])
 	_check(roof_consultations.size() == 1 and roof_consultations[0]["person_id"] == &"ur_nanna", "Consultation log should preserve the consulted NPC and period")
-	var roof_silver_before := roof_world.get_resource(&"silver")
+	var roof_silver_before := roof_actor.get_personal_resource(&"silver")
 	var roof_law_xp_before := int(roof_actor.skills.xp.get(&"law", 0))
 	var roof_opinion_before := int(roof_world.get_person(&"ur_nanna").get_opinion(roof_actor.id))
 	_check(not roof_world.complete_assignment(roof_assignment, roof_actor.id, &"leak_confirmed_repair_required", true), "Submission should fail until the physical inspection is recorded")
 	_check(roof_world.record_assignment_action(&"north_bay_roof", &"inspect_beams"), "Physical inspection should be recorded")
 	_check(roof_world.complete_assignment(roof_assignment, roof_actor.id, &"leak_confirmed_repair_required", true), "Complete evidence should allow assessment submission")
-	_check(roof_world.get_resource(&"silver") == roof_silver_before + 5, "Accurate assessment should pay five silver")
+	_check(roof_actor.get_personal_resource(&"silver") == roof_silver_before + 5, "Accurate assessment should pay five personal silver")
 	_check(int(roof_actor.skills.xp.get(&"law", 0)) == roof_law_xp_before + 25, "Accurate assessment should award 25 Law XP")
 	_check(int(roof_world.get_person(&"ur_nanna").get_opinion(roof_actor.id)) == roof_opinion_before + 5, "Accurate assessment should improve Ur-Nanna's opinion by five")
 	_check(bool(roof_world.get_assignment_state(&"north_bay_roof").get("rewarded", false)), "Assignment settlement should record that its reward was paid")
@@ -606,10 +613,10 @@ func _run() -> void:
 	repair_ctx.actor = roof_actor
 	repair_ctx.era = registry.get_era(&"uruk_storehouse")
 	_check(runner.is_eligible(repair_event, repair_ctx), "Repair docket should be eligible with its form and three labor units")
-	var labor_before_repair := roof_world.get_resource(&"labor")
+	var labor_before_repair := roof_world.get_resource(&"labor", "institution", &"", &"eanna_household")
 	runner.resolve_outcome(repair_event, repair_event.outcomes[0], repair_ctx)
 	_check(not roof_world.has_active_hazard(&"north_bay", &"roof_leak"), "Repair outcome should deactivate the roof leak")
-	_check(roof_world.get_resource(&"labor") == labor_before_repair - 3, "Repair outcome should consume three labor units")
+	_check(roof_world.get_resource(&"labor", "institution", &"", &"eanna_household") == labor_before_repair - 3, "Repair outcome should consume three labor units")
 	_check(roof_world.resolved_forms.back().get("disposition", "") == "roof_repaired", "Repair outcome should close the repair docket")
 
 	var sealed_definition: EventTemplate = registry.get_event(&"case_01_sealed_vessel")
@@ -636,16 +643,16 @@ func _run() -> void:
 			roof_inspection_generated = true
 	_check(year_one_generated_types.size() >= 2, "Year 1 simulation should generate at least two distinct form types")
 	_check(roof_inspection_generated, "Active North-Bay roof leak should generate its matching Held Barley inspection in Year 1")
-	_check(year_one_world.get_resource(&"labor") < 40, "Labor should not pin at its stockpile cap during Year 1")
-	_check(year_one_world.get_resource(&"labor") <= 25, "Seasonal and institutional demand should bring labor into the intended working range by Year 1 end")
+	_check(year_one_world.get_resource(&"labor", "institution", &"", &"eanna_household") < 40, "Labor should not pin at its stockpile cap during Year 1")
+	_check(year_one_world.get_resource(&"labor", "institution", &"", &"eanna_household") <= 25, "Seasonal and institutional demand should bring labor into the intended working range by Year 1 end")
 
 	# A low reserve with constrained workforce creates the competing transport/
 	# storehouse allocation that Case 3 actually describes.
 	var load_claim_world := WorldState.new()
 	UrukSeeder.seed_campaign(load_claim_world, 98765)
 	load_claim_world.pending_forms.clear()
-	load_claim_world.stockpiles[&"barley"] = 100
-	load_claim_world.stockpiles[&"labor"] = 12
+	load_claim_world.institutions[&"eanna_household"]["stockpiles"][&"barley"] = 100
+	load_claim_world.institutions[&"eanna_household"]["stockpiles"][&"labor"] = 12
 	var load_claim_sim := WorldSimulator.new()
 	load_claim_sim._generate_forms(load_claim_world)
 	var load_claim_generated := false
@@ -659,7 +666,7 @@ func _run() -> void:
 	var sim_world_b := WorldState.new()
 	UrukSeeder.seed_campaign(sim_world_a, 24680)
 	UrukSeeder.seed_campaign(sim_world_b, 24680)
-	var initial_sim_barley := sim_world_a.get_resource(&"barley")
+	var initial_sim_barley := sim_world_a.get_resource(&"barley", "institution", &"", &"eanna_household")
 	var sim_a := WorldSimulator.new()
 	var sim_b := WorldSimulator.new()
 	for sim_period in range(48):
@@ -667,9 +674,9 @@ func _run() -> void:
 		sim_a.advance_period(sim_world_a)
 		sim_b.advance_period(sim_world_b)
 	_check(sim_world_a.year == -3196 and sim_world_a.period == 0, "WorldSimulator should advance the calendar exactly once per period")
-	_check(sim_world_a.stockpiles == sim_world_b.stockpiles, "Narrative RNG consumption must not alter autonomous economy results")
+	_check(sim_world_a.stockpiles == sim_world_b.stockpiles and sim_world_a.institutions[&"eanna_household"].stockpiles == sim_world_b.institutions[&"eanna_household"].stockpiles, "Narrative RNG consumption must not alter autonomous economy results")
 	_check(int(sim_world_a.institutions[&"eanna_household"].get("activity_count", 0)) == 48, "Institutions should execute autonomous activity every period")
-	_check(sim_world_a.get_resource(&"barley") != initial_sim_barley, "World simulation should materially change seeded barley over several years")
+	_check(sim_world_a.get_resource(&"barley", "institution", &"", &"eanna_household") != initial_sim_barley, "World simulation should materially change seeded barley over several years")
 	var generated_sim_form := false
 	for sim_form in sim_world_a.pending_forms:
 		if StringName(sim_form.get("generated_by", "")) == &"world_simulator":
@@ -684,10 +691,10 @@ func _run() -> void:
 	var generator_world_b := WorldState.new()
 	var generator_actor_a := UrukSeeder.seed_campaign(generator_world_a, 8675309)
 	var generator_actor_b := UrukSeeder.seed_campaign(generator_world_b, 8675309)
-	generator_world_a.stockpiles[&"labor"] = 30
-	generator_world_b.stockpiles[&"labor"] = 30
-	generator_world_a.stockpiles[&"silver"] = 12
-	generator_world_b.stockpiles[&"silver"] = 12
+	generator_world_a.institutions[&"eanna_household"]["stockpiles"][&"labor"] = 30
+	generator_world_b.institutions[&"eanna_household"]["stockpiles"][&"labor"] = 30
+	generator_world_a.institutions[&"eanna_household"]["stockpiles"][&"silver"] = 12
+	generator_world_b.institutions[&"eanna_household"]["stockpiles"][&"silver"] = 12
 	var generator_previous := &""
 	var generator_deterministic := true
 	var generator_variety := {}

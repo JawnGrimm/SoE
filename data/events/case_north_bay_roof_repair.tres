@@ -15,12 +15,12 @@ parameters = {"form_type": &"north_bay_roof_repair"}
 script = ExtResource("4")
 condition_type = &"resource_compare"
 target = "actor"
-parameters = {"resource": &"labor", "comparison": ">=", "value": 3}
+parameters = {"resource": &"labor", "comparison": ">=", "value": 3, "scope": "institution", "institution_id": &"eanna_household"}
 
 [sub_resource type="Resource" id="EffectLabor"]
 script = ExtResource("3")
 effect_type = &"modify_resource"
-parameters = {"resource": &"labor", "amount": -3, "scope": "world"}
+parameters = {"resource": &"labor", "amount": -3, "scope": "institution"}
 
 [sub_resource type="Resource" id="EffectRepair"]
 script = ExtResource("3")

@@ -37,7 +37,7 @@ parameters = {"subject": &"shuruppak_ilu", "other": &"player_apprentice", "amoun
 [sub_resource type="Resource" id="fx_4"]
 script = ExtResource("3")
 effect_type = &"modify_resource"
-parameters = {"resource": &"barley", "amount": 23, "scope": "world"}
+parameters = {"resource": &"barley", "amount": 23, "scope": "institution"}
 
 [sub_resource type="Resource" id="fx_5"]
 script = ExtResource("3")
@@ -72,7 +72,7 @@ parameters = {"subject": &"shuruppak_ilu", "other": &"player_apprentice", "amoun
 [sub_resource type="Resource" id="fx_11"]
 script = ExtResource("3")
 effect_type = &"modify_resource"
-parameters = {"resource": &"barley", "amount": 23, "scope": "world"}
+parameters = {"resource": &"barley", "amount": 23, "scope": "institution"}
 
 [sub_resource type="Resource" id="fx_12"]
 script = ExtResource("3")
@@ -97,7 +97,7 @@ parameters = {"subject": &"enlil_kisu", "other": &"player_apprentice", "amount":
 [sub_resource type="Resource" id="fx_16"]
 script = ExtResource("3")
 effect_type = &"modify_resource"
-parameters = {"resource": &"barley", "amount": 23, "scope": "world"}
+parameters = {"resource": &"barley", "amount": 23, "scope": "institution"}
 
 [sub_resource type="Resource" id="fx_17"]
 script = ExtResource("3")

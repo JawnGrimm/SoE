@@ -19,7 +19,7 @@ static func generate(world: WorldState, actor: PersonEntity) -> Dictionary:
 			if bool(hazard_record.get("active", false)):
 				active_hazard = true
 				break
-		var shortage_pressure := world.get_resource(&"barley") < 100 or world.get_resource(&"labor") < 8
+		var shortage_pressure := world.get_resource(&"barley", "institution", &"", &"eanna_household") < 100 or world.get_resource(&"labor", "institution", &"", &"eanna_household") < 8
 		if not active_hazard and not shortage_pressure:
 			archetype = &"delivery_mismatch"
 	world.recent_archetypes.append(archetype)
@@ -78,7 +78,7 @@ static func generate(world: WorldState, actor: PersonEntity) -> Dictionary:
 	var place_name := String(world.places.get(place_id, {}).get("name", String(place_id).replace("_", " ")))
 	var good: StringName = GOODS[world.rng_narrative.randi_range(0, GOODS.size() - 1)]
 	var good_name := String(good).replace("_", " ")
-	var amount := maxi(1, world.get_resource(good))
+	var amount := maxi(1, world.get_resource(good, "institution", &"", &"eanna_household"))
 	var dispatched := world.rng_narrative.randi_range(16, 36)
 	var received := dispatched - world.rng_narrative.randi_range(1, 4)
 	var line_a := world.rng_narrative.randi_range(4, 12)
@@ -105,7 +105,7 @@ static func generate(world: WorldState, actor: PersonEntity) -> Dictionary:
 		&"damaged_consignment":
 			good = DAMAGED_GOODS[world.rng_narrative.randi_range(0, DAMAGED_GOODS.size() - 1)]
 			good_name = String(good).replace("_", " ")
-			amount = maxi(1, world.get_resource(good))
+			amount = maxi(1, world.get_resource(good, "institution", &"", &"eanna_household"))
 			payload.resource_id = good
 			payload.amount = amount
 			var damaged := maxi(1, int(round(float(amount) * 0.2)))
@@ -138,7 +138,7 @@ static func generate(world: WorldState, actor: PersonEntity) -> Dictionary:
 			if hazard.is_empty():
 				payload.title = "HAZARD / MAINTENANCE CHECK"
 				payload.left_card.quote = "%s requests preventive maintenance at %s." % [left.display_name, place_name]
-				payload.left_card.facts = "LABOR: %d\nSILVER: %d" % [world.get_resource(&"labor"), world.get_resource(&"silver")]
+				payload.left_card.facts = "LABOR: %d\nSILVER: %d" % [world.get_resource(&"labor", "institution", &"", &"eanna_household"), world.get_resource(&"silver", "institution", &"", &"eanna_household")]
 				payload.right_card.quote = "%s says a crew can be assigned if the storehouse authorizes it." % right.display_name
 				payload.right_card.facts = "NO ACTIVE HAZARD\nPREVENTIVE WORK"
 				payload.choices = [_choice("Assign labor", "Labor is committed to maintenance.", &"labor", -2, 1, 1, "stewardship", 12, "", 2), _choice("Issue silver", "Silver is issued for repair materials.", &"silver", -2, 1, 1, "law", 10, "", 1), _choice("Record and defer", "Maintenance is recorded without allocation.", good, 0, -1, -1, "arithmetic", 5, "", 0)]
@@ -151,8 +151,8 @@ static func generate(world: WorldState, actor: PersonEntity) -> Dictionary:
 				payload.left_card.quote = "%s reports active %s at %s." % [left.display_name, String(hz_id).replace("_", " "), String(world.places.get(hz_place, {}).get("name", hz_place))]
 				payload.left_card.facts = "ONGOING LOSS: %d %s / PERIOD" % [int(hazard.get("rate", 0)), String(hazard.get("resource", "stock"))]
 				payload.right_card.quote = "%s can provide a crew if labor or silver is assigned." % right.display_name
-				payload.right_card.facts = "LABOR: %d\nSILVER: %d" % [world.get_resource(&"labor"), world.get_resource(&"silver")]
-				var repair_resource: StringName = &"labor" if world.get_resource(&"labor") >= 3 else &"silver"
+				payload.right_card.facts = "LABOR: %d\nSILVER: %d" % [world.get_resource(&"labor", "institution", &"", &"eanna_household"), world.get_resource(&"silver", "institution", &"", &"eanna_household")]
+				var repair_resource: StringName = &"labor" if world.get_resource(&"labor", "institution", &"", &"eanna_household") >= 3 else &"silver"
 				var repair_cost := 3
 				payload.choices = [_choice("Allocate %s and repair" % repair_resource, "The hazard is repaired and its ongoing loss stops.", repair_resource, -repair_cost, 2, 2, "stewardship", 15, "", 2, true), _choice("Record loss; defer repair", "The hazard remains active; loss continues.", good, 0, -1, -1, "arithmetic", 5, "", 1)]
 	return payload

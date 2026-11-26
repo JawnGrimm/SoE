@@ -20,7 +20,7 @@ parameters = {"min": 6, "max": 11}
 [sub_resource type="Resource" id="FxReleaseFive"]
 script = ExtResource("3")
 effect_type = &"modify_resource"
-parameters = {"resource": &"barley", "amount": -5, "scope": "world"}
+parameters = {"resource": &"barley", "amount": -5, "scope": "institution"}
 
 [sub_resource type="Resource" id="FxMemoryFive"]
 script = ExtResource("3")
@@ -35,7 +35,7 @@ parameters = {"form_type": &"held_barley", "disposition": "five_released_two_qua
 [sub_resource type="Resource" id="FxReleaseAll"]
 script = ExtResource("3")
 effect_type = &"modify_resource"
-parameters = {"resource": &"barley", "amount": -7, "scope": "world"}
+parameters = {"resource": &"barley", "amount": -7, "scope": "institution"}
 
 [sub_resource type="Resource" id="FxMemoryAll"]
 script = ExtResource("3")
@@ -50,7 +50,7 @@ parameters = {"form_type": &"held_barley", "disposition": "all_seven_released"}
 [sub_resource type="Resource" id="FxCondemn"]
 script = ExtResource("3")
 effect_type = &"modify_resource"
-parameters = {"resource": &"barley", "amount": -7, "scope": "world"}
+parameters = {"resource": &"barley", "amount": -7, "scope": "institution"}
 
 [sub_resource type="Resource" id="FxMemoryCondemn"]
 script = ExtResource("3")

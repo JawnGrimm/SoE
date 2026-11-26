@@ -7,6 +7,7 @@ const SUPPORTED_ACTIONS: Array[StringName] = [&"consult_steward", &"inspect_beam
 @export var title: String = ""
 @export var employer: StringName = &""
 @export var compensation_resource: StringName = &"silver"
+@export var compensation_scope: String = "actor"
 @export var compensation_amount: int = 0
 @export var law_xp: int = 0
 @export var opinion_reward: int = 0

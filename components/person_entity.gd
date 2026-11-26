@@ -9,8 +9,18 @@ var traits: Array[StringName] = []
 var vulnerabilities: Dictionary[StringName, int] = {}
 var flags: Dictionary[StringName, int] = {}
 var memory: Array[Dictionary] = []
+var personal_stockpiles: Dictionary[StringName, int] = {}
 # Directed social ties keyed by the other person's entity id.
 var relationships: Dictionary[StringName, Dictionary] = {}
+
+func get_personal_resource(resource_id: StringName) -> int:
+	return personal_stockpiles.get(resource_id, 0)
+
+func modify_personal_resource(resource_id: StringName, amount: int) -> void:
+	if resource_id == &"":
+		push_warning("PersonEntity: refusing personal resource change with empty id")
+		return
+	personal_stockpiles[resource_id] = maxi(0, get_personal_resource(resource_id) + amount)
 
 func get_opinion(other_id: StringName) -> int:
 	var tie: Dictionary = relationships.get(other_id, {})

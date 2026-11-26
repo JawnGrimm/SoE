@@ -278,7 +278,7 @@ func _build_interface() -> void:
 	compound_title.add_theme_color_override("font_color", Color("#d6bd8b"))
 	compound_box.add_child(compound_title)
 	var stores_title := Label.new()
-	stores_title.text = "SETTLEMENT STORES"
+	stores_title.text = "EANNA STOREHOUSE STORES"
 	stores_title.add_theme_font_size_override("font_size", 11)
 	stores_title.add_theme_color_override("font_color", Color("#a99570"))
 	compound_box.add_child(stores_title)
@@ -861,14 +861,14 @@ func _submit_north_bay_assessment(is_accurate: bool) -> void:
 		push_warning("Main: North-Bay employer disappeared before settlement")
 		return
 	var opinion_before := int(steward.get_opinion(actor.id))
-	var silver_before_assignment := world.get_resource(&"silver")
+	var silver_before_assignment := actor.get_personal_resource(&"silver")
 	var traits_before_assignment: Array[StringName] = actor.traits.duplicate()
 	if not world.complete_assignment(north_bay_assignment, actor.id, assessment, is_accurate):
 		push_warning("Main: North-Bay assessment rejected; required actions or lifecycle state are invalid")
 		return
 	var opinion_delta := steward.get_opinion(actor.id) - opinion_before
 	world.cases_settled += 1
-	var assignment_silver_delta := world.get_resource(&"silver") - silver_before_assignment
+	var assignment_silver_delta := actor.get_personal_resource(&"silver") - silver_before_assignment
 	if assignment_silver_delta > 0:
 		world.silver_earned += assignment_silver_delta
 	for gained_trait in actor.traits:
@@ -976,7 +976,7 @@ func _resolve_choice(index: int) -> void:
 		return
 	if active_event == null:
 		return
-	var silver_before := world.get_resource(&"silver")
+	var silver_before := actor.get_personal_resource(&"silver")
 	var traits_before: Array[StringName] = actor.traits.duplicate()
 	var before: Dictionary[StringName, int] = {}
 	for person_id in ROSTER_ORDER:
@@ -1001,7 +1001,7 @@ func _resolve_procedural_choice(index: int, choice: Dictionary) -> void:
 	var pair_parts := String(procedural_assignment.get("npc_pair", "")).split("|")
 	var left := world.get_person(StringName(pair_parts[0])) if pair_parts.size() > 0 else null
 	var right := world.get_person(StringName(pair_parts[1])) if pair_parts.size() > 1 else null
-	var silver_before := world.get_resource(&"silver")
+	var silver_before := actor.get_personal_resource(&"silver")
 	var traits_before: Array[StringName] = actor.traits.duplicate()
 	last_opinion_deltas.clear()
 	var left_delta := int(effects.get("opinion_left", 0))
@@ -1017,14 +1017,14 @@ func _resolve_procedural_choice(index: int, choice: Dictionary) -> void:
 	var result_text := String(choice.get("result_text", "The entry is sealed."))
 	var allocation_paid := resource_delta >= 0
 	if resource_id != &"" and resource_delta != 0:
-		if resource_delta < 0 and world.get_resource(resource_id) < absi(resource_delta):
+		if resource_delta < 0 and world.get_resource(resource_id, "institution", &"", &"eanna_household") < absi(resource_delta):
 			allocation_paid = false
 			result_text += " The allocation was not made: stores cannot cover the cost."
 			if bool(effects.get("repair_hazard", false)):
 				result_text += " The hazard remains active."
 		else:
 			allocation_paid = true
-			world.stockpiles[resource_id] = maxi(0, world.get_resource(resource_id) + resource_delta)
+			world.modify_resource(resource_id, resource_delta, "institution", &"", &"eanna_household")
 	if bool(effects.get("repair_hazard", false)) and allocation_paid:
 		var repair_place := StringName(procedural_assignment.get("place_id", ""))
 		var repair_id := StringName(procedural_assignment.get("hazard_id", ""))
@@ -1045,7 +1045,7 @@ func _resolve_procedural_choice(index: int, choice: Dictionary) -> void:
 
 func _record_case_settlement(silver_before: int, traits_before: Array[StringName]) -> void:
 	world.cases_settled += 1
-	var silver_delta := world.get_resource(&"silver") - silver_before
+	var silver_delta := actor.get_personal_resource(&"silver") - silver_before
 	if silver_delta > 0:
 		world.silver_earned += silver_delta
 	for trait_id in actor.traits:
@@ -1120,7 +1120,7 @@ func _show_era_completion() -> void:
 	case_heading.text = "𒂍  THE GREAT CANAL CUT IS FINISHED"
 	dossier.visible = true
 	dossier.text = summary
-	_set_evidence_facts("THE CAREER RECORD\nThe canal is entered as completed work. The apprentice kept the measures and the names.", "THE STOREHOUSE\nThe reserves held long enough. The next shift inherits the result.")
+	_set_evidence_facts("THE CAREER RECORD\nThe canal is entered as a completed Epic. The apprentice kept the measures and the names.", "THE STOREHOUSE\nThe reserves held long enough. The next shift inherits the result.")
 	# Completion is an authored career verdict, never leftover testimony from
 	# whichever docket happened to precede the final period.
 	evidence_left_title.text = "CAREER VERDICT / ARCHIVE"
@@ -1131,9 +1131,9 @@ func _show_era_completion() -> void:
 	evidence_right_quote.text = "“The canal stands, and the stores were not emptied to build it. That is competent work.”"
 	_set_evidence_portrait(&"shuruppak_ilu", &"ur_nanna")
 	_set_evidence_tension(0, 0)
-	prompt_label.text = "The canal is built. This era's work is complete."
+	prompt_label.text = "The canal is built. This era's Epic is complete."
 	_add_choice("Begin Next Era / New Shift", _begin_next_shift)
-	status_label.text = "ERA WORK COMPLETE  /  CEDAR DESK ENTRY SEALED"
+	status_label.text = "ERA EPIC COMPLETE  /  CEDAR DESK ENTRY SEALED"
 
 func _begin_next_shift() -> void:
 	if phase != "era_complete":
@@ -1320,11 +1320,11 @@ func _refresh_compound() -> void:
 	for trait_id in actor.traits:
 		if trait_id in [&"exacting", &"stubborn", &"protective", &"diplomatic"]:
 			mentor_trait = String(trait_id)
-	heirloom_label.text = "HEIRLOOM RIM  /  APPRENTICE SCRIBE  /  MENTOR MARK: %s  /  SILVER AT DESK: %d SHEKELS" % [mentor_trait.to_upper(), world.get_resource(&"silver")]
-	stores_label.text = "Barley     %d measures\nNorth-Bay water loss  %d\nSilver     %d shekels\nClay/Reeds %d\nLabor      %d" % [world.get_resource(&"barley"), world.get_hazard_total_lost(&"north_bay", &"roof_leak"), world.get_resource(&"silver"), world.get_resource(&"clay_reeds"), world.get_resource(&"labor")]
+	heirloom_label.text = "YOUR DESK PURSE  /  %d SHEKELS PERSONAL SILVER  /  MENTOR MARK: %s" % [actor.get_personal_resource(&"silver"), mentor_trait.to_upper()]
+	stores_label.text = "Barley     %d measures\nNorth-Bay water loss  %d\nSilver     %d shekels (institutional)\nClay/Reeds %d\nLabor      %d" % [world.get_resource(&"barley", "institution", &"", &"eanna_household"), world.get_hazard_total_lost(&"north_bay", &"roof_leak"), world.get_resource(&"silver", "institution", &"", &"eanna_household"), world.get_resource(&"clay_reeds", "institution", &"", &"eanna_household"), world.get_resource(&"labor", "institution", &"", &"eanna_household")]
 	var canal := world.get_resource(&"canal_progress")
 	var filled := int(round(float(canal) / 10.0))
-	canal_label.text = "THE GREAT CANAL CUT\n[%s%s] %d / 100\nTarget before Inundation" % ["=".repeat(filled), "-".repeat(10 - filled), canal]
+	canal_label.text = "ERA EPIC: THE GREAT CANAL CUT\n[%s%s] %d / 100\nTarget before Inundation" % ["=".repeat(filled), "-".repeat(10 - filled), canal]
 	for child in roster_box.get_children():
 		roster_box.remove_child(child)
 		child.queue_free()

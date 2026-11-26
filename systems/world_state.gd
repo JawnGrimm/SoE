@@ -57,11 +57,13 @@ func _process_hazards() -> void:
 		var resource_id := StringName(hazard.get("resource", ""))
 		if rate <= 0 or resource_id == &"":
 			continue
-		var available := maxi(0, get_resource(resource_id))
+		var scope := String(hazard.get("scope", "world"))
+		var institution_id := StringName(hazard.get("institution_id", ""))
+		var available := maxi(0, get_resource(resource_id, scope, &"", institution_id))
 		var lost := mini(available, rate)
 		if lost <= 0:
 			continue
-		stockpiles[resource_id] = available - lost
+		modify_resource(resource_id, -lost, scope, &"", institution_id)
 		hazard["total_lost"] = int(hazard.get("total_lost", 0)) + lost
 		hazards[index] = hazard
 
@@ -173,7 +175,7 @@ func complete_assignment(assignment: AssignmentDef, actor_id: StringName, assess
 	var opinion_delta := assignment.opinion_penalty
 	if is_accurate:
 		opinion_delta = assignment.opinion_reward
-		modify_resource(assignment.compensation_resource, assignment.compensation_amount)
+		modify_resource(assignment.compensation_resource, assignment.compensation_amount, assignment.compensation_scope, actor_id)
 		actor.skills.add_xp(&"law", assignment.law_xp)
 	employer.change_opinion(actor_id, opinion_delta, "North-Bay roof inspection assessment: %s" % ("accurate and supported" if is_accurate else "unsupported; contradicted by physical inspection"), year)
 
@@ -284,20 +286,48 @@ func resolve_form(parameters: Dictionary, current_year: int) -> bool:
 	pending_forms.remove_at(match_index)
 	return true
 
-func get_resource(resource_id: StringName) -> int:
-	return stockpiles.get(resource_id, 0)
+func get_resource(resource_id: StringName, scope: String = "world", actor_id: StringName = &"", institution_id: StringName = &"") -> int:
+	match scope:
+		"world":
+			return stockpiles.get(resource_id, 0)
+		"actor":
+			var person := get_person(actor_id)
+			return person.get_personal_resource(resource_id) if person != null else 0
+		"office", "institution":
+			var institution: Dictionary = institutions.get(institution_id, {})
+			var stores: Dictionary = institution.get("stockpiles", {})
+			return stores.get(resource_id, 0)
+		_:
+			push_warning("WorldState: unknown resource scope '%s'" % scope)
+			return 0
 
-func modify_resource(resource_id: StringName, amount: int, scope: String = "world") -> void:
-	if scope != "world":
-		push_warning("WorldState: unsupported resource scope '%s'; no resource changed" % scope)
-		return
+func modify_resource(resource_id: StringName, amount: int, scope: String = "world", actor_id: StringName = &"", institution_id: StringName = &"") -> void:
 	if resource_id == &"":
 		push_warning("WorldState: refusing resource change with empty id")
 		return
-	var next_value := get_resource(resource_id) + amount
-	if resource_id == &"canal_progress":
-		next_value = clampi(next_value, 0, 100)
-	stockpiles[resource_id] = next_value
+	match scope:
+		"world":
+			var next_value := get_resource(resource_id) + amount
+			if resource_id == &"canal_progress":
+				next_value = clampi(next_value, 0, 100)
+			stockpiles[resource_id] = next_value
+		"actor":
+			var person := get_person(actor_id)
+			if person == null:
+				push_warning("WorldState: actor resource change could not resolve '%s'" % actor_id)
+				return
+			person.modify_personal_resource(resource_id, amount)
+		"office", "institution":
+			if not institutions.has(institution_id):
+				push_warning("WorldState: institution resource change could not resolve '%s'" % institution_id)
+				return
+			var institution: Dictionary = institutions[institution_id]
+			var stores: Dictionary = institution.get("stockpiles", {}).duplicate(true)
+			stores[resource_id] = maxi(0, int(stores.get(resource_id, 0)) + amount)
+			institution["stockpiles"] = stores
+			institutions[institution_id] = institution
+		_:
+			push_warning("WorldState: unsupported resource scope '%s'; no resource changed" % scope)
 
 func set_flag(flag: StringName, expiry_period: int) -> void:
 	if flag != &"":
