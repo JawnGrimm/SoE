@@ -156,6 +156,19 @@ func _run() -> void:
 	var form_resolution := AssignmentPipeline.resolve(assignment_world, assignment_actor, form_assignment_id, &"certify")
 	_check(bool(form_resolution.get("success", false)), "Two investigative actions should permit a supported form assessment")
 	_check(assignment_world.pending_forms.is_empty(), "Certifying the generated form should resolve that exact source form")
+	var deferred_world := WorldState.new()
+	var deferred_actor := UrukSeeder.seed_campaign(deferred_world, 44004401)
+	var deferred_form: Dictionary = {}
+	for opportunity in AssignmentPipeline.generate_opportunities(deferred_world, deferred_actor):
+		if StringName(opportunity.get("kind", "")) == &"form":
+			deferred_form = opportunity
+			break
+	AssignmentPipeline.begin(deferred_world, deferred_form, deferred_actor)
+	var deferred_id := StringName(deferred_form.get("id", ""))
+	AssignmentPipeline.perform_action(deferred_world, deferred_actor, deferred_id, &"examine_records")
+	AssignmentPipeline.perform_action(deferred_world, deferred_actor, deferred_id, &"reconcile_accounts")
+	var deferred_result := AssignmentPipeline.resolve(deferred_world, deferred_actor, deferred_id, &"defer")
+	_check(bool(deferred_result.get("success", false)) and deferred_world.pending_forms.is_empty() and String(deferred_world.resolved_forms.back().get("disposition", "")) == "deferred", "Deferring an assessment should close that form as deferred without fabricating a resolution")
 	_check(AssignmentPipeline.begin(assignment_world, hazard_opportunity, assignment_actor), "Active hazard should become a selectable engagement")
 	var hazard_assignment_id := StringName(hazard_opportunity.get("id", ""))
 	AssignmentPipeline.perform_action(assignment_world, assignment_actor, hazard_assignment_id, &"consult_official")
