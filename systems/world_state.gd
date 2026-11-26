@@ -301,12 +301,14 @@ func get_resource(resource_id: StringName, scope: String = "world", owner_id: St
 			var institution: Dictionary = institutions.get(resolved_id, {})
 			var resources: Dictionary = institution.get("stockpiles", {})
 			return int(resources.get(resource_id, 0))
-		_:
+		"world":
 			if stockpiles.has(resource_id):
 				return int(stockpiles[resource_id])
 			# Legacy world-scope callers resolve seeded household commodities to
 			# Eanna until all authored data has explicit institution scope.
 			return get_resource(resource_id, "institution", "", &"eanna_household")
+		_:
+			return 0
 
 func institution_has_resource(resource_id: StringName, institution_id: StringName = &"eanna_household") -> bool:
 	var institution: Dictionary = institutions.get(institution_id, {})
@@ -325,6 +327,9 @@ func get_institution_for_person(person_id: StringName) -> StringName:
 func modify_resource(resource_id: StringName, amount: int, scope: String = "world", owner_id: String = "", institution_id: StringName = &"") -> bool:
 	if resource_id == &"":
 		push_warning("WorldState: refusing resource change with empty id")
+		return false
+	if scope not in ["world", "actor", "office", "institution"]:
+		push_warning("WorldState: unsupported resource scope '%s'; no resource changed" % scope)
 		return false
 	if scope == "actor":
 		var person := get_person(StringName(owner_id))
