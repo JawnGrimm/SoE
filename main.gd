@@ -75,6 +75,12 @@ var choice_locked := false
 func _ready() -> void:
 	_build_interface()
 	_start_world()
+	MusicDirector.play_for_phase(phase)
+
+func _set_phase(next_phase: String) -> void:
+	phase = next_phase
+	MusicDirector.play_for_phase(phase)
+
 
 func _build_interface() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -593,7 +599,7 @@ func _show_character_creation_screen(screen: int) -> void:
 	creation_screen = clampi(screen, 0, 8)
 	_clear_stamp_history()
 	_clear_choices()
-	phase = "character_creation"
+	_set_phase("character_creation")
 	case_heading.text = "𒂍  A LIFE IN THE MAKING  /  %02d" % creation_screen
 	case_heading.add_theme_font_size_override("font_size", 20)
 	dossier.visible = true
@@ -766,7 +772,7 @@ func _open_north_bay_assignment() -> void:
 
 func _show_north_bay_activity() -> void:
 	_clear_choices()
-	phase = "north_bay_activity"
+	_set_phase("north_bay_activity")
 	var state := world.get_assignment_state(NORTH_BAY_ASSIGNMENT_ID)
 	var actions: Dictionary = state.get("actions", {})
 	var payload := {
@@ -839,7 +845,7 @@ func _begin_north_bay_assessment() -> void:
 			prompt_label.text = "The report cannot be submitted: consult Ur-Nanna and inspect the beams first."
 			return
 	_clear_choices()
-	phase = "north_bay_assessment"
+	_set_phase("north_bay_assessment")
 	var payload := {
 		"title": "NORTH-BAY / ASSESSMENT",
 		"left_card": {"title": "STEWARD'S ACCOUNT", "speaker_id": &"ur_nanna", "quote": "“I ordered a patch. I cannot certify the beam sockets.”", "facts": "TESTIMONY RECORDED\nThe steward's statement is not physical inspection."},
@@ -879,7 +885,7 @@ func _submit_north_bay_assessment(is_accurate: bool) -> void:
 	assignment_card.disabled = true
 	assignment_card.text = "FILED  /  NORTH-BAY ROOF INSPECTION  /  %s" % ("5 SHEKELS PAID" if is_accurate else "ASSESSMENT REJECTED")
 	_clear_choices()
-	phase = "north_bay_result"
+	_set_phase("north_bay_result")
 	case_heading.text = "𒂍  ASSESSMENT SEALED"
 	dossier.text = "The report has been entered into the storehouse record. The physical leak remains active; each elapsed period spoils one measure of barley. Ur-Nanna has opened a repair docket for the next available desk."
 	if is_accurate:
@@ -935,7 +941,7 @@ func _authored_choices_payload() -> Array:
 func _show_case() -> void:
 	_clear_stamp_history()
 	_clear_choices()
-	phase = "case"
+	_set_phase("case")
 	_render_docket_payload(_active_docket_payload())
 
 func _render_docket_payload(payload: Dictionary, callbacks: Array = []) -> void:
@@ -1064,7 +1070,7 @@ func _play_outcome_foley(index: int) -> void:
 func _show_result(outcome: EventOutcome) -> void:
 	last_resolved_outcome = outcome
 	_clear_choices()
-	phase = "result"
+	_set_phase("result")
 	case_heading.add_theme_font_size_override("font_size", 20)
 	case_heading.text = "𒂍  MARK MADE"
 	dossier.visible = false
@@ -1090,7 +1096,7 @@ func _advance_period() -> void:
 
 func _show_procedural_result(result_title: String, result_text: String) -> void:
 	_clear_choices()
-	phase = "result"
+	_set_phase("result")
 	case_heading.text = "𒂍  " + result_title.to_upper()
 	dossier.visible = false
 	dossier.text = ""
@@ -1102,7 +1108,7 @@ func _show_procedural_result(result_title: String, result_text: String) -> void:
 
 func _show_era_completion() -> void:
 	world.era_completion_started = true
-	phase = "era_complete"
+	_set_phase("era_complete")
 	_clear_choices()
 	var standing_total := 0
 	var standing_count := 0
@@ -1154,7 +1160,7 @@ func _begin_next_shift() -> void:
 
 func _show_end_of_queue() -> void:
 	_clear_choices()
-	phase = "end_of_queue"
+	_set_phase("end_of_queue")
 	case_heading.add_theme_font_size_override("font_size", 20)
 	case_heading.text = "𒂍  THE DESK IS CLEAR"
 	dossier.visible = false
