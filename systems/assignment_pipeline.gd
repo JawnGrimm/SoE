@@ -205,6 +205,7 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 	var kind := StringName(record.get("kind", ""))
 	var source_id := StringName(record.get("source_id", ""))
 	var result_text := ""
+	var work_details := ""
 	var accurate := true
 	match kind:
 		&"form":
@@ -248,12 +249,7 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 			var target := int(project.get("target", 100))
 			var project_state: Dictionary = world.epics.get(source_id, {})
 			var notes: Array = project_state.get("history_notes", [])
-			world.cedar_desk_log.append({
-				"year": world.year,
-				"period": world.period,
-				"title": "PUBLIC WORK PROGRESS REVIEW / %s" % String(project.get("title", source_id)),
-				"summary": "Progress %d / %d. Current stage: %s. Recorded simulation entries: %d." % [progress, target, String(project_state.get("stage", "unrecorded")), notes.size()]
-			})
+			work_details = "Progress %d / %d. Current stage: %s. Recorded simulation entries: %d." % [progress, target, String(project_state.get("stage", "unrecorded")), notes.size()]
 			result_text = "The project's actual progress, stage, and recorded interruptions are entered in the archive. The crews continue their work independently."
 		&"pressure":
 			var institution_id := StringName(record.get("source_data", {}).get("institution_id", source_id))
@@ -264,12 +260,7 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 			var lines := PackedStringArray()
 			for resource_id in resources.keys():
 				lines.append("%s: %d" % [String(resource_id).replace("_", " ").capitalize(), int(resources[resource_id])])
-			world.cedar_desk_log.append({
-				"year": world.year,
-				"period": world.period,
-				"title": "RESOURCE PRESSURE REVIEW / %s" % String(institution.get("name", institution_id)),
-				"summary": "Pressure index %d. %s" % [int(institution.get("resource_pressure", 0)), "; ".join(lines)]
-			})
+			work_details = "Pressure index %d. %s" % [int(institution.get("resource_pressure", 0)), "; ".join(lines)]
 			result_text = "The institution's current stockpile position is entered in the archive. The underlying pressure remains the institution's responsibility."
 		&"ledger":
 			var ledger_institution_id := StringName(record.get("source_data", {}).get("institution_id", &"eanna_household"))
@@ -280,12 +271,7 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 			var ledger_lines := PackedStringArray()
 			for resource_id in ledger_resources.keys():
 				ledger_lines.append("%s: %d" % [String(resource_id).replace("_", " ").capitalize(), int(ledger_resources[resource_id])])
-			world.cedar_desk_log.append({
-				"year": world.year,
-				"period": world.period,
-				"title": "PERIODIC INSTITUTIONAL ACCOUNT / %s" % String(ledger.get("name", ledger_institution_id)),
-				"summary": "Members: %d. Activity records: %d. Stockpiles: %s" % [int(record.get("source_data", {}).get("member_count", ledger.get("members", []).size())), int(record.get("source_data", {}).get("activity_count", ledger.get("activity_count", 0))), "; ".join(ledger_lines)]
-			})
+			work_details = "Members: %d. Activity records: %d. Stockpiles: %s" % [int(record.get("source_data", {}).get("member_count", ledger.get("members", []).size())), int(record.get("source_data", {}).get("activity_count", ledger.get("activity_count", 0))), "; ".join(ledger_lines)]
 			result_text = "The institution's actual membership, activity, and resource records are copied into the archive. No goods are created or moved by the act of recording them."
 		_:
 			return {"success": false, "message": "Unsupported world situation."}
@@ -303,6 +289,34 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 	record["result"] = result_text
 	record["accurate"] = accurate
 	world.assignments[assignment_id] = record
+	var source_data: Dictionary = record.get("source_data", {})
+	var institution_id := StringName(source_data.get("institution_id", ""))
+	var location_id := StringName(source_data.get("place_id", source_data.get("subject_id", "")))
+	if location_id == &"" and institution_id != &"":
+		location_id = StringName(world.institutions.get(institution_id, {}).get("place_id", ""))
+	var commodity_id := StringName(source_data.get("resource", source_data.get("commodity_id", "")))
+	var npc_ids: Array[StringName] = []
+	if employer_id != &"":
+		npc_ids.append(employer_id)
+	world.cedar_desk_log.append({
+		"year": world.year,
+		"period": world.period,
+		"assignment_id": String(assignment_id),
+		"title": String(record.get("title", "Assignment")),
+		"employer_id": String(employer_id),
+		"responsible_character_id": String(actor.id),
+		"npc_ids": npc_ids,
+		"institution_id": String(institution_id),
+		"location_id": String(location_id),
+		"commodity_id": String(commodity_id),
+		"document_type": String(source_data.get("form_type", kind)),
+		"category": String(kind),
+		"activity": "assignment_assessment",
+		"decision": String(verdict),
+		"outcome": result_text,
+		"details": work_details,
+		"relationship_delta": opinion_delta
+	})
 	actor.memory.append({
 		"memory_id": &"assignment_assessment",
 		"text": "%s — %s" % [String(record.get("title", "Assignment")), result_text],
