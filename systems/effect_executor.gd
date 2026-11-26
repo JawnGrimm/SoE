@@ -48,10 +48,7 @@ func _change_opinion(relative_subject: PersonEntity, p: Dictionary, ctx: EventCo
 		push_warning("EffectExecutor: change_opinion could not resolve both people")
 		return
 	var delta := int(p.get("amount", 0))
-	subject.opinions[other.id] = int(subject.opinions.get(other.id, 0)) + delta
-	var reasons: Array = subject.opinion_reasons.get(other.id, [])
-	reasons.append({"year": ctx.year, "amount": delta, "reason": String(p.get("reason", ""))})
-	subject.opinion_reasons[other.id] = reasons
+	subject.change_opinion(other.id, delta, String(p.get("reason", "")), ctx.year)
 
 func _gain_skill_xp(subject: PersonEntity, p: Dictionary, _ctx: EventContext) -> void:
 	if subject != null:

@@ -11,20 +11,19 @@ static func seed_campaign(world: WorldState, seed: int) -> PersonEntity:
 	world.places.clear()
 	world.institutions.clear()
 	world.social_groups.clear()
-	world.relationships.clear()
 	world.assignments.clear()
 	world.pending_forms.clear()
 	world.resolved_forms.clear()
 	world.event_history.clear()
 	world.character_event_history.clear()
-	world.north_bay_roof_total_spoiled = 0
+	world.hazards.clear()
 	world._next_form_sequence = 1
 
 	# The original eight remain the center of the first playable slice.
 	var player := _person(&"player_apprentice", "Enlil-barni", &"apprentice_scribe", {"literacy": 1, "arithmetic": 1, "law": 1}, [])
 	world.people[player.id] = player
 	var senior := _person(&"shuruppak_ilu", "Shuruppak-ilu", &"archive_keeper", {"literacy": 4, "arithmetic": 4, "law": 3, "rhetoric": 2, "intrigue": 2, "stewardship": 3}, [&"patient", &"exacting"])
-	senior.opinions[PLAYER_ID] = 5
+	senior.set_opinion(PLAYER_ID, 5)
 	senior.vulnerabilities[&"patience_remaining"] = 3 + world.rng_people.randi_range(0, 2)
 	world.people[senior.id] = senior
 	var steward := _person(&"ur_nanna", "Ur-Nanna", &"grain_clerk", {"stewardship": 4, "law": 2, "arithmetic": 3}, [&"cautious", &"weather_watcher"])
@@ -49,6 +48,9 @@ static func seed_campaign(world: WorldState, seed: int) -> PersonEntity:
 	world.people[&"nin_azu"] = _person(&"nin_azu", "Nin-azu", &"precinct_attendant", {"literacy": 2, "rhetoric": 2}, [&"devout", &"ambitious"])
 	world.people[&"geme_tur"] = _person(&"geme_tur", "Geme-tur", &"player_household", {"stewardship": 2}, [&"practical", &"blunt"])
 
+	for person in world.people.values():
+		if person.id != player.id and not person.relationships.has(player.id):
+			person.set_opinion(player.id, 0)
 	_seed_places(world)
 	_seed_institutions_and_groups(world)
 	_seed_relationships(world)
@@ -75,8 +77,7 @@ static func seed_campaign(world: WorldState, seed: int) -> PersonEntity:
 	world.stockpiles[&"labor"] = 25 + world.rng_sim.randi_range(-5, 5)
 
 	# The North-Bay roof is already leaking; each elapsed period spoils one measure of barley.
-	world.north_bay_roof_leak_active = true
-	world.north_bay_roof_leak_rate = 1
+	world.hazards.append({"id": &"roof_leak", "place_id": &"north_bay", "resource": &"barley", "rate": 1, "total_lost": 0, "active": true})
 	world.enqueue_form({"form_type": &"grain_levy", "subject_id": &"south_court_storehouse", "urgency": 1, "year": world.year})
 	return player
 
@@ -127,6 +128,7 @@ static func _seed_relationships(world: WorldState) -> void:
 	_link(world, &"nin_azu", &"nin_kasi", &"cultic_and_workplace_tie", 2, 5)
 	_link(world, &"geme_tur", &"player_apprentice", &"family", 8, 9)
 	_link(world, &"geme_tur", &"shuruppak_ilu", &"household_reputation", 1, 4)
+	_link(world, &"nin_kasi", &"ama_edin", &"brewery_household_supply", 2, 4)
 
 static func _link(world: WorldState, source_id: StringName, target_id: StringName, relation_type: StringName, strength: int, trust: int) -> void:
 	var source := world.get_person(source_id)
@@ -134,17 +136,21 @@ static func _link(world: WorldState, source_id: StringName, target_id: StringNam
 	if source == null or target == null:
 		push_warning("UrukSeeder: relationship references missing person %s -> %s" % [source_id, target_id])
 		return
-	var tie := {"type": relation_type, "strength": strength, "trust": trust}
+	var tie: Dictionary = source.relationships.get(target_id, {})
+	tie["type"] = relation_type
+	tie["strength"] = strength
+	tie["trust"] = trust
+	if not tie.has("opinion"):
+		tie["opinion"] = 0
+	if not tie.has("reasons"):
+		tie["reasons"] = []
 	source.relationships[target_id] = tie
-	world.relationships.append({"source_id": source_id, "target_id": target_id, "type": relation_type, "strength": strength, "trust": trust})
 
 static func _person(id: StringName, display_name: String, office: StringName, values: Dictionary, person_traits: Array) -> PersonEntity:
 	var person := PersonEntity.new()
 	person.id = id
 	person.display_name = display_name
 	person.office_id = office
-	if id != PLAYER_ID:
-		person.opinions[PLAYER_ID] = 0
 	person.traits.assign(person_traits)
 	for skill in person.skills.levels.keys():
 		person.skills.levels[skill] = int(values.get(String(skill), 0))

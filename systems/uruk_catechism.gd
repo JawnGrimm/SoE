@@ -6,12 +6,12 @@ static func choose_path(world: WorldState, actor: PersonEntity, path: StringName
 		return false
 	actor.flags[path] = -1
 	if path == &"path_temple":
-		world.get_person(&"ur_nanna").opinions[actor.id] += 5
-		world.get_person(&"nin_kasi").opinions[actor.id] += 3
+		world.get_person(&"ur_nanna").change_opinion(actor.id, 5, "Path catechism: temple instruction", world.year)
+		world.get_person(&"nin_kasi").change_opinion(actor.id, 3, "Path catechism: temple instruction", world.year)
 		world.enqueue_form({"form_type": &"pension_roll", "subject_id": &"brewing_house_account", "urgency": 1, "year": world.year})
 	else:
-		world.get_person(&"enlil_kisu").opinions[actor.id] += 5
-		world.get_person(&"geme_inana").opinions[actor.id] += 3
+		world.get_person(&"enlil_kisu").change_opinion(actor.id, 5, "Path catechism: landing instruction", world.year)
+		world.get_person(&"geme_inana").change_opinion(actor.id, 3, "Path catechism: landing instruction", world.year)
 		world.enqueue_form({"form_type": &"consignment_receipt", "subject_id": &"temple_consignment", "urgency": 1, "year": world.year})
 	return true
 
@@ -35,5 +35,5 @@ static func choose_mentor(world: WorldState, actor: PersonEntity, mentor_id: Str
 	var mentor := world.get_person(mentor_id)
 	if mentor == null:
 		return false
-	mentor.opinions[actor.id] = int(mentor.opinions.get(actor.id, 0)) + 5
+	mentor.change_opinion(actor.id, 5, "Mentor selection", world.year)
 	return true

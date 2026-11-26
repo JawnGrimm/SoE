@@ -11,3 +11,4 @@ extends Resource
 @export var once_per_world: bool = false
 @export var conditions: Array[EventCondition] = []
 @export var outcomes: Array[EventOutcome] = []
+@export var records: Array[Dictionary] = []

@@ -9,6 +9,7 @@ func _init() -> void:
     _handlers[&"skill_at_least"] = _skill_at_least
     _handlers[&"in_office"] = _in_office
     _handlers[&"year_in_range"] = _year_in_range
+    _handlers[&"period_in_range"] = _period_in_range
     _handlers[&"opinion_compare"] = _opinion_compare
     _handlers[&"has_pending_form"] = _has_pending_form
     _handlers[&"flag_set"] = _flag_set
@@ -47,6 +48,17 @@ func _in_office(subject: PersonEntity, p: Dictionary, _ctx: EventContext) -> boo
 
 func _year_in_range(_subject: PersonEntity, p: Dictionary, ctx: EventContext) -> bool:
     return ctx.year >= int(p.get("min", -999999)) and ctx.year <= int(p.get("max", 999999))
+
+func _period_in_range(_subject: PersonEntity, p: Dictionary, ctx: EventContext) -> bool:
+    if ctx.world == null:
+        return false
+    var minimum := int(p.get("min", 0))
+    var maximum := int(p.get("max", 11))
+    if minimum < 0 or maximum > 11 or minimum > maximum:
+        push_warning("ConditionEvaluator: invalid period range; expected 0..11 with min <= max")
+        return false
+    var period := ctx.world.period
+    return period >= minimum and period <= maximum
 
 func _has_pending_form(_subject: PersonEntity, p: Dictionary, ctx: EventContext) -> bool:
     return ctx.world != null and ctx.world.has_pending_form(StringName(p.get("form_type", "")))
@@ -92,7 +104,7 @@ func _opinion_compare(subject: PersonEntity, p: Dictionary, ctx: EventContext) -
         if other == null:
             return false
         opinion_owner = other
-    var value := int(opinion_owner.opinions.get(ctx.actor.id, 0))
+    var value := opinion_owner.get_opinion(ctx.actor.id)
     var expected := int(p.get("value", 0))
     match String(p.get("comparison", ">=")):
         ">=": return value >= expected

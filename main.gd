@@ -1,9 +1,6 @@
 extends Control
 
 const CAMPAIGN_SEED: int = 32003200
-const CASE_15_ID: StringName = &"case_15_south_court"
-const CASE_01_ID: StringName = &"case_01_sealed_vessel"
-const CASE_02_ID: StringName = &"case_02_brewers_reckoning"
 const NORTH_BAY_ASSIGNMENT_ID: StringName = &"north_bay_roof"
 const ROSTER_ORDER: Array[StringName] = [&"player_apprentice", &"shuruppak_ilu", &"utu_mansum", &"enlil_kisu", &"ur_nanna", &"nin_kasi", &"geme_inana", &"lu_nanshe"]
 
@@ -29,9 +26,6 @@ var north_bay_assignment: AssignmentDef
 var assignment_card: Button
 var phase_before_assignment: String = ""
 var last_resolved_outcome: EventOutcome
-var first_case_pending := true
-var turn_two_pending := false
-var arc_complete := false
 var selected_path: StringName = &""
 var phase := "case"
 var last_opinion_deltas: Dictionary[StringName, int] = {}
@@ -561,17 +555,16 @@ func _schedule_next_case() -> void:
 	context.year = world.year
 	current_era = Registry.get_era_for_year(world.year)
 	context.era = current_era
-	if first_case_pending:
-		active_event = Registry.get_event(CASE_15_ID)
-		first_case_pending = false
-	else:
-		active_event = null
+	var event_templates: Array[EventTemplate] = []
+	for definition in Registry.get_definitions("events"):
+		if definition is EventTemplate:
+			event_templates.append(definition as EventTemplate)
+	active_event = scheduler.pick_next_event(world, actor, event_templates, current_era)
 	_refresh_compound()
 	if active_event == null:
 		_show_end_of_queue()
 	else:
 		_show_case()
-
 
 func _show_path_catechism() -> void:
 	_clear_choices()
@@ -705,7 +698,7 @@ func _north_bay_inspect_beams() -> void:
 	evidence_right_title.text = "NORTH BAY  /  PHYSICAL INSPECTION"
 	evidence_right_speaker.text = "APPRENTICE'S OBSERVATION"
 	evidence_right_quote.text = "A slow drop falls from the north beam socket. The timber is dark and soft around the joint."
-	_set_evidence_facts(evidence_left_facts.text, "DIRECT OBSERVATION\nActive water ingress: %s\nBeam integrity index: %d / 100\nWater is reaching the storehouse interior." % ["CONFIRMED" if world.north_bay_roof_leak_active else "NOT OBSERVED", integrity])
+	_set_evidence_facts(evidence_left_facts.text, "DIRECT OBSERVATION\nActive water ingress: %s\nBeam integrity index: %d / 100\nWater is reaching the storehouse interior." % ["CONFIRMED" if world.has_active_hazard(&"north_bay", &"roof_leak") else "NOT OBSERVED", integrity])
 	prompt_label.text = "The physical inspection is recorded. Submit an assessment."
 	_refresh_north_bay_actions()
 
@@ -734,11 +727,11 @@ func _submit_north_bay_assessment(is_accurate: bool) -> void:
 	if steward == null:
 		push_warning("Main: North-Bay employer disappeared before settlement")
 		return
-	var opinion_before := int(steward.opinions.get(actor.id, 0))
+	var opinion_before := int(steward.get_opinion(actor.id))
 	if not world.complete_assignment(north_bay_assignment, actor.id, assessment, is_accurate):
 		push_warning("Main: North-Bay assessment rejected; required actions or lifecycle state are invalid")
 		return
-	var opinion_delta := int(steward.opinions.get(actor.id, 0)) - opinion_before
+	var opinion_delta := steward.get_opinion(actor.id) - opinion_before
 	last_opinion_deltas.clear()
 	last_opinion_deltas[north_bay_assignment.employer] = opinion_delta
 	assignment_card.disabled = true
@@ -774,50 +767,17 @@ func _show_case() -> void:
 	phase = "case"
 	case_heading.add_theme_font_size_override("font_size", 20)
 	case_heading.text = "𒂍  " + active_event.title.to_upper()
-	dossier.visible = false
-	dossier.text = ""
+	dossier.visible = true
+	dossier.text = active_event.description
 	_set_evidence_tension(0, 0)
 	_set_evidence_facts("", "")
-	if active_event.id == CASE_15_ID:
-		evidence_left_title.text = "SOUTH COURT  /  DISPATCH"
-		evidence_left_speaker.text = "ENLIL-KISU"
-		evidence_left_portrait.texture = _load_character_portrait(&"enlil_kisu")
-		evidence_right_speaker.text = "UTU-MANSUM"
-		evidence_right_portrait.texture = _load_character_portrait(&"utu_mansum")
-		evidence_left_quote.text = "“The river road is dangerous and hungry. I know what a boatman endures.”"
-		evidence_right_title.text = "SOUTH COURT  /  GATE TALLY"
-		evidence_right_speaker.text = "UTU-MANSUM"
-		evidence_right_quote.text = "“The gate tally reads twenty-three. I will answer for the count I witnessed.”"
-		_set_evidence_facts("𒂍  DISPATCH TABLET\n24 measures barley\nSealed at the river.", "𒂍  THRESHOLD TALLY\n23 measures barley\nCUSTODY: No witness at loading, transit, or unloading.")
-	elif active_event.id == CASE_01_ID:
-		evidence_left_title.text = "RIVER QUAYS  /  PIERCED TAG"
-		evidence_left_speaker.text = "ENLIL-KISU"
-		evidence_left_portrait.texture = _load_character_portrait(&"enlil_kisu")
-		evidence_right_title.text = "SOUTH COURT  /  RECEIPT"
-		evidence_right_speaker.text = "UTU-MANSUM"
-		evidence_right_portrait.texture = _load_character_portrait(&"utu_mansum")
-		_set_evidence_facts("𒂍  PIERCED TAG\n4 jars oil · 6 linen bundles\nSender’s seal intact on tag.", "𒂍  COURT MAT\n4 jars present · 6 bundles present\nSmallest oil jar seal cracked. CARRIER: road was rough; Enlil-kisu says the jar was never unstoppered.")
-	elif active_event.id == &"challenge_quayside_stoppage":
-		case_heading.text = "𒂍  THE RIVER WALL WAITS"
-		evidence_left_title.text = "RIVER QUAYS  /  THE LANDING"
-		evidence_left_speaker.text = "ENLIL-KISU"
-		evidence_left_portrait.texture = _load_character_portrait(&"enlil_kisu")
-		evidence_left_quote.text = "“A boatman cannot haul stone on an empty belly, Scribe. Your clay tally settled our rations, and our hunger has settled our oars.”"
-		evidence_right_title.text = "TEMPLE CELLARS  /  STOREHOUSE WARNING"
-		evidence_right_speaker.text = "UR-NANNA"
-		evidence_right_portrait.texture = _load_character_portrait(&"ur_nanna")
-		evidence_right_quote.text = "“If the canal revetment is not laid before the Inundation crests, the flood will take the granary. Fix this dispute, apprentice, or find a new trade.”"
-		_set_evidence_facts("𒂍  QUAYSIDE\nLanding barges stranded in silt\nStone blocks and reed-fascines\nBoatmen refuse the oars.", "𒂍  TEMPLE CELLARS\nFlood expected in thirty days\nGranary foundations exposed\nCanal revetment unfinished.")
-		dossier.text = "The Euphrates winds low and cold against the mud-brick quays. The final stone blocks and bundles of reed-fascines meant for the Great Canal embankment lie stranded on the landing barges, half-submerged in silt. Enlil-kisu’s boatmen sit on the mooring posts with their arms crossed, silent and unmoving. Enlil-kisu stands at the edge of the wharf, watching the water rise toward the storehouse foundations. The flood is thirty days away. He does not spit when you approach; he simply points to the empty bread-line tally you scored against his crew three seasons ago."
-		dossier.visible = true
-	elif active_event.id == CASE_02_ID:
-		evidence_left_title.text = "BREWING HOUSE  /  ACCOUNT"
-		evidence_left_speaker.text = "NIN-KASI"
-		evidence_left_portrait.texture = _load_character_portrait(&"nin_kasi")
-		evidence_right_title.text = "ARCHIVE COPY  /  MALT & SIGN"
-		evidence_right_speaker.text = "CLERK'S COPY"
-		evidence_right_portrait.texture = _make_seal_placeholder()
-		_set_evidence_facts("𒂍  GRAIN ENTRIES\n6 + 8 + 4 = 18\nSubtotal written: 17.", "𒂍  MALT ENTRY · 3 baskets malt\nMalted spelt recorded below the dividing line.\n𒂍  BLURRED SIGN\nMoisture-damaged; allocation between libation and worker bread cannot be established.")
+	for record in active_event.records:
+		var label := String(record.get("label", "RECORD"))
+		var value := String(record.get("value", ""))
+		var note := String(record.get("note", ""))
+		dossier.text += "\n\n[b]%s[/b]\n%s" % [label, value]
+		if not note.is_empty():
+			dossier.text += "\n[color=#7b6546]%s[/color]" % note
 	prompt_label.text = "What mark will you leave?"
 	for index in range(active_event.outcomes.size()):
 		var outcome: EventOutcome = active_event.outcomes[index]
@@ -825,7 +785,7 @@ func _show_case() -> void:
 	status_label.text = "THE CLERK'S MARK WILL OUTLIVE THE CLERK"
 
 func _resolve_choice(index: int) -> void:
-	if phase != "case":
+	if phase != "case" or active_event == null:
 		return
 	if index < 0 or index >= active_event.outcomes.size():
 		return
@@ -833,44 +793,27 @@ func _resolve_choice(index: int) -> void:
 	for person_id in ROSTER_ORDER:
 		var person := world.get_person(person_id)
 		if person != null:
-			before[person_id] = int(person.opinions.get(actor.id, 0))
+			before[person_id] = int(person.get_opinion(actor.id))
 	context.year = world.year
 	context.era = Registry.get_era_for_year(world.year)
 	last_resolved_outcome = active_event.outcomes[index]
 	runner.resolve_outcome(active_event, active_event.outcomes[index], context)
-	if active_event.id == CASE_15_ID:
-		turn_two_pending = true
-	else:
-		arc_complete = true
 	last_opinion_deltas.clear()
 	for person_id in before:
 		var person := world.get_person(person_id)
-		var delta := int(person.opinions.get(actor.id, 0)) - before[person_id]
+		var delta := person.get_opinion(actor.id) - before[person_id]
 		if delta != 0:
 			last_opinion_deltas[person_id] = delta
 	_show_result(active_event.outcomes[index])
 
 func _play_outcome_foley(index: int) -> void:
-	match active_event.id:
-		CASE_15_ID:
-			if index == 0:
-				AudioManager.play_stylus_mark()
-			elif index == 1:
-				AudioManager.play_seal_press()
-			else:
-				AudioManager.play_tablet_snap()
-		CASE_01_ID:
-			if index == 0:
-				AudioManager.play_stylus_mark()
-			else:
-				AudioManager.play_tablet_snap()
-		CASE_02_ID:
-			if index == 0:
-				AudioManager.play_stylus_mark()
-			elif index == 1:
-				AudioManager.play_seal_press()
-			else:
-				AudioManager.play_tablet_snap()
+	match index:
+		0:
+			AudioManager.play_stylus_mark()
+		1:
+			AudioManager.play_seal_press()
+		_:
+			AudioManager.play_tablet_snap()
 
 func _show_result(outcome: EventOutcome) -> void:
 	last_resolved_outcome = outcome
@@ -886,42 +829,13 @@ func _show_result(outcome: EventOutcome) -> void:
 	_add_choice("End Period", _advance_period)
 	_refresh_compound()
 
-func _try_schedule_quayside_challenge() -> bool:
-	if world.period < 8 or world.period > 10:
-		return false
-	var challenge := Registry.get_event(&"challenge_quayside_stoppage")
-	if challenge == null:
-		return false
-	context.year = world.year
-	context.era = Registry.get_era_for_year(world.year)
-	if not scheduler._quayside_challenge_is_eligible(world, actor, context.era):
-		return false
-	if not world.has_pending_form(&"succession_claim"):
-		world.enqueue_form({"form_type": &"succession_claim", "subject_id": &"quayside_stoppage", "urgency": 3, "year": world.year})
-	active_event = challenge
-	_refresh_compound()
-	_show_case()
-	return true
-
 func _advance_period() -> void:
 	if phase != "result" and phase != "end_of_queue":
 		return
-	if phase == "result":
-		# The clay tablet stays on the desk for the whole assignment.
-		pass
 	world.advance_period()
+	_prepare_seasonal_forms()
 	last_opinion_deltas.clear()
-	if turn_two_pending:
-		turn_two_pending = false
-		active_event = Registry.get_event(CASE_02_ID if selected_path == &"path_temple" else CASE_01_ID)
-		_refresh_compound()
-		_show_case()
-	elif _try_schedule_quayside_challenge():
-		return
-	elif arc_complete:
-		_show_end_of_queue()
-	else:
-		_schedule_next_case()
+	_schedule_next_case()
 
 func _prepare_seasonal_forms() -> void:
 	# Harvest opens the South Court barley docket and the oil/textile receiving docket.
@@ -1086,7 +1000,7 @@ func _refresh_compound() -> void:
 		if trait_id in [&"exacting", &"stubborn", &"protective", &"diplomatic"]:
 			mentor_trait = String(trait_id)
 	heirloom_label.text = "HEIRLOOM RIM  /  APPRENTICE SCRIBE  /  MENTOR MARK: %s  /  SILVER AT DESK: %d SHEKELS" % [mentor_trait.to_upper(), world.get_resource(&"silver")]
-	stores_label.text = "Barley     %d measures\nNorth-Bay water loss  %d\nSilver     %d shekels\nClay/Reeds %d\nLabor      %d" % [world.get_resource(&"barley"), world.north_bay_roof_total_spoiled, world.get_resource(&"silver"), world.get_resource(&"clay_reeds"), world.get_resource(&"labor")]
+	stores_label.text = "Barley     %d measures\nNorth-Bay water loss  %d\nSilver     %d shekels\nClay/Reeds %d\nLabor      %d" % [world.get_resource(&"barley"), world.get_hazard_total_lost(&"north_bay", &"roof_leak"), world.get_resource(&"silver"), world.get_resource(&"clay_reeds"), world.get_resource(&"labor")]
 	var canal := world.get_resource(&"canal_progress")
 	var filled := int(round(float(canal) / 10.0))
 	canal_label.text = "THE GREAT CANAL CUT\n[%s%s] %d / 100\nTarget before Inundation" % ["=".repeat(filled), "-".repeat(10 - filled), canal]
@@ -1097,7 +1011,7 @@ func _refresh_compound() -> void:
 		var person := world.get_person(person_id)
 		if person == null:
 			continue
-		var opinion := int(person.opinions.get(actor.id, 0))
+		var opinion := person.get_opinion(actor.id)
 		var line := RichTextLabel.new()
 		line.bbcode_enabled = true
 		line.fit_content = true

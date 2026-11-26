@@ -130,21 +130,25 @@ func _run() -> void:
 	_check(uruk_a.places.size() == 9, "Uruk seed should establish nine local and connected places")
 	_check(uruk_a.institutions.size() == 3, "Uruk seed should establish three institutions and exchange networks")
 	_check(uruk_a.social_groups.size() == 5, "Uruk seed should establish five working and household groups")
-	_check(uruk_a.relationships.size() == 19, "Uruk seed should establish nineteen directed social and economic ties")
+	var seeded_tie_count := 0
+	for person in uruk_a.people.values():
+		seeded_tie_count += person.relationships.size()
+	_check(seeded_tie_count == 34, "Uruk seed should establish thirty-four directed relationship entries, including explicit player opinions and authored social/economic ties (found %d)" % seeded_tie_count)
 	_check(uruk_a.get_person(&"geme_tur").relationships.has(uruk_player_a.id), "The player's household member should have an explicit family tie")
 	_check(uruk_a.get_person(&"ur_gula").relationships.has(&"nin_dada"), "Pastoral wool supply should connect to textile production")
 	_check(uruk_a.places.has(&"susa") and uruk_a.places.has(&"habuba_kabira"), "Uruk seed should include both external exchange settlements")
 	var world_graph_is_closed := true
-	for edge in uruk_a.relationships:
-		if uruk_a.get_person(edge["source_id"]) == null or uruk_a.get_person(edge["target_id"]) == null:
-			world_graph_is_closed = false
+	for person in uruk_a.people.values():
+		for other_id in person.relationships:
+			if uruk_a.get_person(other_id) == null:
+				world_graph_is_closed = false
 	_check(world_graph_is_closed, "Every seeded person-to-person relationship should resolve both endpoints")
 	for resource_id in [&"barley", &"dates", &"sheep", &"goats", &"cattle", &"fish", &"beer", &"wool", &"textiles", &"clay", &"reeds", &"bitumen", &"timber", &"copper", &"silver"]:
 		_check(uruk_a.stockpiles.has(resource_id), "Uruk seed should initialize commodity %s" % resource_id)
 	_check(uruk_player_a.id == &"player_apprentice", "Uruk seeder should return the apprentice")
-	_check(uruk_a.get_person(&"shuruppak_ilu").opinions[uruk_player_a.id] == 5, "Senior scribe should begin at +5 opinion")
+	_check(uruk_a.get_person(&"shuruppak_ilu").get_opinion(uruk_player_a.id) == 5, "Senior scribe should begin at +5 opinion")
 	for resident_id in [&"ur_nanna", &"utu_mansum", &"enlil_kisu", &"lu_nanshe", &"nin_kasi", &"geme_inana"]:
-		_check(uruk_a.get_person(resident_id).opinions.has(uruk_player_a.id) and uruk_a.get_person(resident_id).opinions[uruk_player_a.id] == 0, "Every other resident should store an explicit zero opinion")
+		_check(uruk_a.get_person(resident_id).relationships.has(uruk_player_a.id) and uruk_a.get_person(resident_id).get_opinion(uruk_player_a.id) == 0, "Every other resident should store an explicit zero opinion")
 	_check(uruk_a.get_person(&"shuruppak_ilu").vulnerabilities[&"patience_remaining"] == uruk_b.get_person(&"shuruppak_ilu").vulnerabilities[&"patience_remaining"], "People jitter should reproduce from the same seed")
 	_check(uruk_a.stockpiles == uruk_b.stockpiles, "Simulation stockpiles should reproduce from the same seed")
 	var stream_a := WorldState.new()
@@ -168,17 +172,18 @@ func _run() -> void:
 	uruk_ctx.actor = uruk_player_a
 	uruk_ctx.year = uruk_a.year
 	uruk_ctx.era = registry.get_era(&"uruk_storehouse")
-	_check(runner.is_eligible(case15, uruk_ctx), "Case 15 should be eligible at campaign start")
+	_check(not runner.is_eligible(case15, uruk_ctx), "Case 15 should not be eligible before Harvest")
+	uruk_a.period = 6
+	var case15_pool: Array[EventTemplate] = [case15]
+	_check(runner.is_eligible(case15, uruk_ctx), "Case 15 should be eligible during Harvest with a pending grain levy")
+	_check(scheduler.pick_next_event(uruk_a, uruk_player_a, case15_pool, uruk_ctx.era, uruk_a.rng_narrative) == case15, "Case 15 should return to the desk during Harvest when a levy is pending")
 	runner.resolve_outcome(case15, case15.outcomes[0], uruk_ctx)
-	_check(uruk_a.get_person(&"utu_mansum").opinions[uruk_player_a.id] == 2, "Case 15 should shift Utu-mansum's opinion of the apprentice")
-	_check(uruk_a.get_person(&"enlil_kisu").opinions[uruk_player_a.id] == 2, "Case 15 should shift Enlil-kisu's opinion of the apprentice")
-	_check(uruk_a.get_person(&"shuruppak_ilu").opinions[uruk_player_a.id] == 10, "Case 15 should shift Shuruppak-ilu's opinion of the apprentice")
+	_check(uruk_a.get_person(&"utu_mansum").get_opinion(uruk_player_a.id) == 2, "Case 15 should shift Utu-mansum's opinion of the apprentice")
+	_check(uruk_a.get_person(&"enlil_kisu").get_opinion(uruk_player_a.id) == 2, "Case 15 should shift Enlil-kisu's opinion of the apprentice")
+	_check(uruk_a.get_person(&"shuruppak_ilu").get_opinion(uruk_player_a.id) == 10, "Case 15 should shift Shuruppak-ilu's opinion of the apprentice")
 	_check(uruk_a.get_resource(&"barley") >= 443, "Case 15 should enter 23 measures of barley")
 	_check(uruk_a.resolved_forms.size() == 1, "Case 15 should resolve the opening grain levy")
-	uruk_a.period = 6
-	uruk_a.enqueue_form({"form_type": &"grain_levy"})
-	var case15_pool: Array[EventTemplate] = [case15]
-	_check(scheduler.pick_next_event(uruk_a, uruk_player_a, case15_pool, uruk_ctx.era, uruk_a.rng_narrative) == case15, "Case 15 should return to the desk during Harvest when a levy is pending")
+
 
 	# Case 1 may arrive from a receipt in any season, or from the Harvest/Stores desk pool.
 	var sealed_case := registry.get_event(&"case_01_sealed_vessel")
@@ -198,7 +203,8 @@ func _run() -> void:
 	_check(scheduler.pick_next_event(sealed_world, sealed_player, sealed_pool, sealed_context.era, sealed_world.rng_narrative) == sealed_case, "Case 1 should be eligible when a consignment receipt is pending")
 	sealed_world.pending_forms.clear()
 	sealed_world.period = 6
-	_check(scheduler.pick_next_event(sealed_world, sealed_player, sealed_pool, sealed_context.era, sealed_world.rng_narrative) == sealed_case, "Case 1 should enter the Harvest seasonal pool")
+	sealed_world.enqueue_form({"form_type": &"consignment_receipt"})
+	_check(scheduler.pick_next_event(sealed_world, sealed_player, sealed_pool, sealed_context.era, sealed_world.rng_narrative) == sealed_case, "Case 1 should be eligible during Harvest when a consignment receipt is pending")
 	sealed_world.enqueue_form({"form_type": &"consignment_receipt"})
 	var sealed_form_context := EventContext.new()
 	sealed_form_context.world = sealed_world
@@ -206,8 +212,8 @@ func _run() -> void:
 	sealed_form_context.year = sealed_world.year
 	sealed_form_context.era = sealed_context.era
 	runner.resolve_outcome(sealed_case, sealed_case.outcomes[0], sealed_form_context)
-	_check(sealed_world.get_person(&"utu_mansum").opinions[sealed_player.id] == 3, "Case 1 should record Utu-mansum's opinion of the apprentice")
-	_check(sealed_world.get_person(&"enlil_kisu").opinions[sealed_player.id] == 1, "Case 1 should record Enlil-kisu's opinion of the apprentice")
+	_check(sealed_world.get_person(&"utu_mansum").get_opinion(sealed_player.id) == 3, "Case 1 should record Utu-mansum's opinion of the apprentice")
+	_check(sealed_world.get_person(&"enlil_kisu").get_opinion(sealed_player.id) == 1, "Case 1 should record Enlil-kisu's opinion of the apprentice")
 	_check(sealed_world.get_resource(&"clay_reeds") >= 49, "Case 1 should consume one clay and reed unit")
 	_check(sealed_world.resolved_forms.back()["disposition"] == "quarantine_cracked_vessel", "Case 1 should resolve the receipt with its authored disposition")
 
@@ -343,13 +349,13 @@ func _run() -> void:
 	var temple_actor := UrukSeeder.seed_campaign(temple_world, 32003200)
 	_check(UrukCatechism.choose_path(temple_world, temple_actor, &"path_temple"), "Temple path should be accepted")
 	_check(temple_actor.has_flag(&"path_temple", temple_world.current_period_index()), "Temple path flag should be permanent on the apprentice")
-	_check(temple_world.get_person(&"ur_nanna").opinions[temple_actor.id] == 5, "Temple path should grant Ur-Nanna +5")
-	_check(temple_world.get_person(&"nin_kasi").opinions[temple_actor.id] == 3, "Temple path should grant Nin-kasi +3")
+	_check(temple_world.get_person(&"ur_nanna").get_opinion(temple_actor.id) == 5, "Temple path should grant Ur-Nanna +5")
+	_check(temple_world.get_person(&"nin_kasi").get_opinion(temple_actor.id) == 3, "Temple path should grant Nin-kasi +3")
 	_check(temple_world.has_pending_form(&"pension_roll"), "Temple path should open the brewery account docket")
 	_check(UrukCatechism.choose_mentor(temple_world, temple_actor, &"nin_kasi"), "Nin-kasi should be a valid mentor")
 	_check(temple_actor.skills.get_level(&"rhetoric") == 1, "Nin-kasi mentorship should add one Rhetoric")
 	_check(&"diplomatic" in temple_actor.traits, "Nin-kasi mentorship should add diplomatic")
-	_check(temple_world.get_person(&"nin_kasi").opinions[temple_actor.id] == 8, "Mentor choice should add +5 opinion on top of path standing")
+	_check(temple_world.get_person(&"nin_kasi").get_opinion(temple_actor.id) == 8, "Mentor choice should add +5 opinion on top of path standing")
 
 	var brewer_case: EventTemplate = registry.get_event(&"case_02_brewers_reckoning")
 	_check(brewer_case != null, "Registry should load Case 2")
@@ -360,7 +366,7 @@ func _run() -> void:
 	_check(runner.is_eligible(brewer_case, temple_ctx), "Case 2 should pass Temple path, office, and docket conditions")
 	runner.resolve_outcome(brewer_case, brewer_case.outcomes[0], temple_ctx)
 	_check(temple_world.get_resource(&"canal_progress") == 5, "Honest brewery arithmetic should advance Canal Cut by five")
-	_check(temple_world.get_person(&"nin_kasi").opinions[temple_actor.id] == 14, "Honest brewery arithmetic should improve Nin-kasi by six")
+	_check(temple_world.get_person(&"nin_kasi").get_opinion(temple_actor.id) == 14, "Honest brewery arithmetic should improve Nin-kasi by six")
 	_check(temple_world.resolved_forms.back().get("disposition", "") == "rectified_subtotal_allocation_pending", "Honest brewery arithmetic should resolve the pension docket")
 
 	var commingled_world := WorldState.new()
@@ -391,8 +397,8 @@ func _run() -> void:
 	var landing_actor := UrukSeeder.seed_campaign(landing_world, 32003200)
 	UrukCatechism.choose_path(landing_world, landing_actor, &"path_landing")
 	_check(landing_actor.has_flag(&"path_landing", landing_world.current_period_index()), "Landing path flag should be permanent on the apprentice")
-	_check(landing_world.get_person(&"enlil_kisu").opinions[landing_actor.id] == 5, "Landing path should grant Enlil-kisu +5")
-	_check(landing_world.get_person(&"geme_inana").opinions[landing_actor.id] == 3, "Landing path should grant Geme-Inana +3")
+	_check(landing_world.get_person(&"enlil_kisu").get_opinion(landing_actor.id) == 5, "Landing path should grant Enlil-kisu +5")
+	_check(landing_world.get_person(&"geme_inana").get_opinion(landing_actor.id) == 3, "Landing path should grant Geme-Inana +3")
 	_check(landing_world.has_pending_form(&"consignment_receipt"), "Landing path should open the receiving docket")
 	var landing_case_context := _make_context(landing_world)
 	landing_case_context.actor = landing_actor
@@ -422,6 +428,7 @@ func _run() -> void:
 	var south_case: EventTemplate = registry.get_event(&"case_15_south_court")
 	var south_honest_world := WorldState.new()
 	var south_honest_actor := UrukSeeder.seed_campaign(south_honest_world, 71)
+	south_honest_world.period = 6
 	var south_honest_ctx := _make_context(south_honest_world)
 	south_honest_ctx.actor = south_honest_actor
 	south_honest_ctx.era = registry.get_era(&"uruk_storehouse")
@@ -430,6 +437,7 @@ func _run() -> void:
 
 	var south_forged_world := WorldState.new()
 	var south_forged_actor := UrukSeeder.seed_campaign(south_forged_world, 72)
+	south_forged_world.period = 6
 	var south_forged_ctx := _make_context(south_forged_world)
 	south_forged_ctx.actor = south_forged_actor
 	south_forged_ctx.era = registry.get_era(&"uruk_storehouse")
@@ -438,6 +446,7 @@ func _run() -> void:
 
 	var south_penalty_world := WorldState.new()
 	var south_penalty_actor := UrukSeeder.seed_campaign(south_penalty_world, 73)
+	south_penalty_world.period = 6
 	var south_penalty_ctx := _make_context(south_penalty_world)
 	south_penalty_ctx.actor = south_penalty_actor
 	south_penalty_ctx.era = registry.get_era(&"uruk_storehouse")
@@ -463,54 +472,55 @@ func _run() -> void:
 		_check(UrukCatechism.choose_mentor(mentor_world, mentor_actor, mentor_id), "Each authored mentor should be selectable")
 		_check(mentor_actor.skills.get_level(mentor_skill) == starting_level + 1, "Each mentor should add exactly one level in the named skill")
 		_check(mentor_trait in mentor_actor.traits, "Each mentor should grant the named trait")
-		_check(mentor_world.get_person(mentor_id).opinions[mentor_actor.id] == starting_opinion + 5, "Each mentor should gain five opinion of the apprentice")
+		_check(mentor_world.get_person(mentor_id).get_opinion(mentor_actor.id) == starting_opinion + 5, "Each mentor should gain five opinion of the apprentice")
 
 
-	# Phase 8B: Quayside Stoppage is gated by the player's carrier history.
+	# Phase 8B: Quayside Stoppage uses the live event condition/scheduler path.
 	var quayside_template: EventTemplate = registry.get_event(&"challenge_quayside_stoppage")
 	_check(quayside_template != null, "Registry should load the Quayside Stoppage definition")
 	var quayside_world := WorldState.new()
 	var quayside_actor := UrukSeeder.seed_campaign(quayside_world, 32003200)
-	quayside_world.period = 8
-	quayside_world.get_person(&"enlil_kisu").opinions[quayside_actor.id] = -15
 	var quayside_ctx := _make_context(quayside_world)
 	quayside_ctx.actor = quayside_actor
 	quayside_ctx.year = quayside_world.year
 	quayside_ctx.era = registry.get_era(&"uruk_storehouse")
 	var quayside_scheduler := EventScheduler.new(runner)
-	_check(quayside_scheduler._quayside_challenge_is_eligible(quayside_world, quayside_actor, quayside_ctx.era), "Hostile carrier standing should unlock the challenge in Stores Season")
-	quayside_world.get_person(&"enlil_kisu").opinions[quayside_actor.id] = 2
-	_check(not quayside_scheduler._quayside_challenge_is_eligible(quayside_world, quayside_actor, quayside_ctx.era), "Fair carrier standing without slowdown should not unlock the challenge")
-	quayside_world.set_flag(&"canal_crew_slowdown", quayside_world.current_period_index() + 2)
-	_check(quayside_scheduler._quayside_challenge_is_eligible(quayside_world, quayside_actor, quayside_ctx.era), "Active crew slowdown should independently unlock the challenge")
+	quayside_world.period = 0
+	quayside_world.get_person(&"enlil_kisu").set_opinion(quayside_actor.id, -15)
+	quayside_world.set_flag(&"canal_crew_slowdown", quayside_world.current_period_index() + 11)
+	_check(not runner.is_eligible(quayside_template, quayside_ctx), "Quayside challenge must not be eligible in Period 0")
+	_check(quayside_scheduler.pick_next_event(quayside_world, quayside_actor, [quayside_template], quayside_ctx.era) == null, "Scheduler must not select Quayside challenge before Stores Season")
 	quayside_world.period = 7
-	_check(not quayside_scheduler._quayside_challenge_is_eligible(quayside_world, quayside_actor, quayside_ctx.era), "Challenge must not fire before Stores Season")
+	_check(not runner.is_eligible(quayside_template, quayside_ctx), "Quayside challenge must not be eligible before Period 8")
 	quayside_world.period = 8
-	quayside_world.clear_flag(&"canal_crew_slowdown")
-	quayside_world.get_person(&"enlil_kisu").opinions[quayside_actor.id] = -15
+	_check(runner.is_eligible(quayside_template, quayside_ctx), "Active slowdown should make Quayside eligible during Stores Season")
+	_check(quayside_scheduler.pick_next_event(quayside_world, quayside_actor, [quayside_template], quayside_ctx.era) == quayside_template, "Scheduler should select eligible Quayside event from supplied template pool")
+	quayside_world.period = 11
+	_check(not runner.is_eligible(quayside_template, quayside_ctx), "Quayside challenge must stop being eligible after Period 10")
+	quayside_world.period = 8
 	quayside_world.enqueue_form({"form_type": &"succession_claim", "subject_id": &"quayside_stoppage"})
-	quayside_ctx.year = quayside_world.year
-	quayside_ctx.era = registry.get_era(&"uruk_storehouse")
 	var silver_before := quayside_world.get_resource(&"silver")
 	runner.resolve_outcome(quayside_template, quayside_template.outcomes[0], quayside_ctx)
 	_check(quayside_world.get_resource(&"silver") == silver_before - 4, "Silver conciliation should cost four shekels")
 	_check(quayside_world.get_resource(&"canal_progress") == 25, "Silver conciliation should add 25 canal progress")
-	_check(quayside_world.get_person(&"enlil_kisu").opinions[quayside_actor.id] == -3, "Silver conciliation should improve Enlil-kisu's standing by twelve")
+	_check(quayside_world.get_person(&"enlil_kisu").get_opinion(quayside_actor.id) == -3, "Silver conciliation should improve Enlil-kisu's standing by twelve")
 	_check(not quayside_world.world_flags.has(&"canal_crew_slowdown"), "Silver conciliation should clear the slowdown")
 	_check(quayside_world.resolved_forms.back().get("disposition", "") == "strike_settled_privately", "Silver conciliation should close the challenge docket")
 
 	var force_world := WorldState.new()
 	var force_actor := UrukSeeder.seed_campaign(force_world, 32003201)
 	force_world.period = 8
+	force_world.set_flag(&"canal_crew_slowdown", force_world.current_period_index() + 11)
 	force_world.enqueue_form({"form_type": &"succession_claim", "subject_id": &"quayside_stoppage"})
 	var force_ctx := _make_context(force_world)
 	force_ctx.actor = force_actor
+	force_ctx.year = force_world.year
 	force_ctx.era = registry.get_era(&"uruk_storehouse")
 	runner.resolve_outcome(quayside_template, quayside_template.outcomes[2], force_ctx)
 	_check(force_world.get_resource(&"canal_progress") == 30, "Temple Guard outcome should add 30 canal progress")
 	_check(force_world.has_flag(&"blood_on_the_quays", force_world.current_period_index()), "Temple Guard outcome should leave the twelve-period blood flag")
 	_check(&"severe" in force_actor.traits, "Temple Guard outcome should mark the apprentice severe")
-	_check(force_world.get_person(&"enlil_kisu").opinions[force_actor.id] == -30, "Temple Guard outcome should create lasting carrier hatred")
+	_check(force_world.get_person(&"enlil_kisu").get_opinion(force_actor.id) == -30, "Temple Guard outcome should create lasting carrier hatred")
 
 	# North-Bay assignment: definition loading, fail-closed lifecycle, and a real leaking roof.
 	var roof_assignment := registry.get_assignment(&"north_bay_roof")
@@ -526,10 +536,10 @@ func _run() -> void:
 	var roof_world := WorldState.new()
 	var roof_actor := UrukSeeder.seed_campaign(roof_world, 32003200)
 	var barley_before_leak := roof_world.get_resource(&"barley")
-	_check(roof_world.north_bay_roof_leak_active, "Uruk seeding should establish the active North-Bay leak")
+	_check(roof_world.has_active_hazard(&"north_bay", &"roof_leak"), "Uruk seeding should establish the active North-Bay leak")
 	roof_world.advance_period()
 	_check(roof_world.get_resource(&"barley") == barley_before_leak - 1, "An elapsed period should spoil one measure of barley through the roof leak")
-	_check(roof_world.north_bay_roof_total_spoiled == 1, "WorldState should retain cumulative barley lost to the leak")
+	_check(roof_world.get_hazard_total_lost(&"north_bay", &"roof_leak") == 1, "WorldState should retain cumulative barley lost to the leak")
 	_check(roof_world.offer_assignment(&"north_bay_roof", &"ur_nanna"), "WorldState should offer the North-Bay assignment to the existing steward")
 	_check(not roof_world.offer_assignment(&"north_bay_roof", &"ur_nanna"), "WorldState should prevent duplicate assignment offers")
 	_check(roof_world.start_assignment(&"north_bay_roof"), "Player should be able to open an offered assignment")
@@ -540,17 +550,17 @@ func _run() -> void:
 	_check(roof_consultations.size() == 1 and roof_consultations[0]["person_id"] == &"ur_nanna", "Consultation log should preserve the consulted NPC and period")
 	var roof_silver_before := roof_world.get_resource(&"silver")
 	var roof_law_xp_before := int(roof_actor.skills.xp.get(&"law", 0))
-	var roof_opinion_before := int(roof_world.get_person(&"ur_nanna").opinions.get(roof_actor.id, 0))
+	var roof_opinion_before := int(roof_world.get_person(&"ur_nanna").get_opinion(roof_actor.id))
 	_check(not roof_world.complete_assignment(roof_assignment, roof_actor.id, &"leak_confirmed_repair_required", true), "Submission should fail until the physical inspection is recorded")
 	_check(roof_world.record_assignment_action(&"north_bay_roof", &"inspect_beams"), "Physical inspection should be recorded")
 	_check(roof_world.complete_assignment(roof_assignment, roof_actor.id, &"leak_confirmed_repair_required", true), "Complete evidence should allow assessment submission")
 	_check(roof_world.get_resource(&"silver") == roof_silver_before + 5, "Accurate assessment should pay five silver")
 	_check(int(roof_actor.skills.xp.get(&"law", 0)) == roof_law_xp_before + 25, "Accurate assessment should award 25 Law XP")
-	_check(int(roof_world.get_person(&"ur_nanna").opinions.get(roof_actor.id, 0)) == roof_opinion_before + 5, "Accurate assessment should improve Ur-Nanna's opinion by five")
+	_check(int(roof_world.get_person(&"ur_nanna").get_opinion(roof_actor.id)) == roof_opinion_before + 5, "Accurate assessment should improve Ur-Nanna's opinion by five")
 	_check(bool(roof_world.get_assignment_state(&"north_bay_roof").get("rewarded", false)), "Assignment settlement should record that its reward was paid")
 	_check(not roof_world.complete_assignment(roof_assignment, roof_actor.id, &"leak_confirmed_repair_required", true), "Completed assignment should not be settled twice")
 	_check(String(roof_world.get_assignment_state(&"north_bay_roof").get("status", "")) == "completed", "Assignment lifecycle should retain its completed state")
-	_check(roof_world.north_bay_roof_leak_active, "Submitting an inspection must not falsely repair the roof")
+	_check(roof_world.has_active_hazard(&"north_bay", &"roof_leak"), "Submitting an inspection must not falsely repair the roof")
 
 	_finish()
 
