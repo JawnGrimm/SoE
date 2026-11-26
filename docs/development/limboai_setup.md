@@ -1,6 +1,6 @@
 # LimboAI setup (Godot 4.7.2)
 
-Scribe of Eras uses the **LimboAI 1.8.1 GDExtension build**. Do not install the Godot engine-module build: that requires a custom Godot executable. The GDExtension release supports Godot 4.6 and newer, which includes the project's Godot 4.7.2 target.
+Scribe of Eras uses the **LimboAI 1.8.1 GDExtension build**. The upstream GDExtension release supports Godot 4.6 and newer, including the project's Godot 4.7.2 target. Do not install an engine-module build; that requires a custom Godot executable.
 
 ## Install on Windows
 
@@ -14,14 +14,16 @@ Scribe of Eras uses the **LimboAI 1.8.1 GDExtension build**. Do not install the 
 
 4. Reopen `project.godot` in Godot 4.7.2 and let the filesystem scan finish.
 
-The installer downloads the pinned upstream release, verifies its SHA-256 checksum, installs the `addons/limboai` plugin folder, and enables it in the project's `[editor_plugins]` settings. If an `addons/limboai` folder already exists, it is moved aside to a timestamped backup before installation.
+The installer downloads the pinned upstream release, verifies its SHA-256 checksum, locates `limboai.gdextension`, validates the Windows x86_64 editor library, and installs the package at `res://addons/limboai/`. If an existing `addons/limboai` folder is present, it is moved aside to a timestamped backup. If copying fails, the backup is restored.
 
-## What is in the repository
+## Important: GDExtension, not an editor plugin
 
-`addons/limboai+v1.8.1.demo-project/` is the upstream demo project, retained as a reference/tutorial. It is **not** the installed plugin. The actual plugin and native GDExtension libraries are installed separately by the script. Native binaries are intentionally not committed to this repository; the installer retrieves the pinned release and verifies it before use.
+LimboAI's GDExtension build does **not** use `plugin.cfg` and does not need to be enabled under Project Settings > Plugins. Godot discovers the `limboai.gdextension` descriptor and loads the matching native library. The descriptor references the platform-specific libraries under `addons/limboai/bin/`.
+
+`addons/limboai+v1.8.1.demo-project/` is the upstream demo project, retained as a reference/tutorial. It is separate from the installed plugin. Native binaries are intentionally not committed; the installer retrieves the pinned release and verifies it before use. The local `addons/limboai/bin/` folder is ignored by Git.
 
 ## Verify
 
-In Godot, open **Project > Project Settings > Plugins** and confirm **LimboAI** is enabled. The LimboAI behavior-tree editor tools should then be available in the editor. If Godot reports that the GDExtension cannot be loaded, check that the downloaded build matches the host platform and that the project is running Godot 4.6 or newer.
+After reopening the project, check the Godot Output/Debugger for GDExtension load errors. LimboAI's classes and behavior-tree resources should be available to the editor. If the extension fails to load, confirm the installed `addons/limboai/bin/liblimboai.windows.editor.x86_64.dll` exists and that the project is running a compatible 64-bit Godot 4.6+ build.
 
 Upstream release: https://github.com/limbonaut/limboai/releases/tag/v1.8.1
