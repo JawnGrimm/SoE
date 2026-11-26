@@ -1,5 +1,6 @@
 extends Control
 
+const AssignmentGeneratorScript = preload("res://systems/assignment_generator.gd")
 const CAMPAIGN_SEED: int = 32003200
 const NORTH_BAY_ASSIGNMENT_ID: StringName = &"north_bay_roof"
 const ROSTER_ORDER: Array[StringName] = [&"player_apprentice", &"shuruppak_ilu", &"utu_mansum", &"enlil_kisu", &"ur_nanna", &"nin_kasi", &"geme_inana", &"lu_nanshe"]
@@ -571,7 +572,7 @@ func _schedule_next_case() -> void:
 	active_event = scheduler.pick_next_event(world, actor, event_templates, current_era)
 	procedural_assignment.clear()
 	if active_event == null:
-		procedural_assignment = AssignmentGenerator.generate(world, actor)
+		procedural_assignment = AssignmentGeneratorScript.generate(world, actor)
 	_refresh_compound()
 	if active_event == null and procedural_assignment.is_empty():
 		_show_end_of_queue()
