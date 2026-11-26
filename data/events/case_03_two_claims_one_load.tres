@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="EventTemplate" load_steps=12 format=3]
+[gd_resource type="Resource" script_class="EventTemplate" load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://data/definitions/event_template.gd" id="1"]
 [ext_resource type="Script" path="res://data/definitions/event_outcome.gd" id="2"]
@@ -31,19 +31,29 @@ script = ExtResource("3")
 effect_type = &"add_memory"
 parameters = {"memory_id": &"load_claim_storehouse", "text": "I assigned the disputed load to the storehouse reserve and entered the transport claim as outstanding.", "involved": [&"enlil_kisu", &"ur_nanna"]}
 
+[sub_resource type="Resource" id="EffectResolveCrew"]
+script = ExtResource("3")
+effect_type = &"resolve_form"
+parameters = {"form_type": &"load_claim", "disposition": "load_assigned_to_transport"}
+
+[sub_resource type="Resource" id="EffectResolveStore"]
+script = ExtResource("3")
+effect_type = &"resolve_form"
+parameters = {"form_type": &"load_claim", "disposition": "load_assigned_to_reserve"}
+
 [sub_resource type="Resource" id="OutcomeCrew"]
 script = ExtResource("2")
 label = "Honor the transport crew's claim"
 title_override = "THE LOAD IS SENT TO THE QUAY"
 description_override = "The load is released to the crew. The storehouse records a delay in its reserve account."
-effects = Array[ExtResource("3")]([SubResource("EffectCrew"), SubResource("EffectCrewMemory")])
+effects = Array[ExtResource("3")]([SubResource("EffectCrew"), SubResource("EffectCrewMemory"), SubResource("EffectResolveCrew")])
 
 [sub_resource type="Resource" id="OutcomeStore"]
 script = ExtResource("2")
 label = "Assign the load to the storehouse reserve"
 title_override = "THE LOAD IS HELD FOR THE STOREHOUSE"
 description_override = "The reserve receives the load. The transport claim remains unsettled and the crew must wait."
-effects = Array[ExtResource("3")]([SubResource("EffectStore"), SubResource("EffectStoreMemory")])
+effects = Array[ExtResource("3")]([SubResource("EffectStore"), SubResource("EffectStoreMemory"), SubResource("EffectResolveStore")])
 
 [resource]
 script = ExtResource("1")
