@@ -837,7 +837,7 @@ func _run() -> void:
 	var regression_silver_actor := PersonEntity.new()
 	regression_silver_actor.id = &"purse_test"
 	regression_silver_actor.resources[&"silver"] = 5
-		var no_traits: Array[StringName] = []
+	var no_traits: Array[StringName] = []
 	MainSceneScript._record_case_settlement_state(purse_world, regression_silver_actor, 4, no_traits)
 	_check(purse_world.silver_earned == 1, "Case settlement should count personal purse silver gained")
 	purse_world.stockpiles[&"silver"] = 110
