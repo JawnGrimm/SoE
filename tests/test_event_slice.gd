@@ -837,14 +837,11 @@ func _run() -> void:
 	var regression_silver_actor := PersonEntity.new()
 	regression_silver_actor.id = &"purse_test"
 	regression_silver_actor.resources[&"silver"] = 5
-	var settlement_main = MainSceneScript.new()
-	settlement_main.world = purse_world
-	settlement_main.actor = regression_silver_actor
-	var no_traits: Array[StringName] = []
-	settlement_main._record_case_settlement(4, no_traits)
+		var no_traits: Array[StringName] = []
+	MainSceneScript._record_case_settlement_state(purse_world, regression_silver_actor, 4, no_traits)
 	_check(purse_world.silver_earned == 1, "Case settlement should count personal purse silver gained")
 	purse_world.stockpiles[&"silver"] = 110
-	settlement_main._record_case_settlement(5, no_traits)
+	MainSceneScript._record_case_settlement_state(purse_world, regression_silver_actor, 5, no_traits)
 	_check(purse_world.silver_earned == 1, "Institutional/world silver must not inflate personal silver earned")
 
 	# A completed Epic must be re-armed for a new shift, otherwise the
@@ -859,9 +856,7 @@ func _run() -> void:
 		"scandal_flags": [],
 		"history_notes": []
 	}
-	var epic_reset_main = MainSceneScript.new()
-	epic_reset_main.world = epic_reset_world
-	epic_reset_main._reset_epic_for_new_shift(&"great_canal_cut")
+	MainSceneScript._reset_epic_for_new_shift(epic_reset_world, &"great_canal_cut")
 	var reset_epic_state: Dictionary = epic_reset_world.epics[&"great_canal_cut"]
 	_check(int(reset_epic_state.get("progress", -1)) == 0 and String(reset_epic_state.get("stage", "")) == "survey" and not bool(reset_epic_state.get("completed", true)), "New shift should reset the completed canal Epic state")
 	epic_reset_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 128, &"labor": 10}}
