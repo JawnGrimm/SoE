@@ -1,15 +1,29 @@
 extends Node
 
+const BOOK_OPEN = preload("res://assets/audio/bookOpen.ogg")
+const BOOK_CLOSE = preload("res://assets/audio/bookClose.ogg")
+const BOOK_FLIP_1 = preload("res://assets/audio/bookFlip1.ogg")
+const BOOK_FLIP_2 = preload("res://assets/audio/bookFlip2.ogg")
+const BOOK_FLIP_3 = preload("res://assets/audio/bookFlip3.ogg")
+const BOOK_PLACE_1 = preload("res://assets/audio/bookPlace1.ogg")
+const BOOK_PLACE_2 = preload("res://assets/audio/bookPlace2.ogg")
+const BOOK_PLACE_3 = preload("res://assets/audio/bookPlace3.ogg")
+const METAL_CLICK = preload("res://assets/audio/metalClick.ogg")
+const HANDLE_COINS = preload("res://assets/audio/handleCoins.ogg")
+
 const SAMPLE_RATE: int = 22050
+
 var _players: Array[AudioStreamPlayer] = []
 var _streams: Dictionary = {}
 
 func _ready() -> void:
-	_streams[&"docket"] = _make_noise_stream(0.16, 0.22, 1800.0, 0.0)
-	_streams[&"stylus"] = _make_noise_stream(0.11, 0.38, 4200.0, 0.0)
-	_streams[&"seal"] = _make_thud_stream()
-	_streams[&"snap"] = _make_snap_stream()
-	_streams[&"roof_drip"] = _make_roof_drip_stream()
+	_streams[&"docket"] = [BOOK_FLIP_1, BOOK_FLIP_2, BOOK_FLIP_3, BOOK_PLACE_1, BOOK_PLACE_2, BOOK_PLACE_3]
+	_streams[&"book_open"] = [BOOK_OPEN]
+	_streams[&"book_close"] = [BOOK_CLOSE]
+	_streams[&"stylus"] = [METAL_CLICK]
+	_streams[&"seal"] = [METAL_CLICK, HANDLE_COINS]
+	_streams[&"snap"] = [BOOK_CLOSE]
+	_streams[&"roof_drip"] = [_make_roof_drip_stream()]
 	for index in range(4):
 		var player := AudioStreamPlayer.new()
 		player.volume_db = -9.0
@@ -18,6 +32,12 @@ func _ready() -> void:
 
 func play_docket_slide() -> void:
 	_play(&"docket")
+
+func play_book_open() -> void:
+	_play(&"book_open")
+
+func play_book_close() -> void:
+	_play(&"book_close")
 
 func play_stylus_mark() -> void:
 	_play(&"stylus")
@@ -32,14 +52,16 @@ func play_roof_drip() -> void:
 	_play(&"roof_drip")
 
 func _play(sound_id: StringName) -> void:
-	if not _streams.has(sound_id):
+	var candidates: Array = _streams.get(sound_id, [])
+	if candidates.is_empty():
 		return
+	var stream: AudioStream = candidates[randi() % candidates.size()]
 	var player: AudioStreamPlayer = _players[0]
 	for candidate in _players:
 		if not candidate.playing:
 			player = candidate
 			break
-	player.stream = _streams[sound_id]
+	player.stream = stream
 	player.pitch_scale = randf_range(0.94, 1.06)
 	player.play()
 
@@ -58,43 +80,6 @@ func _make_roof_drip_stream() -> AudioStreamWAV:
 		if second_age >= 0.0:
 			second = sin(TAU * 860.0 * second_age) * exp(-second_age * 29.0) * 0.48
 		_write_sample(bytes, index, first + second)
-	return _wav(bytes)
-
-func _make_noise_stream(duration: float, amplitude: float, cutoff: float, tone: float) -> AudioStreamWAV:
-	var count := int(SAMPLE_RATE * duration)
-	var bytes := PackedByteArray()
-	bytes.resize(count * 2)
-	var previous := 0.0
-	for index in range(count):
-		var time := float(index) / SAMPLE_RATE
-		var envelope := pow(1.0 - float(index) / count, 2.0)
-		var noise := randf_range(-1.0, 1.0)
-		previous += (noise - previous) * minf(1.0, cutoff / SAMPLE_RATE * 5.0)
-		var sample := clampf(previous * amplitude * envelope + sin(TAU * tone * time) * 0.04 * envelope, -1.0, 1.0)
-		_write_sample(bytes, index, sample)
-	return _wav(bytes)
-
-func _make_thud_stream() -> AudioStreamWAV:
-	var count := int(SAMPLE_RATE * 0.28)
-	var bytes := PackedByteArray()
-	bytes.resize(count * 2)
-	for index in range(count):
-		var time := float(index) / SAMPLE_RATE
-		var envelope := exp(-time * 17.0)
-		var sample := (sin(TAU * (82.0 - 22.0 * time) * time) * 0.72 + randf_range(-0.12, 0.12)) * envelope
-		_write_sample(bytes, index, sample)
-	return _wav(bytes)
-
-func _make_snap_stream() -> AudioStreamWAV:
-	var count := int(SAMPLE_RATE * 0.19)
-	var bytes := PackedByteArray()
-	bytes.resize(count * 2)
-	for index in range(count):
-		var time := float(index) / SAMPLE_RATE
-		var envelope := exp(-time * 28.0)
-		var ceramic_ring := sin(TAU * 1450.0 * time) * 0.32 + sin(TAU * 2130.0 * time) * 0.16
-		var sample := (randf_range(-0.8, 0.8) * 0.7 + ceramic_ring) * envelope
-		_write_sample(bytes, index, sample)
 	return _wav(bytes)
 
 func _write_sample(bytes: PackedByteArray, index: int, value: float) -> void:
