@@ -587,6 +587,7 @@ func _run() -> void:
 	var sim_world_b := WorldState.new()
 	UrukSeeder.seed_campaign(sim_world_a, 24680)
 	UrukSeeder.seed_campaign(sim_world_b, 24680)
+	var initial_sim_barley := sim_world_a.get_resource(&"barley")
 	var sim_a := WorldSimulator.new()
 	var sim_b := WorldSimulator.new()
 	for sim_period in range(48):
@@ -594,10 +595,9 @@ func _run() -> void:
 		sim_a.advance_period(sim_world_a)
 		sim_b.advance_period(sim_world_b)
 	_check(sim_world_a.year == -3196 and sim_world_a.period == 0, "WorldSimulator should advance the calendar exactly once per period")
-	_check(sim_world_a.stockpiles != sim_world_b.stockpiles or sim_world_a.year == sim_world_b.year, "Identically seeded simulations should remain deterministic")
 	_check(sim_world_a.stockpiles == sim_world_b.stockpiles, "Narrative RNG consumption must not alter autonomous economy results")
 	_check(int(sim_world_a.institutions[&"eanna_household"].get("activity_count", 0)) == 48, "Institutions should execute autonomous activity every period")
-	_check(sim_world_a.stockpiles != uruk_a.stockpiles, "World simulation should materially change seeded stockpiles over several years")
+	_check(sim_world_a.get_resource(&"barley") != initial_sim_barley, "World simulation should materially change seeded barley over several years")
 	var generated_sim_form := false
 	for sim_form in sim_world_a.pending_forms:
 		if StringName(sim_form.get("generated_by", "")) == &"world_simulator":
