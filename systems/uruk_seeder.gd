@@ -30,6 +30,9 @@ static func seed_campaign(world: WorldState, seed: int) -> PersonEntity:
 	world.stockpiles[&"silver"] = 8 + world.rng_sim.randi_range(0, 4)
 	world.stockpiles[&"clay_reeds"] = 60 + world.rng_sim.randi_range(-10, 10)
 	world.stockpiles[&"labor"] = 25 + world.rng_sim.randi_range(-5, 5)
+	# The North-Bay roof is already leaking; each elapsed period spoils one measure of barley.
+	world.north_bay_roof_leak_active = true
+	world.north_bay_roof_leak_rate = 1
 	world.enqueue_form({"form_type": &"grain_levy", "subject_id": &"south_court_storehouse", "urgency": 1, "year": world.year})
 	return player
 
