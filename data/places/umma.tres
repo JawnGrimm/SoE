@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="PlaceDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/place_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"umma"
+display_name = "Umma"
+place_type = &"rival_city"
+region = &"lower_mesopotamia"
+political_relation = &"autonomous_peer"
+exports = Array[StringName]([&"grain", &"labor"])
+imports = Array[StringName]([&"canal_access", &"textiles"])
+connected_to = Array[StringName]([&"uruk"])
+era_id = &"uruk_storehouse"
