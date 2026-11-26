@@ -135,18 +135,34 @@ static func attach_player(world: WorldState, player: PersonEntity) -> void:
 	_link(world, &"geme_tur", world.player_id, &"family", 8, 9)
 
 static func _seed_places(world: WorldState) -> void:
+	# Keep local Eanna work areas, while canonical settlements come from
+	# immutable PlaceDef resources so dockets can share the same geography.
 	world.places = {
-		&"uruk": {"name": "Uruk", "kind": &"city", "region": &"southern_mesopotamia", "connected_to": [&"eanna_precinct", &"anu_precinct", &"agricultural_hinterland"]},
 		&"eanna_precinct": {"name": "Eanna Precinct", "kind": &"institutional_precinct", "parent": &"uruk"},
 		&"anu_precinct": {"name": "Anu Precinct", "kind": &"cultic_precinct", "parent": &"uruk"},
 		&"agricultural_hinterland": {"name": "Uruk Agricultural Hinterland", "kind": &"productive_land", "parent": &"uruk"},
 		&"south_court_storehouse": {"name": "South Court Storehouse", "kind": &"storehouse", "parent": &"eanna_precinct"},
 		&"north_bay": {"name": "North-Bay", "kind": &"work_area", "parent": &"eanna_precinct"},
 		&"great_canal_cut": {"name": "Great Canal Cut", "kind": &"canal_worksite", "parent": &"agricultural_hinterland"},
-		&"susa": {"name": "Susa", "kind": &"external_settlement", "region": &"susiana", "connected_to": [&"uruk"]},
-		&"habuba_kabira": {"name": "Habuba Kabira", "kind": &"external_settlement", "region": &"upper_euphrates", "connected_to": [&"uruk"]}
+		&"djebel_aruda": {"name": "Djebel Aruda", "kind": &"uruk_related_settlement", "region": &"upper_euphrates", "connected_to": [&"habuba_kabira"]}
 	}
-
+	var place_ids: Array[String] = ["uruk", "umma", "nippur", "ur", "habuba_kabira", "hacinebi", "susa"]
+	for place_id in place_ids:
+		var resource_path := "res://data/places/%s.tres" % place_id
+		var definition := ResourceLoader.load(resource_path) as PlaceDef
+		if definition == null or not definition.is_valid():
+			push_warning("UrukSeeder: failed to load canonical place '%s'" % resource_path)
+			continue
+		world.places[definition.id] = {
+			"name": definition.display_name,
+			"kind": definition.place_type,
+			"region": definition.region,
+			"political_relation": definition.political_relation,
+			"exports": definition.exports.duplicate(),
+			"imports": definition.imports.duplicate(),
+			"connected_to": definition.connected_to.duplicate(),
+			"era_id": definition.era_id
+		}
 static func _seed_institutions_and_groups(world: WorldState) -> void:
 	var eanna_members: Array[StringName] = [&"shuruppak_ilu", &"ur_nanna", &"utu_mansum", &"enlil_kisu", &"lu_nanshe"]
 	world.institutions = {
