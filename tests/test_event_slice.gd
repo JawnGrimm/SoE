@@ -574,6 +574,7 @@ func _run() -> void:
 
 	var roof_world := WorldState.new()
 	var roof_actor := UrukSeeder.seed_campaign(roof_world, 32003200)
+	_check(int(roof_actor.resources.get(&"silver", 0)) == 2, "Uruk apprentice should begin with two personal shekels")
 	var barley_before_leak := roof_world.get_resource(&"barley")
 	_check(roof_world.has_active_hazard(&"north_bay", &"roof_leak"), "Uruk seeding should establish the active North-Bay leak")
 	roof_world.advance_period()
@@ -794,6 +795,8 @@ func _run() -> void:
 	WorldSimulator.new().advance_period(epic_high_world)
 	_check(epic_high_world.get_resource(&"canal_progress") == 3, "Canal Epic should autonomously gain three progress at full labor and ration thresholds")
 	_check(epic_high_world.get_resource(&"barley", "institution", "", &"eanna_household") == 116, "Full canal progress should consume four institutional barley after household demand")
+	var epic_high_state: Dictionary = epic_high_world.epics.get(&"great_canal_cut", {})
+	_check(int(epic_high_state.get("progress", 0)) == 3 and String(epic_high_state.get("stage", "")) == "cutting" and not bool(epic_high_state.get("completed", true)), "Epic runtime state should retain progress, stage, and completion status")
 
 	var epic_partial_world := WorldState.new()
 	epic_partial_world.year = -3200
@@ -815,7 +818,7 @@ func _run() -> void:
 	epic_silt_world.period = 11
 	epic_silt_world.stockpiles[&"canal_progress"] = 8
 	epic_silt_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 20, &"labor": 0}}
-	for labor_office in range(3):
+	for labor_office in range(4):
 		var labor_person := PersonEntity.new()
 		labor_person.id = StringName("labor_test_%d" % labor_office)
 		labor_person.office_id = &"labor_office"
