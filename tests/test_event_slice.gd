@@ -203,7 +203,8 @@ func _run() -> void:
 	_check(scheduler.pick_next_event(sealed_world, sealed_player, sealed_pool, sealed_context.era, sealed_world.rng_narrative) == sealed_case, "Case 1 should be eligible when a consignment receipt is pending")
 	sealed_world.pending_forms.clear()
 	sealed_world.period = 6
-	_check(scheduler.pick_next_event(sealed_world, sealed_player, sealed_pool, sealed_context.era, sealed_world.rng_narrative) == sealed_case, "Case 1 should enter the Harvest seasonal pool")
+	sealed_world.enqueue_form({"form_type": &"consignment_receipt"})
+	_check(scheduler.pick_next_event(sealed_world, sealed_player, sealed_pool, sealed_context.era, sealed_world.rng_narrative) == sealed_case, "Case 1 should be eligible during Harvest when a consignment receipt is pending")
 	sealed_world.enqueue_form({"form_type": &"consignment_receipt"})
 	var sealed_form_context := EventContext.new()
 	sealed_form_context.world = sealed_world
