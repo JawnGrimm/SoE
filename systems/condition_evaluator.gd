@@ -9,6 +9,7 @@ func _init() -> void:
     _handlers[&"skill_at_least"] = _skill_at_least
     _handlers[&"in_office"] = _in_office
     _handlers[&"year_in_range"] = _year_in_range
+    _handlers[&"opinion_compare"] = _opinion_compare
     _handlers[&"has_pending_form"] = _has_pending_form
     _handlers[&"flag_set"] = _flag_set
     _handlers[&"resource_compare"] = _resource_compare
@@ -79,3 +80,24 @@ func _recent_event(_subject: PersonEntity, p: Dictionary, ctx: EventContext) -> 
     return ctx.world != null and ctx.world.was_event_recent(
         StringName(p.get("event_id", "")), ctx.year, int(p.get("within_years", 1))
     )
+
+
+func _opinion_compare(subject: PersonEntity, p: Dictionary, ctx: EventContext) -> bool:
+    if subject == null or ctx.actor == null:
+        return false
+    var other_id := StringName(p.get("other", ""))
+    var opinion_owner: PersonEntity = subject
+    if other_id != &"":
+        var other := ctx.world.get_person(other_id) if ctx.world != null else null
+        if other == null:
+            return false
+        opinion_owner = other
+    var value := int(opinion_owner.opinions.get(ctx.actor.id, 0))
+    var expected := int(p.get("value", 0))
+    match String(p.get("comparison", ">=")):
+        ">=": return value >= expected
+        "<=": return value <= expected
+        "==": return value == expected
+        _:
+            push_warning("ConditionEvaluator: invalid opinion comparison")
+            return false

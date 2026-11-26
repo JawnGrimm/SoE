@@ -1,0 +1,170 @@
+[gd_resource type="Resource" script_class="EventTemplate" load_steps=34 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/event_template.gd" id="1"]
+[ext_resource type="Script" path="res://data/definitions/event_outcome.gd" id="2"]
+[ext_resource type="Script" path="res://data/definitions/event_effect.gd" id="3"]
+[ext_resource type="Script" path="res://data/definitions/event_condition.gd" id="4"]
+
+[sub_resource type="Resource" id="condition_office"]
+script = ExtResource("4")
+condition_type = &"in_office"
+target = "actor"
+parameters = {"office_id": &"apprentice_scribe"}
+
+[sub_resource type="Resource" id="condition_year"]
+script = ExtResource("4")
+condition_type = &"year_in_range"
+target = "actor"
+parameters = {"min": -3200, "max": -3100}
+
+[sub_resource type="Resource" id="fx_1"]
+script = ExtResource("3")
+effect_type = &"modify_resource"
+parameters = {"resource": &"silver", "amount": -4, "scope": "world"}
+
+[sub_resource type="Resource" id="fx_2"]
+script = ExtResource("3")
+effect_type = &"change_opinion"
+parameters = {"subject": &"enlil_kisu", "amount": 12, "reason": "Compensated crew out of personal silver"}
+
+[sub_resource type="Resource" id="fx_3"]
+script = ExtResource("3")
+effect_type = &"change_opinion"
+parameters = {"subject": &"ur_nanna", "amount": 4, "reason": "Resolved quayside strike without temple expense"}
+
+[sub_resource type="Resource" id="fx_4"]
+script = ExtResource("3")
+effect_type = &"modify_resource"
+parameters = {"resource": &"canal_progress", "amount": 25, "scope": "world"}
+
+[sub_resource type="Resource" id="fx_5"]
+script = ExtResource("3")
+effect_type = &"clear_flag"
+parameters = {"flag": &"canal_crew_slowdown", "scope": "world"}
+
+[sub_resource type="Resource" id="fx_6"]
+script = ExtResource("3")
+effect_type = &"add_memory"
+parameters = {"memory_id": &"paid_quayside_strike", "text": "Spent 4 shekels of personal silver to break Enlil-kisu's strike and save the canal works.", "involved": [&"enlil_kisu", &"ur_nanna"]}
+
+[sub_resource type="Resource" id="fx_7"]
+script = ExtResource("3")
+effect_type = &"resolve_form"
+parameters = {"form_type": &"succession_claim", "disposition": "strike_settled_privately"}
+
+[sub_resource type="Resource" id="outcome_silver"]
+script = ExtResource("2")
+label = "Purchase private rations from personal silver (-4 shekels)"
+title_override = "THE SILVER REPAIR"
+description_override = "You pull four shekels of silver from your desk drawer—savings gathered from months of careful tallies—and hand them directly to Enlil-kisu. By sunset, two baskets of fresh flatbread and jars of small beer arrive at the landing. The boatmen rise without a word, shoulder their poles, and begin hoisting the stone blocks toward the canal cut. The work resumes, but your private tin box is hauntingly light."
+effects = Array[ExtResource("3")]([SubResource("fx_1"), SubResource("fx_2"), SubResource("fx_3"), SubResource("fx_4"), SubResource("fx_5"), SubResource("fx_6"), SubResource("fx_7")])
+
+[sub_resource type="Resource" id="fx_8"]
+script = ExtResource("3")
+effect_type = &"change_opinion"
+parameters = {"subject": &"enlil_kisu", "amount": 15, "reason": "Publicly rescinded unjust carrier penalty"}
+
+[sub_resource type="Resource" id="fx_9"]
+script = ExtResource("3")
+effect_type = &"change_opinion"
+parameters = {"subject": &"shuruppak_ilu", "amount": -6, "reason": "Showed judicial inconsistency under pressure"}
+
+[sub_resource type="Resource" id="fx_10"]
+script = ExtResource("3")
+effect_type = &"change_opinion"
+parameters = {"subject": &"utu_mansum", "amount": -5, "reason": "Undermined threshold tally authority"}
+
+[sub_resource type="Resource" id="fx_11"]
+script = ExtResource("3")
+effect_type = &"modify_resource"
+parameters = {"resource": &"canal_progress", "amount": 20, "scope": "world"}
+
+[sub_resource type="Resource" id="fx_12"]
+script = ExtResource("3")
+effect_type = &"clear_flag"
+parameters = {"flag": &"canal_crew_slowdown", "scope": "world"}
+
+[sub_resource type="Resource" id="fx_13"]
+script = ExtResource("3")
+effect_type = &"add_trait"
+parameters = {"trait_id": &"pliable"}
+
+[sub_resource type="Resource" id="fx_14"]
+script = ExtResource("3")
+effect_type = &"add_memory"
+parameters = {"memory_id": &"rescinded_carrier_penalty", "text": "Publicly struck out the carrier penalty to restart the stalled canal transport.", "involved": [&"enlil_kisu", &"lu_nanshe", &"shuruppak_ilu"]}
+
+[sub_resource type="Resource" id="fx_15"]
+script = ExtResource("3")
+effect_type = &"resolve_form"
+parameters = {"form_type": &"succession_claim", "disposition": "penalty_rescinded_publicly"}
+
+[sub_resource type="Resource" id="outcome_recant"]
+script = ExtResource("2")
+label = "Publicly rescind the crew penalty before Lu-Nanshe"
+title_override = "THE STYLUS IS TURNED BACK"
+description_override = "You summon Lu-Nanshe to the threshold and lay the original carrier docket on the stone. Before the gathered foremen and scribes, you score a wide horizontal line through the penalty mark, officially declaring the transit loss unassigned and restoring the boatmen's standing. Enlil-kisu nods slowly, accepting the restoration of his men's honor. The physical strike ends, but Shuruppak-ilu notes in the margin that your judicial hand is easily swayed by pressure."
+effects = Array[ExtResource("3")]([SubResource("fx_8"), SubResource("fx_9"), SubResource("fx_10"), SubResource("fx_11"), SubResource("fx_12"), SubResource("fx_13"), SubResource("fx_14"), SubResource("fx_15")])
+
+[sub_resource type="Resource" id="fx_16"]
+script = ExtResource("3")
+effect_type = &"change_opinion"
+parameters = {"subject": &"enlil_kisu", "amount": -30, "reason": "Forced crew to labor at spearpoint"}
+
+[sub_resource type="Resource" id="fx_17"]
+script = ExtResource("3")
+effect_type = &"change_opinion"
+parameters = {"subject": &"ur_nanna", "amount": 5, "reason": "Brought stones to the wall by any means necessary"}
+
+[sub_resource type="Resource" id="fx_18"]
+script = ExtResource("3")
+effect_type = &"change_opinion"
+parameters = {"subject": &"shuruppak_ilu", "amount": -5, "reason": "Used military force to resolve a clerical dispute"}
+
+[sub_resource type="Resource" id="fx_19"]
+script = ExtResource("3")
+effect_type = &"modify_resource"
+parameters = {"resource": &"canal_progress", "amount": 30, "scope": "world"}
+
+[sub_resource type="Resource" id="fx_20"]
+script = ExtResource("3")
+effect_type = &"clear_flag"
+parameters = {"flag": &"canal_crew_slowdown", "scope": "world"}
+
+[sub_resource type="Resource" id="fx_21"]
+script = ExtResource("3")
+effect_type = &"set_flag"
+parameters = {"flag": &"blood_on_the_quays", "scope": "world", "periods": 12}
+
+[sub_resource type="Resource" id="fx_22"]
+script = ExtResource("3")
+effect_type = &"add_trait"
+parameters = {"trait_id": &"severe"}
+
+[sub_resource type="Resource" id="fx_23"]
+script = ExtResource("3")
+effect_type = &"add_memory"
+parameters = {"memory_id": &"conscripted_quayside_stoppage", "text": "Used temple guards to break the Enlil-kisu strike and force canal stone placement.", "involved": [&"enlil_kisu", &"ur_nanna"]}
+
+[sub_resource type="Resource" id="fx_24"]
+script = ExtResource("3")
+effect_type = &"resolve_form"
+parameters = {"form_type": &"succession_claim", "disposition": "strike_broken_by_force"}
+
+[sub_resource type="Resource" id="outcome_force"]
+script = ExtResource("2")
+label = "Invoke Temple Guard mandate; compel labor by spearpoint"
+title_override = "THE QUAY IS SWEPT BY FORCE"
+description_override = "You refuse to bargain with resting labor. Stepping out onto the portico, you summon the temple guard. Their bronze spears flash in the harsh sunlight as they clear the quays, driving Enlil-kisu's men back to the stone-slings at spearpoint. The revetment blocks move—heavy, sullen, and fast. The canal work surges forward, but Enlil-kisu looks at you with a quiet, bottomless hatred that no seal or decree will ever erase."
+effects = Array[ExtResource("3")]([SubResource("fx_16"), SubResource("fx_17"), SubResource("fx_18"), SubResource("fx_19"), SubResource("fx_20"), SubResource("fx_21"), SubResource("fx_22"), SubResource("fx_23"), SubResource("fx_24")])
+
+[resource]
+script = ExtResource("1")
+id = &"challenge_quayside_stoppage"
+title = "The Quayside Stoppage"
+description = "The Euphrates winds low and cold against the mud-brick quays. The final stone blocks and bundles of reed-fascines meant for the Great Canal embankment lie stranded on the landing barges, half-submerged in silt. Enlil-kisu’s boatmen sit on the mooring posts with their arms crossed, silent and unmoving. Enlil-kisu stands at the edge of the wharf, watching the water rise toward the storehouse foundations. The flood is thirty days away. He does not spit when you approach; he simply points to the empty bread-line tally you scored against his crew three seasons ago."
+era_tags = Array[StringName]([&"uruk"])
+weight = 10.0
+once_per_world = true
+conditions = Array[ExtResource("4")]([SubResource("condition_office"), SubResource("condition_year")])
+outcomes = Array[ExtResource("2")]([SubResource("outcome_silver"), SubResource("outcome_recant"), SubResource("outcome_force")])
