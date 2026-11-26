@@ -50,7 +50,7 @@ static func build_biography(catalog: Dictionary, selections: CharacterCreationSe
 	var validation := validate(catalog, selections)
 	if not validation.has("selected_answers"):
 		return ""
-	var lines: Array[String] = [selections.character_name.strip_edges(), "Uruk · c. 3200 BCE"]
+	var lines: Array[String] = [selections.character_name.strip_edges(), String(catalog.get("display_context", ""))]
 	for question_data in catalog.get("questions", []):
 		var answer := _find_answer(question_data, selections.get_answer(StringName(question_data.get("id", ""))))
 		var fragment := String(answer.get("biography", "")).strip_edges()

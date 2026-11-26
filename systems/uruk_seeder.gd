@@ -31,7 +31,8 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 	if add_player_to_world:
 		world.people[player.id] = player
 	var senior := _person(&"shuruppak_ilu", "Shuruppak-ilu", &"archive_keeper", {"literacy": 4, "arithmetic": 4, "law": 3, "rhetoric": 2, "intrigue": 2, "stewardship": 3}, [&"patient", &"exacting"])
-	senior.set_opinion(PLAYER_ID, 5)
+	if add_player_to_world:
+		senior.set_opinion(PLAYER_ID, 5)
 	senior.vulnerabilities[&"patience_remaining"] = 3 + world.rng_people.randi_range(0, 2)
 	world.people[senior.id] = senior
 	var steward := _person(&"ur_nanna", "Ur-Nanna", &"grain_clerk", {"stewardship": 4, "law": 2, "arithmetic": 3}, [&"cautious", &"weather_watcher"])
@@ -139,7 +140,8 @@ static func _seed_relationships(world: WorldState, include_player: bool = true) 
 	_link(world, &"ab_kala", &"ur_nanna", &"institutional_supplier", 2, 5)
 	_link(world, &"nin_dada", &"geme_inana", &"textile_trade", 3, 5)
 	_link(world, &"nin_azu", &"nin_kasi", &"cultic_and_workplace_tie", 2, 5)
-	_link(world, &"geme_tur", &"player_apprentice", &"family", 8, 9)
+	if include_player:
+		_link(world, &"geme_tur", &"player_apprentice", &"family", 8, 9)
 	_link(world, &"geme_tur", &"shuruppak_ilu", &"household_reputation", 1, 4)
 	_link(world, &"nin_kasi", &"ama_edin", &"brewery_household_supply", 2, 4)
 

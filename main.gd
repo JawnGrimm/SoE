@@ -617,7 +617,7 @@ func _show_character_creation_screen(screen: int) -> void:
 
 	if creation_screen == 0:
 		prompt_label.text = "A LIFE ALREADY UNDERWAY"
-		dossier.text = "You are not beginning with an empty slate. You have grown up among other people, learned to be useful, made mistakes, and found your way toward the work of a scribe.\n\nThe choices ahead describe the life that brought you here. They shape the people you know, the work you recognize, and the circumstances in which your career begins.\n\nERA I  /  URUK  /  c. 3200 BCE"
+		dossier.text = "You are not beginning with an empty slate. You have grown up among other people, learned to be useful, made mistakes, and found your way toward the work of a scribe.\n\nThe choices ahead describe the life that brought you here. They shape the people you know, the work you recognize, and the circumstances in which your career begins.\n\nERA I  /  " + String(creation_catalog.get("display_context", "Current era")) + ""
 		_add_choice("Begin this life", _show_character_creation_screen.bind(1))
 		return
 

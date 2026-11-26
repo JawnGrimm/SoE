@@ -1,6 +1,7 @@
 {
   "era_id": "uruk_storehouse",
   "location_id": "uruk",
+  "display_context": "Uruk · c. 3200 BCE",
   "questions": [
     {
       "id": "origin",
