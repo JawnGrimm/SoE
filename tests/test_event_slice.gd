@@ -127,6 +127,14 @@ func _run() -> void:
 	for opportunity in opportunities:
 		opportunity_kinds.append(StringName(opportunity.get("kind", "")))
 	_check(opportunity_kinds.has(&"form") and opportunity_kinds.has(&"hazard") and opportunity_kinds.has(&"ledger"), "Initial opportunities should be grounded in a pending form, active hazard, and real institution ledger")
+	var martial_opportunities := AssignmentPipeline.generate_opportunities(assignment_world, assignment_actor, &"path_martial")
+	var civil_hazard_priority := 0
+	var martial_hazard_priority := 0
+	for opportunity in opportunities:
+		if StringName(opportunity.get("kind", "")) == &"hazard": civil_hazard_priority = int(opportunity.get("priority", 0))
+	for opportunity in martial_opportunities:
+		if StringName(opportunity.get("kind", "")) == &"hazard": martial_hazard_priority = int(opportunity.get("priority", 0))
+	_check(martial_opportunities.size() == 3 and martial_hazard_priority > civil_hazard_priority, "Career path should influence opportunity priority without gating access")
 	var form_opportunity: Dictionary = {}
 	var hazard_opportunity: Dictionary = {}
 	var ledger_opportunity: Dictionary = {}
@@ -137,6 +145,9 @@ func _run() -> void:
 			&"ledger": ledger_opportunity = opportunity
 	_check(AssignmentPipeline.begin(assignment_world, form_opportunity, assignment_actor), "A selected world opportunity should enter the active assignment lifecycle")
 	var form_assignment_id := StringName(form_opportunity.get("id", ""))
+	var other_scribe := PersonEntity.new()
+	other_scribe.id = &"other_scribe"
+	_check(not bool(AssignmentPipeline.perform_action(assignment_world, other_scribe, form_assignment_id, &"examine_records").get("success", false)), "An engagement should only accept actions from its assigned scribe")
 	_check(not bool(AssignmentPipeline.resolve(assignment_world, assignment_actor, form_assignment_id, &"certify").get("success", false)), "An engagement should not permit assessment before investigation")
 	_check(bool(AssignmentPipeline.perform_action(assignment_world, assignment_actor, form_assignment_id, &"examine_records").get("success", false)), "Assignment should allow examination of its actual source record")
 	_check(bool(AssignmentPipeline.perform_action(assignment_world, assignment_actor, form_assignment_id, &"consult_official").get("success", false)), "Assignment should allow consultation as a separate investigative action")
