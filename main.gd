@@ -35,6 +35,8 @@ var creation_selections := CharacterCreationSelections.new()
 var creation_screen: int = 0
 var phase := "case"
 var last_opinion_deltas: Dictionary[StringName, int] = {}
+var active_left_speaker_id: StringName = &""
+var active_right_speaker_id: StringName = &""
 
 var year_label: Label
 var case_heading: Label
@@ -956,6 +958,8 @@ func _render_docket_payload(payload: Dictionary, callbacks: Array = []) -> void:
 	evidence_right_title.text = String(right.get("title", "CLAIM"))
 	var left_id := StringName(left.get("speaker_id", ""))
 	var right_id := StringName(right.get("speaker_id", ""))
+	active_left_speaker_id = left_id
+	active_right_speaker_id = right_id
 	var left_person := world.get_person(left_id)
 	var right_person := world.get_person(right_id)
 	evidence_left_speaker.text = left_person.display_name.to_upper() if left_person != null else String(left_id).to_upper()
@@ -1253,11 +1257,16 @@ func _preview_choice(button: Button) -> void:
 		for effect in outcome.effects:
 			if effect.effect_type != &"change_opinion":
 				continue
-			var target_npc := StringName(effect.parameters.get("other", effect.parameters.get("subject", &"")))
-			var amount := int(effect.parameters.get("amount", 0))
-			if target_npc == &"enlil_kisu":
+			var effect_params: Dictionary = effect.parameters
+			var affected_id := StringName(effect_params.get("subject", ""))
+			if affected_id == &"" and context != null:
+				var affected_person := context.resolve_subject(String(effect.target))
+				if affected_person != null:
+					affected_id = affected_person.id
+			var amount := int(effect_params.get("amount", 0))
+			if affected_id == active_left_speaker_id and active_left_speaker_id != &"":
 				left_delta += amount
-			elif target_npc == &"utu_mansum":
+			elif affected_id == active_right_speaker_id and active_right_speaker_id != &"":
 				right_delta += amount
 	_set_evidence_tension(left_delta, right_delta)
 
