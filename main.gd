@@ -624,6 +624,8 @@ func _choose_mentor(mentor_id: StringName) -> void:
 func _offer_north_bay_assignment() -> void:
 	if north_bay_assignment == null:
 		return
+	if world.get_hazard_total_lost(&"north_bay", &"roof_leak") < 3:
+		return
 	if not world.offer_assignment(north_bay_assignment.id, north_bay_assignment.employer):
 		push_warning("Main: North-Bay assignment could not be offered; it may already exist")
 		return
@@ -746,7 +748,7 @@ func _submit_north_bay_assessment(is_accurate: bool) -> void:
 	_clear_choices()
 	phase = "north_bay_result"
 	case_heading.text = "𒂍  ASSESSMENT SEALED"
-	dossier.text = "The report has been entered into the storehouse record. The physical leak remains active; each elapsed period now spoils one measure of barley until repair is arranged."
+	dossier.text = "The report has been entered into the storehouse record. The physical leak remains active; each elapsed period spoils one measure of barley. Ur-Nanna has opened a repair docket for the next available desk."
 	if is_accurate:
 		prompt_label.text = "Accurate assessment filed. +%d silver · +%d Law XP · Ur-Nanna %+d opinion." % [north_bay_assignment.compensation_amount, north_bay_assignment.law_xp, opinion_delta]
 	else:
@@ -856,6 +858,14 @@ func _advance_period() -> void:
 	_schedule_next_case()
 
 func _prepare_seasonal_forms() -> void:
+	# Three additional Uruk dockets enter at their seasonal desks.
+	if world.period == 2 and not world.has_pending_form(&"labor_tally"):
+		world.enqueue_form({"form_type": &"labor_tally", "subject_id": &"canal_crew", "urgency": 1, "year": world.year})
+	if world.period == 4 and not world.has_pending_form(&"held_barley"):
+		world.enqueue_form({"form_type": &"held_barley", "subject_id": &"agricultural_households", "urgency": 1, "year": world.year})
+	if world.period == 8 and not world.has_pending_form(&"load_claim"):
+		world.enqueue_form({"form_type": &"load_claim", "subject_id": &"north_bay_reserve", "urgency": 1, "year": world.year}
+	)
 	# Harvest opens the South Court barley docket and the oil/textile receiving docket.
 	if world.period == 6 and not world.has_pending_form(&"grain_levy"):
 		world.enqueue_form({"form_type": &"grain_levy", "subject_id": &"south_court_storehouse", "urgency": 1, "year": world.year})
