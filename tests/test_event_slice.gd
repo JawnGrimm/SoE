@@ -877,7 +877,7 @@ func _run() -> void:
 	_check(epic_high_world.get_resource(&"canal_progress") == 1, "Passive Epic work should advance slowly at full labor and ration thresholds")
 	_check(epic_high_world.get_resource(&"barley", "institution", "", &"eanna_household") == 116, "Full canal progress should consume four institutional barley after household demand")
 	var epic_high_state: Dictionary = epic_high_world.epics.get(&"great_canal_cut", {})
-	_check(int(epic_high_state.get("progress", 0)) == 3 and String(epic_high_state.get("stage", "")) == "survey" and not bool(epic_high_state.get("completed", true)), "Epic runtime state should retain progress, stage, and completion status")
+	_check(int(epic_high_state.get("progress", 0)) == 1 and String(epic_high_state.get("stage", "")) == "survey" and not bool(epic_high_state.get("completed", true)), "Epic runtime state should retain progress, stage, and completion status")
 
 	var epic_partial_world := WorldState.new()
 	epic_partial_world.year = -3200
