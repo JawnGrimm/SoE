@@ -582,6 +582,31 @@ func _run() -> void:
 		_check(authored_case != null, "Registry should load authored Uruk case %s" % event_id)
 		_check(authored_case != null and authored_case.cooldown_years >= 1, "Uruk case %s should use a cooldown" % event_id)
 
+	# -- Autonomous world simulation: same seed, same world history; narrative RNG stays independent.
+	var sim_world_a := WorldState.new()
+	var sim_world_b := WorldState.new()
+	UrukSeeder.seed_campaign(sim_world_a, 24680)
+	UrukSeeder.seed_campaign(sim_world_b, 24680)
+	var sim_a := WorldSimulator.new()
+	var sim_b := WorldSimulator.new()
+	for sim_period in range(48):
+		sim_world_a.rng_narrative.randi()
+		sim_a.advance_period(sim_world_a)
+		sim_b.advance_period(sim_world_b)
+	_check(sim_world_a.year == -3196 and sim_world_a.period == 0, "WorldSimulator should advance the calendar exactly once per period")
+	_check(sim_world_a.stockpiles != sim_world_b.stockpiles or sim_world_a.year == sim_world_b.year, "Identically seeded simulations should remain deterministic")
+	_check(sim_world_a.stockpiles == sim_world_b.stockpiles, "Narrative RNG consumption must not alter autonomous economy results")
+	_check(int(sim_world_a.institutions[&"eanna_household"].get("activity_count", 0)) == 48, "Institutions should execute autonomous activity every period")
+	_check(sim_world_a.stockpiles != uruk_a.stockpiles, "World simulation should materially change seeded stockpiles over several years")
+	var generated_sim_form := false
+	for sim_form in sim_world_a.pending_forms:
+		if StringName(sim_form.get("generated_by", "")) == &"world_simulator":
+			generated_sim_form = true
+	for sim_form in sim_world_a.resolved_forms:
+		if StringName(sim_form.get("generated_by", "")) == &"world_simulator":
+			generated_sim_form = true
+	_check(generated_sim_form, "World simulation should generate forms from observed resource conditions")
+
 	_finish()
 
 func _check(cond: bool, msg: String) -> bool:
