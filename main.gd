@@ -1141,9 +1141,9 @@ func _show_era_completion() -> void:
 	evidence_right_quote.text = "“The canal stands, and the stores were not emptied to build it. That is competent work.”"
 	_set_evidence_portrait(&"shuruppak_ilu", &"ur_nanna")
 	_set_evidence_tension(0, 0)
-	prompt_label.text = "The canal is built. This era's work is complete."
+	prompt_label.text = "The canal is built. This era's Epic is complete."
 	_add_choice("Begin Next Era / New Shift", _begin_next_shift)
-	status_label.text = "ERA WORK COMPLETE  /  CEDAR DESK ENTRY SEALED"
+	status_label.text = "ERA EPIC COMPLETE  /  CEDAR DESK ENTRY SEALED"
 
 func _begin_next_shift() -> void:
 	if phase != "era_complete":
@@ -1335,11 +1335,11 @@ func _refresh_compound() -> void:
 	for trait_id in actor.traits:
 		if trait_id in [&"exacting", &"stubborn", &"protective", &"diplomatic"]:
 			mentor_trait = String(trait_id)
-	heirloom_label.text = "HEIRLOOM RIM  /  APPRENTICE SCRIBE  /  MENTOR MARK: %s  /  SILVER AT DESK: %d SHEKELS" % [mentor_trait.to_upper(), world.get_resource(&"silver")]
-	stores_label.text = "Barley     %d measures\nNorth-Bay water loss  %d\nSilver     %d shekels\nClay/Reeds %d\nLabor      %d" % [world.get_resource(&"barley"), world.get_hazard_total_lost(&"north_bay", &"roof_leak"), world.get_resource(&"silver"), world.get_resource(&"clay_reeds"), world.get_resource(&"labor")]
+	heirloom_label.text = "YOUR DESK PURSE: %d SHEKELS  /  MENTOR MARK: %s" % [actor.resources.get(&"silver", 0), mentor_trait.to_upper()]
+	stores_label.text = "EANNA STOREHOUSE STORES\nBarley     %d measures\nNorth-Bay water loss  %d\nTemple silver  %d shekels\nClay/Reeds %d\nLabor      %d" % [world.get_resource(&"barley", "institution", "", &"eanna_household"), world.get_hazard_total_lost(&"north_bay", &"roof_leak"), world.get_resource(&"silver", "institution", "", &"eanna_household"), world.get_resource(&"clay_reeds", "institution", "", &"eanna_household"), world.get_resource(&"labor", "institution", "", &"eanna_household")]
 	var canal := world.get_resource(&"canal_progress")
 	var filled := int(round(float(canal) / 10.0))
-	canal_label.text = "THE GREAT CANAL CUT\n[%s%s] %d / 100\nTarget before Inundation" % ["=".repeat(filled), "-".repeat(10 - filled), canal]
+	canal_label.text = "ERA EPIC: THE GREAT CANAL CUT\n[%s%s] %d / 100\nAutonomous works" % ["=".repeat(filled), "-".repeat(10 - filled), canal]
 	for child in roster_box.get_children():
 		roster_box.remove_child(child)
 		child.queue_free()
