@@ -734,18 +734,11 @@ func _submit_north_bay_assessment(is_accurate: bool) -> void:
 	if steward == null:
 		push_warning("Main: North-Bay employer disappeared before settlement")
 		return
-	if not world.complete_assignment(NORTH_BAY_ASSIGNMENT_ID, north_bay_assignment.required_actions, assessment):
+	var opinion_before := int(steward.opinions.get(actor.id, 0))
+	if not world.complete_assignment(north_bay_assignment, actor.id, assessment, is_accurate):
 		push_warning("Main: North-Bay assessment rejected; required actions or lifecycle state are invalid")
 		return
-	var opinion_delta := north_bay_assignment.opinion_penalty
-	if is_accurate:
-		world.modify_resource(north_bay_assignment.compensation_resource, north_bay_assignment.compensation_amount)
-		actor.skills.add_xp(&"law", north_bay_assignment.law_xp)
-		opinion_delta = north_bay_assignment.opinion_reward
-	steward.opinions[actor.id] = int(steward.opinions.get(actor.id, 0)) + opinion_delta
-	var reasons: Array = steward.opinion_reasons.get(actor.id, [])
-	reasons.append({"year": world.year, "amount": opinion_delta, "reason": "North-Bay roof inspection assessment: %s" % ("accurate and supported" if is_accurate else "unsupported; contradicted by physical inspection")})
-	steward.opinion_reasons[actor.id] = reasons
+	var opinion_delta := int(steward.opinions.get(actor.id, 0)) - opinion_before
 	last_opinion_deltas.clear()
 	last_opinion_deltas[north_bay_assignment.employer] = opinion_delta
 	assignment_card.disabled = true
