@@ -85,6 +85,11 @@ func register_definition(definition: Resource, category: String) -> bool:
 		if assignment == null or not assignment.is_valid():
 			_warn("DefinitionRegistry: rejected malformed AssignmentDef")
 			return false
+	if category == "places":
+		var place := definition as PlaceDef
+		if place == null or not place.is_valid():
+			_warn("DefinitionRegistry: rejected malformed PlaceDef")
+			return false
 
 	var definition_id := StringName(str(definition.get("id")))
 	if definition_id == &"":
