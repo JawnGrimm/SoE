@@ -16,6 +16,10 @@ var resolved_forms: Array[Dictionary] = []
 var event_history: Array[Dictionary] = []
 var character_event_history: Dictionary[StringName, Array] = {}
 var people: Dictionary[StringName, PersonEntity] = {}
+var assignments: Dictionary[StringName, Dictionary] = {}
+var north_bay_roof_leak_active: bool = false
+var north_bay_roof_leak_rate: int = 1
+var north_bay_roof_total_spoiled: int = 0
 var _next_form_sequence: int = 1
 
 func set_world_seed(new_seed: int) -> void:
@@ -33,6 +37,77 @@ func advance_period() -> void:
 		period = 0
 		year += 1
 	_process_period_deadlines()
+	_process_roof_leak()
+
+func _process_roof_leak() -> void:
+	if not north_bay_roof_leak_active or north_bay_roof_leak_rate <= 0:
+		return
+	var available := maxi(0, get_resource(&"barley"))
+	var spoiled := mini(available, north_bay_roof_leak_rate)
+	if spoiled <= 0:
+		return
+	stockpiles[&"barley"] = available - spoiled
+	north_bay_roof_total_spoiled += spoiled
+
+func offer_assignment(assignment_id: StringName, employer_id: StringName) -> bool:
+	if assignment_id == &"" or employer_id == &"" or assignments.has(assignment_id):
+		return false
+	if get_person(employer_id) == null:
+		push_warning("WorldState: assignment employer '%s' does not exist" % employer_id)
+		return false
+	assignments[assignment_id] = {
+		"status": "offered",
+		"employer_id": employer_id,
+		"offered_period": current_period_index(),
+		"actions": {},
+		"assessment": &"",
+	}
+	return true
+
+func start_assignment(assignment_id: StringName) -> bool:
+	if not assignments.has(assignment_id):
+		return false
+	var entry: Dictionary = assignments[assignment_id]
+	if String(entry.get("status", "")) != "offered":
+		return false
+	entry["status"] = "active"
+	assignments[assignment_id] = entry
+	return true
+
+func record_assignment_action(assignment_id: StringName, action_id: StringName) -> bool:
+	if assignment_id == &"" or action_id == &"" or not assignments.has(assignment_id):
+		return false
+	var entry: Dictionary = assignments[assignment_id]
+	if String(entry.get("status", "")) != "active":
+		return false
+	var actions: Dictionary = entry.get("actions", {})
+	if actions.has(action_id):
+		return false
+	actions[action_id] = true
+	entry["actions"] = actions
+	assignments[assignment_id] = entry
+	return true
+
+func complete_assignment(assignment_id: StringName, required_actions: Array[StringName], assessment: StringName) -> bool:
+	if assignment_id == &"" or assessment == &"" or required_actions.is_empty() or not assignments.has(assignment_id):
+		return false
+	var entry: Dictionary = assignments[assignment_id]
+	if String(entry.get("status", "")) != "active":
+		return false
+	var actions: Dictionary = entry.get("actions", {})
+	for action_id in required_actions:
+		if not actions.has(action_id):
+			return false
+	entry["status"] = "completed"
+	entry["assessment"] = assessment
+	entry["completed_period"] = current_period_index()
+	assignments[assignment_id] = entry
+	return true
+
+func get_assignment_state(assignment_id: StringName) -> Dictionary:
+	if not assignments.has(assignment_id):
+		return {}
+	return assignments[assignment_id].duplicate(true)
 
 func _process_period_deadlines() -> void:
 	var now := current_period_index()
