@@ -214,17 +214,16 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 				disposition = "referred"
 				accurate = false
 			elif verdict == &"defer":
+				disposition = "deferred"
 				accurate = false
-				result_text = "The assessment is deferred. The original form remains pending and may return to the desk."
-			if verdict != &"defer":
-				var resolved := world.resolve_form({
-					"form_id": String(source_id),
-					"disposition": disposition,
-					"notes": "Assessment by %s after %d investigative actions." % [actor.display_name, actions.size()]
-				}, world.year)
-				if not resolved:
-					return {"success": false, "message": "The source form has already changed or been resolved."}
-				result_text = "The %s is entered as %s." % [_form_title(StringName(form_data.get("form_type", ""))), disposition]
+			var resolved := world.resolve_form({
+				"form_id": String(source_id),
+				"disposition": disposition,
+				"notes": "Assessment by %s after %d investigative actions." % [actor.display_name, actions.size()]
+			}, world.year)
+			if not resolved:
+				return {"success": false, "message": "The source form has already changed or been resolved."}
+			result_text = "The %s is entered as %s. The underlying matter remains subject to future world conditions." % [_form_title(StringName(form_data.get("form_type", ""))), disposition]
 		&"hazard":
 			var hazard: Dictionary = record.get("source_data", {})
 			var place_id := StringName(hazard.get("place_id", ""))
