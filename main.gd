@@ -79,6 +79,11 @@ func _ready() -> void:
 	_start_world()
 	MusicDirector.play_for_phase(phase)
 
+func _open_pause_menu() -> void:
+	var pause_controller := get_node_or_null("PauseMenuController")
+	if pause_controller != null and pause_controller.has_method("pause"):
+		pause_controller.call("pause")
+
 func _set_phase(next_phase: String) -> void:
 	phase = next_phase
 	MusicDirector.play_for_phase(phase)
@@ -115,6 +120,17 @@ func _build_interface() -> void:
 	year_label.add_theme_font_size_override("font_size", 14)
 	year_label.add_theme_color_override("font_color", Color("#c4ad7c"))
 	header.add_child(year_label)
+	var menu_button := Button.new()
+	menu_button.text = "☰  MENU"
+	menu_button.tooltip_text = "Open the in-game menu (Esc)"
+	menu_button.custom_minimum_size = Vector2(104, 34)
+	menu_button.add_theme_font_size_override("font_size", 13)
+	menu_button.add_theme_color_override("font_color", Color("#e5d2a8"))
+	menu_button.add_theme_stylebox_override("normal", _panel_style("#3a2b1d", "#80653b"))
+	menu_button.add_theme_stylebox_override("hover", _panel_style("#604326", "#d0ad70"))
+	menu_button.add_theme_stylebox_override("pressed", _panel_style("#21170f", "#5b4228"))
+	menu_button.pressed.connect(_open_pause_menu)
+	header.add_child(menu_button)
 	var rule := ColorRect.new()
 	rule.custom_minimum_size.y = 2
 	rule.color = Color("#80653b")
