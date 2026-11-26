@@ -122,7 +122,7 @@ func _modify_resource(subject: PersonEntity, p: Dictionary, ctx: EventContext) -
 	if ctx.world == null:
 		return
 	var scope := String(p.get("scope", "world"))
-	var owner_id := ctx.actor.id if ctx.actor != null and scope in ["actor", "office", "institution"] else (subject.id if subject != null else "")
+	var owner_id: StringName = ctx.actor.id if ctx.actor != null and scope in ["actor", "office", "institution"] else (subject.id if subject != null else &"")
 	ctx.world.modify_resource(
 		StringName(p.get("resource", "")),
 		int(p.get("amount", 0)),
