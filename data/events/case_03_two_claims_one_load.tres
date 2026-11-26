@@ -1,0 +1,66 @@
+[gd_resource type="Resource" script_class="EventTemplate" load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/event_template.gd" id="1"]
+[ext_resource type="Script" path="res://data/definitions/event_outcome.gd" id="2"]
+[ext_resource type="Script" path="res://data/definitions/event_effect.gd" id="3"]
+[ext_resource type="Script" path="res://data/definitions/event_condition.gd" id="4"]
+
+[sub_resource type="Resource" id="ConditionForm"]
+script = ExtResource("4")
+condition_type = &"has_pending_form"
+target = "actor"
+parameters = {"form_type": &"load_claim"}
+
+[sub_resource type="Resource" id="EffectCrew"]
+script = ExtResource("3")
+effect_type = &"change_opinion"
+parameters = {"subject": &"enlil_kisu", "amount": 4, "reason": "Assigned the load to the waiting transport crew"}
+
+[sub_resource type="Resource" id="EffectCrewMemory"]
+script = ExtResource("3")
+effect_type = &"add_memory"
+parameters = {"memory_id": &"load_claim_crew", "text": "I assigned the disputed load to the transport crew's claim and recorded the storehouse delay.", "involved": [&"enlil_kisu", &"ur_nanna"]}
+
+[sub_resource type="Resource" id="EffectStore"]
+script = ExtResource("3")
+effect_type = &"change_opinion"
+parameters = {"subject": &"ur_nanna", "amount": 4, "reason": "Kept the load within the storehouse reserve"}
+
+[sub_resource type="Resource" id="EffectStoreMemory"]
+script = ExtResource("3")
+effect_type = &"add_memory"
+parameters = {"memory_id": &"load_claim_storehouse", "text": "I assigned the disputed load to the storehouse reserve and entered the transport claim as outstanding.", "involved": [&"enlil_kisu", &"ur_nanna"]}
+
+[sub_resource type="Resource" id="OutcomeCrew"]
+script = ExtResource("2")
+label = "Honor the transport crew's claim"
+title_override = "THE LOAD IS SENT TO THE QUAY"
+description_override = "The load is released to the crew. The storehouse records a delay in its reserve account."
+effects = Array[ExtResource("3")]([SubResource("EffectCrew"), SubResource("EffectCrewMemory")])
+
+[sub_resource type="Resource" id="OutcomeStore"]
+script = ExtResource("2")
+label = "Assign the load to the storehouse reserve"
+title_override = "THE LOAD IS HELD FOR THE STOREHOUSE"
+description_override = "The reserve receives the load. The transport claim remains unsettled and the crew must wait."
+effects = Array[ExtResource("3")]([SubResource("EffectStore"), SubResource("EffectStoreMemory")])
+
+[resource]
+script = ExtResource("1")
+id = &"case_03_two_claims_one_load"
+title = "Two Claims, One Load"
+description = "A single load has arrived at the storehouse threshold. The transport crew says it was promised for their next journey; Ur-Nanna says the same load was assigned to the reserve. Both claims carry a mark. There is only one load to enter."
+era_tags = Array[StringName]([&"uruk"])
+weight = 8.0
+cooldown_years = 1
+conditions = Array[ExtResource("4")]([SubResource("ConditionForm")])
+evidence_left_title = "RIVER QUAY  /  CREW CLAIM"
+evidence_right_title = "STOREHOUSE  /  RESERVE CLAIM"
+evidence_left_speaker = "ENLIL-KISU"
+evidence_right_speaker = "UR-NANNA"
+evidence_left_quote = "The load was promised to the crew for the next journey."
+evidence_right_quote = "The reserve assignment was entered before the boat reached the quay."
+evidence_left_portrait = &"enlil_kisu"
+evidence_right_portrait = &"ur_nanna"
+records = Array[Dictionary]([{"label": "TRANSPORT CLAIM", "value": "1 load assigned to crew", "note": "Crew cites an earlier promise."}, {"label": "RESERVE CLAIM", "value": "1 load assigned to storehouse", "note": "Storehouse cites the reserve tablet."}])
+outcomes = Array[ExtResource("2")]([SubResource("OutcomeCrew"), SubResource("OutcomeStore")])
