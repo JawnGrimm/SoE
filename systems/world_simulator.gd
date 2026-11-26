@@ -166,7 +166,7 @@ func _simulate_economy(world: WorldState) -> void:
 	# Seasonal production varies with waterworks progress and the seeded sim stream.
 	# Periods are Uruk's broad agricultural cycle, not a scripted event schedule.
 	if p >= 4 and p <= 7:
-		var canal_bonus := int(world.get_resource(&"canal_progress") / 20)
+		var canal_bonus := int(_get_active_epic_progress(world) / 20)
 		_change(world, &"barley", world.rng_sim.randi_range(18, 34) + canal_bonus)
 	if p == 5 or p == 6:
 		_change(world, &"dates", world.rng_sim.randi_range(5, 11))
@@ -256,7 +256,7 @@ func _generate_forms(world: WorldState) -> void:
 	# Canal maintenance and field mobilization require labor tallies before
 	# workforce reaches an emergency zero.
 	var sowing_or_harvest := period >= 0 and period <= 7
-	if sowing_or_harvest and (world.get_resource(&"canal_progress") < 60 or labor <= 18):
+	if sowing_or_harvest and (_get_active_epic_progress(world) < 60 or labor <= 18):
 		_offer_if_ready(world, &"pension_roll", &"ditch_labor_tally", 2, &"canal_workforce_demand")
 
 	if dates >= 100 and barley >= 180:
@@ -302,7 +302,7 @@ func _offer_if_ready(world: WorldState, form_type: StringName, subject_id: Strin
 func _change(world: WorldState, resource_id: StringName, amount: int) -> void:
 	if amount == 0:
 		return
-	if resource_id == &"canal_progress":
+	if String(resource_id).ends_with("_progress"):
 		world.modify_resource(resource_id, amount, "world")
 		return
 	var available := world.get_resource(resource_id, "institution", "", &"eanna_household")
@@ -316,3 +316,13 @@ func _change(world: WorldState, resource_id: StringName, amount: int) -> void:
 	resources[resource_id] = clampi(world.get_resource(resource_id, "institution", "", &"eanna_household"), MIN_STOCK, upper_bound)
 	institution["stockpiles"] = resources
 	world.institutions[&"eanna_household"] = institution
+
+func _get_active_epic_progress(world: WorldState) -> int:
+	for epic_id in world.epics.keys():
+		var state: Dictionary = world.epics[epic_id]
+		if not bool(state.get("active", false)):
+			continue
+		var resource_id := StringName(state.get("progress_resource", ""))
+		if resource_id != &"":
+			return world.get_resource(resource_id)
+	return 0
