@@ -116,6 +116,8 @@ func _generate_forms(world: WorldState) -> void:
 		_offer_if_ready(world, &"pension_roll", &"ditch_labor_tally", 2, &"labor_shortage")
 	if dates >= 100 and barley >= 180:
 		_offer_if_ready(world, &"consignment_receipt", &"temple_consignment", 1, &"surplus_provisions")
+	elif world.get_resource(&"fish") <= 14:
+		_offer_if_ready(world, &"consignment_receipt", &"river_fish_supply", 2, &"fish_shortage")
 	if wool >= 30 and world.get_resource(&"textiles") < 8:
 		_offer_if_ready(world, &"held_barley", &"textile_workshop", 2, &"wool_backlog")
 	if world.get_resource(&"beer") <= 4 and world.get_resource(&"barley") >= 40:
