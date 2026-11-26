@@ -135,10 +135,14 @@ static func _link(world: WorldState, source_id: StringName, target_id: StringNam
 	if source == null or target == null:
 		push_warning("UrukSeeder: relationship references missing person %s -> %s" % [source_id, target_id])
 		return
-	var tie := {"type": relation_type, "strength": strength, "trust": trust}
-	source.relationships[target_id] = tie
-	tie["opinion"] = 0
-	tie["reasons"] = []
+	var tie: Dictionary = source.relationships.get(target_id, {})
+	tie["type"] = relation_type
+	tie["strength"] = strength
+	tie["trust"] = trust
+	if not tie.has("opinion"):
+		tie["opinion"] = 0
+	if not tie.has("reasons"):
+		tie["reasons"] = []
 	source.relationships[target_id] = tie
 
 static func _person(id: StringName, display_name: String, office: StringName, values: Dictionary, person_traits: Array) -> PersonEntity:
