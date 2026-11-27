@@ -33,7 +33,7 @@ func _run() -> void:
 	actor.id = &"circuit_scribe"
 	actor.display_name = "Circuit Scribe"
 	actor.office_id = &"apprentice_scribe"
-	actor.traits = [&"pliable", &"severe"]
+	actor.traits = [&"severe"]
 	actor.resources[&"silver"] = 0
 	world.set_player(actor)
 	var foreman := PersonEntity.new()
