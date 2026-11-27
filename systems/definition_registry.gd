@@ -9,6 +9,7 @@ const DEFAULT_FOLDERS: Dictionary = {
 	"assignments": "res://data/assignments",
 	"places": "res://data/places",
 	"routes": "res://data/routes",
+	"institutions": "res://data/institutions",
 	"epics": "res://data/epics",
 }
 
@@ -68,6 +69,12 @@ func register_place(definition: PlaceDef) -> bool:
 		return false
 	return register_definition(definition, "places")
 
+func register_institution(definition: InstitutionDef) -> bool:
+	if definition == null or not definition.is_valid():
+		_warn("DefinitionRegistry: rejected malformed InstitutionDef")
+		return false
+	return register_definition(definition, "institutions")
+
 func register_route(definition: RouteDef) -> bool:
 	if definition == null or not definition.is_valid():
 		_warn("DefinitionRegistry: rejected malformed RouteDef")
@@ -96,6 +103,11 @@ func register_definition(definition: Resource, category: String) -> bool:
 		var place := definition as PlaceDef
 		if place == null or not place.is_valid():
 			_warn("DefinitionRegistry: rejected malformed PlaceDef")
+			return false
+	if category == "institutions":
+		var institution := definition as InstitutionDef
+		if institution == null or not institution.is_valid():
+			_warn("DefinitionRegistry: rejected malformed InstitutionDef")
 			return false
 	if category == "routes":
 		var route := definition as RouteDef
@@ -145,6 +157,17 @@ func get_assignment(definition_id: StringName) -> AssignmentDef:
 
 func get_place(definition_id: StringName) -> PlaceDef:
 	return get_definition(definition_id) as PlaceDef
+
+func get_institution(definition_id: StringName) -> InstitutionDef:
+	return get_definition(definition_id) as InstitutionDef
+
+func all_institutions() -> Array[InstitutionDef]:
+	var result: Array[InstitutionDef] = []
+	for definition in _definitions_by_category.get("institutions", []):
+		if definition is InstitutionDef:
+			result.append(definition)
+	result.sort_custom(func(a: InstitutionDef, b: InstitutionDef) -> bool: return String(a.id) < String(b.id))
+	return result
 
 func get_route(definition_id: StringName) -> RouteDef:
 	return get_definition(definition_id) as RouteDef
