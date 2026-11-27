@@ -28,7 +28,7 @@ func _run() -> void:
 	var network := RouteNetworkScript.new()
 	var travel := TravelServiceScript.new()
 	_check(world.current_location_id == &"uruk", "A new campaign begins in Uruk")
-	_check(network.configure(world, registry.all_places(), registry.all_routes()) and network.places.size() == 14 and network.routes.size() == 2, "The route network configures from the complete registered regional data set")
+	_check(network.configure(world, registry.all_places(), registry.all_routes(), &"uruk_storehouse") and network.places.size() == 14 and network.routes.size() == 2, "The route network configures from the complete registered regional data set")
 	_check(travel.configure(network, simulator), "TravelService configures with the route graph and authoritative world simulator")
 	var initial_total_periods := world.total_periods
 	var invalid_journey := travel.travel(world, &"river_uruk_nippur", &"umma")
