@@ -208,6 +208,7 @@ func _build_interface() -> void:
 	year_label.add_theme_color_override("font_color", Color("#c4ad7c"))
 	header.add_child(year_label)
 	header_resource_label = Label.new()
+	header_resource_label.visible = false
 	header_resource_label.add_theme_font_size_override("font_size", 12)
 	header_resource_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	header_resource_label.add_theme_color_override("font_color", Color("#e5d2a8"))
@@ -504,7 +505,7 @@ func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: Strin
 	var header := HBoxContainer.new()
 	box.add_child(header)
 	var portrait := TextureRect.new()
-	portrait.custom_minimum_size = Vector2(44, 44)
+	portrait.custom_minimum_size = Vector2(64, 64)
 	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	portrait.texture = _load_character_portrait(character_id)
@@ -513,7 +514,7 @@ func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: Strin
 	title.text = heading
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.add_theme_font_size_override("font_size", 13)
+	title.add_theme_font_size_override("font_size", 15)
 	title.add_theme_color_override("font_color", Color("#d6bd8b"))
 	header.add_child(title)
 	var speaker_label := Label.new()
@@ -525,7 +526,7 @@ func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: Strin
 	quote_label.text = "“%s”" % quote
 	quote_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	quote_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	quote_label.add_theme_font_size_override("font_size", 14)
+	quote_label.add_theme_font_size_override("font_size", 15)
 	quote_label.add_theme_color_override("font_color", Color("#e0d4bd"))
 	box.add_child(quote_label)
 	# Evidence can contain a complete resource ledger. Keep it inside the card's
@@ -538,7 +539,7 @@ func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: Strin
 	facts_label.custom_minimum_size.y = 0
 	facts_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	facts_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	facts_label.add_theme_font_size_override("normal_font_size", 12)
+	facts_label.add_theme_font_size_override("normal_font_size", 13)
 	facts_label.add_theme_color_override("default_color", Color("#c7ad7e"))
 	box.add_child(facts_label)
 	if heading.begins_with("GRANARY"):
@@ -567,7 +568,7 @@ func _load_character_portrait(character_id: StringName) -> Texture2D:
 		if source_texture != null:
 			var portrait_image := source_texture.get_image()
 			if portrait_image != null and not portrait_image.is_empty():
-				# Center-crop and downsample once for the 44px evidence badge.
+				# Center-crop and downsample once for the 64px evidence portrait.
 				var source_size := portrait_image.get_size()
 				var crop_size := mini(source_size.x, source_size.y)
 				var crop_origin := Vector2i(
@@ -1269,6 +1270,7 @@ func _resolve_world_assignment(verdict: StringName) -> void:
 	procedural_assignment.clear()
 	if clay_docket != null:
 		clay_docket.seal_verdict()
+	_seal_clay_docket()
 	_show_procedural_result("ASSESSMENT SEALED", String(result.get("message", "The work is entered into the record.")), result.get("consequences", []))
 
 func _abandon_world_assignment() -> void:
@@ -1353,6 +1355,7 @@ func _resolve_choice(index: int) -> void:
 		if delta != 0:
 			last_opinion_deltas[person_id] = delta
 	_record_case_settlement(silver_before, traits_before)
+	_seal_clay_docket()
 	_show_result(active_event.outcomes[index])
 
 func _resolve_procedural_choice(_index: int, choice: Dictionary) -> void:
@@ -2220,6 +2223,10 @@ func _refresh_header_status() -> void:
 	header_resource_label.text = "PURSE %d %s  ·  DEBT %d  ·  BREAD %d  ·  BEER %d  ·  %s" % [silver, currency.to_upper(), debt, bread, beer, audit_text]
 
 
+func _seal_clay_docket() -> void:
+	if clay_docket != null:
+		clay_docket.seal_verdict()
+
 func _on_clay_impression_added(_action_id: StringName, _glyph: String) -> void:
 	AudioManager.play_tablet_snap()
 
@@ -2229,7 +2236,10 @@ func _refresh_archive_stack() -> void:
 	var urgent_kind := ""
 	for opportunity in assignment_opportunities:
 		var tags: Array = opportunity.get("tags", [])
-		var text_value := String(opportunity.get("title", "")) + " " + " ".join(PackedStringArray(tags))
+		var tag_text := ""
+		for tag in tags:
+			tag_text += " " + String(tag)
+		var text_value := String(opportunity.get("title", "")) + tag_text
 		if text_value.to_upper().contains("SUMMONS"):
 			urgent_kind = "SUMMONS"
 			break
