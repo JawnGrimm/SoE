@@ -4,6 +4,7 @@ extends PanelContainer
 ## RouteNetwork and TravelService remain the authoritative gameplay systems.
 
 signal travel_requested(route_id: StringName, destination_id: StringName)
+signal close_requested
 
 const WorldmapViewScript = preload("res://addons/worldmap_builder/nodes/worldmap_view.gd")
 const WorldmapGraphScript = preload("res://addons/worldmap_builder/nodes/worldmap_graph.gd")
@@ -101,7 +102,7 @@ func _build_surface() -> void:
 	var close_button := Button.new()
 	close_button.text = "ROLL SURVEY"
 	close_button.add_theme_font_size_override("font_size", 10)
-	close_button.pressed.connect(func() -> void: visible = false)
+	close_button.pressed.connect(func() -> void: close_requested.emit())
 	title_row.add_child(close_button)
 	location_summary = Label.new()
 	location_summary.add_theme_font_size_override("font_size", 11)
