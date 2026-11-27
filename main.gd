@@ -1862,7 +1862,8 @@ func _refresh_compound() -> void:
 	var active_epic := Registry.get_epic(active_epic_id)
 	if active_epic == null and current_era != null:
 		for epic_definition in Registry.all_epics():
-			if epic_definition.era_id == current_era.id:
+			var epic_state: Dictionary = world.epics.get(epic_definition.id, {})
+			if epic_definition.era_id == current_era.id and bool(epic_state.get("active", false)):
 				active_epic = epic_definition
 				break
 	var epic_title := active_epic.title if active_epic != null else "No active Epic"
@@ -1870,7 +1871,10 @@ func _refresh_compound() -> void:
 	var epic_target := active_epic.target if active_epic != null else 100
 	var filled := int(round(float(epic_progress) / maxf(1.0, float(epic_target)) * 10.0))
 	var bar_fill := clampi(filled, 0, 10)
-	canal_label.text = "ERA EPIC / BACKDROP\n%s\n[%s%s] %d / %d\nYour docket can move the project" % [epic_title.to_upper(), "=".repeat(bar_fill), "-".repeat(10 - bar_fill), epic_progress, epic_target]
+	if active_epic == null:
+		canal_label.text = "CANAL ADMINISTRATION / DORMANT\nNo summons has reached your desk. Local cases and regional work come first."
+	else:
+		canal_label.text = "ERA EPIC / BACKDROP\n%s\n[%s%s] %d / %d\nYour docket can move the project" % [epic_title.to_upper(), "=".repeat(bar_fill), "-".repeat(10 - bar_fill), epic_progress, epic_target]
 	_refresh_faction_standings()
 	year_label.text = CalendarFormatter.format_date(current_era, world.year, world.period)
 	status_label.text = "SEED %d  /  PERIOD %02d OF 12" % [world.master_seed, world.period + 1]
