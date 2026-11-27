@@ -6,6 +6,7 @@ extends Resource
 @export var display_name: String = ""
 @export var institution_type: StringName = &"institutional_household"
 @export var place_id: StringName = &""
+@export var era_id: StringName = &""
 @export var members: Array[StringName] = []
 @export var interests: Array[StringName] = []
 @export var starting_stockpiles: Dictionary = {}
@@ -15,13 +16,14 @@ extends Resource
 @export var ledger_work_priority: int = 1
 
 func is_valid() -> bool:
-	return id != &"" and not display_name.strip_edges().is_empty() and place_id != &""
+	return id != &"" and not display_name.strip_edges().is_empty() and place_id != &"" and era_id != &""
 
 func create_runtime_state() -> Dictionary:
 	return {
 		"name": display_name,
 		"kind": institution_type,
 		"place_id": place_id,
+		"era_id": era_id,
 		"members": members.duplicate(),
 		"interests": interests.duplicate(),
 		"stockpiles": starting_stockpiles.duplicate(true),
