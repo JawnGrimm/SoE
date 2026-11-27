@@ -14,7 +14,7 @@ Scribe of Eras uses the **LimboAI 1.8.1 GDExtension build**. The pinned `gdexten
 
 4. Reopen `project.godot` in Godot 4.7.2 and let the filesystem scan finish.
 
-The installer downloads `limboai+v1.8.1.gdextension-4.6.zip`, verifies its SHA-256 checksum, locates `limboai.gdextension`, validates the Windows x86_64 editor library, and installs the package at `res://addons/limboai/`. If an existing `addons/limboai` folder is present, it is moved aside to a timestamped backup. If copying fails, the backup is restored.
+The installer downloads `limboai+v1.8.1.gdextension-4.6.zip`, verifies its SHA-256 checksum, locates `addons/limboai/bin/limboai.gdextension`, validates the Windows x86_64 editor library, and installs the package at `res://addons/limboai/`. If an existing `addons/limboai` folder is present, it is moved aside to a timestamped backup. If copying fails, the backup is restored.
 
 ## Important: GDExtension, not an editor plugin
 
@@ -24,6 +24,6 @@ LimboAI's GDExtension build does **not** use `plugin.cfg` and does not need to b
 
 ## Verify
 
-After reopening the project, check the Godot Output/Debugger for GDExtension load errors. LimboAI's classes and behavior-tree resources should be available to the editor. If the extension fails to load, confirm `addons/limboai/bin/liblimboai.windows.editor.x86_64.dll` exists and that the project is running a compatible 64-bit Godot 4.6+ build.
+After reopening the project, check the Godot Output/Debugger for GDExtension load errors. LimboAI's classes and behavior-tree resources should be available to the editor. If the extension fails to load, confirm `addons/limboai/bin/limboai.gdextension` and `addons/limboai/bin/liblimboai.windows.editor.x86_64.dll` exist and that the project is running a compatible 64-bit Godot 4.6+ build.
 
 Upstream release: https://github.com/limbonaut/limboai/releases/tag/v1.8.1

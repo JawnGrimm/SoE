@@ -48,11 +48,16 @@ jobs:
           unzip -q "$archive" -d "$extract"
           descriptor="$(find "$extract" -type f -name limboai.gdextension -print -quit)"
           test -n "$descriptor"
-          addon_dir="$(dirname "$descriptor")"
+          manifest_dir="$(dirname "$descriptor")"
+          if [ "$(basename "$manifest_dir")" = "bin" ]; then
+            addon_dir="$(dirname "$manifest_dir")"
+          else
+            addon_dir="$manifest_dir"
+          fi
           mkdir -p addons
           rm -rf addons/limboai
           cp -a "$addon_dir" addons/limboai
-          test -f addons/limboai/limboai.gdextension
+          test -f addons/limboai/bin/limboai.gdextension
           find addons/limboai/bin -type f -name '*.so' | grep -q .
 
       - name: Import project and validate resources

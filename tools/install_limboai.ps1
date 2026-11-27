@@ -27,7 +27,12 @@ try {
     if ($null -eq $descriptor) {
         throw "The verified LimboAI archive does not contain limboai.gdextension."
     }
-    $source = $descriptor.Directory.FullName
+    $manifestDirectory = $descriptor.Directory.FullName
+    if ($descriptor.Directory.Name -eq "bin") {
+        $source = $descriptor.Directory.Parent.FullName
+    } else {
+        $source = $manifestDirectory
+    }
     $windowsLibrary = Get-ChildItem -Path (Join-Path $source "bin") -Filter "*windows.editor.x86_64.dll" -File -ErrorAction SilentlyContinue | Select-Object -First 1
     if ($null -eq $windowsLibrary) {
         throw "The LimboAI archive is missing its Windows x86_64 editor library."
