@@ -155,14 +155,14 @@ func _run() -> void:
 	AssignmentGeneratorScript.record_selection(assignment_world, career_payload)
 	_check(assignment_world.recent_archetypes.size() == 1 and assignment_world.recent_npc_pairs.size() == 1, "Opening a career docket should record its archetype and NPC pair for saveable diversity history")
 	# Abandoning a period-keyed opportunity removes it from this period's board.
-	var form_opportunity: Dictionary = {}
+	var abandoned_form_opportunity: Dictionary = {}
 	for candidate in opportunities:
 		if StringName(candidate.get("kind", "")) == &"form":
-			form_opportunity = candidate
+			abandoned_form_opportunity = candidate
 			break
-	if not form_opportunity.is_empty():
-		_check(AssignmentPipeline.begin(assignment_world, form_opportunity, assignment_actor), "A board form should begin")
-		var abandoned_id := StringName(form_opportunity.get("id", ""))
+	if not abandoned_form_opportunity.is_empty():
+		_check(AssignmentPipeline.begin(assignment_world, abandoned_form_opportunity, assignment_actor), "A board form should begin")
+		var abandoned_id := StringName(abandoned_form_opportunity.get("id", ""))
 		var abandoned_record: Dictionary = assignment_world.assignments[abandoned_id]
 		abandoned_record["status"] = "abandoned"
 		assignment_world.assignments[abandoned_id] = abandoned_record
@@ -172,6 +172,7 @@ func _run() -> void:
 			if StringName(candidate.get("id", "")) == abandoned_id:
 				abandoned_reappeared = true
 		_check(not abandoned_reappeared, "An abandoned same-period opportunity must not reappear and become unopenable")
+		assignment_world.assignments.erase(abandoned_id)
 
 	# Sponsor institution resolves to its place: a Uruk Epic review is not local in Nippur.
 	var regional_board_world := WorldState.new()
@@ -226,6 +227,7 @@ func _run() -> void:
 	for opportunity in martial_opportunities:
 		if StringName(opportunity.get("kind", "")) == &"procedural_docket": martial_docket = opportunity
 	var martial_payload: Dictionary = martial_docket.get("source_data", {})
+	AssignmentGeneratorScript.record_selection(assignment_world, martial_payload)
 	_check(StringName(martial_payload.get("path_id", "")) == &"path_martial", "A changed career orientation should generate a matching martial docket on the ordinary board")
 	_check(assignment_world.recent_npc_pairs.size() == 2 and assignment_world.recent_npc_pairs[0] != assignment_world.recent_npc_pairs[1] and assignment_world.recent_archetypes[0] != assignment_world.recent_archetypes[1], "Recent docket history should rotate NPC pairs and archetypes")
 	var civil_hazard_priority := 0
