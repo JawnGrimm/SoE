@@ -903,7 +903,7 @@ func _add_creation_back_next() -> void:
 	if creation_screen < 8:
 		var next := Button.new()
 		next.text = "CONTINUE →"
-		next.disabled = not _creation_step_complete(creation_screen)
+		next.disabled = creation_screen < 7 and not _creation_step_complete(creation_screen)
 		next.pressed.connect(_show_character_creation_screen.bind(creation_screen + 1))
 		row.add_child(next)
 
