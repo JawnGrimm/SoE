@@ -1040,7 +1040,7 @@ func _show_world_engagement() -> void:
 	var payload := {
 		"title": String(record.get("title", "ASSIGNMENT")),
 		"left_card": {"title": "WORLD SITUATION / %s" % String(record.get("kind", "work")).to_upper(), "speaker_id": &"", "quote": left_quote, "facts": "OPENED: %s / PERIOD %d" % [CalendarFormatter.format_year(world.year), world.period + 1]},
-		"right_card": {"title": "RESPONSIBLE OFFICE", "speaker_id": employer.id if employer != null else &"", "quote": right_quote, "facts": "INVESTIGATIONS RECORDED: %d / 4\n\n%s" % [actions.size(), "\n\n".join(evidence_lines)]},
+		"right_card": {"title": "RESPONSIBLE OFFICE", "speaker_id": employer.id if employer != null else &"", "quote": right_quote, "facts": "Marks upon the docket: %d of four.\n\n%s" % [actions.size(), "\n\n".join(evidence_lines)]},
 		"prompt": "Investigate the situation. Your skills affect what you can establish; your judgment determines what is entered.",
 		"choices": []
 	}
@@ -1106,7 +1106,7 @@ func _format_investigation_scene(scene: Dictionary) -> String:
 	var closing := String(scene.get("closing", ""))
 	if not closing.is_empty():
 		lines.append(closing)
-	return "\\n\\n".join(lines)
+	return "\n\n".join(lines)
 
 func _resolve_world_assignment(verdict: StringName) -> void:
 	if phase != "world_engagement":
