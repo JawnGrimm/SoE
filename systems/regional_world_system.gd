@@ -59,6 +59,7 @@ static func ensure_regional_world(world: WorldState) -> void:
 		for commodity in habuba_exports:
 			habuba_stock[StringName(commodity)] = 24
 		habuba_stock[&"beer"] = 12
+		habuba_stock[&"bread"] = 24
 		habuba_stock[&"silver"] = 24
 		var habuba_members: Array[StringName] = []
 		if world.people.has(&"enki_ili"):
@@ -499,7 +500,7 @@ static func provision_route(world: WorldState, route_id: StringName, risk_reduct
 	world.routes[route_id] = route
 	return true
 
-static func simulate_regional_flows(world: WorldState -> void:
+static func simulate_regional_flows(world: WorldState) -> void:
 	if world == null:
 		return
 	var place_ids: Array = world.places.keys()
