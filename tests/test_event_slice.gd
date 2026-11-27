@@ -6,6 +6,7 @@ var registry: DefinitionRegistry
 var _finished := false
 
 const AssignmentGeneratorScript = preload("res://systems/assignment_generator.gd")
+const AssignmentNarratorScript = preload("res://systems/assignment_narrator.gd")
 const SaveCodecScript = preload("res://systems/save_codec.gd")
 const SaveManagerScript = preload("res://autoloads/save_manager.gd")
 const ROUTINE_CASE: EventTemplate = preload("res://data/events/routine_tally_adjustment.tres")
@@ -22,6 +23,19 @@ func _watchdog() -> void:
 		quit(2)
 
 func _run() -> void:
+	# Assignment narration is a presentation translation only; raw simulator fields
+	# must never become player-facing copy.
+	var grain_matter := {"id": "nippur_shrine_establishment", "title": "Nippur Shrine Establishment / Resource Pressure", "summary": "The institution reports a pressure_index of 1."}
+	var narrated_grain := AssignmentNarratorScript.translate_opportunity(grain_matter)
+	_check(String(narrated_grain.get("title", "")) == "THE NIPPUR SHRINE SHORTAGE", "Narrator should translate a Nippur shrine pressure matter into diegetic title")
+	_check(not String(narrated_grain.get("summary", "")).contains("pressure_index"), "Narrated summary must not expose raw pressure metric key")
+	_check(String(grain_matter.get("summary", "")).contains("pressure_index"), "Narrator must leave the source simulation record untouched")
+	var canal_matter := {"id": "great_canal_cut", "title": "Great Canal Cut / Progress Review", "summary": "The active public work stands at 21 of 100."}
+	var narrated_canal := AssignmentNarratorScript.translate_opportunity(canal_matter)
+	_check(String(narrated_canal.get("title", "")) == "THE UPPER EMBANKMENT STALLED", "Narrator should translate canal progress matter into the authored docket voice")
+	var raw_payload := {"title": "Nippur Shrine Establishment / Resource Pressure", "prompt": "pressure_index = 1", "left_card": {"title": "RESOURCE PRESSURE", "quote": "pressure_index is 1", "facts": "pressure_index: 1"}, "right_card": {}, "choices": []}
+	var narrated_payload := AssignmentNarratorScript.translate_payload(raw_payload)
+	_check(not String(narrated_payload.get("prompt", "")).contains("pressure_index") and not String(narrated_payload.left_card.get("quote", "")).contains("pressure_index"), "Docket translation must remove raw metric keys from payload copy")
 	# Player identity is a runtime pointer, not a named seeded person.
 	var identity_world := WorldState.new()
 	var first_character := PersonEntity.new()
