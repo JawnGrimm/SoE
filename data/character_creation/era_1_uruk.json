@@ -763,5 +763,28 @@
     "mentor_shuruppak_ilu": "Sit. The reed is crooked in your hand, and your sums are soft at the edges. Fix the arithmetic on the third column, and don’t invent numbers to make the clay look happy.",
     "mentor_utu_mansum": "Stand by the scale. Don’t look at the sky, don’t talk to the boatmen, and don’t let anyone rush your tally. What crosses that sill belongs to the temple until I say otherwise.",
     "mentor_ur_nanna": "Check the thatch over Bay Four. If the rain gets into the seed-corn again, Shuruppak-ilu will have both our skins on the drying rack. Go look at the jars."
-  }
+  },
+  "collision_comments": [
+    {
+      "answer_ids": [
+        "responsibility_grain_debt",
+        "entry_debt_pledge"
+      ],
+      "text": "Pledged against the same debt? Then the storehouse owns both ends of you."
+    },
+    {
+      "answer_ids": [
+        "entry_temple_draft",
+        "path_martial"
+      ],
+      "text": "A temple levy heading for the armory. The priests won’t like it. I’ll note it down."
+    },
+    {
+      "answer_ids": [
+        "origin_marsh",
+        "path_martial"
+      ],
+      "text": "Marsh-born, among those who carry bronze. That will be noticed."
+    }
+  ]
 }
