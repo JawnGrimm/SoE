@@ -40,6 +40,8 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 		return candidates
 
 	for form in world.pending_forms:
+		if bool(form.get("tutorial_only", false)):
+			continue
 		var form_id := StringName(form.get("id", ""))
 		if form_id == &"":
 			continue
