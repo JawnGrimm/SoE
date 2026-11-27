@@ -84,26 +84,35 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			"path_id": selected_path
 		})
 
-	# Routine reconciliation is real work against each institution's actual
-	# membership, activity, and resource records—not a fabricated dispute.
+	# Epic reviews are state-latched: only initial or newly reached stages appear.
 	for epic_id in world.epics.keys():
 		var epic: Dictionary = world.epics[epic_id]
 		if not bool(epic.get("active", false)) or bool(epic.get("completed", false)):
 			continue
-		var progress := world.get_resource(StringName(epic.get("progress_resource", "")))
+		world.ensure_epic_review_state(StringName(epic_id))
+		epic = world.epics[epic_id]
+		if not bool(epic.get("review_pending", false)):
+			continue
+		var sponsor_id := StringName(epic.get("sponsor_institution", &"eanna_household"))
+		var sponsor: Dictionary = world.institutions.get(sponsor_id, {})
+		var place_id := StringName(sponsor.get("place_id", ""))
+		if not _is_local_to_current_location(world, place_id):
+			continue
+		var progress := int(epic.get("progress", world.get_resource(StringName(epic.get("progress_resource", "")))))
 		var target := int(epic.get("target", 100))
-		var sponsor_id := StringName(epic.get("sponsor_institution", ""))
-		if not _is_local_to_current_location(world, sponsor_id):
-			continue
-		if target <= 0 or progress >= target or not _project_review_due(world, StringName(epic_id), epic, progress):
-			continue
+		var review_stage := int(epic.get("review_stage", world.get_epic_stage_index(progress, target)))
+		var stage_label := String(epic.get("review_stage_label", world.get_epic_stage_label(review_stage)))
+		var review_reason := String(epic.get("review_reason", "stage_reached"))
+		var title_suffix := stage_label if review_reason in ["project_opened", "stage_reached"] else _epic_problem_label(review_reason)
+		var review_summary := String(epic.get("review_summary", "Review labor, supply, and project progress."))
 		candidates.append({
-			"id": StringName("work_project_%s_%d" % [epic_id, world.current_period_index()]),
+			"id": StringName("epic:%s:s%d" % [epic_id, review_stage]),
 			"kind": &"project_review",
 			"source_id": StringName(epic_id),
 			"sponsor_institution": sponsor_id,
-			"title": "%s / Progress Review" % String(epic.get("title", epic_id)),
-			"summary": "The active public work stands at %d of %d. Its current labor and provisioning position requires review." % [progress, target],
+			"place_id": place_id,
+			"title": "%s — %s" % [String(epic.get("title", epic_id)), title_suffix],
+			"summary": "%s (%d / %d)." % [review_summary.trim_suffix("."), progress, target],
 			"priority": 2 + _career_bonus(selected_path, &"project"),
 			"employer_id": &"shuruppak_ilu" if world.get_person(&"shuruppak_ilu") != null else &"",
 			"source_data": epic.duplicate(true),
@@ -309,6 +318,11 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 			var progress := world.get_resource(progress_resource)
 			var target := int(project.get("target", 100))
 			var project_state: Dictionary = world.epics.get(source_id, {})
+			if not bool(project_state.get("review_pending", false)):
+				return {"success": false, "message": "This stage review has already been acknowledged."}
+			var presented_stage := int(project.get("review_stage", project_state.get("review_stage", -1)))
+			if presented_stage != int(project_state.get("review_stage", -2)) or String(project.get("review_reason", "")) != String(project_state.get("review_reason", "")):
+				return {"success": false, "message": "The project's conditions changed while this review was in progress. Return to the board for the current docket."}
 			var notes: Array = project_state.get("history_notes", [])
 			var reviewed_stage := String(project_state.get("stage", "unrecorded"))
 			work_details = "Progress %d / %d. Current stage: %s. Recorded simulation entries: %d." % [progress, target, reviewed_stage, notes.size()]
@@ -319,6 +333,7 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 			record["reviewed_stage"] = reviewed_stage
 			record["review_cycle"] = int(project_state.get("review_cycle", 0))
 			result_text = "The project's actual progress, stage, and recorded interruptions are entered in the archive. The crews continue their work independently."
+			world.resolve_epic_review(source_id)
 		&"pressure":
 			var pressure_institution_id := StringName(record.get("source_data", {}).get("institution_id", source_id))
 			var institution: Dictionary = world.institutions.get(pressure_institution_id, {})
@@ -555,6 +570,14 @@ static func _is_local_to_current_location(world: WorldState, place_id: StringNam
 		var place: Dictionary = world.places.get(cursor, {})
 		cursor = StringName(place.get("parent", ""))
 	return false
+
+static func _epic_problem_label(reason: String) -> String:
+	match reason:
+		"labor_shortage": return "Labor Shortage Review"
+		"barley_shortage": return "Ration Shortage Review"
+		"site_hazard": return "Site Disruption Review"
+		"scandal_audit": return "Audit Inquiry"
+		_: return "Project Conditions Review"
 
 static func _place_name(world: WorldState, place_id: StringName) -> String:
 	if place_id == &"":
