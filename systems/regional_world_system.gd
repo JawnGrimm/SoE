@@ -31,44 +31,45 @@ static func seed_regional_institutions(world: WorldState) -> int:
 					institution = candidate
 					break
 		if institution.is_empty():
-				institution_id = StringName("trade_post_%s" % String(place_id))
-				var agent_id := StringName("regional_factor_%s" % String(place_id))
-				var agent := PersonEntity.new()
-				agent.id = agent_id
-				agent.display_name = "%s Trade Factor" % String(place.get("name", place_id))
-				agent.office_id = &"trade_factor"
-				agent.current_location_id = place_id
-				agent.skills.levels[&"literacy"] = world.rng_people.randi_range(1, 3)
-				agent.skills.levels[&"arithmetic"] = world.rng_people.randi_range(1, 3)
-				agent.skills.levels[&"rhetoric"] = world.rng_people.randi_range(1, 3)
-				agent.skills.levels[&"intrigue"] = world.rng_people.randi_range(1, 3)
-				agent.skills.levels[&"stewardship"] = world.rng_people.randi_range(1, 3)
-				agent.resources[&"silver"] = world.rng_people.randi_range(1, 8)
-				world.people[agent_id] = agent
-				var exports: Array = place.get("exports", [])
-				if exports.is_empty():
-					exports = [&"timber", &"copper"]
-				var stockpiles: Dictionary = {}
-				for commodity in exports:
-					stockpiles[StringName(commodity)] = world.rng_sim.randi_range(12, 48)
-				stockpiles[&"beer"] = maxi(8, int(stockpiles.get(&"beer", 0)))
-				stockpiles[&"silver"] = maxi(8, int(stockpiles.get(&"silver", 0)))
-				institution = {
-					"name": "%s Trade House" % String(place.get("name", place_id)),
-					"kind": &"regional_trade_post", "place_id": place_id,
-					"members": [agent_id], "interests": exports.duplicate(),
-					"stockpiles": stockpiles,
-					"activity_count": world.rng_sim.randi_range(1, 4),
-					"resource_pressure": world.rng_sim.randi_range(0, 2)
-				}
-				world.institutions[institution_id] = institution
-				place["regional_agent_id"] = agent_id
-				created += 1
+			institution_id = StringName("trade_post_%s" % String(place_id))
+			var agent_id := StringName("regional_factor_%s" % String(place_id))
+			var agent := PersonEntity.new()
+			agent.id = agent_id
+			agent.display_name = "%s Trade Factor" % String(place.get("name", place_id))
+			agent.office_id = &"trade_factor"
+			agent.current_location_id = place_id
+			agent.skills.levels[&"literacy"] = world.rng_people.randi_range(1, 3)
+			agent.skills.levels[&"arithmetic"] = world.rng_people.randi_range(1, 3)
+			agent.skills.levels[&"rhetoric"] = world.rng_people.randi_range(1, 3)
+			agent.skills.levels[&"intrigue"] = world.rng_people.randi_range(1, 3)
+			agent.skills.levels[&"stewardship"] = world.rng_people.randi_range(1, 3)
+			agent.resources[&"silver"] = world.rng_people.randi_range(1, 8)
+			world.people[agent_id] = agent
+			var exports: Array = place.get("exports", [])
+			if exports.is_empty():
+				exports = [&"timber", &"copper"]
+			var stockpiles: Dictionary = {}
+			for commodity in exports:
+				stockpiles[StringName(commodity)] = world.rng_sim.randi_range(12, 48)
+			stockpiles[&"beer"] = maxi(8, int(stockpiles.get(&"beer", 0)))
+			stockpiles[&"silver"] = maxi(8, int(stockpiles.get(&"silver", 0)))
+			institution = {
+				"name": "%s Trade House" % String(place.get("name", place_id)),
+				"kind": &"regional_trade_post", "place_id": place_id,
+				"members": [agent_id], "interests": exports.duplicate(),
+				"stockpiles": stockpiles,
+				"activity_count": world.rng_sim.randi_range(1, 4),
+				"resource_pressure": world.rng_sim.randi_range(0, 2)
+			}
+			world.institutions[institution_id] = institution
+			place["regional_agent_id"] = agent_id
+			created += 1
 		else:
 			var members: Array = institution.get("members", [])
 			var existing_agent_id := StringName(members[0]) if not members.is_empty() else &""
 			if existing_agent_id != &"" and world.people.has(existing_agent_id):
-				world.people[existing_agent_id].current_location_id = place_id
+				var existing_agent: PersonEntity = world.people[existing_agent_id]
+				existing_agent.current_location_id = place_id
 				place["regional_agent_id"] = existing_agent_id
 		place["regional_institution_id"] = institution_id
 		world.places[place_id] = place
