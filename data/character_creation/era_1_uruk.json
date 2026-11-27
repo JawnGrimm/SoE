@@ -3,11 +3,11 @@
   "location_id": "uruk",
   "display_context": "Uruk · c. 3200 BCE",
   "designation_by_origin": {
-    "origin_city_ward": "city-born",
-    "origin_marsh": "marsh-born",
-    "origin_canal_village": "canal-village",
-    "origin_herding_camp": "herding-camp",
-    "origin_trading_town": "foreign-origin"
+    "origin_city_ward": "of the walls",
+    "origin_marsh": "of the marsh-fringe",
+    "origin_canal_village": "of the canal barley",
+    "origin_herding_camp": "of the herding camps",
+    "origin_trading_town": "the outlander"
   },
   "questions": [
     {
