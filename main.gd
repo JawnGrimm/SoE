@@ -814,6 +814,9 @@ func _schedule_next_case() -> void:
 	context.actor = actor
 	context.year = world.year
 	current_era = Registry.get_era_for_year(world.year)
+	if CareerEvaluatorScript.is_terminal_failure(actor):
+		_show_memorial_tablet()
+		return
 	context.era = current_era
 	var active_era_id := current_era.id if current_era != null else &""
 	if route_network == null or route_network.era_id != active_era_id:
