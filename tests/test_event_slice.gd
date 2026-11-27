@@ -193,6 +193,15 @@ func _run() -> void:
 	for provision_tick in range(3):
 		route_risk_world.advance_period()
 	_check(RegionalWorldSystem.effective_route_risk(route_risk_world, &"uruk_habuba_river") == risk_before, "Temporary route provisioning should expire on the calendar")
+	var ration_world := WorldState.new()
+	var ration_player := UrukSeeder.seed_campaign(ration_world, 32003213)
+	ration_player.resources[&"bread"] = 0
+	ration_player.resources[&"beer"] = 0
+	ration_player.resources[&"silver"] = 20
+	var ration_travel := RegionalWorldSystem.start_player_travel(ration_world, ration_player, &"habuba_kabira")
+	_check(bool(ration_travel.get("success", false)) and int(ration_travel.get("silver_spent", 0)) == 5, "A regional journey should purchase missing bread and beer from local stores")
+	_check(int(ration_player.resources.get(&"bread", 0)) == 3 and int(ration_player.resources.get(&"beer", 0)) == 1 and int(ration_player.resources.get(&"silver", 0)) == 15, "Travel provisioning should charge silver and place the required rations in the character's purse")
+
 	var autonomous_trade_world := WorldState.new()
 	UrukSeeder.seed_campaign(autonomous_trade_world, 32003212)
 	autonomous_trade_world.shipments[&"shipment_000001"]["status"] = "accepted"
