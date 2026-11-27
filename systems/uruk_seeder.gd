@@ -5,6 +5,7 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 	world.set_world_seed(world_seed)
 	world.year = -3200
 	world.period = 0
+	world.current_location_id = &"uruk"
 	world.people.clear()
 	world.places.clear()
 	world.institutions.clear()
@@ -169,7 +170,8 @@ static func _seed_institutions_and_groups(world: WorldState) -> void:
 	world.institutions = {
 		&"eanna_household": {"name": "Eanna Institutional Household", "kind": &"institutional_household", "place_id": &"eanna_precinct", "members": eanna_members, "interests": [&"grain", &"labor", &"storage", &"canal_work"]},
 		&"anu_establishment": {"name": "Anu Precinct Establishment", "kind": &"cultic_establishment", "place_id": &"anu_precinct", "members": [&"nin_azu", &"nin_kasi"], "interests": [&"offerings", &"beer", &"prestige"]},
-		&"exchange_network": {"name": "River and Overland Exchange", "kind": &"exchange_network", "place_id": &"uruk", "members": [&"geme_inana", &"enki_ili", &"ur_amas"], "interests": [&"transport", &"materials", &"exchange"]}
+		&"exchange_network": {"name": "River and Overland Exchange", "kind": &"exchange_network", "place_id": &"uruk", "members": [&"geme_inana", &"enki_ili", &"ur_amas"], "interests": [&"transport", &"materials", &"exchange"]},
+		&"nippur_shrine": {"name": "Nippur Shrine Establishment", "kind": &"cultic_establishment", "place_id": &"nippur", "members": [], "interests": [&"offerings", &"ritual_supplies"], "stockpiles": {&"offerings": 24}, "activity_count": 0}
 	}
 	world.social_groups = {
 		&"agricultural_households": {"name": "Agricultural Households", "kind": &"household_group", "place_id": &"agricultural_hinterland", "members": [&"ama_edin", &"geme_tur"], "resources": [&"barley", &"dates"]},
