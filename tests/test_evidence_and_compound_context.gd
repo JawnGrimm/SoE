@@ -12,7 +12,7 @@ func _initialize() -> void:
 
 func _run() -> void:
 	_check(ResourceLoader.exists("res://assets/fonts/NotoSansCuneiform-Regular.ttf"), "Cuneiform font exists")
-	_check(Pipeline._live_stock_facts({"offerings": 24}, {}).contains("OFFERINGS: 24"), "Custom shrine offerings are displayed")
+	_check(Pipeline._live_stock_facts({"offerings": 24}, {}).contains("Offerings: 24"), "Custom shrine offerings are displayed")
 	_check(not Pipeline._live_stock_facts({"offerings": 24}, {}).contains("BARLEY: 0"), "Shrines do not invent barley")
 	_check(Pipeline._live_stock_facts({}, {}).contains("None on record"), "Empty inventory reports none on record")
 	var clean_evidence := Pipeline._sanitize_evidence_text("CAPABILITY APPLIED: inspect_source\\nFORM: pension_roll / form_000005")
