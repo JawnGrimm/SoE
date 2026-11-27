@@ -4,6 +4,7 @@ const CompoundContextScript = preload("res://systems/compound_context.gd")
 const CareerEvaluatorScript = preload("res://systems/career_evaluator.gd")
 const CanalDedicationServiceScript = preload("res://systems/canal_dedication_service.gd")
 const MemorialTabletViewScript = preload("res://ui/memorial_tablet_view.gd")
+const CanalDedicationEvent: EventTemplate = preload("res://data/events/epic_canal_dedication.tres")
 const ConsequenceVisibilityScript = preload("res://systems/consequence_visibility.gd")
 
 const AssignmentGeneratorScript = preload("res://systems/assignment_generator.gd")
@@ -1046,6 +1047,8 @@ func _confirm_character_creation() -> void:
 		_show_character_creation_screen(8)
 		return
 	selected_path = creation_selections.get_answer(&"professional_orientation")
+	world.world_flags[&"professional_orientation"] = int(selected_path.hash())
+	world.world_flags[&"career_start_year"] = world.year
 	world.local_path_dockets_settled = 0
 	world.epic_summon_pending = false
 	world.epic_summon_issued = false
@@ -1713,22 +1716,25 @@ func _canal_dedication_due() -> bool:
 func _show_canal_dedication() -> void:
 	if phase == "canal_dedication" or phase == "memorial":
 		return
-	active_event = null
+	CanalDedicationServiceScript.mark_climax_ready(world)
+	active_event = CanalDedicationEvent
 	procedural_assignment.clear()
 	_clear_stamp_history()
 	_clear_choices()
 	_set_phase("canal_dedication")
-	case_heading.text = "DEDICATION OF THE SLUICE GATES"
+	case_heading.text = CanalDedicationEvent.title.to_upper()
 	dossier.visible = true
-	dossier.text = "At the Iturungal regulator sluice, the waters wait behind the final gate. The High Priest of Eanna, the Carrier Foreman, and the city elders gather before a monolithic limestone monument. The canal's account is complete. Your seal will decide what the city remembers."
+	dossier.text = CanalDedicationEvent.description
 	prompt_label.text = "The final act is yours. What shall the monument record?"
-	_set_evidence_facts("THE MONUMENT\nA name cut here will outlast the hand that holds the stylus.", "THE ASSEMBLY\nThe crews, the temple, and the city each claim a place in the record.")
-	_add_choice("Inscribe the names of the work crews alongside the temple gods", _conclude_canal_dedication.bind(&"honor_crews"))
-	_add_choice("Attribute the entire achievement solely to Eanna Temple", _conclude_canal_dedication.bind(&"temple_only"))
-	var eligible := CanalDedicationServiceScript.can_personal_seal(actor)
-	_add_choice("Affix your personal cylinder seal to the dedication stone  [Law 2 / Literacy 2]", _conclude_canal_dedication.bind(&"personal_seal"), not eligible)
-	if not eligible:
-		_add_choice("Your legal and literary training is not yet sufficient for the personal seal.", func() -> void: pass, true)
+	_set_evidence_facts("%s\n%s" % [CanalDedicationEvent.evidence_left_title, CanalDedicationEvent.evidence_left_quote], "%s\n%s" % [CanalDedicationEvent.evidence_right_title, CanalDedicationEvent.evidence_right_quote])
+	var choice_ids: Array[StringName] = [&"honor_crews", &"temple_only", &"personal_seal"]
+	for index in range(mini(choice_ids.size(), CanalDedicationEvent.outcomes.size())):
+		var outcome: EventOutcome = CanalDedicationEvent.outcomes[index]
+		var disabled := choice_ids[index] == &"personal_seal" and not CanalDedicationServiceScript.can_personal_seal(actor)
+		var choice_text := outcome.label + "\n" + outcome.description_override
+		if choice_ids[index] == &"personal_seal":
+			choice_text += "\nRequires Law 2 and Literacy 2."
+		_add_choice(choice_text, _conclude_canal_dedication.bind(choice_ids[index]), disabled)
 
 
 func _conclude_canal_dedication(choice: StringName) -> void:
