@@ -286,6 +286,8 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 	var result_text := ""
 	var work_details := ""
 	var accurate := true
+	var opinion_delta_override := 0
+	var silver_award := 2
 	match kind:
 		&"form":
 			var form_data: Dictionary = record.get("source_data", {})
@@ -304,7 +306,45 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 			}, world.year)
 			if not resolved:
 				return {"success": false, "message": "The source form has already changed or been resolved."}
-			result_text = "The %s is entered as %s. The underlying matter remains subject to future world conditions." % [_form_title(StringName(form_data.get("form_type", ""))), disposition]
+			var form_type := StringName(form_data.get("form_type", ""))
+			var npc_evidence: Dictionary = form_data.get("npc_evidence", {})
+			var form_institution_id := StringName(form_data.get("institution_id", _institution_for_location(world, StringName(form_data.get("place_id", form_data.get("subject_id", ""))))))
+			var form_institution: Dictionary = world.institutions.get(form_institution_id, {})
+			var form_stock_records: Dictionary = form_institution.get("stock_records", {})
+			var concealed := not npc_evidence.is_empty() or bool(form_stock_records.get("concealed_spoilage", false))
+			if concealed and verdict == &"refer":
+				form_stock_records["concealed_spoilage"] = false
+				form_stock_records.erase("barley_quality_declaration")
+				form_institution["stock_records"] = form_stock_records
+				var form_stock: Dictionary = form_institution.get("stockpiles", {})
+				form_stock[&"barley"] = maxi(0, int(form_stock.get(&"barley", 0)) - 8)
+				form_institution["stockpiles"] = form_stock
+				world.institutions[form_institution_id] = form_institution
+				opinion_delta_override = -3
+				var archivist := world.get_person(&"shuruppak_ilu")
+				if archivist != null and world.current_location_id == &"uruk":
+					archivist.change_opinion(actor.id, 2, "The apprentice referred a concealed grain account for correction.", world.year)
+				world.cedar_desk_log.append({"year": world.year, "period": world.period, "title": "FORMAL AUDIT CORRECTION", "summary": "The damp-barley declaration was referred. Concealed spoilage was cleared, eight measures were struck from the usable stock, and the archive received the correction.", "institution_id": String(form_institution_id)})
+				result_text = "The %s is referred. Concealed spoilage is exposed, eight measures are struck from usable barley, and the archive records a formal correction." % _form_title(form_type)
+			elif concealed and verdict == &"certify":
+				opinion_delta_override = 2
+				silver_award = 4
+				actor.flags[&"audit_exposure"] = int(actor.flags.get(&"audit_exposure", 0)) + 1
+				form_institution["audit_exposure"] = int(form_institution.get("audit_exposure", 0)) + 1
+				world.institutions[form_institution_id] = form_institution
+				result_text = "The %s is certified. The official pays four silver; damp grain and the shortage remain concealed. Your name is exposed to an archive audit." % _form_title(form_type)
+			elif form_type in [&"bailiff_requisition", &"pension_roll"] and verdict == &"certify":
+				var relief_stock: Dictionary = form_institution.get("stockpiles", {})
+				var relief_resource := &"labor" if form_type == &"pension_roll" else &"barley"
+				var relief_amount := 3 if relief_resource == &"labor" else 12
+				relief_stock[relief_resource] = int(relief_stock.get(relief_resource, 0)) + relief_amount
+				form_institution["stockpiles"] = relief_stock
+				form_institution["resource_pressure"] = maxi(0, int(form_institution.get("resource_pressure", 0)) - 2)
+				form_institution["requisition_relief_note"] = "Authorized %d %s against the immediate backlog." % [relief_amount, String(relief_resource)]
+				world.institutions[form_institution_id] = form_institution
+				result_text = "The %s is certified. %d %s are reassigned to the institution; the immediate backlog is reduced." % [_form_title(form_type), relief_amount, String(relief_resource)]
+			else:
+				result_text = "The %s is entered as %s. The current stock and shortage remain visible for the next account." % [_form_title(form_type), disposition]
 		&"hazard":
 			var hazard: Dictionary = record.get("source_data", {})
 			var place_id := StringName(hazard.get("place_id", ""))
@@ -371,10 +411,12 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 
 	var employer_id := StringName(record.get("employer_id", ""))
 	var employer := world.get_person(employer_id)
-	var opinion_delta := 1 if accurate else -1
+	var opinion_delta := opinion_delta_override if opinion_delta_override != 0 else (1 if accurate else -1)
 	if employer != null:
 		employer.change_opinion(actor.id, opinion_delta, "Assignment assessment: %s" % String(record.get("title", "")), world.year)
-	actor.resources[&"silver"] = int(actor.resources.get(&"silver", 0)) + (2 if accurate else 1)
+	if opinion_delta_override == 0:
+		silver_award = 2 if accurate else 1
+	actor.resources[&"silver"] = int(actor.resources.get(&"silver", 0)) + silver_award
 	actor.skills.add_xp(&"law" if accurate else &"arithmetic", 12 if accurate else 6)
 	record["status"] = "completed"
 	record["assessment"] = verdict
@@ -411,7 +453,7 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 		"outcome": result_text,
 		"details": work_details,
 		"relationship_delta": opinion_delta,
-		"silver_awarded": 2 if accurate else 1,
+		"silver_awarded": silver_award,
 		"skill_awarded": "law" if accurate else "arithmetic",
 		"skill_xp": 12 if accurate else 6,
 		"path_id": String(record.get("path_id", ""))
