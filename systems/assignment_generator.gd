@@ -343,11 +343,11 @@ static func record_selection(world: WorldState, payload: Dictionary) -> void:
 		return
 	var archetype_id := StringName(payload.get("archetype", ""))
 	var pair := String(payload.get("npc_pair", ""))
-	if archetype_id != &"" and not world.recent_archetypes.has(archetype_id):
+	if archetype_id != &"":
 		world.recent_archetypes.append(archetype_id)
 		while world.recent_archetypes.size() > 6:
 			world.recent_archetypes.pop_front()
-	if not pair.is_empty() and not world.recent_npc_pairs.has(pair):
+	if not pair.is_empty():
 		world.recent_npc_pairs.append(pair)
 		while world.recent_npc_pairs.size() > 6:
 			world.recent_npc_pairs.pop_front()
