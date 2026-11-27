@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="InstitutionDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/institution_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"nippur_shrine"
+display_name = "Nippur Shrine Establishment"
+institution_type = &"cultic_establishment"
+place_id = &"nippur"
+members = Array[StringName]([])
+interests = Array[StringName]([&"offerings", &"ritual_supplies"])
+starting_stockpiles = {&"offerings": 24}
+starting_activity_count = 0
