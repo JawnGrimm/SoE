@@ -442,6 +442,7 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 					result_text = "The milestone is certified on the crew's estimate. The cut advances by ten; two silver enter your purse, and the account acquires a pliable scribe, one more audit exposure, and entangled brewery accounts."
 				_:
 					return {"success": false, "message": "Choose one of the available Epic verdicts."}
+			# Each Epic verdict owns its consequence text; do not replace it with a generic receipt.
 			custom_verdict = true
 			accurate = false
 			project_state["last_reviewed_progress"] = progress
