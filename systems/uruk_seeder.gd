@@ -7,6 +7,11 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 	world.period = 0
 	world.people.clear()
 	world.places.clear()
+	world.routes.clear()
+	world.shipments.clear()
+	world.player_travel.clear()
+	world.travel_history.clear()
+	world._next_shipment_sequence = 1
 	world.institutions.clear()
 	world.social_groups.clear()
 	world.faction_standings.clear()
@@ -35,6 +40,7 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 
 	# The original eight remain the center of the first playable slice.
 	var player := _person(world.allocate_person_id(), "Enlil-barni", &"apprentice_scribe", {"literacy": 1, "arithmetic": 1, "law": 1}, [])
+	player.current_location_id = &"uruk"
 	player.resources[&"silver"] = 2
 	if add_player_to_world:
 		world.set_player(player)
@@ -64,6 +70,7 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 	world.people[&"geme_tur"] = _person(&"geme_tur", "Geme-tur", &"player_household", {"stewardship": 2}, [&"practical", &"blunt"])
 
 	_seed_places(world)
+	RegionalWorldSystem.seed_routes(world)
 	_seed_institutions_and_groups(world)
 	_seed_relationships(world)
 	if add_player_to_world:
@@ -101,6 +108,12 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 
 	# The North-Bay roof is already leaking; each elapsed period spoils one measure of barley.
 	world.hazards.append({"id": &"roof_leak", "place_id": &"north_bay", "resource": &"barley", "rate": 1, "total_lost": 0, "active": true})
+	RegionalWorldSystem.launch_shipment(world, {
+		"origin_id": &"habuba_kabira", "destination_id": &"uruk",
+		"commodity_id": &"timber", "quantity": 40,
+		"seal_id": "habuba_governor_seal_01", "sender_id": &"enki_ili",
+		"destination_institution_id": &"eanna_household"
+	})
 	world.enqueue_form({"form_type": &"grain_levy", "subject_id": &"south_court_storehouse", "urgency": 1, "year": world.year})
 	return player
 
@@ -115,6 +128,8 @@ static func attach_player(world: WorldState, player: PersonEntity) -> void:
 		return
 	if not world.set_player(player):
 		return
+	if player.current_location_id == &"":
+		player.current_location_id = &"uruk"
 
 	var household: Dictionary = world.institutions.get(&"eanna_household", {})
 	if not household.is_empty():
@@ -146,7 +161,7 @@ static func _seed_places(world: WorldState) -> void:
 		&"great_canal_cut": {"name": "Great Canal Cut", "kind": &"canal_worksite", "parent": &"agricultural_hinterland"},
 		&"djebel_aruda": {"name": "Djebel Aruda", "kind": &"uruk_related_settlement", "region": &"upper_euphrates", "connected_to": [&"habuba_kabira"]}
 	}
-	var place_ids: Array[String] = ["uruk", "umma", "nippur", "ur", "habuba_kabira", "hacinebi", "susa"]
+	var place_ids: Array[String] = ["uruk", "umma", "nippur", "ur", "habuba_kabira", "hacinebi", "susa", "eridu", "mari", "tell_brak", "hamoukar", "godin_tepe"]
 	for place_id in place_ids:
 		var resource_path := "res://data/places/%s.tres" % place_id
 		var definition := ResourceLoader.load(resource_path) as PlaceDef
