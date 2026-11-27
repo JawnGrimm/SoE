@@ -43,7 +43,7 @@ func travel(world: WorldState, route_id: StringName, destination_id: StringName)
 
 
 func execute_journey(world: WorldState, actor: PersonEntity, destination_id: StringName) -> Dictionary:
-	return execute_selected_journey(world, actor, destination_id)
+	return execute_selected_journey(world, actor, destination_id, &"")
 
 
 func execute_selected_journey(world: WorldState, actor: PersonEntity, destination_id: StringName, route_id: StringName) -> Dictionary:
