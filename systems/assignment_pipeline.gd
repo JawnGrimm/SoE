@@ -4,6 +4,7 @@ extends RefCounted
 ## It never invents economic quantities: all facts are read from WorldState.
 
 const BOARD_SIZE := 4
+const MAX_INVESTIGATION_ACTIONS := 2
 const AssignmentGeneratorScript = preload("res://systems/assignment_generator.gd")
 const INVESTIGATION_ACTIONS := [
 	{"id": &"examine_records", "label": "Examine the written record", "skill": &"literacy", "xp": 8},
@@ -238,6 +239,8 @@ static func perform_action(world: WorldState, actor: PersonEntity, assignment_id
 	if StringName(record.get("actor_id", "")) != actor.id:
 		return {"success": false, "message": "This engagement belongs to another scribe."}
 	var actions: Dictionary = record.get("actions", {})
+	if actions.size() >= MAX_INVESTIGATION_ACTIONS:
+		return {"success": false, "message": "2 / 2 inquiries spent — choose your disposition."}
 	if actions.has(action_id):
 		return {"success": false, "message": "That action has already been recorded."}
 	var action: Dictionary = {}
@@ -514,13 +517,18 @@ static func _stock_detail(stock: Dictionary, skill_level: int, skill_label: Stri
 static func _institution_for_location(world: WorldState, location_id: StringName) -> StringName:
 	if location_id == &"":
 		return &""
-	var place: Dictionary = world.places.get(location_id, {})
-	var parent_id := StringName(place.get("parent", ""))
-	for institution_id in world.institutions.keys():
-		var institution: Dictionary = world.institutions[institution_id]
-		var institution_place := StringName(institution.get("place_id", ""))
-		if institution_place == location_id or (parent_id != &"" and institution_place == parent_id):
-			return StringName(institution_id)
+	var cursor := location_id
+	var visited: Dictionary = {}
+	while cursor != &"" and not visited.has(cursor):
+		visited[cursor] = true
+		for institution_id in world.institutions.keys():
+			var institution: Dictionary = world.institutions[institution_id]
+			if StringName(institution.get("place_id", "")) == cursor:
+				return StringName(institution_id)
+		var place: Dictionary = world.places.get(cursor, {})
+		cursor = StringName(place.get("parent", ""))
+	if visited.has(&"uruk") and world.institutions.has(&"eanna_household"):
+		return &"eanna_household"
 	return &""
 
 static func _preferred_office(form_type: StringName) -> StringName:
@@ -560,7 +568,10 @@ static func _resolve_local_employer(world: WorldState, institution_id: StringNam
 		for person in world.people.values():
 			if person != null and person.location_id == &"uruk" and (preferred_office_id == &"" or person.office_id == preferred_office_id):
 				return person.id
-	return &""
+	var fallback := _form_employer(world, &"pension_roll")
+	if fallback != &"":
+		return fallback
+	return world.player_id
 
 static func _form_employer(world: WorldState, form_type: StringName) -> StringName:
 	var preferred_id: StringName = &"shuruppak_ilu"
