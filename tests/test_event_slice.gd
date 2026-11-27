@@ -154,6 +154,47 @@ func _run() -> void:
 	_check(StringName(career_payload.get("path_id", "")) == &"path_civil" and String(career_payload.get("docket_kind", "")) == "local_path", "The normal assignment board should carry a docket authored for the selected career path")
 	AssignmentGeneratorScript.record_selection(assignment_world, career_payload)
 	_check(assignment_world.recent_archetypes.size() == 1 and assignment_world.recent_npc_pairs.size() == 1, "Opening a career docket should record its archetype and NPC pair for saveable diversity history")
+	# Abandoning a period-keyed opportunity removes it from this period's board.
+	var form_opportunity: Dictionary = {}
+	for candidate in opportunities:
+		if StringName(candidate.get("kind", "")) == &"form":
+			form_opportunity = candidate
+			break
+	if not form_opportunity.is_empty():
+		_check(AssignmentPipeline.begin(assignment_world, form_opportunity, assignment_actor), "A board form should begin")
+		var abandoned_id := StringName(form_opportunity.get("id", ""))
+		var abandoned_record: Dictionary = assignment_world.assignments[abandoned_id]
+		abandoned_record["status"] = "abandoned"
+		assignment_world.assignments[abandoned_id] = abandoned_record
+		var after_abandon := AssignmentPipeline.generate_opportunities(assignment_world, assignment_actor, &"path_civil")
+		var abandoned_reappeared := false
+		for candidate in after_abandon:
+			if StringName(candidate.get("id", "")) == abandoned_id:
+				abandoned_reappeared = true
+		_check(not abandoned_reappeared, "An abandoned same-period opportunity must not reappear and become unopenable")
+
+	# Sponsor institution resolves to its place: a Uruk Epic review is not local in Nippur.
+	var regional_board_world := WorldState.new()
+	regional_board_world.current_location_id = &"nippur"
+	regional_board_world.places[&"uruk"] = {"name": "Uruk", "parent": &""}
+	regional_board_world.places[&"nippur"] = {"name": "Nippur", "parent": &""}
+	regional_board_world.institutions[&"eanna_household"] = {"place_id": &"uruk", "name": "Eanna"}
+	regional_board_world.epics[&"great_canal_cut"] = {"active": true, "completed": false, "progress": 10, "progress_resource": &"canal_progress", "target": 100, "sponsor_institution": &"eanna_household", "stage": "survey", "review_cycle": 0}
+	var regional_board := AssignmentPipeline.generate_opportunities(regional_board_world, assignment_actor, &"path_civil")
+	var remote_review_found := false
+	for candidate in regional_board:
+		if StringName(candidate.get("kind", "")) == &"project_review":
+			remote_review_found = true
+	_check(not remote_review_found, "Uruk Epic review must be hidden while the player is in Nippur")
+
+	var healthy_canal := {"kind": &"project_review", "source_id": &"great_canal_cut", "source_data": {"stage": "cutting", "progress": 40, "target": 100, "stalled": false, "active_problem": "", "history_notes": []}}
+	var narrated_healthy_canal := AssignmentNarratorScript.translate_opportunity(healthy_canal)
+	_check(String(narrated_healthy_canal.get("title", "")) == "THE CANAL CUT", "Healthy canal milestone should use stage-appropriate narration")
+	var stalled_canal := healthy_canal.duplicate(true)
+	stalled_canal.source_data.stalled = true
+	var narrated_stalled_canal := AssignmentNarratorScript.translate_opportunity(stalled_canal)
+	_check(String(narrated_stalled_canal.get("title", "")) == "THE UPPER EMBANKMENT STALLED", "Stalled canal review should retain the crisis narration")
+
 	var review_baseline := {"stage": "survey", "last_reviewed_progress": 40, "last_reviewed_stage": "survey"}
 	_check(not AssignmentPipeline._project_review_due(assignment_world, &"great_canal_cut", review_baseline, 40), "A project review should not recur without material change")
 	_check(AssignmentPipeline._project_review_due(assignment_world, &"great_canal_cut", review_baseline, 60), "A project review may recur after twenty points of progress")
