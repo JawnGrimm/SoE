@@ -8,6 +8,7 @@ id = &"eanna_household"
 display_name = "Eanna Institutional Household"
 institution_type = &"institutional_household"
 place_id = &"eanna_precinct"
+era_id = &"uruk_storehouse"
 members = Array[StringName]([&"shuruppak_ilu", &"ur_nanna", &"utu_mansum", &"enlil_kisu", &"lu_nanshe"])
 interests = Array[StringName]([&"grain", &"labor", &"storage", &"canal_work"])
 ledger_work_title = "Reconcile Eanna Periodic Accounts"
