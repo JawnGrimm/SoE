@@ -13,11 +13,9 @@ const CUNEIFORM_FONT = preload("res://assets/Noto_Sans_Cuneiform,Noto_Sans_Egypt
 const CAMPAIGN_SEED: int = 32003200
 const ROSTER_CAST: Array[StringName] = [&"shuruppak_ilu", &"utu_mansum", &"enlil_kisu", &"ur_nanna", &"nin_kasi", &"geme_inana", &"lu_nanshe"]
 const FACTION_LABELS := {
-	&"eanna_household": "🏛 Eanna Temple",
-	&"boatmens_guild": "⛵ Landing Boatmen & Guilds",
-	&"city_garrison": "🛡 City Garrison",
-	&"council_of_elders": "📜 Council of Elders",
-	&"agricultural_households": "🌾 Agricultural Households"
+	&"boatmens_guild": "⛵ Landing Boatmen",
+	&"weavers_guild": "🧵 Weaver Guild",
+	&"council_of_elders": "📜 City Elders"
 }
 
 class CylinderSealProp extends Control:
@@ -1882,7 +1880,7 @@ func _refresh_faction_standings() -> void:
 			official_line.text = "%s\n%s / %s / Opinion %+d" % [official.display_name, title, String(official.office_id).replace("_", " ").capitalize(), official.get_opinion(actor.id)]
 			roster_box.add_child(official_line)
 		return
-	for faction_id in [&"eanna_household", &"boatmens_guild", &"city_garrison", &"council_of_elders", &"agricultural_households"]:
+	for faction_id in [&"boatmens_guild", &"weavers_guild", &"council_of_elders"]:
 		var standing := world.get_faction_standing(faction_id)
 		var line := RichTextLabel.new()
 		line.bbcode_enabled = true
