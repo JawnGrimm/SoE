@@ -293,6 +293,7 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 			world.epics[source_id] = project_state
 			record["reviewed_progress"] = progress
 			record["reviewed_stage"] = reviewed_stage
+			record["review_cycle"] = int(project_state.get("review_cycle", 0))
 			result_text = "The project's actual progress, stage, and recorded interruptions are entered in the archive. The crews continue their work independently."
 		&"pressure":
 			var pressure_institution_id := StringName(record.get("source_data", {}).get("institution_id", source_id))
@@ -550,9 +551,13 @@ static func _project_review_due(world: WorldState, epic_id: StringName, epic: Di
 	# another; completed reviews return after a stage change or twenty progress.
 	var latest_review: Dictionary = {}
 	var latest_period := -1
+	var current_cycle := int(epic.get("review_cycle", 0))
 	for assignment_value in world.assignments.values():
 		var assignment: Dictionary = assignment_value
 		if StringName(assignment.get("kind", "")) != &"project_review" or StringName(assignment.get("source_id", "")) != epic_id:
+			continue
+		var assignment_source: Dictionary = assignment.get("source_data", {})
+		if int(assignment.get("review_cycle", assignment_source.get("review_cycle", 0))) != current_cycle:
 			continue
 		if String(assignment.get("status", "")) == "active":
 			return false
