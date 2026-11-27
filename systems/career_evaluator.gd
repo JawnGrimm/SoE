@@ -109,6 +109,9 @@ static func evaluate(world: WorldState, actor: PersonEntity) -> Dictionary:
 		"law": law_level,
 		"literacy": literacy_level,
 		"arithmetic": actor.skills.get_level(&"arithmetic"),
+		"rhetoric": actor.skills.get_level(&"rhetoric"),
+		"intrigue": actor.skills.get_level(&"intrigue"),
+		"stewardship": actor.skills.get_level(&"stewardship"),
 		"mentor_trust": mentor_trust,
 		"archivist_trust": archivist_trust,
 		"primary_legacy_faction": String(FACTION_LABELS.get(primary_faction, String(primary_faction).replace("_", " ").capitalize())),
@@ -132,7 +135,7 @@ static func generate_export_text(summary: Dictionary) -> String:
 		"Served from %s to %s (%d years); concluded in period %d." % [CalendarFormatter.format_year(int(summary.get("start_year", -3200))), CalendarFormatter.format_year(int(summary.get("end_year", -3200))), int(summary.get("years_in_service", 0)), int(summary.get("period", 1))],
 		"Settled %d cases and earned %d silver; held %d silver at conclusion." % [int(summary.get("total_cases_settled", 0)), int(summary.get("silver_earned", 0)), int(summary.get("silver_held", 0))],
 		"Net worth: %d silver; debt cleared %d, defaulted %d, and unpaid upkeep %d." % [int(summary.get("net_worth", 0)), int(summary.get("debt_cleared", 0)), int(summary.get("debt_defaulted", 0)), int(summary.get("unpaid_upkeep", 0))],
-		"Integrity: %d / 100. Corruption: %d / 100. Law: %d; Literacy: %d; Arithmetic: %d. Audit reprimands survived: %d." % [int(summary.get("integrity_score", 0)), int(summary.get("corruption_score", 0)), int(summary.get("law", 0)), int(summary.get("literacy", 0)), int(summary.get("arithmetic", 0)), int(summary.get("audit_reprimands_survived", 0))],
+		"Integrity: %d / 100. Corruption: %d / 100. Law: %d; Literacy: %d; Arithmetic: %d; Rhetoric: %d; Intrigue: %d; Stewardship: %d. Audit reprimands survived: %d." % [int(summary.get("integrity_score", 0)), int(summary.get("corruption_score", 0)), int(summary.get("law", 0)), int(summary.get("literacy", 0)), int(summary.get("arithmetic", 0)), int(summary.get("rhetoric", 0)), int(summary.get("intrigue", 0)), int(summary.get("stewardship", 0)), int(summary.get("audit_reprimands_survived", 0))],
 		"Great Canal Cut: %d / %d — %s. Lasting standing: %s." % [int(summary.get("canal_progress", 0)), int(summary.get("canal_target", 100)), String(summary.get("canal_labor_outcome", "unrecorded")), String(summary.get("primary_legacy_faction", "No faction recorded"))],
 		"",
 		"Thus the tablets remember %s: not the loudest hand in Uruk, but the hand whose marks endured." % String(summary.get("character_name", "the scribe"))
