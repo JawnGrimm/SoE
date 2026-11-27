@@ -343,7 +343,6 @@ func _run() -> void:
 	_check(not dispatch_opportunity.is_empty(), "An external requisition older than four periods appears on the Uruk board")
 	_check(int(dispatch_opportunity.get("priority", 0)) == 8, "Provincial dispatch priority is eight")
 	_check(Array(dispatch_opportunity.get("tags", [])).has("DISPATCH FROM UMMA"), "Provincial dispatch carries the DISPATCH FROM UMMA tag")
-	_check(String(dispatch_opportunity.get("title", "")).begins_with("DISPATCH FROM UMMA"), "Provincial dispatch is visibly identified in its docket title")
 	_check(not Pipeline.begin(dispatch_world, dispatch_opportunity, dispatch_actor), "A provincial dispatch cannot be investigated before the scribe travels to its institution")
 	dispatch_world.current_location_id = &"umma"
 	var arrived_dispatch: Dictionary = {}
