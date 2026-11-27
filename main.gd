@@ -932,10 +932,10 @@ func _show_assignment_board() -> void:
 		callbacks.append(_select_assignment_opportunity.bind(index))
 		summaries.append("%d. %s / %s" % [index + 1, String(opportunity.get("kind", "work")).replace("_", " ").to_upper(), String(opportunity.get("title", "Work"))])
 	var payload := {
-		"title": "THE SCRIBE'S DESK / THREE OPPORTUNITIES",
+		"title": "THE SCRIBE'S DESK / %d OPPORTUNITIES" % assignment_opportunities.size(),
 		"left_card": {"title": "THE LIVING WORLD", "speaker_id": &"", "quote": "The city has continued its business while you were away from the desk.", "facts": "YEAR: %s\nPERIOD: %d / 12\nPENDING FORMS: %d\nACTIVE HAZARDS: %d" % [CalendarFormatter.format_year(world.year), world.period + 1, world.pending_forms.size(), world.hazards.filter(func(h: Dictionary) -> bool: return bool(h.get("active", false))).size()]},
 		"right_card": {"title": "AVAILABLE WORK", "speaker_id": &"shuruppak_ilu", "quote": "Choose the matter you will take responsibility for this period. The others remain in the world, whether you attend to them or not.", "facts": "\n".join(summaries)},
-		"prompt": "Three matters have reached your desk. Select one engagement, or pass without penalty.",
+		"prompt": "%d matters have reached your desk. Select one engagement, or pass without penalty." % assignment_opportunities.size(),
 		"choices": choices_payload
 	}
 	_render_docket_payload(payload, callbacks)
