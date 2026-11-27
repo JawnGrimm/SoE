@@ -1,5 +1,7 @@
 extends Control
 
+const CompoundContextScript = preload("res://systems/compound_context.gd")
+
 const AssignmentGeneratorScript = preload("res://systems/assignment_generator.gd")
 const AssignmentNarratorScript = preload("res://systems/assignment_narrator.gd")
 const DevCommandRouterScript = preload("res://systems/dev_command_router.gd")
