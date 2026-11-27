@@ -75,6 +75,9 @@ jobs:
       - name: Run three-location route network tests
         run: godot --headless --path . --script res://tests/test_route_network.gd
 
+      - name: Run evidence and compound-context regression tests
+        run: godot --headless --path . --script res://tests/test_evidence_and_compound_context.gd
+
       - name: Run Nippur travel circuit acceptance test
         run: godot --headless --path . --script res://tests/test_travel_circuit.gd
 
