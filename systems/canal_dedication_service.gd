@@ -2,6 +2,15 @@ class_name CanalDedicationService
 extends RefCounted
 ## Applies the three authored terminal acts for the Great Canal Cut.
 
+static func is_climax_due(world: WorldState) -> bool:
+	if world == null or world.world_flags.has(&"canal_dedication_concluded"):
+		return false
+	var epic: Dictionary = world.epics.get(&"great_canal_cut", {})
+	var progress := int(epic.get("progress", world.get_resource(&"canal_progress")))
+	var target := int(epic.get("target", 100))
+	# BCE year numbers increase toward the boundary: -3200 precedes -3160.
+	return progress >= target or world.year >= -3160
+
 static func can_personal_seal(actor: PersonEntity) -> bool:
 	return actor != null and actor.skills.get_level(&"law") >= 2 and actor.skills.get_level(&"literacy") >= 2
 
