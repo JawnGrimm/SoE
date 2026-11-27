@@ -169,7 +169,8 @@ func _build_interface() -> void:
 	var upper_workspace := VBoxContainer.new()
 	upper_workspace.custom_minimum_size.y = 0
 	upper_workspace.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	upper_workspace.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	# Evidence cards are fixed-height; the docket receives the remaining vertical space.
+	upper_workspace.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	upper_workspace.add_theme_constant_override("separation", 6)
 	desk_box.add_child(upper_workspace)
 	var evidence_row := HBoxContainer.new()
@@ -219,9 +220,8 @@ func _build_interface() -> void:
 	tablet_content.add_child(tablet_scroll)
 	var mat_box := VBoxContainer.new()
 	mat_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	# Let the docket content keep its natural height. Expanding this child to
-	# the ScrollContainer viewport prevents it from growing when choices overflow.
-	mat_box.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	# Fill the scroll viewport when content fits; ScrollContainer still scrolls when its minimum height exceeds it.
+	mat_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	mat_box.add_theme_constant_override("separation", 7)
 	tablet_scroll.add_child(mat_box)
 	case_heading = Label.new()
