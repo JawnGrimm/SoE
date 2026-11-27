@@ -42,6 +42,8 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 	var player := _person(world.allocate_person_id(), "Enlil-barni", &"apprentice_scribe", {"literacy": 1, "arithmetic": 1, "law": 1}, [])
 	player.current_location_id = &"uruk"
 	player.resources[&"silver"] = 2
+	player.resources[&"bread"] = 12
+	player.resources[&"beer"] = 6
 	if add_player_to_world:
 		world.set_player(player)
 	var senior := _person(&"shuruppak_ilu", "Shuruppak-ilu", &"archive_keeper", {"literacy": 4, "arithmetic": 4, "law": 3, "rhetoric": 2, "intrigue": 2, "stewardship": 3}, [&"patient", &"exacting"])
@@ -88,6 +90,7 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 	world.stockpiles[&"cattle"] = 7 + world.rng_sim.randi_range(-1, 2)
 	world.stockpiles[&"fish"] = 24 + world.rng_sim.randi_range(-5, 5)
 	world.stockpiles[&"beer"] = 36 + world.rng_sim.randi_range(-6, 8)
+	world.stockpiles[&"bread"] = 80 + world.rng_sim.randi_range(-8, 12)
 	world.stockpiles[&"wool"] = 22 + world.rng_sim.randi_range(-4, 6)
 	world.stockpiles[&"textiles"] = 12 + world.rng_sim.randi_range(-2, 4)
 	world.stockpiles[&"clay"] = 80 + world.rng_sim.randi_range(-10, 15)
@@ -202,7 +205,7 @@ static func _seed_institutions_and_groups(world: WorldState) -> void:
 		&"eanna_household": {"name": "Eanna Institutional Household", "kind": &"institutional_household", "place_id": &"eanna_precinct", "members": eanna_members, "interests": [&"grain", &"labor", &"storage", &"canal_work"]},
 		&"anu_establishment": {"name": "Anu Precinct Establishment", "kind": &"cultic_establishment", "place_id": &"anu_precinct", "members": [&"nin_azu", &"nin_kasi"], "interests": [&"offerings", &"beer", &"prestige"]},
 		&"exchange_network": {"name": "River and Overland Exchange", "kind": &"exchange_network", "place_id": &"uruk", "members": [&"geme_inana", &"ur_amas"], "interests": [&"transport", &"materials", &"exchange"]},
-		&"habuba_trade_post": {"name": "Habuba Kabira Trade Enclave", "kind": &"trade_enclave", "place_id": &"habuba_kabira", "members": [&"enki_ili"], "interests": [&"timber", &"textiles", &"river_trade"], "stockpiles": {&"timber": 120, &"textiles": 6, &"beer": 12, &"silver": 24}, "activity_count": 3, "resource_pressure": 0}
+		&"habuba_trade_post": {"name": "Habuba Kabira Trade Enclave", "kind": &"trade_enclave", "place_id": &"habuba_kabira", "members": [&"enki_ili"], "interests": [&"timber", &"textiles", &"river_trade"], "stockpiles": {&"timber": 120, &"textiles": 6, &"beer": 12, &"bread": 24, &"silver": 24}, "activity_count": 3, "resource_pressure": 0}
 	}
 	world.social_groups = {
 		&"agricultural_households": {"name": "Agricultural Households", "kind": &"household_group", "place_id": &"agricultural_hinterland", "members": [&"ama_edin", &"geme_tur"], "resources": [&"barley", &"dates"]},
