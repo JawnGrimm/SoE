@@ -140,21 +140,14 @@ static func attach_player(world: WorldState, player: PersonEntity) -> void:
 	_link(world, &"geme_tur", world.player_id, &"family", 8, 9)
 
 static func _seed_places(world: WorldState, definitions: DefinitionRegistry) -> void:
-	# Small work areas remain runtime geography beneath their authored settlement.
-	world.places = {
-		&"eanna_precinct": {"name": "Eanna Precinct", "kind": &"institutional_precinct", "parent": &"uruk"},
-		&"anu_precinct": {"name": "Anu Precinct", "kind": &"cultic_precinct", "parent": &"uruk"},
-		&"agricultural_hinterland": {"name": "Uruk Agricultural Hinterland", "kind": &"productive_land", "parent": &"uruk"},
-		&"south_court_storehouse": {"name": "South Court Storehouse", "kind": &"storehouse", "parent": &"eanna_precinct"},
-		&"north_bay": {"name": "North-Bay", "kind": &"work_area", "parent": &"eanna_precinct"},
-		&"great_canal_cut": {"name": "Great Canal Cut", "kind": &"canal_worksite", "parent": &"agricultural_hinterland"},
-		&"djebel_aruda": {"name": "Djebel Aruda", "kind": &"uruk_related_settlement", "region": &"upper_euphrates", "connected_to": [&"habuba_kabira"]}
-	}
+	# Every settlement, precinct, work area, and route landmark is authored as PlaceDef data.
+	world.places.clear()
 	for definition in definitions.all_places():
 		world.places[definition.id] = {
 			"name": definition.display_name,
 			"kind": definition.place_type,
 			"region": definition.region,
+			"parent": definition.parent_place_id,
 			"political_relation": definition.political_relation,
 			"exports": definition.exports.duplicate(),
 			"imports": definition.imports.duplicate(),
