@@ -59,7 +59,11 @@ func _build() -> void:
 	body.add_child(epitaph)
 	body.add_child(_label("THE PURSE\nSilver earned: %d   Held: %d\nDebt defaulted: %d   Unpaid upkeep: %d   Net worth: %d" % [int(summary.get("silver_earned", 0)), int(summary.get("silver_held", 0)), int(summary.get("debt_defaulted", 0)), int(summary.get("unpaid_upkeep", 0)), int(summary.get("net_worth", 0))], 15, INK))
 	body.add_child(_label("THE LAW & THE ARCHIVE\nLaw: %d   Literacy: %d   Arithmetic: %d\nIntegrity: %d / 100   Corruption: %d / 100\nAudit exposure: %d   Scandals buried: %d" % [int(summary.get("law", 0)), int(summary.get("literacy", 0)), int(summary.get("arithmetic", 0)), int(summary.get("integrity_score", 0)), int(summary.get("corruption_score", 0)), int(summary.get("audit_exposure", 0)), int(summary.get("scandals_buried", 0))], 15, INK))
-	body.add_child(_label("THE CITY & THE PROVINCE\nPrimary legacy: %s\nSettled cases: %d" % [summary.get("primary_legacy_faction", "Unrecorded"), int(summary.get("total_cases_settled", 0))], 15, INK))
+	var standings: Dictionary = summary.get("character_standings", {})
+	var standing_lines := PackedStringArray()
+	for person_name in standings:
+		standing_lines.append("%s: %+d" % [String(person_name), int(standings[person_name])])
+	body.add_child(_label("THE CITY & THE PROVINCE\\nPrimary legacy: %s\\nSettled cases: %d\\n%s" % [summary.get("primary_legacy_faction", "Unrecorded"), int(summary.get("total_cases_settled", 0)), "\\n".join(standing_lines)], 15, INK))
 	body.add_child(_label("THE GREAT CANAL CUT\nProgress: %d / %d   Labor: %s\nConcluded: %s, period %d" % [int(summary.get("canal_progress", 0)), int(summary.get("canal_target", 100)), summary.get("canal_labor_outcome", "unrecorded"), CalendarFormatter.format_year(int(summary.get("end_year", -3200))), int(summary.get("period", 1))], 15, INK))
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 12)
@@ -76,6 +80,12 @@ func _build() -> void:
 	title.focus_mode = Control.FOCUS_ALL
 	title.pressed.connect(func() -> void: return_to_title.emit())
 	actions.add_child(title)
+	var restart := Button.new()
+	restart.text = "Begin New Career"
+	restart.custom_minimum_size.y = 48
+	restart.focus_mode = Control.FOCUS_ALL
+	restart.pressed.connect(func() -> void: restart_requested.emit())
+	actions.add_child(restart)
 	var succession := Button.new()
 	succession.text = "Pass Seal to Next Scribe"
 	succession.custom_minimum_size.y = 48
