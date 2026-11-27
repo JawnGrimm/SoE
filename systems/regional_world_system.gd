@@ -269,6 +269,47 @@ static func _advance_player_travel(world: WorldState) -> void:
 		travel["remaining_periods"] = maxi(1, int(world.routes.get(StringName(route_ids[route_index]), {}).get("travel_periods", 1)))
 	world.player_travel = travel
 
+
+static func simulate_regional_flows(world: WorldState) -> void:
+	if world == null or not world.institutions.has(&"habuba_trade_post"):
+		return
+	var habuba: Dictionary = world.institutions[&"habuba_trade_post"]
+	var habuba_stock: Dictionary = habuba.get("stockpiles", {})
+	var timber := int(habuba_stock.get(&"timber", 0))
+	if timber >= 4 and not _has_open_shipment(world, &"habuba_kabira", &"uruk", &"timber") and world.rng_sim.randf() < 0.30:
+		var quantity := world.rng_sim.randi_range(4, mini(12, timber))
+		if world.modify_resource(&"timber", -quantity, "institution", "", &"habuba_trade_post"):
+			var launched := launch_shipment(world, {
+				"origin_id": &"habuba_kabira", "destination_id": &"uruk",
+				"commodity_id": &"timber", "quantity": quantity,
+				"seal_id": "habuba_trade_seal_%d" % world.current_period_index(),
+				"sender_id": &"enki_ili", "destination_institution_id": &"eanna_household"
+			})
+			if not bool(launched.get("success", false)):
+				world.modify_resource(&"timber", quantity, "institution", "", &"habuba_trade_post")
+	var eanna: Dictionary = world.institutions.get(&"eanna_household", {})
+	var eanna_stock: Dictionary = eanna.get("stockpiles", {})
+	var textiles := int(eanna_stock.get(&"textiles", 0))
+	if textiles >= 3 and not _has_open_shipment(world, &"uruk", &"habuba_kabira", &"textiles") and world.rng_sim.randf() < 0.22:
+		var quantity := world.rng_sim.randi_range(3, mini(6, textiles))
+		if world.modify_resource(&"textiles", -quantity, "institution", "", &"eanna_household"):
+			var launched := launch_shipment(world, {
+				"origin_id": &"uruk", "destination_id": &"habuba_kabira",
+				"commodity_id": &"textiles", "quantity": quantity,
+				"seal_id": "eanna_export_seal_%d" % world.current_period_index(),
+				"sender_id": &"geme_inana", "destination_institution_id": &"habuba_trade_post"
+			})
+			if not bool(launched.get("success", false)):
+				world.modify_resource(&"textiles", quantity, "institution", "", &"eanna_household")
+
+static func _has_open_shipment(world: WorldState, origin_id: StringName, destination_id: StringName, commodity_id: StringName) -> bool:
+	for shipment in world.shipments.values():
+		if StringName(shipment.get("origin_id", "")) != origin_id or StringName(shipment.get("destination_id", "")) != destination_id or StringName(shipment.get("commodity_id", "")) != commodity_id:
+			continue
+		if String(shipment.get("status", "")) in ["in_transit", "arrived", "held", "awaiting_origin"]:
+			return true
+	return false
+
 static func resolve_remote_dispatch(world: WorldState, form_data: Dictionary, verdict: StringName) -> Dictionary:
 	var shipment_id := StringName(form_data.get("shipment_id", ""))
 	if world == null or shipment_id == &"" or not world.shipments.has(shipment_id):
