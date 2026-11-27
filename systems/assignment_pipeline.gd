@@ -4,7 +4,7 @@ extends RefCounted
 ## It never invents economic quantities: all facts are read from WorldState.
 
 const BOARD_SIZE := 3
-const INVESTIGATION_ACTIONS := [
+const WORK_ACTIONS := [
 	{"id": &"examine_records", "label": "Examine the written record", "skill": &"literacy", "xp": 8},
 	{"id": &"reconcile_accounts", "label": "Reconcile the figures", "skill": &"arithmetic", "xp": 8},
 	{"id": &"consult_official", "label": "Consult the responsible official", "skill": &"rhetoric", "xp": 8},
@@ -42,7 +42,7 @@ static func get_actions(record: Dictionary) -> Array:
 		return REMOTE_DISPATCH_ACTIONS
 	if StringName(record.get("kind", "")) == &"form" and form_type == &"remote_origin_reply":
 		return ORIGIN_REPLY_ACTIONS
-	return INVESTIGATION_ACTIONS
+	return WORK_ACTIONS
 
 static func generate_opportunities(world: WorldState, actor: PersonEntity, selected_path: StringName = &"") -> Array[Dictionary]:
 	var candidates: Array[Dictionary] = []
@@ -267,7 +267,7 @@ static func perform_action(world: WorldState, actor: PersonEntity, assignment_id
 			action = candidate
 			break
 	if action.is_empty():
-		return {"success": false, "message": "Unknown investigation action."}
+		return {"success": false, "message": "Unknown work approach."}
 
 	var skill_id: StringName = action.skill
 	var level := actor.skills.get_level(skill_id)
@@ -297,7 +297,7 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 		return {"success": false, "message": "This engagement belongs to another scribe."}
 	var actions: Dictionary = record.get("actions", {})
 	if actions.size() < 2:
-		return {"success": false, "message": "At least two investigative actions must be recorded before assessment."}
+		return {"success": false, "message": "At least two work approaches must be recorded before assessment."}
 
 	var kind := StringName(record.get("kind", ""))
 	var source_id := StringName(record.get("source_id", ""))
