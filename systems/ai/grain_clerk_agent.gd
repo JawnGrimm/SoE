@@ -15,7 +15,7 @@ func condition_passes(condition_id: StringName) -> bool:
 	match condition_id:
 		&"north_bay_roof_leak_active":
 			for hazard in world.hazards:
-				if bool(hazard.get("active", false)) and StringName(hazard.get("place_id", "")) == place_id and StringName(hazard.get("id", "")) == &"roof_leak":
+				if bool(hazard.get("active", false)) and (StringName(hazard.get("place_id", "")) == place_id or (institution_id == &"eanna_household" and StringName(hazard.get("place_id", "")) == &"north_bay")) and StringName(hazard.get("id", "")) == &"roof_leak":
 					return true
 			return false
 		&"personal_fear_above_five":
