@@ -341,7 +341,7 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 						world.modify_resource(commodity_id, quantity, "institution", "", source_institution_id)
 					return {"success": false, "message": String(launched.get("error", "The shipment could not be launched."))}
 					result_text = "A sealed shipment of %d %s departs %s for %s. The world will carry it along the route; the destination must still account for what arrives." % [quantity, String(commodity_id).replace("_", " "), _place_name(world, origin_id), _place_name(world, destination_id)]
-					work_details = "Shipment %s launched. Quantity %d. Route periods %d." % [String(launched.get("shipment_id", "")), quantity, int(launched.get("travel_periods", 0))]
+				work_details = "Shipment %s launched. Quantity %d. Route periods %d." % [String(launched.get("shipment_id", "")), quantity, int(launched.get("travel_periods", 0))]
 			elif work_type == &"route_provisions":
 				if verdict != &"issue":
 					accurate = false
