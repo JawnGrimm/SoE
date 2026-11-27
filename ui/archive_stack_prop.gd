@@ -9,7 +9,7 @@ var count_label: Label
 var badge_label: Label
 
 func _ready() -> void:
-	text = ""
+	text = "OPEN QUEUE"
 	custom_minimum_size = Vector2(130, 92)
 	focus_mode = Control.FOCUS_ALL
 	tooltip_text = "Open work queue: Epics, Challenges, Assignments"

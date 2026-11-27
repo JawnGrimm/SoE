@@ -7,6 +7,10 @@ const DeskLayout = preload("res://ui/cedar_desk_layout.gd")
 const SaveCodec = preload("res://systems/save_codec.gd")
 
 func _initialize() -> void:
+	call_deferred("_run_tests")
+
+func _run_tests() -> void:
+	await process_frame
 	_test_header_formatting()
 	_test_cuneiform_punches()
 	_test_archive_badge()

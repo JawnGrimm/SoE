@@ -117,6 +117,10 @@ func _simulate_epics(world: WorldState) -> void:
 				continue
 			_simulate_epic(world, definition, state)
 			continue
+		if bool(state.get("dedicated", false)) or world.world_flags.has(&"canal_dedication_concluded"):
+			state["active"] = false
+			world.epics[epic_id] = state
+			continue
 		if not bool(state.get("active", false)):
 			var earned_canal := world.year >= CANAL_LAUNCH_YEAR and world.cases_settled >= CANAL_CASES_REQUIRED
 			var summoned_canal := world.epic_summon_issued and world.year >= CANAL_LAUNCH_YEAR
