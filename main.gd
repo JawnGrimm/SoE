@@ -1024,12 +1024,23 @@ func _active_docket_payload() -> Dictionary:
 		"choices": _authored_choices_payload()
 	}
 
+static func _is_outcome_disabled_for_actor(event_id: StringName, outcome: EventOutcome, personal_silver: int) -> bool:
+	if event_id != &"challenge_quayside_stoppage" or outcome == null or personal_silver >= 4:
+		return false
+	for effect in outcome.effects:
+		if effect.effect_type != &"modify_resource":
+			continue
+		var parameters: Dictionary = effect.parameters
+		if StringName(parameters.get("resource", "")) == &"silver" and String(parameters.get("scope", "")) == "actor" and int(parameters.get("amount", 0)) < 0:
+			return true
+	return false
+
 func _authored_choices_payload() -> Array:
 	var result: Array = []
 	if active_event == null:
 		return result
 	for outcome in active_event.outcomes:
-		var disabled := active_event.id == &"challenge_quayside_stoppage" and String(outcome.resource_name) == "outcome_silver" and int(actor.resources.get(&"silver", 0)) < 4
+		var disabled := _is_outcome_disabled_for_actor(active_event.id, outcome, int(actor.resources.get(&"silver", 0)))
 		result.append({"label": outcome.label, "result_title": outcome.title_override, "result_text": outcome.description_override, "effects": outcome.effects, "disabled": disabled})
 	return result
 
