@@ -8,6 +8,7 @@ const DEFAULT_FOLDERS: Dictionary = {
 	"eras": "res://data/eras",
 	"assignments": "res://data/assignments",
 	"places": "res://data/places",
+	"routes": "res://data/routes",
 	"epics": "res://data/epics",
 }
 
