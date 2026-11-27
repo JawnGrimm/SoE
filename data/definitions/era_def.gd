@@ -8,6 +8,7 @@ extends Resource
 ## Inclusive bounds in the world's continuous simulation-year timeline.
 @export var start_year: int = 0
 @export var end_year: int = 0
+@export var starting_place_id: StringName = &""
 
 ## Stable tags for event/content matching, independent of this definition's ID.
 @export var era_tags: Array[StringName] = []
