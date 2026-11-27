@@ -3,7 +3,8 @@ extends RefCounted
 ## Converts persistent world conditions into professional opportunities.
 ## It never invents economic quantities: all facts are read from WorldState.
 
-const BOARD_SIZE := 3
+const BOARD_SIZE := 4
+const AssignmentGeneratorScript = preload("res://systems/assignment_generator.gd")
 const INVESTIGATION_ACTIONS := [
 	{"id": &"examine_records", "label": "Examine the written record", "skill": &"literacy", "xp": 8},
 	{"id": &"reconcile_accounts", "label": "Reconcile the figures", "skill": &"arithmetic", "xp": 8},
@@ -152,15 +153,21 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 	)
 	var result: Array[Dictionary] = []
 	var used_kinds: Dictionary = {}
+	var procedural_candidate: Dictionary = {}
 	for candidate in candidates:
+		if StringName(candidate.get("kind", "")) == &"procedural_docket":
+			procedural_candidate = candidate
+			continue
 		var kind := StringName(candidate.get("kind", ""))
-		# Prefer three different kinds of work when the world offers them.
-		if used_kinds.has(kind) and result.size() < BOARD_SIZE:
+		# Reserve one board slot for the career-path story, then diversify world work.
+		if used_kinds.has(kind) and result.size() < BOARD_SIZE - 1:
 			continue
 		result.append(candidate.duplicate(true))
 		used_kinds[kind] = true
-		if result.size() >= BOARD_SIZE:
+		if result.size() >= BOARD_SIZE - 1:
 			break
+	if not procedural_candidate.is_empty() and result.size() < BOARD_SIZE:
+		result.append(procedural_candidate.duplicate(true))
 	if result.size() < BOARD_SIZE:
 		for candidate in candidates:
 			if candidate not in result:
@@ -291,7 +298,14 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 			if presented_stage != int(project_state.get("review_stage", -2)) or String(project.get("review_reason", "")) != String(project_state.get("review_reason", "")):
 				return {"success": false, "message": "The project's conditions changed while this review was in progress. Return to the board for the current docket."}
 			var notes: Array = project_state.get("history_notes", [])
-			work_details = "Progress %d / %d. Current stage: %s. Recorded simulation entries: %d." % [progress, target, String(project_state.get("stage", "unrecorded")), notes.size()]
+			var reviewed_stage := String(project_state.get("stage", "unrecorded"))
+			work_details = "Progress %d / %d. Current stage: %s. Recorded simulation entries: %d." % [progress, target, reviewed_stage, notes.size()]
+			project_state["last_reviewed_progress"] = progress
+			project_state["last_reviewed_stage"] = reviewed_stage
+			world.epics[source_id] = project_state
+			record["reviewed_progress"] = progress
+			record["reviewed_stage"] = reviewed_stage
+			record["review_cycle"] = int(project_state.get("review_cycle", 0))
 			result_text = "The project's actual progress, stage, and recorded interruptions are entered in the archive. The crews continue their work independently."
 			world.resolve_epic_review(source_id)
 		&"pressure":
@@ -545,3 +559,45 @@ static func _place_name(world: WorldState, place_id: StringName) -> String:
 	if world.places.has(place_id):
 		return String(world.places[place_id].get("name", place_id))
 	return String(place_id).replace("_", " ").capitalize()
+
+
+static func _project_review_due(world: WorldState, epic_id: StringName, epic: Dictionary, progress: int) -> bool:
+	var current_stage := String(epic.get("stage", ""))
+	var current_cycle := int(epic.get("review_cycle", 0))
+	for assignment_value in world.assignments.values():
+		var active_assignment: Dictionary = assignment_value
+		if StringName(active_assignment.get("kind", "")) != &"project_review" or StringName(active_assignment.get("source_id", "")) != epic_id:
+			continue
+		var active_source: Dictionary = active_assignment.get("source_data", {})
+		if int(active_assignment.get("review_cycle", active_source.get("review_cycle", 0))) == current_cycle and String(active_assignment.get("status", "")) == "active":
+			return false
+	if epic.has("last_reviewed_progress"):
+		var reviewed_progress := int(epic.get("last_reviewed_progress", -1))
+		var reviewed_stage := String(epic.get("last_reviewed_stage", ""))
+		return current_stage != reviewed_stage or progress >= reviewed_progress + 20
+
+	# Migrate older saves from completed assignment records. Active reviews block
+	# another; completed reviews return after a stage change or twenty progress.
+	var latest_review: Dictionary = {}
+	var latest_period := -1
+	for assignment_value in world.assignments.values():
+		var assignment: Dictionary = assignment_value
+		if StringName(assignment.get("kind", "")) != &"project_review" or StringName(assignment.get("source_id", "")) != epic_id:
+			continue
+		var assignment_source: Dictionary = assignment.get("source_data", {})
+		if int(assignment.get("review_cycle", assignment_source.get("review_cycle", 0))) != current_cycle:
+			continue
+		if String(assignment.get("status", "")) == "active":
+			return false
+		var completed_period := int(assignment.get("completed_period", assignment.get("started_period", -1)))
+		if completed_period >= latest_period:
+			latest_period = completed_period
+			latest_review = assignment
+	if latest_review.is_empty():
+		return true
+	var source_data: Dictionary = latest_review.get("source_data", {})
+	var reviewed_progress := int(latest_review.get("reviewed_progress", source_data.get("progress", -1)))
+	var reviewed_stage := String(latest_review.get("reviewed_stage", source_data.get("stage", "")))
+	if reviewed_progress < 0:
+		return false
+	return current_stage != reviewed_stage or progress >= reviewed_progress + 20

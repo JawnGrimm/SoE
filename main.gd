@@ -751,8 +751,13 @@ func _schedule_next_case() -> void:
 			"summary": active_event.description,
 			"priority": 100
 		})
-		while assignment_opportunities.size() > 3:
-			assignment_opportunities.pop_back()
+		while assignment_opportunities.size() > AssignmentPipeline.BOARD_SIZE:
+			var remove_index := assignment_opportunities.size() - 1
+			for candidate_index in range(assignment_opportunities.size() - 1, 0, -1):
+				if StringName(assignment_opportunities[candidate_index].get("kind", "")) != &"procedural_docket":
+					remove_index = candidate_index
+					break
+			assignment_opportunities.remove_at(remove_index)
 	if not assignment_opportunities.is_empty():
 		_show_assignment_board()
 	else:
@@ -996,6 +1001,12 @@ func _select_assignment_opportunity(index: int) -> void:
 	if phase != "opportunity_board" or index < 0 or index >= assignment_opportunities.size():
 		return
 	var opportunity := assignment_opportunities[index]
+	if StringName(opportunity.get("kind", "")) == &"procedural_docket":
+		procedural_assignment = (opportunity.get("source_data", {}) as Dictionary).duplicate(true)
+		active_event = null
+		AudioManager.play_docket_slide()
+		_show_case()
+		return
 	if StringName(opportunity.get("kind", "")) == &"event":
 		active_event = Registry.get_event(StringName(opportunity.get("source_id", "")))
 		if active_event == null:

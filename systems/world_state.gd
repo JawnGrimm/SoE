@@ -181,6 +181,9 @@ func reset_epic_for_new_shift(epic_id: StringName, initial_stage: String = "") -
 	epic_state["stage"] = initial_stage if initial_stage != "" else String(epic_state.get("initial_stage", "survey"))
 	epic_state["completed"] = false
 	epic_state["active"] = true
+	epic_state["review_cycle"] = int(epic_state.get("review_cycle", 0)) + 1
+	epic_state.erase("last_reviewed_progress")
+	epic_state.erase("last_reviewed_stage")
 	epics[epic_id] = epic_state
 
 func reset_active_epics() -> void:
