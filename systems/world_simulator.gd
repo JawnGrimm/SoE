@@ -22,6 +22,8 @@ func advance_period(world: WorldState) -> void:
 	_simulate_economy(world)
 	_simulate_institutions(world)
 	_simulate_epics(world)
+	_simulate_personal_upkeep(world)
+	_tick_audit_reprimands(world)
 	_simulate_people(world)
 	_tick_grain_clerk_agenda(world)
 	_generate_forms(world)
@@ -226,6 +228,46 @@ func _simulate_epic(world: WorldState, definition: EpicDef, state: Dictionary) -
 	world.epics[definition.id] = state
 	world.stockpiles[resource_id] = progress
 	world.ensure_epic_review_state(definition.id)
+
+func _simulate_personal_upkeep(world: WorldState) -> void:
+	if world.total_periods <= 0 or world.total_periods % 3 != 0:
+		return
+	var player := world.get_player()
+	if player == null:
+		return
+	var silver := int(player.resources.get(&"silver", 0))
+	if silver >= 2:
+		player.resources[&"silver"] = silver - 2
+		player.flags[&"unpaid_upkeep"] = 0
+		world.cedar_desk_log.append({"year": world.year, "period": world.period, "title": "HOUSEHOLD UPKEEP", "summary": "Two silver paid for seasonal lodging and meals."})
+	else:
+		player.flags[&"unpaid_upkeep"] = int(player.flags.get(&"unpaid_upkeep", 0)) + 2 - silver
+		player.resources[&"silver"] = 0
+		var senior := world.get_person(&"shuruppak_ilu")
+		if senior != null:
+			senior.change_opinion(player.id, -1, "The apprentice's household account fell into arrears.", world.year)
+		world.cedar_desk_log.append({"year": world.year, "period": world.period, "title": "UPKEEP IN ARREARS", "summary": "The household could not pay its two-silver seasonal account. Debt is recorded; work remains available."})
+
+func _tick_audit_reprimands(world: WorldState) -> void:
+	if world.total_periods <= 0 or world.total_periods % 6 != 0:
+		return
+	var player := world.get_player()
+	if player == null:
+		return
+	var exposure := int(player.flags.get(&"audit_exposure", 0))
+	if exposure <= 0:
+		return
+	player.flags[&"audit_exposure"] = exposure - 1
+	var silver := int(player.resources.get(&"silver", 0))
+	if silver >= 2:
+		player.resources[&"silver"] = silver - 2
+	else:
+		player.flags[&"audit_debt"] = int(player.flags.get(&"audit_debt", 0)) + 2 - silver
+		player.resources[&"silver"] = 0
+	var archivist := world.get_person(&"shuruppak_ilu")
+	if archivist != null:
+		archivist.change_opinion(player.id, -2, "A concealed account was found in the archive audit.", world.year)
+	world.cedar_desk_log.append({"year": world.year, "period": world.period, "title": "ARCHIVE REPRIMAND", "summary": "Shuruppak-ilu found a concealed account. Two silver were fined or entered as debt."})
 
 func _simulate_economy(world: WorldState) -> void:
 	var p := world.period
