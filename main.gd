@@ -1464,6 +1464,7 @@ func _resolve_procedural_choice(_index: int, choice: Dictionary) -> void:
 	for flag_key in world.world_flags:
 		if not world_flags_before.has(flag_key) or world_flags_before[flag_key] != world.world_flags[flag_key]:
 			consequences.append({"type": "flag", "name": String(flag_key)})
+	_seal_clay_docket()
 	var result_title := String(choice.get("result_title", "MARK MADE"))
 	_show_procedural_result(result_title, result_text, consequences)
 
@@ -1509,6 +1510,7 @@ func _advance_period_once() -> bool:
 	active_world_assignment_id = &""
 	if clay_docket != null:
 		clay_docket.impressions.clear()
+		clay_docket.verdict_is_sealed = false
 		clay_docket._refresh_grid()
 		clay_docket.set_case_title("New period")
 	_clear_stamp_history()
