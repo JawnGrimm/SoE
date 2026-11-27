@@ -37,9 +37,10 @@ func configure(network: RouteNetwork, current_world: WorldState, allow_travel: b
 	travel_allowed = allow_travel
 	selected_route_id = &""
 	selected_destination_id = &""
-	_build_route_graph()
+	if not _build_route_graph():
+		return false
 	_refresh_route_summary()
-	return map_view != null
+	return true
 
 func get_map_node_count() -> int:
 	return map_nodes.size()
@@ -133,7 +134,7 @@ func _build_surface() -> void:
 	board_button.pressed.connect(board_selected_route)
 	footer.add_child(board_button)
 
-func _build_route_graph() -> void:
+func _build_route_graph() -> bool:
 	if map_view != null and is_instance_valid(map_view):
 		map_canvas.remove_child(map_view)
 		map_view.queue_free()
@@ -159,8 +160,11 @@ func _build_route_graph() -> void:
 		plotted_places[route.destination_id] = route_network.get_place(route.destination_id)
 	var place_ids: Array[StringName] = []
 	for place_id in plotted_places:
-		if plotted_places[place_id] != null:
-			place_ids.append(place_id)
+		var place: PlaceDef = plotted_places[place_id]
+		if place == null or place.survey_position == Vector2.ZERO:
+			push_warning("RegionalSurveyMap: route endpoint '%s' has no authored survey position." % place_id)
+			return false
+		place_ids.append(place_id)
 	place_ids.sort()
 	graph.set("node_count", place_ids.size())
 	var current_index := 0
@@ -198,6 +202,7 @@ func _build_route_graph() -> void:
 		name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		map_view.add_child(name_label)
 	map_canvas.add_child(map_view)
+	return not place_ids.is_empty()
 
 func _make_style(icon_tint: Color, line_tint: Color, priority: int) -> Resource:
 	var style: Resource = WorldmapStyleScript.new()
@@ -210,7 +215,7 @@ func _make_style(icon_tint: Color, line_tint: Color, priority: int) -> Resource:
 	style.set("straight_tex_region", Rect2(0, 0, 4, 4))
 	return style
 
-func _make_place_marker(index: int, is_current: bool) -> Texture2D:
+func _make_place_marker(_index: int, is_current: bool) -> Texture2D:
 	var image := Image.create(40, 40, false, Image.FORMAT_RGBA8)
 	var center := Vector2(19.5, 19.5)
 	var fill := Color("#65421f") if is_current else Color("#8a754e")
@@ -253,7 +258,8 @@ func _refresh_route_summary() -> void:
 	var periods := route_network.get_transit_periods(selected_route_id, world.current_location_id, selected_destination_id)
 	var status := String(route_network.get_route_status(selected_route_id)).to_upper()
 	var route_name := route.display_name if not route.display_name.is_empty() else String(route.route_type).replace("_", " ").to_upper()
-	route_summary.text = "%s TO %s  /  %d PERIOD%s  /  ROUTE %s" % [route_name.to_upper(), destination.display_name.to_upper(), periods, "" if periods == 1 else "S", status]
+	var duration := "%d PERIOD%s" % [periods, "" if periods == 1 else "S"] if periods > 0 else "NO PASSAGE"
+	route_summary.text = "%s TO %s  /  %s  /  ROUTE %s" % [route_name.to_upper(), destination.display_name.to_upper(), duration, status]
 	if periods > 0:
 		var mode := "BOARD RIVER BARGE" if route.route_type == &"river" else "TAKE THE OVERLAND ROAD"
 		board_button.text = "%s  /  %d PERIOD%s" % [mode, periods, "" if periods == 1 else "S"]
