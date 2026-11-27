@@ -1292,6 +1292,8 @@ func _show_case() -> void:
 	_render_docket_payload(AssignmentNarratorScript.translate_payload(_active_docket_payload()))
 
 func _render_docket_payload(payload: Dictionary, callbacks: Array = []) -> void:
+	if clay_docket != null:
+		clay_docket.set_case_title(String(payload.get("title", "Active case")))
 	if consequence_panel != null:
 		consequence_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 		prompt_label.add_theme_color_override("font_color", Color("#d6bd8b"))
