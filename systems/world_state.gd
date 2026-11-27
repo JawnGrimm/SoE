@@ -13,6 +13,16 @@ func ensure_epic_review_state(epic_id: StringName, epic_def: EpicDef = null) -> 
 	var stage := get_epic_stage_index(progress, target, epic_def)
 	if not entry.has("review_pending"):
 		entry["review_pending"] = bool(entry.get("active", false)) and not bool(entry.get("completed", false))
+	if not entry.has("review_reason"):
+		entry["review_reason"] = "project_opened" if stage == 0 else "stage_reached"
+	if not entry.has("review_summary"):
+		entry["review_summary"] = "Initial survey, labor tally, and work charter."
+	if not entry.has("active_problem"):
+		entry["active_problem"] = ""
+	if not entry.has("last_problem_key"):
+		entry["last_problem_key"] = ""
+	if not entry.has("stalled"):
+		entry["stalled"] = false
 	if not entry.has("review_stage"):
 		entry["review_stage"] = stage
 	if not entry.has("reviewed_stage"):
@@ -50,6 +60,32 @@ func get_epic_stage_label(stage_index: int, epic_def: EpicDef = null) -> String:
 		3: return "Weir & Headgate Masonry"
 		_: return "Stage %d" % (stage_index + 1)
 
+func open_epic_review(epic_id: StringName, reason: String, summary: String, stage_index: int = -1, epic_def: EpicDef = null) -> bool:
+	if not epics.has(epic_id):
+		return false
+	ensure_epic_review_state(epic_id, epic_def)
+	var entry: Dictionary = epics[epic_id]
+	if not bool(entry.get("active", false)) or bool(entry.get("completed", false)):
+		return false
+	var target := maxi(1, int(entry.get("target", 100)))
+	var resolved_stage := stage_index if stage_index >= 0 else get_epic_stage_index(int(entry.get("progress", 0)), target, epic_def)
+	if bool(entry.get("review_pending", false)):
+		if reason != "stage_reached" and str(entry.get("review_reason", "")) == "stage_reached":
+			entry["review_reason"] = reason
+			entry["review_summary"] = summary
+			entry["review_stage"] = resolved_stage
+			entry["review_stage_label"] = get_epic_stage_label(resolved_stage, epic_def)
+			epics[epic_id] = entry
+			return true
+		return false
+	entry["review_pending"] = true
+	entry["review_reason"] = reason
+	entry["review_summary"] = summary
+	entry["review_stage"] = resolved_stage
+	entry["review_stage_label"] = get_epic_stage_label(resolved_stage, epic_def)
+	epics[epic_id] = entry
+	return true
+
 func resolve_epic_review(epic_id: StringName, epic_def: EpicDef = null) -> void:
 	if not epics.has(epic_id):
 		return
@@ -60,6 +96,8 @@ func resolve_epic_review(epic_id: StringName, epic_def: EpicDef = null) -> void:
 	entry["reviewed_stage"] = maxi(int(entry.get("reviewed_stage", -1)), stage)
 	entry["review_stage"] = stage
 	entry["review_pending"] = false
+	entry["review_reason"] = ""
+	entry["review_summary"] = ""
 	entry["last_reviewed_period"] = current_period_index()
 	epics[epic_id] = entry
 
