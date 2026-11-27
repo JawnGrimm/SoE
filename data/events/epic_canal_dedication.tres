@@ -1,6 +1,35 @@
-[gd_resource type="Resource" script_class="EventTemplate" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="EventTemplate" load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://data/definitions/event_template.gd" id="1"]
+[ext_resource type="Script" path="res://data/definitions/event_outcome.gd" id="2"]
+[ext_resource type="Script" path="res://data/definitions/event_condition.gd" id="3"]
+
+[sub_resource type="Resource" id="EventCondition_dedication_ready"]
+script = ExtResource("3")
+condition_type = &"flag_set"
+target = "actor"
+parameters = {"flag": &"canal_dedication_ready", "scope": "world"}
+
+[sub_resource type="Resource" id="EventOutcome_honor_crews"]
+script = ExtResource("2")
+label = "Inscribe the names of the work crews alongside the temple gods"
+weight = 1.0
+title_override = "The Names Beside the Gods"
+description_override = "The monument names the carriers and ditch crews beside the divine patrons. The laborers' part in the work will endure."
+
+[sub_resource type="Resource" id="EventOutcome_temple_only"]
+script = ExtResource("2")
+label = "Attribute the entire achievement solely to Eanna Temple"
+weight = 1.0
+title_override = "The Temple's Monument"
+description_override = "The inscription credits Eanna alone. The priesthood is pleased, and its treasury rewards the scribe."
+
+[sub_resource type="Resource" id="EventOutcome_personal_seal"]
+script = ExtResource("2")
+label = "Affix your personal cylinder seal to the dedication stone"
+weight = 1.0
+title_override = "The Scribe's Seal"
+description_override = "Your cylinder seal is pressed into the permanent stone. The record names the hand that certified the works."
 
 [resource]
 script = ExtResource("1")
@@ -12,8 +41,8 @@ weight = 1.0
 cooldown_years = 0
 once_per_character = true
 once_per_world = true
-conditions = []
-outcomes = []
+conditions = Array[ExtResource("3")]([SubResource("EventCondition_dedication_ready")])
+outcomes = Array[ExtResource("2")]([SubResource("EventOutcome_honor_crews"), SubResource("EventOutcome_temple_only"), SubResource("EventOutcome_personal_seal")])
 records = Array[Dictionary]([{"label": "PLACE", "value": "Iturungal regulator sluice"}, {"label": "WITNESSES", "value": "Eanna priesthood, carrier foreman, city elders"}, {"label": "WORKS", "value": "The Great Canal Cut"}])
 evidence_left_title = "THE MONUMENT"
 evidence_right_title = "THE ASSEMBLY"
