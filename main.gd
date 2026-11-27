@@ -1029,7 +1029,8 @@ func _authored_choices_payload() -> Array:
 	if active_event == null:
 		return result
 	for outcome in active_event.outcomes:
-		result.append({"label": outcome.label, "result_title": outcome.title_override, "result_text": outcome.description_override, "effects": outcome.effects})
+		var disabled := active_event.id == &"challenge_quayside_stoppage" and String(outcome.resource_name) == "outcome_silver" and int(actor.resources.get(&"silver", 0)) < 4
+		result.append({"label": outcome.label, "result_title": outcome.title_override, "result_text": outcome.description_override, "effects": outcome.effects, "disabled": disabled})
 	return result
 
 func _show_assignment_board() -> void:
@@ -1140,6 +1141,18 @@ func _show_world_engagement() -> void:
 			&"hazard":
 				_add_choice("Allocate three labor and repair", _resolve_world_assignment.bind(&"repair"), world.get_resource(&"labor", "institution", "", &"eanna_household") < 3)
 				_add_choice("Record the loss and defer repair", _resolve_world_assignment.bind(&"defer"))
+			&"project_review":
+				var sponsor_id := StringName(record.get("sponsor_institution", record.get("source_data", {}).get("sponsor_institution", &"eanna_household")))
+				var has_emergency_stock := world.get_resource(&"barley", "institution", "", sponsor_id) >= 20 and world.get_resource(&"labor", "institution", "", sponsor_id) >= 2
+				_add_choice("Authorize emergency rations and advance the cut (20 barley, 2 labor)", _resolve_world_assignment.bind(&"epic_emergency"), not has_emergency_stock)
+				_add_choice("Halt work for audit; challenge the foreman's roll", _resolve_world_assignment.bind(&"epic_audit"))
+				_add_choice("Certify the milestone uninspected / accept crew estimates", _resolve_world_assignment.bind(&"epic_certify"))
+			&"pressure":
+				var pressure_institution_id := StringName(record.get("source_data", {}).get("institution_id", record.get("source_id", &"")))
+				var has_reserves := world.get_resource(&"barley", "institution", "", pressure_institution_id) >= 15 and world.get_resource(&"labor", "institution", "", pressure_institution_id) >= 15
+				_add_choice("Authorize emergency drawdown from temple reserves (15 barley, 15 labor)", _resolve_world_assignment.bind(&"pressure_drawdown"), not has_reserves)
+				_add_choice("Enforce strict rationing; reject extra requisitions", _resolve_world_assignment.bind(&"pressure_ration"))
+				_add_choice("Falsify tally balance to conceal the deficit", _resolve_world_assignment.bind(&"pressure_falsify"))
 			_:
 				_add_choice("File the verified account", _resolve_world_assignment.bind(&"record"))
 	_add_choice("Set this work aside", _abandon_world_assignment)
