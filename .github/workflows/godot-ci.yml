@@ -40,3 +40,6 @@ jobs:
 
       - name: Run event and period integration tests
         run: godot --headless --path . --script res://tests/test_event_slice.gd
+
+      - name: Run developer command router tests
+        run: godot --headless --path . --script res://tests/test_dev_command_router.gd
