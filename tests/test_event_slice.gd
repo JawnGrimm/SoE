@@ -1,5 +1,7 @@
 extends SceneTree
 
+const RegionalWorldSystemScript = preload("res://systems/regional_world_system.gd")
+
 var _checks: int = 0
 var _failures: Array[String] = []
 var registry: DefinitionRegistry
@@ -187,18 +189,18 @@ func _run() -> void:
 	_check(registry.get_definitions("routes").size() >= 24 and registry.get_definition(&"uruk_habuba_river") is RouteDef, "DefinitionRegistry should index regional RouteDef resources by id")
 	var route_risk_world := WorldState.new()
 	UrukSeeder.seed_campaign(route_risk_world, 32003211)
-	var risk_before := RegionalWorldSystem.effective_route_risk(route_risk_world, &"uruk_habuba_river")
-	_check(RegionalWorldSystem.provision_route(route_risk_world, &"uruk_habuba_river", 8, 3), "Regional route should accept a real provisioning allocation")
-	_check(RegionalWorldSystem.effective_route_risk(route_risk_world, &"uruk_habuba_river") == risk_before - 8, "Provisioning should reduce route risk for its active period")
+	var risk_before := RegionalWorldSystemScript.effective_route_risk(route_risk_world, &"uruk_habuba_river")
+	_check(RegionalWorldSystemScript.provision_route(route_risk_world, &"uruk_habuba_river", 8, 3), "Regional route should accept a real provisioning allocation")
+	_check(RegionalWorldSystemScript.effective_route_risk(route_risk_world, &"uruk_habuba_river") == risk_before - 8, "Provisioning should reduce route risk for its active period")
 	for provision_tick in range(3):
 		route_risk_world.advance_period()
-	_check(RegionalWorldSystem.effective_route_risk(route_risk_world, &"uruk_habuba_river") == risk_before, "Temporary route provisioning should expire on the calendar")
+	_check(RegionalWorldSystemScript.effective_route_risk(route_risk_world, &"uruk_habuba_river") == risk_before, "Temporary route provisioning should expire on the calendar")
 	var ration_world := WorldState.new()
 	var ration_player := UrukSeeder.seed_campaign(ration_world, 32003213)
 	ration_player.resources[&"bread"] = 0
 	ration_player.resources[&"beer"] = 0
 	ration_player.resources[&"silver"] = 20
-	var ration_travel := RegionalWorldSystem.start_player_travel(ration_world, ration_player, &"habuba_kabira")
+	var ration_travel := RegionalWorldSystemScript.start_player_travel(ration_world, ration_player, &"habuba_kabira")
 	_check(bool(ration_travel.get("success", false)) and int(ration_travel.get("silver_spent", 0)) == 5, "A regional journey should purchase missing bread and beer from local stores")
 	_check(int(ration_player.resources.get(&"bread", 0)) == 3 and int(ration_player.resources.get(&"beer", 0)) == 1 and int(ration_player.resources.get(&"silver", 0)) == 15, "Travel provisioning should charge silver and place the required rations in the character's purse")
 
@@ -384,8 +386,8 @@ func _run() -> void:
 	_check(uruk_a.places.has(&"susa") and uruk_a.places.has(&"habuba_kabira"), "Uruk seed should include both external exchange settlements")
 	_check(uruk_a.routes.size() >= 20, "Uruk seed should load a regional route graph from RouteDef resources")
 	_check(uruk_a.shipments.size() == 1, "Uruk seed should launch a remote timber consignment from Habuba Kabira")
-	var regional_path := RegionalWorldSystem.find_route_path(uruk_a, &"habuba_kabira", &"uruk")
-	_check(not regional_path.is_empty() and RegionalWorldSystem.route_path_periods(uruk_a, regional_path) == 3, "Habuba-to-Uruk river route should take three periods")
+	var regional_path := RegionalWorldSystemScript.find_route_path(uruk_a, &"habuba_kabira", &"uruk")
+	_check(not regional_path.is_empty() and RegionalWorldSystemScript.route_path_periods(uruk_a, regional_path) == 3, "Habuba-to-Uruk river route should take three periods")
 	var regional_arrival_world := WorldState.new()
 	var regional_arrival_player := UrukSeeder.seed_campaign(regional_arrival_world, 32003209)
 	var arrived_dispatch := false
@@ -426,7 +428,7 @@ func _run() -> void:
 			_check(bool(accept_result.get("success", false)) and String(regional_arrival_world.shipments[&"shipment_000001"].get("status", "")) == "accepted", "Origin reply should let the player settle the held shipment")
 			_check(timber_after_accept - timber_before_accept == int(regional_arrival_world.shipments[&"shipment_000001"].get("received_quantity", 0)), "Accepted cargo should change the destination institution by the actual received quantity")
 
-	var second_shipment_result := RegionalWorldSystem.launch_shipment(regional_arrival_world, {
+	var second_shipment_result := RegionalWorldSystemScript.launch_shipment(regional_arrival_world, {
 		"origin_id": &"uruk", "destination_id": &"habuba_kabira",
 		"commodity_id": &"timber", "quantity": 12,
 		"seal_id": "uruk_quay_seal_02", "sender_id": &"geme_inana",
@@ -434,7 +436,7 @@ func _run() -> void:
 	})
 	var second_shipment_id := StringName(second_shipment_result.get("shipment_id", ""))
 	_check(bool(second_shipment_result.get("success", false)), "Regional system should launch additional world-driven shipments")
-	var travel_start := RegionalWorldSystem.start_player_travel(regional_arrival_world, regional_arrival_player, &"habuba_kabira")
+	var travel_start := RegionalWorldSystemScript.start_player_travel(regional_arrival_world, regional_arrival_player, &"habuba_kabira")
 	_check(bool(travel_start.get("success", false)) and int(travel_start.get("travel_periods", 0)) == 3, "Player should be able to accept a three-period regional journey")
 	for travel_tick in range(3):
 		regional_arrival_world.advance_period()
@@ -447,7 +449,7 @@ func _run() -> void:
 			habuba_has_regional_work = true
 	_check(habuba_opportunities.size() == 3 and habuba_has_regional_work, "Arrival at Habuba should change the available work to local trade and regional cargo")
 	_check(regional_arrival_world.places[&"susa"].has("regional_institution_id") and regional_arrival_world.institutions.has(&"trade_post_susa"), "Susa should have its own seeded trade institution and local agent")
-	var uruk_destinations := RegionalWorldSystem.get_destination_options(regional_arrival_world, &"uruk")
+	var uruk_destinations := RegionalWorldSystemScript.get_destination_options(regional_arrival_world, &"uruk")
 	var susa_route_found := false
 	for destination in uruk_destinations:
 		if StringName(destination.get("place_id", "")) == &"susa" and int(destination.get("travel_periods", 0)) == 2:
