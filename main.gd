@@ -996,6 +996,12 @@ func _select_assignment_opportunity(index: int) -> void:
 	if phase != "opportunity_board" or index < 0 or index >= assignment_opportunities.size():
 		return
 	var opportunity := assignment_opportunities[index]
+	if StringName(opportunity.get("kind", "")) == &"procedural_docket":
+		procedural_assignment = (opportunity.get("source_data", {}) as Dictionary).duplicate(true)
+		active_event = null
+		AudioManager.play_docket_slide()
+		_show_case()
+		return
 	if StringName(opportunity.get("kind", "")) == &"event":
 		active_event = Registry.get_event(StringName(opportunity.get("source_id", "")))
 		if active_event == null:
