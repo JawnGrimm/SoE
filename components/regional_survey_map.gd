@@ -112,7 +112,7 @@ func _build_surface() -> void:
 	location_summary.add_theme_color_override("font_color", Color("#59432a"))
 	body.add_child(location_summary)
 	map_canvas = Control.new()
-	map_canvas.custom_minimum_size = Vector2(0, 210)
+	map_canvas.custom_minimum_size = Vector2(0, 220)
 	map_canvas.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	map_canvas.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	map_canvas.clip_contents = true
