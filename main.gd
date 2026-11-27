@@ -713,6 +713,9 @@ func _schedule_next_case() -> void:
 	context.year = world.year
 	current_era = Registry.get_era_for_year(world.year)
 	context.era = current_era
+	var active_era_id := current_era.id if current_era != null else &""
+	if route_network == null or route_network.era_id != active_era_id:
+		_configure_route_network()
 	if world.epic_summon_pending and not world.epic_summon_issued:
 		active_event = null
 		procedural_assignment = AssignmentGeneratorScript.create_epic_summons()
