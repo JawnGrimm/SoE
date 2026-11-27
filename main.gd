@@ -1009,6 +1009,7 @@ func _select_assignment_opportunity(index: int) -> void:
 		status_label.text = "WORK COULD NOT BE OPENED / SOURCE MAY HAVE CHANGED"
 		return
 	active_world_assignment_id = StringName(opportunity.get("id", ""))
+	latest_investigation_scene.clear()
 	AudioManager.play_docket_slide()
 	_show_world_engagement()
 
@@ -1023,6 +1024,8 @@ func _show_world_engagement() -> void:
 	_set_phase("world_engagement")
 	var actions: Dictionary = record.get("actions", {})
 	var evidence: Dictionary = record.get("evidence", {})
+	if latest_investigation_scene.is_empty() and evidence.has(&"examine_records"):
+		latest_investigation_scene = AssignmentNarratorScript.narrate_record_examination(record, actor, world, evidence[&"examine_records"])
 	var evidence_lines := PackedStringArray()
 	for action in AssignmentPipeline.INVESTIGATION_ACTIONS:
 		var action_id: StringName = action.id
@@ -1083,8 +1086,6 @@ func _world_assignment_action(action_id: StringName) -> void:
 		var record := AssignmentPipeline.get_record(world, active_world_assignment_id)
 		var evidence: Dictionary = result.get("evidence", {})
 		latest_investigation_scene = AssignmentNarratorScript.narrate_record_examination(record, actor, world, evidence)
-	else:
-		latest_investigation_scene.clear()
 	_show_world_engagement()
 
 func _format_investigation_scene(scene: Dictionary) -> String:
