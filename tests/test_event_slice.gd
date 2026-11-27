@@ -151,6 +151,10 @@ func _run() -> void:
 	_check(not AssignmentPipeline._project_review_due(assignment_world, &"great_canal_cut", review_baseline, 40), "A project review should not recur without material change")
 	_check(AssignmentPipeline._project_review_due(assignment_world, &"great_canal_cut", review_baseline, 60), "A project review may recur after twenty points of progress")
 	_check(AssignmentPipeline._project_review_due(assignment_world, &"great_canal_cut", review_baseline, 40) == false and AssignmentPipeline._project_review_due(assignment_world, &"great_canal_cut", {"stage": "cutting", "last_reviewed_progress": 40, "last_reviewed_stage": "survey"}, 40), "A stage transition should reopen a project review")
+	var review_cycle_world := WorldState.new()
+	review_cycle_world.epics[&"test_epic"] = {"active": true, "progress_resource": &"test_progress", "progress": 75, "stage": "survey", "last_reviewed_progress": 75, "last_reviewed_stage": "survey"}
+	review_cycle_world.reset_epic_for_new_shift(&"test_epic")
+	_check(int(review_cycle_world.epics[&"test_epic"].get("review_cycle", 0)) == 1 and not review_cycle_world.epics[&"test_epic"].has("last_reviewed_progress") and AssignmentPipeline._project_review_due(review_cycle_world, &"test_epic", review_cycle_world.epics[&"test_epic"], 0), "A new project shift should reset the review cooldown and make its first review eligible")
 	var martial_opportunities := AssignmentPipeline.generate_opportunities(assignment_world, assignment_actor, &"path_martial")
 	var martial_docket: Dictionary = {}
 	for opportunity in martial_opportunities:
