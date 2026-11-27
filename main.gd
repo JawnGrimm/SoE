@@ -1221,6 +1221,8 @@ func _debug_advance_periods(count: int) -> Dictionary:
 		return {"success": false, "error": "Developer commands are unavailable in release builds."}
 	if world == null or world.get_player() == null:
 		return {"success": false, "error": "Finish character creation before advancing the world from the console."}
+	if phase == "era_complete":
+		return {"success": false, "error": "Begin the next era before advancing the world again."}
 	if count < 1 or count > 120:
 		return {"success": false, "error": "Period count must be between 1 and 120."}
 
@@ -1323,21 +1325,21 @@ func _debug_resource_ids() -> Array[String]:
 	if world == null:
 		return ids
 	for resource_id in world.stockpiles.keys():
-		var value := String(resource_id)
-		if not ids.has(value):
-			ids.append(value)
+		var world_resource_value := String(resource_id)
+		if not ids.has(world_resource_value):
+			ids.append(world_resource_value)
 	for person in world.people.values():
 		if person == null:
 			continue
 		for resource_id in person.resources.keys():
-			var value := String(resource_id)
-			if not ids.has(value):
-				ids.append(value)
+			var person_resource_value := String(resource_id)
+			if not ids.has(person_resource_value):
+				ids.append(person_resource_value)
 	for institution in world.institutions.values():
 		for resource_id in institution.get("stockpiles", {}).keys():
-			var value := String(resource_id)
-			if not ids.has(value):
-				ids.append(value)
+			var institution_resource_value := String(resource_id)
+			if not ids.has(institution_resource_value):
+				ids.append(institution_resource_value)
 	ids.sort()
 	return ids
 
