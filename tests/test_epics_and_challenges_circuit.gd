@@ -4,6 +4,7 @@ const QueueScript = preload("res://ui/work_queue_overlay.gd")
 const Pipeline = preload("res://systems/assignment_pipeline.gd")
 const EventRunnerScript = preload("res://systems/event_runner.gd")
 const SaveCodec = preload("res://systems/save_codec.gd")
+const PopulationServiceScript = preload("res://systems/population_service.gd")
 const Quayside: EventTemplate = preload("res://data/events/challenge_quayside_stoppage.tres")
 const LedgerInquest: EventTemplate = preload("res://data/events/challenge_ledger_inquest.tres")
 const SiltBreach: EventTemplate = preload("res://data/events/challenge_dry_kettles_silt_breach.tres")
@@ -20,6 +21,10 @@ func _run() -> void:
 	_check(QueueScript.category_for({"kind": &"challenge"}) == "challenges", "Challenge event opportunities route to Challenges")
 	_check(QueueScript.category_for({"source_id": &"challenge_quayside_stoppage"}) == "challenges", "Challenge source IDs route to Challenges")
 	_check(QueueScript.category_for({"kind": &"form"}) == "assignments", "Routine forms remain Assignments")
+	var population := PopulationServiceScript.new()
+	_check(population.load_name_table() and population._names_by_culture.get(&"sumerian", []).size() >= 60, "Era I Sumerian name table contains at least sixty eligible entries")
+	var scribe_template: CharacterTemplate = load("res://data/characters/uruk_scribe_template.tres")
+	_check(scribe_template != null and scribe_template.trait_ids.has(&"meticulous") and int(scribe_template.skill_bonuses.get(&"literacy", 0)) == 2 and int(scribe_template.skill_bonuses.get(&"arithmetic", 0)) == 1, "Uruk scribe template carries meticulous and literacy/arithmetic bonuses")
 
 	var world := WorldState.new()
 	world.year = -3199
@@ -31,6 +36,10 @@ func _run() -> void:
 	actor.traits = [&"pliable", &"severe"]
 	actor.resources[&"silver"] = 0
 	world.set_player(actor)
+	var foreman := PersonEntity.new()
+	foreman.id = &"enlil_kisu"
+	foreman.display_name = "Enlil-kisu"
+	world.people[foreman.id] = foreman
 	world.institutions[&"eanna_household"] = {
 		"name": "Eanna Temple",
 		"place_id": &"uruk",
@@ -106,7 +115,7 @@ func _run() -> void:
 	var audit_result := Pipeline.resolve(world, actor, audit_id, &"epic_audit")
 	_check(bool(audit_result.get("success", false)), "Epic audit verdict resolves")
 	_check(actor.get_opinion(&"enlil_kisu") == -3 and int(actor.flags.get(&"audit_exposure", 0)) == 0, "Epic audit applies foreman opinion and clears one exposure")
-	_check(actor.skills.get_xp(&"law") >= 15 and bool(world.epics.get(&"test_epic", {}).get("stalled", false)), "Epic audit awards law XP and halts the project")
+	_check(int(actor.skills.xp.get(&"law", 0)) >= 15 and bool(world.epics.get(&"test_epic", {}).get("stalled", false)), "Epic audit awards law XP and halts the project")
 
 	# The pliable certification branch produces its intended consequence chain.
 	epic_state = world.epics[&"test_epic"]
