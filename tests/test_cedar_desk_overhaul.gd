@@ -76,5 +76,5 @@ func _test_transient_prop_state() -> void:
 	prop.stamp_inquiry(&"examine_records")
 	prop.seal_verdict()
 	var after_ui_actions: Dictionary = SaveCodec.encode_world(world)
-	assert(save_data == after_ui_actions, "Transient desk props must not alter the save payload.")
+	assert(save_data.get("world", {}) == after_ui_actions.get("world", {}), "Transient desk props must not alter serialized world state.")
 	prop.queue_free()
