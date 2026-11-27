@@ -13,6 +13,7 @@ const WorkQueueOverlayScript = preload("res://ui/work_queue_overlay.gd")
 const CedarDeskHeaderScript = preload("res://ui/cedar_desk_header.gd")
 const ClayDocketPropScript = preload("res://ui/clay_docket_prop.gd")
 const ArchiveStackPropScript = preload("res://ui/archive_stack_prop.gd")
+const CedarDeskLayoutScript = preload("res://ui/cedar_desk_layout.gd")
 const CUNEIFORM_FONT = preload("res://assets/Noto_Sans_Cuneiform,Noto_Sans_Egyptian_Hieroglyphs/Noto_Sans_Cuneiform/NotoSansCuneiform-Regular.ttf")
 const CAMPAIGN_SEED: int = 32003200
 const ROSTER_CAST: Array[StringName] = [&"shuruppak_ilu", &"utu_mansum", &"enlil_kisu", &"ur_nanna", &"nin_kasi", &"geme_inana", &"lu_nanshe"]
@@ -168,6 +169,8 @@ func _open_pause_menu() -> void:
 
 func _set_phase(next_phase: String) -> void:
 	phase = next_phase
+	if upper_workspace_control != null:
+		_set_evidence_visible(CedarDeskLayoutScript.evidence_visible(phase, survey_map != null and survey_map.visible))
 	MusicDirector.play_for_phase(phase)
 
 
@@ -264,7 +267,7 @@ func _build_interface() -> void:
 	desk_caption.add_theme_color_override("font_color", Color("#a99570"))
 	desk_toolbar.add_child(desk_caption)
 	survey_button = Button.new()
-	survey_button.text = "UNROLL REGIONAL SURVEY"
+	survey_button.text = "UNROLL SURVEY MAP"
 	survey_button.tooltip_text = "Unroll the regional river-and-road survey on the cedar desk."
 	survey_button.add_theme_font_size_override("font_size", 12)
 	survey_button.add_theme_stylebox_override("normal", _panel_style("#3a2b1d", "#80653b"))
@@ -276,7 +279,7 @@ func _build_interface() -> void:
 	upper_workspace.custom_minimum_size.y = 0
 	upper_workspace.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	upper_workspace.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	upper_workspace.size_flags_stretch_ratio = 58.0
+	upper_workspace.size_flags_stretch_ratio = CedarDeskLayoutScript.UPPER_WORKSPACE_RATIO
 	upper_workspace.add_theme_constant_override("separation", 6)
 	desk_box.add_child(upper_workspace)
 	var evidence_row := HBoxContainer.new()
@@ -290,14 +293,14 @@ func _build_interface() -> void:
 	var lower_workspace := HBoxContainer.new()
 	lower_workspace.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	lower_workspace.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	lower_workspace.size_flags_stretch_ratio = 42.0
+	lower_workspace.size_flags_stretch_ratio = CedarDeskLayoutScript.LOWER_WORKSPACE_RATIO
 	lower_workspace.add_theme_constant_override("separation", 8)
 	desk_box.add_child(lower_workspace)
 	docket_motion_layer = Control.new()
 	docket_motion_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	docket_motion_layer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	docket_motion_layer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	docket_motion_layer.size_flags_stretch_ratio = 62.0
+	docket_motion_layer.size_flags_stretch_ratio = CedarDeskLayoutScript.ACTION_BOX_RATIO
 	lower_workspace.add_child(docket_motion_layer)
 	docket_overlay = PanelContainer.new()
 	docket_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -322,13 +325,13 @@ func _build_interface() -> void:
 	clay_docket = ClayDocketPropScript.new()
 	clay_docket.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	clay_docket.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	clay_docket.size_flags_stretch_ratio = 22.0
+	clay_docket.size_flags_stretch_ratio = CedarDeskLayoutScript.CLAY_DOCKET_RATIO
 	clay_docket.impression_added.connect(_on_clay_impression_added)
 	lower_workspace.add_child(clay_docket)
 	archive_stack = ArchiveStackPropScript.new()
 	archive_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	archive_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	archive_stack.size_flags_stretch_ratio = 16.0
+	archive_stack.size_flags_stretch_ratio = CedarDeskLayoutScript.ARCHIVE_STACK_RATIO
 	archive_stack.pressed.connect(_toggle_work_queue)
 	lower_workspace.add_child(archive_stack)
 	survey_map = RegionalSurveyMapScript.new()
@@ -2033,8 +2036,8 @@ func _open_regional_survey() -> void:
 func _close_regional_survey() -> void:
 	if survey_map == null:
 		return
-	_set_evidence_visible(phase != "character_creation")
 	survey_map.visible = false
+	_set_evidence_visible(CedarDeskLayoutScript.evidence_visible(phase, false))
 	if docket_overlay != null:
 		docket_overlay.visible = true
 	if survey_button != null:
@@ -2196,14 +2199,15 @@ func _on_queue_opportunity_selected(index: int) -> void:
 
 
 func _set_evidence_visible(is_visible: bool) -> void:
+	var visible_now := is_visible and CedarDeskLayoutScript.evidence_visible(phase, survey_map != null and survey_map.visible)
 	if upper_workspace_control != null:
-		upper_workspace_control.visible = is_visible
+		upper_workspace_control.visible = visible_now
 	if evidence_workspace != null:
-		evidence_workspace.visible = is_visible
+		evidence_workspace.visible = visible_now
 	if evidence_left != null:
-		evidence_left.visible = is_visible
+		evidence_left.visible = visible_now
 	if evidence_right != null:
-		evidence_right.visible = is_visible
+		evidence_right.visible = visible_now
 
 
 func _refresh_header_status() -> void:
