@@ -77,7 +77,7 @@ General project rules:
 - The Umma canal institution declares both `canal_bailiff` and `granary_clerk` in its staffed-office roles; the actual named seats remain distinct: Ur-Mes holds `canal_bailiff` in the canal institution, and Nin-Enlil holds `granary_clerk` in the granary. Do not double-list Nin-Enlil as a canal member.
 - Runtime membership and office maps rebuild from living valid members. Vacancies may be filled by eligible unseated people in the institution's place or parent settlement; do not retain orphan pointers.
 - `umma_granary` is registry-loaded from a Resource, uses a child place under Umma, and owns local stockpiles. Definitions remain immutable.
-- Bailiff forms retain issuing/target institution IDs and `created_period`; requests older than four periods escalate through the existing dispatch circuit. Archive and foreman consequences name the acting official and use existing debt/opinion/period-delta/Epic state.
+- Bailiff forms retain issuing/target institution IDs and `created_period`; local canal requisitions carry priority 7 so they survive the four-slot board, and requests older than four periods escalate through the existing dispatch circuit. A requisition that becomes a dispatch while remote keeps its dispatch flag/tag/priority on arrival, but the travel gate clears once the player is local. Archive and foreman consequences name the acting official and use existing debt/opinion/period-delta/Epic state.
 - Office agendas, seats, pending forms, and local state round-trip through `SaveCodec`.
 
 ## Living office acceptance commands
