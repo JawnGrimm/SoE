@@ -164,7 +164,17 @@ func _run() -> void:
 	other_scribe.id = &"other_scribe"
 	_check(not bool(AssignmentPipeline.perform_action(assignment_world, other_scribe, form_assignment_id, &"examine_records").get("success", false)), "An engagement should only accept actions from its assigned scribe")
 	_check(not bool(AssignmentPipeline.resolve(assignment_world, assignment_actor, form_assignment_id, &"certify").get("success", false)), "An engagement should not permit assessment before investigation")
-	_check(bool(AssignmentPipeline.perform_action(assignment_world, assignment_actor, form_assignment_id, &"examine_records").get("success", false)), "Assignment should allow examination of its actual source record")
+	var examine_result := AssignmentPipeline.perform_action(assignment_world, assignment_actor, form_assignment_id, &"examine_records")
+	_check(bool(examine_result.get("success", false)), "Assignment should allow examination of its actual source record")
+	var examined_record := AssignmentPipeline.get_record(assignment_world, form_assignment_id)
+	var examination_scene := AssignmentNarratorScript.narrate_record_examination(examined_record, assignment_actor, assignment_world, examine_result.get("evidence", {}))
+	var has_dialogue := false
+	var has_thought := false
+	for beat in examination_scene.get("beats", []):
+		if String(beat.get("kind", "")) == "dialogue": has_dialogue = true
+		if String(beat.get("kind", "")) == "internal_monologue": has_thought = true
+	_check(has_dialogue and has_thought, "Record examination should narrate an official's dialogue and the scribe's internal thought")
+	_check(String(examination_scene.get("heading", "")) == "A closer reading", "Record examination should return a scene for the tablet presenter")
 	_check(bool(AssignmentPipeline.perform_action(assignment_world, assignment_actor, form_assignment_id, &"consult_official").get("success", false)), "Assignment should allow consultation as a separate investigative action")
 	_check(not bool(AssignmentPipeline.perform_action(assignment_world, assignment_actor, form_assignment_id, &"examine_records").get("success", false)), "An investigative action should not be recordable twice")
 	var form_resolution := AssignmentPipeline.resolve(assignment_world, assignment_actor, form_assignment_id, &"certify")

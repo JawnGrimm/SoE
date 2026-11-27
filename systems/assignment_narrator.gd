@@ -92,6 +92,44 @@ static func translate_record(source: Dictionary) -> Dictionary:
 	result["evidence"] = evidence
 	return result
 
+static func narrate_record_examination(record: Dictionary, actor: PersonEntity, world: WorldState, evidence: Dictionary) -> Dictionary:
+	## A first-person tablet scene for the first investigative action.
+	## This is presentation only; evidence and effects are resolved by AssignmentPipeline.
+	var source: Dictionary = record.get("source_data", {})
+	var official := world.get_person(StringName(record.get("employer_id", ""))) if world != null else null
+	var official_name := official.display_name if official != null else "the responsible clerk"
+	var npc_evidence: Dictionary = source.get("npc_evidence", {})
+	var beats: Array[Dictionary] = []
+	beats.append({"kind": "description", "speaker": "", "text": "You draw the tablet closer. The clay is cool where the seal has kept it from the sun."})
+	if not npc_evidence.is_empty():
+		var dispatch := String(npc_evidence.get("dispatch_record", "The dispatch tablet gives no account of the load."))
+		var tally := String(npc_evidence.get("threshold_tally", "The threshold tally is absent."))
+		beats.append({"kind": "document", "speaker": "The written record", "text": dispatch})
+		beats.append({"kind": "document", "speaker": "The threshold tally", "text": tally})
+		beats.append({"kind": "observation", "speaker": "", "text": "The two accounts cannot both be true. Someone has made the contradiction durable by pressing it into clay."})
+	elif StringName(record.get("kind", "")) == &"form":
+		var form_type := String(source.get("form_type", ""))
+		var subject := String(source.get("subject_id", "the named place"))
+		beats.append({"kind": "document", "speaker": "The pending register", "text": "The entry names %s, concerning %s. Its urgency is marked %d." % [form_type.replace("_", " "), subject.replace("_", " "), int(source.get("urgency", 1))]})
+		beats.append({"kind": "observation", "speaker": "", "text": "The register tells you why the matter arrived. It does not tell you who is telling the truth."})
+	else:
+		beats.append({"kind": "document", "speaker": "The written record", "text": String(evidence.get("facts", "The source tablet carries the matter forward, but leaves its origin uncertain."))})
+		beats.append({"kind": "observation", "speaker": "", "text": "The figures are orderly. That is not the same thing as their being honest."})
+	if official != null:
+		beats.append({"kind": "dialogue", "speaker": official_name, "text": "The entry is in order. I have nothing further to add to what is written."})
+		beats.append({"kind": "observation", "speaker": "", "text": "He calls it an entry, not an account. You notice the distinction because he seems determined not to."})
+	else:
+		beats.append({"kind": "observation", "speaker": "", "text": "No name stands beside the entry. The hand that made it has left no witness but the clay."})
+	var thought := "A record can survive its maker. It can also survive the lie that its maker needed."
+	if actor != null and actor.skills != null and actor.skills.get_level(&"literacy") >= 2:
+		thought = "The hand is practiced; the wording is not. Whoever made this entry knew how to write around a question."
+	beats.append({"kind": "internal_monologue", "speaker": actor.display_name if actor != null else "The scribe", "text": thought})
+	return {
+		"heading": "A closer reading",
+		"beats": beats,
+		"closing": "The tablet has yielded a contradiction, not a verdict. The next voice may explain it—or make it worse."
+	}
+
 static func _template_for(record: Dictionary) -> Dictionary:
 	for key in ["template_id", "source_id", "matter_id", "id"]:
 		var value := StringName(record.get(key, ""))
