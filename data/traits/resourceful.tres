@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="TraitDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/trait_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"resourceful"
+display_name = "Resourceful"
+description = "Finds a workable answer when supplies or instructions run short."
+culture_tags = Array[StringName]([&"sumerian"])
+era_ids = Array[StringName]([&"uruk_storehouse"])
