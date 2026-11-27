@@ -63,6 +63,9 @@ jobs:
       - name: Import project and validate resources
         run: godot --headless --editor --path . --quit
 
+      - name: Launch cedar desk scene headlessly
+        run: godot --headless --path . --quit-after 3
+
       - name: Run event and period integration tests
         run: godot --headless --path . --script res://tests/test_event_slice.gd
 
