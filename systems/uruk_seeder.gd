@@ -85,6 +85,16 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 
 	world.stockpiles.clear()
 	world.stockpiles[&"canal_progress"] = 0
+	var canal_definition := definitions.get_epic(&"great_canal_cut")
+	if canal_definition != null:
+		world.epics[&"great_canal_cut"] = {
+			"active": false, "progress": 0, "progress_resource": canal_definition.progress_resource,
+			"target": canal_definition.target, "title": canal_definition.title,
+			"sponsor_institution": canal_definition.sponsor_institution, "era_id": canal_definition.era_id,
+			"initial_stage": canal_definition.initial_stage, "stage": canal_definition.initial_stage,
+			"completed": false, "review_initialized": false, "review_pending": false,
+			"scandal_flags": [], "history_notes": []
+		}
 	world.stockpiles[&"barley"] = 450 + world.rng_sim.randi_range(-30, 50)
 	world.stockpiles[&"dates"] = 90 + world.rng_sim.randi_range(-10, 15)
 	world.stockpiles[&"sheep"] = 34 + world.rng_sim.randi_range(-4, 6)
