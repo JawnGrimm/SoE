@@ -47,7 +47,7 @@ window/stretch/mode="canvas_items"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/godot-resource-database/plugin.cfg", "res://addons/limbo_console/plugin.cfg", "res://addons/maaacks_menus_template/plugin.cfg", "res://addons/maaacks_music_controller/plugin.cfg", "res://addons/plugin_updater/plugin.cfg", "res://addons/province_map_builder/plugin.cfg", "res://addons/save_value_viewer/plugin.cfg", "res://addons/worldmap_builder/plugin.cfg")
+enabled=PackedStringArray("res://addons/godot-resource-database/plugin.cfg", "res://addons/limbo_console/plugin.cfg", "res://addons/maaacks_menus_template/plugin.cfg", "res://addons/maaacks_music_controller/plugin.cfg", "res://addons/plugin_updater/plugin.cfg", "res://addons/save_value_viewer/plugin.cfg", "res://addons/worldmap_builder/plugin.cfg")
 
 [input]
 
