@@ -53,6 +53,17 @@ func travel(world: WorldState, route_id: StringName, destination_id: StringName)
 	if periods < 1:
 		return _failure("The selected route is closed, disrupted beyond use, or does not connect these places.")
 	var departure_period := world.total_periods
+	var traveler := world.get_player()
+	if traveler != null:
+		var purse := int(traveler.resources.get(&"silver", 0))
+		if purse >= 1:
+			traveler.resources[&"silver"] = purse - 1
+		else:
+			traveler.flags[&"unpaid_route_fees"] = int(traveler.flags.get(&"unpaid_route_fees", 0)) + 1
+			var archivist := world.get_person(&"shuruppak_ilu")
+			if archivist != null:
+				archivist.change_opinion(traveler.id, -1, "The apprentice departed without paying the route fee.", world.year)
+			world.cedar_desk_log.append({"year": world.year, "period": world.period, "title": "ROUTE FEE IN ARREARS", "summary": "One silver passage fee remains owed. Travel proceeds; the debt is recorded."})
 	for _period_index in range(periods):
 		simulator.advance_period(world)
 	world.current_location_id = destination_id
