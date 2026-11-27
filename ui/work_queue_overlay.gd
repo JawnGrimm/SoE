@@ -93,7 +93,7 @@ func _rebuild() -> void:
 	for group in groups:
 		var group_items: Array[int] = []
 		for i in range(_opportunities.size()):
-			if _category(_opportunities[i]) == String(group.id):
+			if category_for(_opportunities[i]) == String(group.id):
 				group_items.append(i)
 		if group_items.is_empty():
 			continue
@@ -123,7 +123,7 @@ func _rebuild() -> void:
 		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		sections.add_child(empty)
 
-func _category(item: Dictionary) -> String:
+static func category_for(item: Dictionary) -> String:
 	var kind := StringName(item.get("kind", ""))
 	if kind == &"project_review" or kind == &"work" or bool(item.get("is_work", false)):
 		return "works"
