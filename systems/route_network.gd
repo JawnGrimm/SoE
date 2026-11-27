@@ -7,7 +7,7 @@ var places: Dictionary[StringName, PlaceDef] = {}
 var routes: Dictionary[StringName, RouteDef] = {}
 var calculator := TravelCalculator.new()
 
-func configure(world_state: WorldState, place_definitions: Array[PlaceDef], route_definitions: Array[RouteDef]) -> bool:
+func configure(world_state: WorldState, place_definitions: Array[PlaceDef], route_definitions: Array[RouteDef], active_era_id: StringName = &"") -> bool:
 	if world_state == null:
 		return false
 	var next_places: Dictionary[StringName, PlaceDef] = {}
@@ -19,6 +19,8 @@ func configure(world_state: WorldState, place_definitions: Array[PlaceDef], rout
 	for route in route_definitions:
 		if route == null or not route.is_valid() or next_routes.has(route.id):
 			return false
+		if active_era_id != &"" and route.era_id != &"" and route.era_id != active_era_id:
+			continue
 		if not next_places.has(route.origin_id) or not next_places.has(route.destination_id):
 			return false
 		next_routes[route.id] = route
