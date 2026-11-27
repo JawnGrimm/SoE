@@ -2020,8 +2020,8 @@ func _open_regional_survey() -> void:
 	if not survey_map.configure(route_network, world, travel_allowed):
 		status_label.text = "SURVEY UNAVAILABLE / REGIONAL ROUTE DATA IS INCOMPLETE."
 		return
-	_set_evidence_visible(false)
 	survey_map.visible = true
+	_set_evidence_visible(false)
 	if work_queue_button != null:
 		work_queue_button.visible = false
 	docket_overlay.visible = false
@@ -2194,7 +2194,13 @@ func _on_queue_opportunity_selected(index: int) -> void:
 
 
 func _set_evidence_visible(is_visible: bool) -> void:
-	var visible_now := is_visible and CedarDeskLayoutScript.evidence_visible(phase, survey_map != null and survey_map.visible)
+	var map_open := survey_map != null and survey_map.visible
+	var full_workspace := phase == "character_creation" or map_open
+	var visible_now := is_visible and CedarDeskLayoutScript.evidence_visible(phase, map_open)
+	if clay_docket != null:
+		clay_docket.visible = not full_workspace
+	if archive_stack != null:
+		archive_stack.visible = not full_workspace
 	if upper_workspace_control != null:
 		upper_workspace_control.visible = visible_now
 	if evidence_workspace != null:
