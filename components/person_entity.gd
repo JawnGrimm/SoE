@@ -3,6 +3,7 @@ extends RefCounted
 
 var id: StringName = &""
 var display_name: String = ""
+var current_location_id: StringName = &"uruk"
 var skills := SkillsComponent.new()
 var office_id: StringName = &""
 var traits: Array[StringName] = []
