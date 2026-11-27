@@ -540,10 +540,11 @@ func _tick_labor_foreman_agenda(world: WorldState, official: PersonEntity, insti
 	var resources: Dictionary = institution.get("stockpiles", {})
 	var labor_warn := int(institution.get("pressure_thresholds", {}).get(&"labor_warn", 8))
 	var labor := int(resources.get(&"labor", world.get_resource(&"labor")))
-	var thirsty := world.has_flag(&"thirsty_diggers", world.current_period_index())
+	var now := world.current_period_index()
+	var thirsty_expiry := int(world.world_flags.get(&"thirsty_diggers", -100))
+	var thirsty := world.has_flag(&"thirsty_diggers", now) or thirsty_expiry >= now - 1
 	if not thirsty and labor >= labor_warn:
 		return
-	var now := world.current_period_index()
 	var last_reaction := int(institution.get("last_foreman_reaction_period", -100))
 	if now - last_reaction < 3:
 		return
