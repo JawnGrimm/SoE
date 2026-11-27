@@ -28,6 +28,9 @@ static func apply_choice(world: WorldState, actor: PersonEntity, choice: StringN
 			world.change_faction_standing(&"boatmens_guild", 25)
 			world.change_faction_standing(&"council_of_elders", 8)
 			world.world_flags[&"canal_crew_legacy"] = 1
+			var foreman := world.get_person(&"enlil_kisu")
+			if foreman != null:
+				actor.change_opinion(foreman.id, 15, "The monument names the ditch crews beside the gods.", world.year)
 			if not actor.traits.has(&"honors_labor"):
 				actor.traits.append(&"honors_labor")
 		&"temple_only":
