@@ -8,6 +8,7 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 	world.set_world_seed(world_seed)
 	world.year = -3200
 	world.period = 0
+	world.periods_elapsed = 0
 	var starting_era := definitions.get_era_for_year(world.year)
 	if starting_era == null:
 		var available_eras := definitions.all_eras()
