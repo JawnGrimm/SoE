@@ -39,10 +39,14 @@ func get_available_destinations(world: WorldState) -> Array[Dictionary]:
 	return result
 
 func travel(world: WorldState, route_id: StringName, destination_id: StringName) -> Dictionary:
-	return execute_journey(world, world.get_player() if world != null else null, destination_id, route_id)
+	return execute_selected_journey(world, world.get_player() if world != null else null, destination_id, route_id)
 
 
-func execute_journey(world: WorldState, actor: PersonEntity, destination_id: StringName, route_id: StringName = &"") -> Dictionary:
+func execute_journey(world: WorldState, actor: PersonEntity, destination_id: StringName) -> Dictionary:
+	return execute_selected_journey(world, actor, destination_id)
+
+
+func execute_selected_journey(world: WorldState, actor: PersonEntity, destination_id: StringName, route_id: StringName) -> Dictionary:
 	if world == null or actor == null or network == null or simulator == null or network.world != world:
 		return _failure("Travel service is not configured for this traveler and world.")
 	var origin_id := world.current_location_id
