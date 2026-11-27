@@ -19,10 +19,10 @@ static func condition_passes(actor: PersonEntity, institution: Dictionary, world
 		&"canal_pressure_present": return int(institution.get("resource_pressure", 0)) > 0
 		&"canal_labor_below_warning": return int(stock.get(&"labor", 0)) < int(thresholds.get(&"labor_warn", 7))
 		&"canal_silt_hazard_active": return _silt_hazard(world, StringName(institution.get("place_id", "")))
-		&"archive_audit_period_due": return now % 6 == 0 and now - int(institution.get("last_archive_audit_period", -100)) >= 6
+		&"archive_audit_period_due": return now % 6 == 0 and (not institution.has("last_archive_audit_period") or now - int(institution.get("last_archive_audit_period", now)) >= 6)
 		&"archive_audit_trigger_present":
 			return player != null and (int(player.flags.get(&"audit_exposure", 0)) > 0 or &"pliable" in player.traits or world.has_flag(&"phantom_barley_measure", now))
-		&"foreman_reaction_cooldown_ready": return now - int(institution.get("last_foreman_reaction_period", -100)) >= 3
+		&"foreman_reaction_cooldown_ready": return not institution.has("last_foreman_reaction_period") or now - int(institution.get("last_foreman_reaction_period", now)) >= 3
 		&"foreman_thirsty_diggers":
 			var expiry := int(world.world_flags.get(&"thirsty_diggers", -100))
 			return world.has_flag(&"thirsty_diggers", now) or expiry >= now - 1
