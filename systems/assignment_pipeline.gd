@@ -486,6 +486,10 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 			else:
 				summary = "The institution's current stock records are reconciled. No discrepancy is presumed without a separate expected balance."
 				facts = "INSTITUTION: %s\nMEMBERS: %d / ACTIVITY RECORDS: %d\n%s" % [String(institution.get("name", institution_id)), int(data.get("member_count", institution.get("members", []).size())), int(data.get("activity_count", institution.get("activity_count", 0))), _live_stock_facts(stock, institution)]
+			facts += "\nTABLET / STOREHOUSE: recorded barley %d; live barley %d; quantity gap %+d." % [int(institution.get("stock_records", {}).get("barley_recorded", stock.get(&"barley", 0))), int(stock.get(&"barley", 0)), int(stock.get(&"barley", 0)) - int(institution.get("stock_records", {}).get("barley_recorded", stock.get(&"barley", 0)))]
+			var ledger_records: Dictionary = institution.get("stock_records", {})
+			if bool(ledger_records.get("concealed_spoilage", false)):
+				facts += "\nTABLET / STOREHOUSE QUALITY GAP: tablet declares %s; physical tally records damp, mold-marked barley." % String(ledger_records.get("barley_quality_declaration", "unrecorded"))
 			facts += "\n" + _stock_detail(stock, skill_level, "ARITHMETIC")
 		&"examine_records":
 			if kind == &"form":
@@ -512,9 +516,12 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 				var total := 0
 				for amount in stock.values():
 					total += int(amount)
-				facts = "INSTITUTION: %s\nMEMBERS: %d / ACTIVITY RECORDS: %d\nRECORDED STOCK: %d across %d resource types" % [String(institution.get("name", institution_id)), int(data.get("member_count", institution.get("members", []).size())), int(data.get("activity_count", institution.get("activity_count", 0))), total, stock.size()]
-				facts += "\n" + _stock_detail(stock, skill_level, "STEWARDSHIP")
-				summary = "The storehouse is inspected against its current recorded stock. Physical-versus-book discrepancies require an independent count."
+				facts = "PHYSICAL SITE: %s\nBIN COUNT / BARLEY: %d | LABOR ROSTER: %d | TEXTILES: %d\nINSTITUTION: %s" % [_place_name(world, StringName(data.get("place_id", data.get("subject_id", "")))), int(stock.get(&"barley", 0)), int(stock.get(&"labor", 0)), int(stock.get(&"textiles", 0)), String(institution.get("name", institution_id))]
+				var physical_records: Dictionary = institution.get("stock_records", {})
+				if bool(physical_records.get("concealed_spoilage", false)):
+					facts += "\nPHYSICAL FINDING: damp or mold-marked barley contradicts the prime seed-corn declaration."
+				facts += "\n" + _live_stock_facts(stock, institution)
+				summary = "The physical storehouse is inspected. These are the current bin and roster counts, not a clerk's tablet claim."
 	var evidence_place := StringName(data.get("place_id", data.get("subject_id", "")))
 	for hazard in world.hazards:
 		if bool(hazard.get("active", false)) and StringName(hazard.get("place_id", "")) == evidence_place:
