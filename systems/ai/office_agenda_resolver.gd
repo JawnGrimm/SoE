@@ -143,7 +143,7 @@ static func _archive_reprimand(actor: PersonEntity, institution: Dictionary, wor
 	var now := world.current_period_index()
 	var exposure := int(player.flags.get(&"audit_exposure", 0))
 	var trigger := exposure > 0 or &"pliable" in player.traits or world.has_flag(&"phantom_barley_measure", now)
-	if now % 6 != 0 or now - int(institution.get("last_archive_audit_period", -100)) < 6 or not trigger: return false
+	if now % 6 != 0 or (institution.has("last_archive_audit_period") and now - int(institution.get("last_archive_audit_period", now)) < 6) or not trigger: return false
 	var updated: Dictionary = world.institutions.get(institution_id, {}).duplicate(true)
 	updated["last_archive_audit_period"] = now
 	if exposure > 0: player.flags[&"audit_exposure"] = exposure - 1
@@ -168,7 +168,7 @@ static func _foreman_disruption(actor: PersonEntity, institution: Dictionary, wo
 	var now := world.current_period_index()
 	var expiry := int(world.world_flags.get(&"thirsty_diggers", -100))
 	var thirsty := world.has_flag(&"thirsty_diggers", now) or expiry >= now - 1
-	if (not thirsty and labor >= labor_warn) or now - int(institution.get("last_foreman_reaction_period", -100)) < 3: return false
+	if (not thirsty and labor >= labor_warn) or (institution.has("last_foreman_reaction_period") and now - int(institution.get("last_foreman_reaction_period", now)) < 3): return false
 	var player := world.get_player()
 	if player != null: actor.change_opinion(player.id, -1, "The canal crew lacks provisions or workable labor.", world.year)
 	world.set_flag(&"canal_crew_slowdown", now + 2)
