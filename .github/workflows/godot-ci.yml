@@ -78,6 +78,9 @@ jobs:
       - name: Run Nippur travel circuit acceptance test
         run: godot --headless --path . --script res://tests/test_travel_circuit.gd
 
+      - name: Run Umma institutional circuit acceptance test
+        run: godot --headless --path . --script res://tests/test_umma_circuit.gd
+
       - name: Run periodic grain clerk agenda tests
         run: godot --headless --path . --script res://tests/test_grain_clerk_agenda.gd
 
