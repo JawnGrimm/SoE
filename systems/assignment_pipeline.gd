@@ -187,26 +187,35 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 	var result: Array[Dictionary] = []
 	var used_kinds: Dictionary = {}
 	var procedural_candidate: Dictionary = {}
+	# Active project reviews are obligations, not optional board rotation.
+	# Include every pending review first; BOARD_SIZE limits routine work only.
 	for candidate in candidates:
-		if StringName(candidate.get("kind", "")) == &"procedural_docket":
+		if StringName(candidate.get("kind", "")) == &"project_review":
+			result.append(candidate.duplicate(true))
+			used_kinds[&"project_review"] = true
+		elif StringName(candidate.get("kind", "")) == &"procedural_docket":
 			procedural_candidate = candidate
-			continue
+	# Fill the ordinary board around the reviews, preserving one story slot.
+	for candidate in candidates:
 		var kind := StringName(candidate.get("kind", ""))
-		# Reserve one board slot for the career-path story, then diversify world work.
-		if used_kinds.has(kind) and result.size() < BOARD_SIZE - 1:
+		if kind in [&"project_review", &"procedural_docket"]:
+			continue
+		if result.size() >= BOARD_SIZE - 1:
+			break
+		if used_kinds.has(kind):
 			continue
 		result.append(candidate.duplicate(true))
 		used_kinds[kind] = true
-		if result.size() >= BOARD_SIZE - 1:
-			break
 	if not procedural_candidate.is_empty() and result.size() < BOARD_SIZE:
 		result.append(procedural_candidate.duplicate(true))
+	# If the story slot was unavailable, fill remaining routine slots by priority.
 	if result.size() < BOARD_SIZE:
 		for candidate in candidates:
-			if candidate not in result:
-				result.append(candidate.duplicate(true))
-				if result.size() >= BOARD_SIZE:
-					break
+			if candidate in result or StringName(candidate.get("kind", "")) == &"procedural_docket":
+				continue
+			result.append(candidate.duplicate(true))
+			if result.size() >= BOARD_SIZE:
+				break
 	return result
 
 static func begin(world: WorldState, opportunity: Dictionary, actor: PersonEntity) -> bool:
@@ -483,7 +492,7 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 				total += int(amount)
 			if kind == &"form":
 				summary = "The form is checked against the institution's current recorded position."
-				facts = "FORM: %s\nURGENCY: %d\n%s" % [String(data.get("form_type", "")), int(data.get("urgency", 0)), _live_stock_facts(stock, institution)]
+				facts = "DOCUMENT: %s\nURGENCY: %d\n%s" % [_form_title(StringName(data.get("form_type", ""))), int(data.get("urgency", 0)), _live_stock_facts(stock, institution)]
 			else:
 				summary = "The institution's current stock records are reconciled. No discrepancy is presumed without a separate expected balance."
 				facts = "INSTITUTION: %s\nMEMBERS: %d / ACTIVITY RECORDS: %d\n%s" % [String(institution.get("name", institution_id)), int(data.get("member_count", institution.get("members", []).size())), int(data.get("activity_count", institution.get("activity_count", 0))), _live_stock_facts(stock, institution)]
@@ -593,17 +602,25 @@ static func _institution_for_location(world: WorldState, location_id: StringName
 
 static func _live_stock_facts(stock: Dictionary, institution: Dictionary) -> String:
 	var thresholds: Dictionary = institution.get("pressure_thresholds", {})
-	var barley := int(stock.get(&"barley", 0))
-	var labor := int(stock.get(&"labor", 0))
-	var textiles := int(stock.get(&"textiles", 0))
-	var minimum_labor := int(thresholds.get(&"labor_warn", 8))
-	var barley_warn := int(thresholds.get(&"barley_warn", 105))
-	var textiles_warn := int(thresholds.get(&"textiles_warn", 3))
-	var lines := "Barley: %d (warn < %d) | Labor: %d (min %d) | Textiles: %d (warn < %d)" % [barley, barley_warn, labor, minimum_labor, textiles, textiles_warn]
+	var lines := PackedStringArray()
+	var resource_ids := stock.keys()
+	resource_ids.sort()
+	for resource_value in resource_ids:
+		var resource_id := StringName(resource_value)
+		var resource_label := String(resource_id).replace("_", " ").capitalize()
+		var amount := int(stock[resource_value])
+		lines.append("%s: %d" % [resource_label, amount])
+		var threshold_key := StringName("%s_warn" % String(resource_id))
+		if thresholds.has(threshold_key) and amount < int(thresholds[threshold_key]):
+			lines.append("  Below the office's warning measure (%d)." % int(thresholds[threshold_key]))
+		elif resource_id == &"labor" and thresholds.has(&"labor_warn") and amount < int(thresholds[&"labor_warn"]):
+			lines.append("  Below the office's minimum labor measure (%d)." % int(thresholds[&"labor_warn"]))
+	if lines.is_empty():
+		lines.append("No stockpile resources are recorded for this institution.")
 	var records: Dictionary = institution.get("stock_records", {})
 	if bool(records.get("concealed_spoilage", false)):
-		lines += "\nHAZARD: concealed spoilage; declaration=%s" % String(records.get("barley_quality_declaration", "unrecorded"))
-	return lines
+		lines.append("The stock record notes concealed spoilage; declared quality: %s." % String(records.get("barley_quality_declaration", "unrecorded")).replace("_", " "))
+	return "\n".join(lines)
 
 static func _official_stance(world: WorldState, actor: PersonEntity, official: PersonEntity, data: Dictionary, opinion: int) -> String:
 	if official == null:
