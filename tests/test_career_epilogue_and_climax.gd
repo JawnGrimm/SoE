@@ -27,6 +27,7 @@ func _test_career_metrics_and_epitaphs() -> void:
 	world.silver_earned = 19
 	world.world_flags[&"audit_exposure"] = 4
 	world.world_flags[&"phantom_barley_measure"] = 1
+	world.faction_standings[&"provincial_frontier"] = 5
 	var actor := PersonEntity.new()
 	actor.display_name = "Test Scribe"
 	actor.resources[&"silver"] = 1
