@@ -84,7 +84,8 @@ func generate_people(
 	for resource in definitions.get_definitions("character_templates"):
 		var template := resource as CharacterTemplate
 		if template != null and template.culture_id == culture_id and _era_matches(template.era_ids, era_id):
-			if definitions.get_definition(template.occupation_id) is OccupationDef:
+			var template_occupation := definitions.get_definition(template.occupation_id) as OccupationDef
+			if template_occupation != null and _occupation_matches(template_occupation, culture_id, era_id):
 				templates.append(template)
 	if occupations.is_empty() or templates.is_empty():
 		push_warning("PopulationService: no eligible occupations/templates for %s in %s" % [culture_id, era_id])
@@ -100,7 +101,7 @@ func generate_people(
 			used_names[String(person.display_name).to_lower()] = true
 	var batch_ids: Array[StringName] = []
 	for index in range(count):
-		var template := _weighted_pick(templates, world.rng_people) as CharacterTemplate
+		var template := _weighted_pick_template(templates, definitions, world.rng_people)
 		if template == null:
 			continue
 		var occupation := definitions.get_definition(template.occupation_id) as OccupationDef
@@ -120,6 +121,7 @@ func generate_people(
 		person.generation_key = batch_key
 		person.name_provenance = StringName(entry["provenance"])
 		person.name_source = String(entry["source"])
+		person.name_gender = StringName(entry["gender"])
 		person.office_id = occupation.office_id
 		for skill_id in CORE_SKILLS:
 			person.skills.levels[skill_id] = 1
@@ -133,7 +135,8 @@ func generate_people(
 		trait_candidates.append_array(occupation.trait_ids)
 		trait_candidates.append_array(template.trait_ids)
 		for trait_id in trait_candidates:
-			if definitions.get_definition(trait_id) is TraitDef and trait_id not in person.traits:
+			var trait_def := definitions.get_definition(trait_id) as TraitDef
+			if trait_def != null and _trait_matches(trait_def, culture_id, era_id) and trait_id not in person.traits:
 				person.traits.append(trait_id)
 		world.people[person.id] = person
 		batch_ids.append(person.id)
@@ -146,6 +149,9 @@ func _occupation_matches(occupation: OccupationDef, culture_id: StringName, era_
 
 func _era_matches(era_ids: Array[StringName], era_id: StringName) -> bool:
 	return era_ids.is_empty() or era_id in era_ids
+
+func _trait_matches(trait_def: TraitDef, culture_id: StringName, era_id: StringName) -> bool:
+	return (trait_def.culture_tags.is_empty() or culture_id in trait_def.culture_tags) and _era_matches(trait_def.era_ids, era_id)
 
 func _eligible_names(culture_id: StringName, era_id: StringName) -> Array:
 	var result: Array = []
@@ -166,13 +172,20 @@ func _pick_unique_name(entries: Array, used_names: Dictionary, rng: RandomNumber
 	used_names[String(picked["name"]).to_lower()] = true
 	return picked
 
-func _weighted_pick(items: Array, rng: RandomNumberGenerator) -> Resource:
+func _weighted_pick_template(templates: Array[CharacterTemplate], definitions: DefinitionRegistry, rng: RandomNumberGenerator) -> CharacterTemplate:
 	var total := 0
-	for item in items:
-		total += maxi(1, int(item.weight))
+	for template in templates:
+		var occupation := definitions.get_definition(template.occupation_id) as OccupationDef
+		if occupation != null:
+			total += maxi(1, template.weight) * maxi(1, occupation.weight)
+	if total <= 0:
+		return null
 	var roll := rng.randi_range(1, total)
-	for item in items:
-		roll -= maxi(1, int(item.weight))
+	for template in templates:
+		var occupation := definitions.get_definition(template.occupation_id) as OccupationDef
+		if occupation == null:
+			continue
+		roll -= maxi(1, template.weight) * maxi(1, occupation.weight)
 		if roll <= 0:
-			return item
-	return items.back()
+			return template
+	return templates.back()
