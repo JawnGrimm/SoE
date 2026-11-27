@@ -13,3 +13,4 @@ exports = Array[StringName]([&"religious_verdicts", &"offerings"])
 imports = Array[StringName]([&"textiles", &"beer"])
 connected_to = Array[StringName]([&"uruk"])
 era_id = &"uruk_storehouse"
+survey_position = Vector2(485, 42)
