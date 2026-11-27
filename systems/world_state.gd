@@ -21,6 +21,11 @@ var player_id: StringName = &""
 var _next_person_sequence: int = 1
 # Seeded world graph. These are runtime records, not shared definition Resources.
 var places: Dictionary[StringName, Dictionary] = {}
+var routes: Dictionary[StringName, Dictionary] = {}
+var shipments: Dictionary[StringName, Dictionary] = {}
+var player_travel: Dictionary = {}
+var travel_history: Array[Dictionary] = []
+var _next_shipment_sequence: int = 1
 var institutions: Dictionary[StringName, Dictionary] = {}
 var social_groups: Dictionary[StringName, Dictionary] = {}
 var assignments: Dictionary[StringName, Dictionary] = {}
@@ -117,6 +122,7 @@ func advance_period() -> void:
 		year += 1
 	_process_period_deadlines()
 	_process_hazards()
+	RegionalWorldSystem.advance_period(self)
 
 func _process_hazards() -> void:
 	for index in range(hazards.size()):
