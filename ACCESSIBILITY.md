@@ -57,7 +57,7 @@
 ## Godot implementation and verification
 
 - Prefer Godot's built-in focus/navigation properties and theme overrides; keep focus logic in reusable UI components.
-- Use `focus_mode = Control.FOCUS_ALL` for actionable controls and `FOCUS_NONE` for decorative controls.
+- Use focus_mode = Control.FOCUS_ALL for actionable controls and FOCUS_NONE for decorative controls.
 - Set accessible_name/accessible_description when supported by the project's Godot version and control type; otherwise provide visible labels and tooltips.
 - Do not change simulation rules, assignment resolution, world state, or save schema to implement accessibility.
 - Verify focus order and overlay focus restoration manually in a running build. Headless tests can validate state and signals, but cannot certify visual contrast, readability, or actual keyboard navigation.
