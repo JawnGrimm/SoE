@@ -13,6 +13,8 @@ extends Resource
 @export var imports: Array[StringName] = []
 @export var connected_to: Array[StringName] = []
 @export var era_id: StringName = &"uruk_storehouse"
+## Authored position on the regional survey layer; zero means not plotted in this map.
+@export var survey_position: Vector2 = Vector2.ZERO
 
 func is_valid() -> bool:
 	return id != &"" and not display_name.strip_edges().is_empty() and era_id != &""
