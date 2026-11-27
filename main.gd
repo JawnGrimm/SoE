@@ -882,6 +882,12 @@ func _show_first_workday_mentor() -> void:
 	var lines: Dictionary = creation_catalog.get("first_workday_mentor_lines", {})
 	dossier.text = String(lines.get(String(mentor_id), "The mentor places a blank tablet before you. “Make your mark.”")) + "\n\n“Here is your tablet [Clay Docket]. Here is the dispatch stack from the daybook [Archive Stack]. When the boatmen bring claims, record what the clay proves, not what their tongues swear.”\n\nYour starting purse contains 2 silver. The reed stylus and cylinder seal are yours to use; the Cedar Desk is ready."
 	_add_choice("Take the reed / begin work", _finish_first_workday_mentor)
+	if choices.get_child_count() > 0:
+		var first_row := choices.get_child(0)
+		if first_row is HBoxContainer and first_row.get_child_count() > 1:
+			var first_button := first_row.get_child(1)
+			if first_button is Button:
+				first_button.grab_focus()
 
 func _finish_first_workday_mentor() -> void:
 	if phase != "first_workday_mentor":
