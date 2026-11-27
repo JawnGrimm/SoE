@@ -15,7 +15,7 @@ func configure(route_network: RouteNetwork, world_simulator: WorldSimulator) -> 
 
 func get_available_destinations(world: WorldState) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
-	if world == null or network == null:
+	if world == null or network == null or network.world != world:
 		return result
 	for route_id in network.get_connected_route_ids(world.current_location_id):
 		var route := network.get_route(route_id)
@@ -38,13 +38,16 @@ func get_available_destinations(world: WorldState) -> Array[Dictionary]:
 	return result
 
 func travel(world: WorldState, route_id: StringName, destination_id: StringName) -> Dictionary:
-	if world == null or network == null or simulator == null:
-		return _failure("Travel service is not configured.")
+	if world == null or network == null or simulator == null or network.world != world:
+		return _failure("Travel service is not configured for this world.")
 	var origin_id := world.current_location_id
 	if destination_id == &"" or destination_id == origin_id:
 		return _failure("The destination is invalid.")
 	if network.get_place(destination_id) == null:
 		return _failure("The destination is not registered in this region.")
+	var route := network.get_route(route_id)
+	if route == null:
+		return _failure("The selected route is not registered.")
 	var periods := network.get_transit_periods(route_id, origin_id, destination_id)
 	if periods < 1:
 		return _failure("The selected route is closed, disrupted beyond use, or does not connect these places.")
@@ -55,6 +58,8 @@ func travel(world: WorldState, route_id: StringName, destination_id: StringName)
 	return {
 		"success": true,
 		"route_id": route_id,
+		"route_name": route.display_name,
+		"route_type": route.route_type,
 		"origin_id": origin_id,
 		"destination_id": destination_id,
 		"transit_periods": periods,
