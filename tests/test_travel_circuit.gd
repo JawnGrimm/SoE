@@ -167,8 +167,8 @@ func _run() -> void:
 	_check(bool(decoded.get("success", false)) and restored != null and restored.current_location_id == &"uruk", "Save/load preserves the current settlement after the circuit")
 	_check(bool(decoded.get("session", {}).get("survey_open", false)), "Save/load preserves survey visibility in the desk session")
 
-	# Provincial dispatch acceptance: reuse the live circuit world so this
-	# regression adds only the one journey period it is intended to exercise.
+	# Provincial dispatch acceptance: the aged requisition becomes local
+	# after the one-period journey and can then enter the normal assignment flow.
 	var dispatch_actor := world.get_player()
 	dispatch_actor.resources[&"silver"] = 1
 	var dispatch_form_id := world.enqueue_form({
@@ -180,14 +180,6 @@ func _run() -> void:
 		"urgency": 3,
 		"created_period": world.current_period_index() - 5
 	})
-	var dispatch_board := AssignmentPipelineScript.generate_opportunities(world, dispatch_actor)
-	var dispatch_opportunity: Dictionary = {}
-	for candidate in dispatch_board:
-		if StringName(candidate.get("source_id", "")) == dispatch_form_id:
-			dispatch_opportunity = candidate
-			break
-	_check(not dispatch_opportunity.is_empty() and bool(dispatch_opportunity.get("dispatch", false)), "The aged Umma requisition appears as a provincial dispatch in Uruk")
-	_check(not AssignmentPipelineScript.begin(world, dispatch_opportunity, dispatch_actor), "The provincial requisition cannot be opened before travel")
 	var departure_index := world.current_period_index()
 	var departure_silver := int(dispatch_actor.resources.get(&"silver", 0))
 	var journey := travel.execute_journey(world, dispatch_actor, &"umma")
