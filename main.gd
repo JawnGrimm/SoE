@@ -31,7 +31,7 @@ var scheduler: EventScheduler
 var world_simulator: WorldSimulator
 var route_network: RouteNetwork
 var travel_service: TravelService
-var survey_map: RegionalSurveyMap
+var survey_map: Variant
 var survey_button: Button
 var world: WorldState
 var actor: PersonEntity
@@ -1693,7 +1693,8 @@ func _toggle_regional_survey() -> void:
 func _open_regional_survey() -> void:
 	if survey_map == null or route_network == null or world == null:
 		return
-	if not survey_map.configure(route_network, world):
+	var travel_allowed := phase not in ["character_creation", "era_complete", "case", "world_engagement"]
+	if not survey_map.configure(route_network, world, travel_allowed):
 		status_label.text = "SURVEY UNAVAILABLE / REGIONAL ROUTE DATA IS INCOMPLETE."
 		return
 	survey_map.visible = true
@@ -1712,7 +1713,7 @@ func _close_regional_survey() -> void:
 	AudioManager.play_docket_slide()
 
 func _on_survey_travel_requested(route_id: StringName, destination_id: StringName) -> void:
-	if phase in ["character_creation", "era_complete"] or travel_service == null or world == null:
+	if phase in ["character_creation", "era_complete", "case", "world_engagement"] or travel_service == null or world == null:
 		return
 	var result := travel_service.travel(world, route_id, destination_id)
 	if not bool(result.get("success", false)):
