@@ -11,6 +11,7 @@ const TravelServiceScript = preload("res://systems/travel_service.gd")
 const AssignmentPipelineScript = preload("res://systems/assignment_pipeline.gd")
 const SaveCodecScript = preload("res://systems/save_codec.gd")
 const CalendarFormatterScript = preload("res://systems/calendar_formatter.gd")
+const RegionalSurveyMapScript = preload("res://components/regional_survey_map.gd")
 const URUK: PlaceDef = preload("res://data/places/uruk.tres")
 const NIPPUR: PlaceDef = preload("res://data/places/nippur.tres")
 const UMMA: PlaceDef = preload("res://data/places/umma.tres")
@@ -31,6 +32,15 @@ func _run() -> void:
 	_check(world.current_location_id == &"uruk", "A new campaign begins in Uruk")
 	_check(network.configure(world, [URUK, NIPPUR, UMMA], [RIVER, LAND]), "The existing three-place route network configures for the campaign")
 	_check(travel.configure(network, simulator), "TravelService configures with the route graph and authoritative world simulator")
+	var survey_map: RegionalSurveyMap = RegionalSurveyMapScript.new()
+	root.add_child(survey_map)
+	_check(survey_map.configure(network, world), "The Worldmap Builder survey opens against the authoritative route graph")
+	await process_frame
+	_check(survey_map.get_map_node_count() == 3 and survey_map.get_map_connection_count() == 2, "The survey renders exactly three authored settlements and two route connections")
+	var journey_results: Array[Dictionary] = []
+	survey_map.travel_requested.connect(func(route_id: StringName, destination_id: StringName) -> void:
+		journey_results.append(travel.travel(world, route_id, destination_id))
+	)
 
 	var baseline_barley := world.get_resource(&"barley", "institution", "", &"eanna_household")
 	_check(baseline_barley > 0 and world.has_active_hazard(&"north_bay", &"roof_leak"), "Baseline Eanna barley stores and active North-Bay leak are present")
@@ -38,7 +48,15 @@ func _run() -> void:
 
 	var upstream_periods := network.get_transit_periods(&"river_uruk_nippur", &"uruk", &"nippur")
 	_check(upstream_periods == 2, "Uruk-to-Nippur river passage is two periods")
-	var upstream_result := travel.travel(world, &"river_uruk_nippur", &"nippur")
+	var nippur_index: int = survey_map.map_nodes.get(&"nippur", -1)
+	var nippur_data: WorldmapNodeData = survey_map.graph.get_node_data(nippur_index)
+	var map_click := InputEventMouseButton.new()
+	map_click.button_index = MOUSE_BUTTON_LEFT
+	map_click.pressed = true
+	survey_map.map_view.emit_signal("node_gui_input", map_click, NodePath("RegionalRouteGraph"), nippur_index, nippur_data)
+	_check(survey_map.get_selected_destination_id() == &"nippur" and survey_map.can_board_selected_route(), "A Worldmap Builder node click selects the upstream river destination")
+	_check(survey_map.board_selected_route() and journey_results.size() == 1, "The survey's Board Barge action invokes the authoritative travel service")
+	var upstream_result: Dictionary = journey_results[0]
 	_check(bool(upstream_result.get("success", false)) and int(upstream_result.get("transit_periods", 0)) == upstream_periods, "TravelService executes the complete upstream journey")
 	_check(world.current_location_id == &"nippur", "Arrival updates the persistent current location to Nippur")
 	_check(world.year == -3200 and world.period == 2, "Two transit periods arrive in Month 3 of 3201 BCE")
@@ -56,6 +74,7 @@ func _run() -> void:
 			opportunity = candidate
 			break
 	_check(not opportunity.is_empty(), "The location-aware assignment pipeline generates Nippur shrine ledger work from local world data")
+	_check(String(opportunity.get("title", "")) == "Audit Nippur Shrine Offerings", "Nippur's assignment title comes from its InstitutionDef resource")
 
 	var audit_id := StringName(opportunity.id)
 	_check(AssignmentPipelineScript.begin(world, opportunity, player), "The Nippur local audit opens through the existing assignment lifecycle")
@@ -67,7 +86,14 @@ func _run() -> void:
 
 	var downstream_periods := network.get_transit_periods(&"river_uruk_nippur", &"nippur", &"uruk")
 	_check(downstream_periods == 1, "Nippur-to-Uruk downstream river passage is one period")
-	var downstream_result := travel.travel(world, &"river_uruk_nippur", &"uruk")
+	_check(survey_map.configure(network, world), "The survey rebuilds from the new current location after arrival")
+	await process_frame
+	var uruk_index: int = survey_map.map_nodes.get(&"uruk", -1)
+	var uruk_data: WorldmapNodeData = survey_map.graph.get_node_data(uruk_index)
+	survey_map.map_view.emit_signal("node_gui_input", map_click, NodePath("RegionalRouteGraph"), uruk_index, uruk_data)
+	_check(survey_map.get_selected_destination_id() == &"uruk" and survey_map.can_board_selected_route(), "The return journey is selectable from the Nippur survey")
+	_check(survey_map.board_selected_route() and journey_results.size() == 2, "The survey's return action invokes TravelService")
+	var downstream_result: Dictionary = journey_results[1]
 	_check(bool(downstream_result.get("success", false)) and int(downstream_result.get("transit_periods", 0)) == downstream_periods, "TravelService executes the complete downstream journey")
 	_check(world.current_location_id == &"uruk", "Return arrival restores the current location to Uruk")
 	_check(world.year == -3200 and world.period == 3, "The return passage arrives in Month 4 of 3201 BCE")
@@ -78,7 +104,16 @@ func _run() -> void:
 	_check(int(eanna.get("agenda_evaluation_count", 0)) == 3, "Ur-Nanna's autonomous agenda evaluates once per transit period")
 	var last_agenda: Dictionary = eanna.get("last_grain_clerk_agenda", {})
 	_check(not last_agenda.is_empty(), "Ur-Nanna records an autonomous agenda decision while the player is away")
+	var return_opportunities := AssignmentPipelineScript.generate_opportunities(world, world.get_player())
+	var returned_grain_docket := false
+	for return_opportunity in return_opportunities:
+		var source_data: Dictionary = return_opportunity.get("source_data", {})
+		if source_data.has("npc_evidence"):
+			returned_grain_docket = true
+			_check(String(return_opportunity.get("title", "")).contains("Contradictory"), "The return docket identifies Ur-Nanna's contradictory grain records")
+	_check(returned_grain_docket, "The player's return exposes the grain clerk's work generated during the absence")
 
+	survey_map.queue_free()
 	var encoded := SaveCodecScript.encode_world(world)
 	var decoded := SaveCodecScript.decode_save(encoded)
 	var restored: WorldState = decoded.get("world") as WorldState
