@@ -78,3 +78,17 @@ General project rules:
 - `umma_granary` is registry-loaded from a Resource, uses a child place under Umma, and owns local stockpiles. Definitions remain immutable.
 - Bailiff forms retain issuing/target institution IDs and `created_period`; requests older than four periods escalate through the existing dispatch circuit. Archive and foreman consequences name the acting official and use existing debt/opinion/period-delta/Epic state.
 - Office agendas, seats, pending forms, and local state round-trip through `SaveCodec`.
+
+## Living office acceptance commands
+
+Run these headlessly with the pinned Godot 4.7.2 and LimboAI 1.8.1 GDExtension installed:
+
+```sh
+godot --headless --path . -s tests/test_living_offices.gd
+godot --headless --path . -s tests/test_evidence_and_compound_context.gd
+godot --headless --path . -s tests/test_travel_circuit.gd
+godot --headless --path . -s tests/test_epics_and_challenges_circuit.gd
+godot --headless --editor --path . --quit
+```
+
+The office regression must exercise actual seeded seating and BT execution, not manually assigning the named officials' office IDs in the test fixture.
