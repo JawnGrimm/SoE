@@ -1936,7 +1936,7 @@ func _refresh_header_status() -> void:
 	var silver := int(actor.resources.get(&"silver", 0))
 	var bread := int(actor.resources.get(&"bread", 0))
 	var beer := int(actor.resources.get(&"beer", 0))
-	var debt := maxi(0, -silver)
+	var debt := int(actor.resources.get(&"debt", maxi(0, -silver)))
 	var flags: Dictionary = world.world_flags
 	var audit_exposure := int(flags.get(&"audit_exposure", flags.get(&"grain_scandal", 0)))
 	var audit_text := "AUDIT EXPOSED" if audit_exposure > 0 else "AUDIT QUIET"
@@ -1966,7 +1966,8 @@ func _local_institution_ids() -> Array[StringName]:
 func _refresh_local_stock_facts() -> void:
 	if local_stock_label == null or world == null:
 		return
-	var lines := PackedStringArray(["LOCAL STORES / OFFICES"])
+	var place_name := String(world.places.get(world.current_location_id, {}).get("name", world.current_location_id))
+	var lines := PackedStringArray(["LOCAL STORES / %s" % place_name.to_upper()])
 	var institution_ids := _local_institution_ids()
 	if institution_ids.is_empty():
 		lines.append("No institution is registered at this location.")
