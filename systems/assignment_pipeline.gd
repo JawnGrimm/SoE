@@ -341,6 +341,7 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 			var commodity_id := StringName(work_data.get("commodity_id", ""))
 			var quantity := int(work_data.get("quantity", 0))
 			var source_institution_id := StringName(work_data.get("source_institution_id", work_data.get("institution_id", "")))
+			var launched: Dictionary = {}
 			if work_type in [&"dispatch_export", &"request_import"]:
 				var shipment_verdict := verdict in [&"dispatch", &"authorize"]
 				if not shipment_verdict:
@@ -354,18 +355,18 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 					var sender_id := StringName(world.places.get(origin_id, {}).get("regional_agent_id", &"geme_inana"))
 					if origin_id == &"uruk":
 						sender_id = &"geme_inana"
-					var launched := RegionalWorldSystem.launch_shipment(world, {
+					launched = RegionalWorldSystem.launch_shipment(world, {
 						"origin_id": origin_id, "destination_id": destination_id,
 						"commodity_id": commodity_id, "quantity": quantity,
 						"seal_id": "%s_trade_seal_%d" % [String(origin_id), world.current_period_index()],
-					"sender_id": sender_id,
-					"destination_institution_id": StringName(work_data.get("destination_institution_id", ""))
-				})
+						"sender_id": sender_id,
+						"destination_institution_id": StringName(work_data.get("destination_institution_id", ""))
+					})
 					if not bool(launched.get("success", false)):
 						world.modify_resource(commodity_id, quantity, "institution", "", source_institution_id)
-					return {"success": false, "message": String(launched.get("error", "The shipment could not be launched."))}
+						return {"success": false, "message": String(launched.get("error", "The shipment could not be launched."))}
 					result_text = "A sealed shipment of %d %s departs %s for %s. The world will carry it along the route; the destination must still account for what arrives." % [quantity, String(commodity_id).replace("_", " "), _place_name(world, origin_id), _place_name(world, destination_id)]
-				work_details = "Shipment %s launched. Quantity %d. Route periods %d." % [String(launched.get("shipment_id", "")), quantity, int(launched.get("travel_periods", 0))]
+					work_details = "Shipment %s launched. Quantity %d. Route periods %d." % [String(launched.get("shipment_id", "")), quantity, int(launched.get("travel_periods", 0))]
 			elif work_type == &"route_provisions":
 				if verdict != &"issue":
 					accurate = false
@@ -376,7 +377,7 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 						return {"success": false, "message": "The institution cannot spare the proposed beer allocation."}
 					if not RegionalWorldSystem.provision_route(world, route_id, 8, 3):
 						world.modify_resource(&"beer", quantity, "institution", "", source_institution_id)
-					return {"success": false, "message": "The route cannot accept provisions at this time."}
+						return {"success": false, "message": "The route cannot accept provisions at this time."}
 					result_text = "%d beer are committed to the route. Exposure is reduced for the next three periods." % quantity
 					work_details = "Route %s provisioned through period %d." % [String(route_id), int(world.routes[route_id].get("risk_modifier_until", 0))]
 			else:
