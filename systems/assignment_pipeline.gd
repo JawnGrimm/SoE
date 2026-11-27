@@ -571,6 +571,11 @@ static func _stock_detail(stock: Dictionary, skill_level: int, skill_label: Stri
 static func _institution_for_location(world: WorldState, location_id: StringName) -> StringName:
 	if location_id == &"":
 		return &""
+	# These Uruk work records are Eanna household responsibilities, not
+	# agricultural-household or exchange ledgers merely because of their parent.
+	for worksite_id in [&"ditch_labor_tally", &"textile_workshop", &"brewery_delivery", &"river_fish_supply"]:
+		if location_id == worksite_id and world.institutions.has(&"eanna_household"):
+			return &"eanna_household"
 	var cursor := location_id
 	var visited: Dictionary = {}
 	while cursor != &"" and not visited.has(cursor):
