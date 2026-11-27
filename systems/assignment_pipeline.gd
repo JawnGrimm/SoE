@@ -184,6 +184,10 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			return String(a.get("id", "")) < String(b.get("id", ""))
 		return int(a.get("priority", 0)) > int(b.get("priority", 0))
 	)
+	return _select_board_candidates(candidates, BOARD_SIZE)
+
+
+static func _select_board_candidates(candidates: Array[Dictionary], board_size: int = BOARD_SIZE) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	var used_kinds: Dictionary = {}
 	var procedural_candidate: Dictionary = {}
@@ -200,23 +204,24 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 		var kind := StringName(candidate.get("kind", ""))
 		if kind in [&"project_review", &"procedural_docket"]:
 			continue
-		if result.size() >= BOARD_SIZE - 1:
+		if result.size() >= maxi(0, board_size - 1):
 			break
 		if used_kinds.has(kind):
 			continue
 		result.append(candidate.duplicate(true))
 		used_kinds[kind] = true
-	if not procedural_candidate.is_empty() and result.size() < BOARD_SIZE:
+	if not procedural_candidate.is_empty() and result.size() < board_size:
 		result.append(procedural_candidate.duplicate(true))
 	# If the story slot was unavailable, fill remaining routine slots by priority.
-	if result.size() < BOARD_SIZE:
+	if result.size() < board_size:
 		for candidate in candidates:
 			if candidate in result or StringName(candidate.get("kind", "")) == &"procedural_docket":
 				continue
 			result.append(candidate.duplicate(true))
-			if result.size() >= BOARD_SIZE:
+			if result.size() >= board_size:
 				break
 	return result
+
 
 static func begin(world: WorldState, opportunity: Dictionary, actor: PersonEntity) -> bool:
 	if world == null or actor == null or opportunity.is_empty():
