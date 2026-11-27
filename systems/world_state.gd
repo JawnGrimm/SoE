@@ -5,6 +5,7 @@ const PERIODS_PER_YEAR := 12
 
 var year: int = 1200
 var period: int = 0
+var current_location_id: StringName = &"uruk"
 var master_seed: int = 0
 var rng_narrative := RandomNumberGenerator.new()
 var rng_sim := RandomNumberGenerator.new()
