@@ -24,7 +24,7 @@ func _run() -> void:
 	var registry := RegistryScript.new()
 	registry.load_defaults()
 	var world := WorldState.new()
-	UrukSeederScript.seed_campaign(world, 32003200)
+	UrukSeederScript.seed_campaign(world, 32003200, true, registry)
 	var simulator := WorldSimulatorScript.new(registry)
 	var network := RouteNetworkScript.new()
 	var travel := TravelServiceScript.new()
