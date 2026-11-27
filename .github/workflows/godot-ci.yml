@@ -69,6 +69,9 @@ jobs:
       - name: Run three-location route network tests
         run: godot --headless --path . --script res://tests/test_route_network.gd
 
+      - name: Run Nippur travel circuit acceptance test
+        run: godot --headless --path . --script res://tests/test_travel_circuit.gd
+
       - name: Run periodic grain clerk agenda tests
         run: godot --headless --path . --script res://tests/test_grain_clerk_agenda.gd
 
