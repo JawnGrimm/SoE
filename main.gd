@@ -3,8 +3,7 @@ extends Control
 const AssignmentGeneratorScript = preload("res://systems/assignment_generator.gd")
 const DevCommandRouterScript = preload("res://systems/dev_command_router.gd")
 const RouteNetworkScript = preload("res://systems/route_network.gd")
-const NIPPUR_AUDIT_ID: StringName = &"nippur_shrine_offerings_audit"
-const RIVER_ROUTE_ID: StringName = &"river_uruk_nippur"
+const TravelServiceScript = preload("res://systems/travel_service.gd")
 const CAMPAIGN_SEED: int = 32003200
 const ROSTER_CAST: Array[StringName] = [&"shuruppak_ilu", &"utu_mansum", &"enlil_kisu", &"ur_nanna", &"nin_kasi", &"geme_inana", &"lu_nanshe"]
 const FACTION_LABELS := {
@@ -30,6 +29,7 @@ var runner: EventRunner
 var scheduler: EventScheduler
 var world_simulator: WorldSimulator
 var route_network: RouteNetwork
+var travel_service: TravelService
 var world: WorldState
 var actor: PersonEntity
 var active_event: EventTemplate
@@ -1662,11 +1662,15 @@ func _configure_route_network() -> void:
 	route_network = RouteNetworkScript.new()
 	if not route_network.configure(world, Registry.all_places(), Registry.all_routes()):
 		push_error("Main: regional route network could not be configured.")
+		return
+	travel_service = TravelServiceScript.new()
+	if not travel_service.configure(route_network, world_simulator):
+		push_error("Main: travel service could not be configured.")
 
 func _location_header_text() -> String:
-	if world != null and world.current_location_id == &"nippur":
-		return "SCRIBE OF ERAS  /  NIPPUR / PROVINCIAL COMPOUND"
-	return "SCRIBE OF ERAS  /  URUK / EANNA STOREHOUSE"
+	var place := route_network.get_place(world.current_location_id) if route_network != null else null
+	var place_name := place.display_name.to_upper() if place != null else String(world.current_location_id).to_upper()
+	return "SCRIBE OF ERAS  /  %s / REGIONAL COMPOUND" % place_name
 
 func _show_nippur_assignment_board() -> void:
 	var existing: Dictionary = world.assignments.get(NIPPUR_AUDIT_ID, {})
@@ -1737,54 +1741,54 @@ func _show_nippur_itinerary_ready(result_title: String, result_text: String) -> 
 	_refresh_compound()
 
 func _show_itinerary_docket() -> void:
-	if route_network == null or world == null:
+	if travel_service == null or world == null:
 		return
-	var origin := world.current_location_id
-	var destination: StringName = &"nippur" if origin == &"uruk" else &"uruk" if origin == &"nippur" else &""
-	if destination == &"":
-		status_label.text = "NO ITINERARY IS AUTHORIZED FROM THIS LOCATION."
-		return
-	var transit_periods := route_network.get_transit_periods(RIVER_ROUTE_ID, origin, destination)
+	var destinations := travel_service.get_available_destinations(world)
 	_clear_choices()
 	_set_phase("itinerary_docket")
-	var direction := "UPSTREAM" if destination == &"nippur" else "DOWNSTREAM"
-	var destination_name := "NIPPUR / PROVINCIAL COMPOUND" if destination == &"nippur" else "URUK / EANNA STOREHOUSE"
-	var travel_label := "Depart %s / %d period%s" % [direction, transit_periods, "" if transit_periods == 1 else "s"] if transit_periods > 0 else "Departure unavailable / route closed"
-	var prompt := "The river passage is open. Transit advances the world period by period; hazards, stores, and NPC agendas continue to operate." if transit_periods > 0 else "The river route is closed or unavailable. No departure can be made."
+	var choice_data: Array[Dictionary] = []
+	var callbacks: Array[Callable] = []
+	for destination in destinations:
+		var periods := int(destination.get("transit_periods", -1))
+		var available := periods > 0
+		var place_name := String(destination.get("destination_name", destination.get("destination_id", "Unknown")))
+		var route_type := String(destination.get("route_type", "route")).replace("_", " ").to_upper()
+		var status := String(destination.get("status", "unknown")).to_upper()
+		var label := "Depart for %s / %d period%s" % [place_name, periods, "" if periods == 1 else "s"] if available else "%s / %s" % [place_name, status]
+		choice_data.append({"label": label, "disabled": not available})
+		callbacks.append(Callable(self, "_depart_via_route").bind(StringName(destination.route_id), StringName(destination.destination_id)))
+	if choice_data.is_empty():
+		choice_data.append({"label": "No connected routes from this location", "disabled": true})
+	var current_place := route_network.get_place(world.current_location_id)
+	var current_name := current_place.display_name if current_place != null else String(world.current_location_id)
 	var payload := {
-		"title": "ITINERARY DOCKET / %s" % direction,
+		"title": "ITINERARY DOCKET",
 		"left_card": {
 			"title": "CURRENT LOCATION",
 			"speaker_id": &"",
 			"quote": "The travel authorization begins here.",
-			"facts": String(origin).to_upper() + "\n" + CalendarFormatter.format_year(world.year) + " / MONTH %d" % (world.period + 1)
+			"facts": "%s\n%s / MONTH %d" % [current_name.to_upper(), CalendarFormatter.format_year(world.year), world.period + 1]
 		},
 		"right_card": {
-			"title": "AUTHORIZED DESTINATION",
+			"title": "CONNECTED DESTINATIONS",
 			"speaker_id": &"",
-			"quote": "No caravan animation is required. The passage is recorded in elapsed periods.",
-			"facts": destination_name + "\nRIVER ROUTE: %s\nTRANSIT: %d PERIOD(S)" % [String(route_network.get_route_status(RIVER_ROUTE_ID)).to_upper(), maxi(0, transit_periods)]
+			"quote": "Select a connected settlement. Every transit period advances the complete world simulation.",
+			"facts": "%d AUTHORIZED ROUTE(S)\nROUTE CONDITIONS ARE LIVE" % destinations.size()
 		},
-		"prompt": prompt,
-		"choices": [{"label": travel_label, "disabled": transit_periods < 1}]
+		"prompt": "Travel is recorded in elapsed periods. Hazards, institutions, economy, and autonomous NPC agendas continue while you are away.",
+		"choices": choice_data
 	}
-	var callbacks: Array[Callable] = []
-	callbacks.append(Callable(self, "_depart_via_river").bind(destination))
 	_render_docket_payload(payload, callbacks)
 	_add_choice("Return to the Desk", _schedule_next_case)
 	_refresh_compound()
 
-func _depart_via_river(destination: StringName) -> void:
-	if phase != "itinerary_docket" or world == null or world_simulator == null or route_network == null:
+func _depart_via_route(route_id: StringName, destination_id: StringName) -> void:
+	if phase != "itinerary_docket" or world == null or travel_service == null:
 		return
-	var origin := world.current_location_id
-	var transit_periods := route_network.get_transit_periods(RIVER_ROUTE_ID, origin, destination)
-	if transit_periods < 1:
-		status_label.text = "DEPARTURE REFUSED / THE RIVER ROUTE IS UNAVAILABLE."
+	var result := travel_service.travel(world, route_id, destination_id)
+	if not bool(result.get("success", false)):
+		status_label.text = "DEPARTURE REFUSED / " + String(result.get("error", "Route unavailable")).to_upper()
 		return
-	for _period_index in range(transit_periods):
-		world_simulator.advance_period(world)
-	world.current_location_id = destination
 	active_event = null
 	procedural_assignment.clear()
 	assignment_opportunities.clear()
@@ -1797,7 +1801,6 @@ func _depart_via_river(destination: StringName) -> void:
 	actor = world.get_player()
 	_refresh_compound()
 	_schedule_next_case()
-
 
 func _refresh_compound() -> void:
 	if world == null:
