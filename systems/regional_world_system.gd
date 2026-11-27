@@ -5,6 +5,64 @@ extends RefCounted
 const ROUTE_FOLDER := "res://data/routes"
 
 
+static func ensure_regional_world(world: WorldState) -> void:
+	if world == null:
+		return
+	if world.routes.is_empty():
+		seed_routes(world)
+	var place_paths: Array[String] = []
+	_collect_tres("res://data/places", place_paths)
+	place_paths.sort()
+	for place_path in place_paths:
+		var definition := ResourceLoader.load(place_path) as PlaceDef
+		if definition == null or not definition.is_valid():
+			continue
+		var place: Dictionary = world.places.get(definition.id, {})
+		if place.is_empty():
+			place = {
+				"name": definition.display_name, "kind": definition.place_type,
+				"region": definition.region, "political_relation": definition.political_relation,
+				"exports": definition.exports.duplicate(), "imports": definition.imports.duplicate(),
+				"connected_to": definition.connected_to.duplicate(), "era_id": definition.era_id
+			}
+		else:
+			if not place.has("name"): place["name"] = definition.display_name
+			if not place.has("kind"): place["kind"] = definition.place_type
+			if not place.has("region"): place["region"] = definition.region
+			if not place.has("political_relation"): place["political_relation"] = definition.political_relation
+			if not place.has("exports"): place["exports"] = definition.exports.duplicate()
+			if not place.has("imports"): place["imports"] = definition.imports.duplicate()
+			if not place.has("connected_to"): place["connected_to"] = definition.connected_to.duplicate()
+			if not place.has("era_id"): place["era_id"] = definition.era_id
+		world.places[definition.id] = place
+	if not world.institutions.has(&"habuba_trade_post"):
+		var habuba_place: Dictionary = world.places.get(&"habuba_kabira", {})
+		var habuba_exports: Array = habuba_place.get("exports", [&"timber", &"limestone"])
+		var habuba_stock: Dictionary = {}
+		for commodity in habuba_exports:
+			habuba_stock[StringName(commodity)] = 24
+		habuba_stock[&"beer"] = 12
+		habuba_stock[&"silver"] = 24
+		var habuba_members: Array[StringName] = []
+		if world.people.has(&"enki_ili"):
+			habuba_members.append(&"enki_ili")
+			world.people[&"enki_ili"].current_location_id = &"habuba_kabira"
+		world.institutions[&"habuba_trade_post"] = {
+			"name": "Habuba Kabira Trade Enclave", "kind": &"trade_enclave",
+			"place_id": &"habuba_kabira", "members": habuba_members,
+			"interests": habuba_exports.duplicate(), "stockpiles": habuba_stock,
+			"activity_count": 2, "resource_pressure": 0
+		}
+		var habuba_record: Dictionary = world.places.get(&"habuba_kabira", {})
+		habuba_record["regional_institution_id"] = &"habuba_trade_post"
+		if not habuba_members.is_empty():
+			habuba_record["regional_agent_id"] = habuba_members[0]
+		world.places[&"habuba_kabira"] = habuba_record
+	seed_regional_institutions(world)
+	var player := world.get_player()
+	if player != null and player.current_location_id == &"":
+		player.current_location_id = &"uruk"
+
 static func seed_regional_institutions(world: WorldState) -> int:
 	if world == null:
 		return 0
