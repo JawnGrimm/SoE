@@ -8,6 +8,12 @@ static func format_purse(silver: int, currency: String) -> String:
 static func format_arrears(debt: int, unpaid_upkeep: int) -> String:
 	return "ARREARS: %d DEBT%s" % [maxi(0, debt), (" · UPKEEP %d" % unpaid_upkeep) if unpaid_upkeep > 0 else ""]
 
+static func arrears_visible(debt: int, unpaid_upkeep: int) -> bool:
+	return debt > 0 or unpaid_upkeep > 0
+
+static func exposure_visible(exposure: int) -> bool:
+	return exposure > 0
+
 static func format_exposure(exposure: int) -> String:
 	return "EXPOSURE: %d" % maxi(0, exposure)
 
@@ -61,8 +67,8 @@ func update_status(world: WorldState, actor: PersonEntity, era: EraDef) -> void:
 	purse_label.text = format_purse(silver, currency)
 	var debt := maxi(0, int(actor.resources.get(&"debt", maxi(0, -silver))))
 	var unpaid := int(actor.resources.get(&"unpaid_upkeep", 0))
-	arrears_label.visible = debt > 0 or unpaid > 0
+	arrears_label.visible = arrears_visible(debt, unpaid)
 	arrears_label.text = format_arrears(debt, unpaid)
 	var exposure := int(world.world_flags.get(&"audit_exposure", world.world_flags.get(&"grain_scandal", 0)))
-	exposure_label.visible = exposure > 0
+	exposure_label.visible = exposure_visible(exposure)
 	exposure_label.text = format_exposure(exposure)
