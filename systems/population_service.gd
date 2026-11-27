@@ -119,6 +119,7 @@ func generate_people(
 		person.generation_source = &"tier2"
 		person.generation_key = batch_key
 		person.name_provenance = StringName(entry["provenance"])
+		person.name_source = String(entry["source"])
 		person.office_id = occupation.office_id
 		for skill_id in CORE_SKILLS:
 			person.skills.levels[skill_id] = 1
