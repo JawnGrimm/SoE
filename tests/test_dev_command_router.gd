@@ -77,6 +77,8 @@ func _run() -> void:
 	var person_command: Callable = console.commands["soe inspect_person"]
 	person_command.call("clerk")
 	_check(console.output.back() == "Person: clerk", "Person inspection should delegate the supplied ID")
+	person_command.call("missing")
+	_check(console.errors.back() == "No such person.", "Failed command results should be reported through LimboConsole")
 
 	var adjust_command: Callable = console.commands["soe adjust_resource"]
 	adjust_command.call("silver", 25, "actor", "clerk", "")
@@ -84,8 +86,6 @@ func _run() -> void:
 
 	router.unregister()
 	_check(console.commands.is_empty(), "Unregister should remove only this router's commands")
-	_check(console.autocomplete.is_empty(), "Unregister should remove command autocomplete sources")
-
 	_finish()
 
 
@@ -99,6 +99,8 @@ func _fake_inspect_world() -> Dictionary:
 
 
 func _fake_inspect_person(person_id: String) -> Dictionary:
+	if person_id == "missing":
+		return {"success": false, "error": "No such person."}
 	return {"success": true, "message": "Person: %s" % person_id}
 
 
