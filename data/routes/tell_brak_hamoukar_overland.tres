@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RouteDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/route_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"tell_brak_hamoukar_overland"
+from_place_id = &"tell_brak"
+to_place_id = &"hamoukar"
+route_type = &"overland_caravan"
+travel_periods = 1
+loss_risk_percent = 16
+era_id = &"uruk_storehouse"
