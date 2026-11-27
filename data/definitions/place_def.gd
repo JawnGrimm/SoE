@@ -12,7 +12,6 @@ extends Resource
 @export var political_relation: StringName = &"autonomous_peer"
 @export var exports: Array[StringName] = []
 @export var imports: Array[StringName] = []
-@export var connected_to: Array[StringName] = []
 @export var era_id: StringName = &"uruk_storehouse"
 ## Authored position on the regional survey layer; zero means not plotted in this map.
 @export var survey_position: Vector2 = Vector2.ZERO
