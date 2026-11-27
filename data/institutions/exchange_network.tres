@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="InstitutionDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/institution_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"exchange_network"
+display_name = "River and Overland Exchange"
+institution_type = &"exchange_network"
+place_id = &"uruk"
+members = Array[StringName]([&"geme_inana", &"enki_ili", &"ur_amas"])
+interests = Array[StringName]([&"transport", &"materials", &"exchange"])
