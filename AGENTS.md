@@ -111,7 +111,7 @@ Run the focused regression with `godot --headless --path . -s tests/test_consequ
 ## Tactile Cedar Desk / Slice B invariants
 
 - The Cedar Desk uses a 58:42 upper evidence / lower action workspace split; the lower row is 62:22:16 action docket, clay prop, archive prop. Ratios are centralized in `ui/cedar_desk_layout.gd`.
-- Evidence panels expand with their workspace and use readable 64px portraits, 15px spoken quotes, and 13px facts. Hide the entire evidence workspace during character creation and while the regional survey is open; the remaining workspace receives the available height.
+- Evidence panels expand with their workspace and use readable 64px portraits, 15px spoken quotes, and 13px facts. Hide the entire evidence workspace and desk props during character creation and while the regional survey is open; the intake/survey control expands into the full workspace width and height.
 - `CedarDeskHeader` is a presentation-only view of live player/world state. Purse, arrears, audit exposure, office, place, season/month, and year are derived; never store these values on the UI or serialize header state.
 - `ClayDocketProp` and `ArchiveStackProp` are transient presentation components. Cuneiform marks are paired with plain-language tooltip descriptions; inquiry marks map only the four supported investigation actions. Verdict seals stop further inquiry marks. UI prop state, open/closed drawers, animations, and notification badges must not enter SaveCodec.
 - Use the canonical font at `res://assets/fonts/NotoSansCuneiform-Regular.ttf`. Stylus/seal audio has visible state feedback and must respect the project's audio/reduced-motion behavior.
