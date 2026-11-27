@@ -115,6 +115,7 @@ static func _world_from_data(data: Dictionary) -> WorldState:
 static func _person_to_data(person: PersonEntity) -> Dictionary:
 	return {
 		"id": String(person.id), "display_name": person.display_name,
+		"pronouns": String(person.pronouns), "institutional_designation": person.institutional_designation,
 		"location_id": String(person.location_id), "template_id": String(person.template_id),
 		"occupation_id": String(person.occupation_id), "generation_source": String(person.generation_source),
 		"generation_key": String(person.generation_key), "name_provenance": String(person.name_provenance),
@@ -133,6 +134,8 @@ static func _person_from_data(data: Variant) -> PersonEntity:
 	var person := PersonEntity.new()
 	person.id = StringName(data.get("id", ""))
 	person.display_name = String(data.get("display_name", ""))
+	person.pronouns = StringName(data.get("pronouns", ""))
+	person.institutional_designation = String(data.get("institutional_designation", ""))
 	person.location_id = StringName(data.get("location_id", ""))
 	person.template_id = StringName(data.get("template_id", ""))
 	person.occupation_id = StringName(data.get("occupation_id", ""))
