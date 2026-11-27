@@ -48,5 +48,6 @@ General project rules:
 - Layer 3 is **Epics**: macro-historical undertakings and milestone reviews. `Works` is deprecated terminology; legacy `kind: &"work"` records must be categorized as Epics during compatibility handling.
 - Event opportunities whose event ID begins `challenge_` or whose authored tags include `challenge` must be classified as Challenges before entering the desk queue. Do not classify all events as routine assignments.
 - Every Epic review and institutional-pressure assignment must expose a meaningful asymmetric disposition after the two-action investigation limit. Verdict costs must be validated and committed in `AssignmentPipeline.resolve()`; UI must not mutate simulation state.
-- Challenge conditions must be linked to world flags/resources produced by actual assignment verdicts. Resource-gated Challenge outcomes must validate affordability before effects/rewards.
+- Challenge conditions must be linked to world flags/resources produced by actual assignment verdicts. Resource-gated Challenge outcomes must validate affordability before effects/rewards. For Quayside, gate only the personal-silver outcome; keep its non-silver verdicts available to broke scribes.
+- An Epic audit verdict applies a bounded one-period audit hold through the existing Epic simulator. It must not create a permanent stall or a second project simulation.
 - Keep these regressions covered by headless tests: queue routing, verdict stock/flags/progress/opinion/traits, Challenge eligibility, silver affordability, and save/load of active docket state.
