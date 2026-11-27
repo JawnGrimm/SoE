@@ -52,6 +52,10 @@ func validate_world_references() -> bool:
 		if place.parent_place_id != &"" and get_place(place.parent_place_id) == null:
 			_warn("DefinitionRegistry: place '%s' references missing parent '%s'" % [place.id, place.parent_place_id])
 			valid = false
+		for connected_place_id in place.connected_to:
+			if get_place(connected_place_id) == null:
+				_warn("DefinitionRegistry: place '%s' references unknown connected place '%s'" % [place.id, connected_place_id])
+				valid = false
 		if place.era_id != &"" and get_era(place.era_id) == null:
 			_warn("DefinitionRegistry: place '%s' references missing era '%s'" % [place.id, place.era_id])
 			valid = false
