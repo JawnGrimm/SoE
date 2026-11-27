@@ -430,6 +430,7 @@ func _run() -> void:
 	for travel_tick in range(3):
 		regional_arrival_world.advance_period()
 	_check(regional_arrival_player.current_location_id == &"habuba_kabira" and String(regional_arrival_world.player_travel.get("status", "")) == "arrived", "Player travel should advance through the route and update character location")
+	_check(int(regional_arrival_player.resources.get(&"bread", 0)) == 9 and int(regional_arrival_player.resources.get(&"beer", 0)) == 5, "A three-period field journey should consume three bread and one beer from the character's purse")
 	var habuba_opportunities := AssignmentPipeline.generate_opportunities(regional_arrival_world, regional_arrival_player)
 	var habuba_has_regional_work := habuba_opportunities.any(func(opportunity: Dictionary) -> bool: return StringName(opportunity.get("kind", "")) == &"regional_work")
 	_check(habuba_opportunities.size() == 3 and habuba_has_regional_work, "Arrival at Habuba should change the available work to local trade and regional cargo")
