@@ -101,14 +101,17 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 		var target := int(epic.get("target", 100))
 		var review_stage := int(epic.get("review_stage", world.get_epic_stage_index(progress, target)))
 		var stage_label := String(epic.get("review_stage_label", world.get_epic_stage_label(review_stage)))
+		var review_reason := String(epic.get("review_reason", "stage_reached"))
+		var title_suffix := stage_label if review_reason in ["project_opened", "stage_reached"] else _epic_problem_label(review_reason)
+		var review_summary := String(epic.get("review_summary", "Review labor, supply, and project progress."))
 		candidates.append({
 			"id": StringName("epic:%s:s%d" % [epic_id, review_stage]),
 			"kind": &"project_review",
 			"source_id": StringName(epic_id),
 			"sponsor_institution": sponsor_id,
 			"place_id": place_id,
-			"title": "%s — %s" % [String(epic.get("title", epic_id)), stage_label],
-			"summary": "The public work stands at %d of %d. Review the stage tally, labor, and provisioning." % [progress, target],
+			"title": "%s — %s" % [String(epic.get("title", epic_id)), title_suffix],
+			"summary": "%s (%d / %d)." % [review_summary.trim_suffix("."), progress, target],
 			"priority": 2 + _career_bonus(selected_path, &"project"),
 			"employer_id": &"shuruppak_ilu" if world.get_person(&"shuruppak_ilu") != null else &"",
 			"source_data": epic.duplicate(true),
@@ -522,6 +525,14 @@ static func _is_local_to_current_location(world: WorldState, place_id: StringNam
 		var place: Dictionary = world.places.get(cursor, {})
 		cursor = StringName(place.get("parent", ""))
 	return false
+
+func _epic_problem_label(reason: String) -> String:
+	match reason:
+		"labor_shortage": return "Labor Shortage Review"
+		"barley_shortage": return "Ration Shortage Review"
+		"site_hazard": return "Site Disruption Review"
+		"scandal_audit": return "Audit Inquiry"
+		_: return "Project Conditions Review"
 
 static func _place_name(world: WorldState, place_id: StringName) -> String:
 	if place_id == &"":
