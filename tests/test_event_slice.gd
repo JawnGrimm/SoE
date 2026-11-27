@@ -338,14 +338,14 @@ func _run() -> void:
 	var uruk_player_b := UrukSeeder.seed_campaign(uruk_b, 987654321)
 	_check(uruk_a.master_seed == 987654321, "Uruk seeder should retain the campaign seed")
 	_check(uruk_a.year == -3200 and uruk_a.period == 0, "Uruk campaign should begin at its era start")
-	_check(uruk_a.people.size() == 17, "Uruk seeder should create the expanded seventeen-person roster")
+	_check(uruk_a.people.size() == 29, "Uruk seeder should retain 17 authored people and add 12 generated regional residents")
 	_check(uruk_a.places.size() == 20, "Uruk seed should establish all authored settlements, local work areas, and form locations")
 	_check(uruk_a.institutions.size() == 4 and uruk_a.institutions.has(&"nippur_shrine"), "Uruk seed should establish three local institutions plus the Nippur shrine ledger")
 	_check(uruk_a.social_groups.size() == 5, "Uruk seed should establish five working and household groups")
 	var seeded_tie_count := 0
 	for person in uruk_a.people.values():
 		seeded_tie_count += person.relationships.size()
-	_check(seeded_tie_count == 34, "Uruk seed should establish thirty-four directed relationship entries, including explicit player opinions and authored social/economic ties (found %d)" % seeded_tie_count)
+	_check(seeded_tie_count == 46, "Uruk seed should establish forty-six directed relationship entries, including generated residents and explicit player opinions and authored social/economic ties (found %d)" % seeded_tie_count)
 	_check(uruk_a.get_person(&"geme_tur").relationships.has(uruk_player_a.id), "The player's household member should have an explicit family tie")
 	_check(uruk_a.get_person(&"ur_gula").relationships.has(&"nin_dada"), "Pastoral wool supply should connect to textile production")
 	_check(uruk_a.places.has(&"susa") and uruk_a.places.has(&"habuba_kabira"), "Uruk seed should include both external exchange settlements")

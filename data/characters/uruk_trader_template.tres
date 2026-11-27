@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CharacterTemplate" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/character_template.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"uruk_trader_template"
+display_name = "Uruk Trader"
+occupation_id = &"market_trader"
+culture_id = &"sumerian"
+era_ids = Array[StringName]([&"uruk_storehouse"])
+trait_ids = Array[StringName]([&"sociable"])
+skill_bonuses = {&"arithmetic": 1}
+weight = 2

@@ -19,6 +19,8 @@ var resolved_forms: Array[Dictionary] = []
 var event_history: Array[Dictionary] = []
 var character_event_history: Dictionary[StringName, Array] = {}
 var people: Dictionary[StringName, PersonEntity] = {}
+# Generation batch keys prevent repeated visits/seeding from duplicating Tier 2 residents.
+var population_batches: Dictionary[StringName, Array] = {}
 var player_id: StringName = &""
 var _next_person_sequence: int = 1
 # Seeded world graph. These are runtime records, not shared definition Resources.
