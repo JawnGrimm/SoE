@@ -117,7 +117,7 @@ func _run() -> void:
 	registry.load_defaults()
 
 	# World-driven Assignment loop: three distinct opportunities are derived
-	# from the seeded form, active hazard, and actual institutional ledgers.
+	# from an arrived regional shipment, local hazard, and live trade routes.
 	var assignment_world := WorldState.new()
 	var assignment_actor := UrukSeeder.seed_campaign(assignment_world, 44004400)
 	_check(assignment_actor.skills.levels.values().all(func(level: int) -> bool: return level >= 1), "All six core skills should begin at level one")
@@ -126,7 +126,7 @@ func _run() -> void:
 	var opportunity_kinds: Array[StringName] = []
 	for opportunity in opportunities:
 		opportunity_kinds.append(StringName(opportunity.get("kind", "")))
-	_check(opportunity_kinds.has(&"form") and opportunity_kinds.has(&"hazard") and opportunity_kinds.has(&"ledger"), "Initial opportunities should be grounded in a pending form, active hazard, and real institution ledger")
+	_check(opportunity_kinds.has(&"form") and opportunity_kinds.has(&"hazard") and opportunity_kinds.has(&"regional_work"), "Initial opportunities should include remote cargo, a local hazard, and regional trade work")
 	var martial_opportunities := AssignmentPipeline.generate_opportunities(assignment_world, assignment_actor, &"path_martial")
 	var civil_hazard_priority := 0
 	var martial_hazard_priority := 0
@@ -137,12 +137,12 @@ func _run() -> void:
 	_check(martial_opportunities.size() == 3 and martial_hazard_priority > civil_hazard_priority, "Career path should influence opportunity priority without gating access")
 	var form_opportunity: Dictionary = {}
 	var hazard_opportunity: Dictionary = {}
-	var ledger_opportunity: Dictionary = {}
+	var regional_work_opportunity: Dictionary = {}
 	for opportunity in opportunities:
 		match StringName(opportunity.get("kind", "")):
 			&"form": form_opportunity = opportunity
 			&"hazard": hazard_opportunity = opportunity
-			&"ledger": ledger_opportunity = opportunity
+			&"regional_work": regional_work_opportunity = opportunity
 	_check(StringName(form_opportunity.get("employer_id", "")) == &"enki_ili", "Remote consignment work should route to its named carrier or sender")
 	_check(AssignmentPipeline.begin(assignment_world, form_opportunity, assignment_actor), "A selected world opportunity should enter the active assignment lifecycle")
 	var form_assignment_id := StringName(form_opportunity.get("id", ""))
@@ -175,13 +175,13 @@ func _run() -> void:
 	AssignmentPipeline.perform_action(assignment_world, assignment_actor, hazard_assignment_id, &"inspect_source")
 	var hazard_result := AssignmentPipeline.resolve(assignment_world, assignment_actor, hazard_assignment_id, &"repair")
 	_check(bool(hazard_result.get("success", false)) and not assignment_world.has_active_hazard(&"north_bay", &"roof_leak"), "Repair assessment should consume real institutional labor and stop the active hazard")
-	_check(AssignmentPipeline.begin(assignment_world, ledger_opportunity, assignment_actor), "A real institutional ledger should become a selectable engagement")
-	var ledger_assignment_id := StringName(ledger_opportunity.get("id", ""))
-	AssignmentPipeline.perform_action(assignment_world, assignment_actor, ledger_assignment_id, &"examine_records")
-	AssignmentPipeline.perform_action(assignment_world, assignment_actor, ledger_assignment_id, &"inspect_source")
-	var ledger_result := AssignmentPipeline.resolve(assignment_world, assignment_actor, ledger_assignment_id, &"record")
-	_check(bool(ledger_result.get("success", false)) and assignment_world.cedar_desk_log.size() == 3 and String(assignment_world.cedar_desk_log.back().get("category", "")) == "ledger", "Every completed engagement should enter the persistent work log with its source category")
-	_check(String(assignment_world.cedar_desk_log.front().get("responsible_character_id", "")) == String(assignment_actor.id) and String(assignment_world.cedar_desk_log.front().get("employer_id", "")) == "ur_nanna" and String(assignment_world.cedar_desk_log.front().get("institution_id", "")) == "eanna_household", "Work log should retain the responsible scribe, employer, and institution")
+	_check(AssignmentPipeline.begin(assignment_world, regional_work_opportunity, assignment_actor), "Regional trade work should become a selectable engagement")
+	var regional_work_assignment_id := StringName(regional_work_opportunity.get("id", ""))
+	AssignmentPipeline.perform_action(assignment_world, assignment_actor, regional_work_assignment_id, &"review_trade_manifest")
+	AssignmentPipeline.perform_action(assignment_world, assignment_actor, regional_work_assignment_id, &"inspect_trade_goods")
+	var regional_work_result := AssignmentPipeline.resolve(assignment_world, assignment_actor, regional_work_assignment_id, &"dispatch")
+	_check(bool(regional_work_result.get("success", false)) and assignment_world.cedar_desk_log.size() == 3 and String(assignment_world.cedar_desk_log.back().get("category", "")) == "regional_work", "A regional trade decision should launch real cargo and enter the persistent work log")
+	_check(String(assignment_world.cedar_desk_log.front().get("responsible_character_id", "")) == String(assignment_actor.id) and String(assignment_world.cedar_desk_log.front().get("employer_id", "")) == "enki_ili" and String(assignment_world.cedar_desk_log.front().get("institution_id", "")) == "eanna_household", "Work log should retain the responsible scribe, remote sender, and destination institution")
 	_check(assignment_world.cases_settled == 3, "Completed world-driven engagements should enter the existing career settlement counters")
 	_check(registry.all_places().size() == 12, "DefinitionRegistry should load the twelve canonical Era 1 places")
 	_check(registry.get_place(&"hacinebi") != null and registry.get_place(&"hacinebi").political_relation == &"foreign_enclave", "Typed place lookup should retain Hacinebi's autonomous local context")
@@ -345,7 +345,7 @@ func _run() -> void:
 	_check(uruk_a.year == -3200 and uruk_a.period == 0, "Uruk campaign should begin at its era start")
 	_check(uruk_a.people.size() == 17, "Uruk seeder should create the expanded seventeen-person roster")
 	_check(uruk_a.places.size() == 19, "Uruk seed should establish twelve regional settlements plus seven local and connected places")
-	_check(uruk_a.institutions.size() == 3, "Uruk seed should establish three institutions and exchange networks")
+	_check(uruk_a.institutions.size() == 4, "Uruk seed should establish the core institutions and the Habuba trade enclave")
 	_check(uruk_a.social_groups.size() == 5, "Uruk seed should establish five working and household groups")
 	var seeded_tie_count := 0
 	for person in uruk_a.people.values():
