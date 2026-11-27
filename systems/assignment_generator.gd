@@ -89,7 +89,12 @@ static func generate(world: WorldState, actor: PersonEntity, selected_path: Stri
 		if not world.recent_archetypes.has(item):
 			archetypes.append(item)
 	if archetypes.is_empty():
-		archetypes = ARCHETYPES.duplicate()
+		var previous_archetype := StringName(world.recent_archetypes.back()) if not world.recent_archetypes.is_empty() else &""
+		for item in ARCHETYPES:
+			if item != previous_archetype:
+				archetypes.append(item)
+		if archetypes.is_empty():
+			archetypes = ARCHETYPES.duplicate()
 	var archetype: StringName = archetypes[world.rng_narrative.randi_range(0, archetypes.size() - 1)]
 	if archetype == &"hazard_check":
 		var active_hazard := false
