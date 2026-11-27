@@ -91,7 +91,9 @@ static func evaluate(world: WorldState, actor: PersonEntity) -> Dictionary:
 		"silver_earned": world.silver_earned,
 		"silver_held": silver,
 		"debt_defaulted": debt,
+		"debt_cleared": maxi(int(world.world_flags.get(&"debt_cleared", 0)), _count_log_title(world, "DEBT CLEARED")),
 		"unpaid_upkeep": unpaid_upkeep,
+		"audit_reprimands_survived": _count_log_title(world, "ARCHIVE REPRIMAND"),
 		"net_worth": silver - debt - unpaid_upkeep,
 		"corruption_score": corruption,
 		"integrity_score": integrity,
@@ -123,8 +125,8 @@ static func generate_export_text(summary: Dictionary) -> String:
 		"",
 		"Served from %s to %s (%d years); concluded in period %d." % [CalendarFormatter.format_year(int(summary.get("start_year", -3200))), CalendarFormatter.format_year(int(summary.get("end_year", -3200))), int(summary.get("years_in_service", 0)), int(summary.get("period", 1))],
 		"Settled %d cases and earned %d silver; held %d silver at conclusion." % [int(summary.get("total_cases_settled", 0)), int(summary.get("silver_earned", 0)), int(summary.get("silver_held", 0))],
-		"Net worth: %d silver after %d defaulted debt and %d unpaid upkeep." % [int(summary.get("net_worth", 0)), int(summary.get("debt_defaulted", 0)), int(summary.get("unpaid_upkeep", 0))],
-		"Integrity: %d / 100. Corruption: %d / 100. Law: %d; Literacy: %d; Arithmetic: %d." % [int(summary.get("integrity_score", 0)), int(summary.get("corruption_score", 0)), int(summary.get("law", 0)), int(summary.get("literacy", 0)), int(summary.get("arithmetic", 0))],
+		"Net worth: %d silver; debt cleared %d, defaulted %d, and unpaid upkeep %d." % [int(summary.get("net_worth", 0)), int(summary.get("debt_cleared", 0)), int(summary.get("debt_defaulted", 0)), int(summary.get("unpaid_upkeep", 0))],
+		"Integrity: %d / 100. Corruption: %d / 100. Law: %d; Literacy: %d; Arithmetic: %d. Audit reprimands survived: %d." % [int(summary.get("integrity_score", 0)), int(summary.get("corruption_score", 0)), int(summary.get("law", 0)), int(summary.get("literacy", 0)), int(summary.get("arithmetic", 0)), int(summary.get("audit_reprimands_survived", 0))],
 		"Great Canal Cut: %d / %d — %s. Lasting standing: %s." % [int(summary.get("canal_progress", 0)), int(summary.get("canal_target", 100)), String(summary.get("canal_labor_outcome", "unrecorded")), String(summary.get("primary_legacy_faction", "No faction recorded"))],
 		"",
 		"Thus the tablets remember %s: not the loudest hand in Uruk, but the hand whose marks endured." % String(summary.get("character_name", "the scribe"))
@@ -145,9 +147,9 @@ static func _epitaph(integrity: int, corruption: int, net_worth: int, law: int, 
 	return "The Diligent Keeper of the Daybook"
 
 static func _labor_outcome(world: WorldState, epic: Dictionary) -> String:
-	if world.world_flags.has(&"canal_forced_drafts"):
+	if world.has_flag(&"canal_forced_drafts", world.current_period_index()):
 		return "forced drafts"
-	if world.world_flags.has(&"canal_worker_strike") or world.world_flags.has(&"canal_crew_slowdown"):
+	if world.has_flag(&"canal_worker_strike", world.current_period_index()) or world.has_flag(&"canal_crew_slowdown", world.current_period_index()):
 		return "worker strikes"
 	if int(epic.get("progress", world.get_resource(&"canal_progress"))) >= int(epic.get("target", 100)):
 		return "full rations"
