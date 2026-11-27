@@ -213,6 +213,76 @@ func _run() -> void:
 		_check(not OutcomeAffordability.is_outcome_disabled_for_actor(Quayside.id, silver_outcome, 4), "Four personal silver enables the four-shekel verdict")
 		_check(not OutcomeAffordability.is_outcome_disabled_for_actor(&"challenge_other", silver_outcome, 0), "The Quayside-specific cost guard does not affect other challenges")
 
+	# Reproduce the live save: a completed legacy stage-only review exists while
+	# the same Epic has a new review pending in cycle 1 at the same stage.
+	var review_world := WorldState.new()
+	review_world.year = -3198
+	review_world.current_location_id = &"uruk"
+	review_world.places[&"uruk"] = {"name": "Uruk", "parent": ""}
+	review_world.institutions[&"eanna_household"] = {"name": "Eanna Temple", "place_id": &"uruk", "members": [], "stockpiles": {}}
+	review_world.stockpiles[&"canal_progress"] = 52
+	var review_actor := PersonEntity.new()
+	review_actor.id = &"review_cycle_scribe"
+	review_actor.display_name = "Review Cycle Scribe"
+	review_world.set_player(review_actor)
+	review_world.epics[&"great_canal_cut"] = {
+		"active": true,
+		"completed": false,
+		"title": "The Great Canal Cut",
+		"progress": 52,
+		"progress_resource": &"canal_progress",
+		"target": 100,
+		"sponsor_institution": &"eanna_household",
+		"review_initialized": true,
+		"review_pending": true,
+		"review_cycle": 1,
+		"review_stage": 1,
+		"review_stage_label": "Canal Cutting",
+		"review_reason": "site_hazard",
+		"review_summary": "The current work conditions have changed.",
+		"active_problem": "disruption",
+		"last_notified_problem": "disruption",
+		"last_reviewed_progress": 41,
+		"last_reviewed_stage": "cutting",
+		"stage": "cutting",
+		"history_notes": []
+	}
+	review_world.assignments[&"epic:great_canal_cut:s1"] = {
+		"kind": &"project_review",
+		"source_id": &"great_canal_cut",
+		"status": "completed",
+		"review_cycle": 0,
+		"reviewed_progress": 41,
+		"reviewed_stage": "cutting",
+		"started_period": -38378,
+		"completed_period": -38378
+	}
+	var cycle_one_opportunity: Dictionary = {}
+	for opportunity in Pipeline.generate_opportunities(review_world, review_actor):
+		if StringName(opportunity.get("kind", "")) == &"project_review":
+			cycle_one_opportunity = opportunity
+			break
+	_check(StringName(cycle_one_opportunity.get("id", "")) == &"epic:great_canal_cut:r1:s1", "A repeated Epic review receives a new identity for review cycle 1")
+	_check(Pipeline.begin(review_world, cycle_one_opportunity, review_actor), "A new same-stage Epic review opens despite the completed legacy review")
+	_check(String(review_world.assignments[&"epic:great_canal_cut:s1"].get("status", "")) == "completed", "Opening the new review preserves the completed historical review")
+
+	# Resolving a review advances the cycle; a subsequent review gets r2, not r1.
+	if not cycle_one_opportunity.is_empty():
+		review_world.assignments[&"epic:great_canal_cut:r1:s1"]["status"] = "completed"
+		review_world.resolve_epic_review(&"great_canal_cut")
+		var next_epic_state: Dictionary = review_world.epics[&"great_canal_cut"]
+		next_epic_state["review_pending"] = true
+		next_epic_state["review_reason"] = "site_hazard"
+		next_epic_state["review_stage"] = 1
+		review_world.epics[&"great_canal_cut"] = next_epic_state
+		var cycle_two_opportunity: Dictionary = {}
+		for opportunity in Pipeline.generate_opportunities(review_world, review_actor):
+			if StringName(opportunity.get("kind", "")) == &"project_review":
+				cycle_two_opportunity = opportunity
+				break
+		_check(StringName(cycle_two_opportunity.get("id", "")) == &"epic:great_canal_cut:r2:s1", "The next same-stage Epic review receives review cycle 2 identity")
+		_check(Pipeline.begin(review_world, cycle_two_opportunity, review_actor), "The cycle 2 Epic review also opens without overwriting prior reviews")
+
 	_finished = true
 	if _failures.is_empty():
 		print("PASS: %d Epic/Challenge circuit checks" % _checks)
