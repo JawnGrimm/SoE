@@ -163,6 +163,7 @@ func _build_route_graph() -> bool:
 		var place: PlaceDef = plotted_places[place_id]
 		if place == null or place.survey_position == Vector2.ZERO:
 			push_warning("RegionalSurveyMap: route endpoint '%s' has no authored survey position." % place_id)
+			graph.free()
 			map_view.free()
 			map_view = null
 			graph = null
@@ -184,6 +185,13 @@ func _build_route_graph() -> bool:
 		map_nodes[place_id] = index
 		if place_id == world.current_location_id:
 			current_index = index
+	if not map_nodes.has(world.current_location_id):
+		push_warning("RegionalSurveyMap: current location '%s' is not plotted in this era's route graph." % world.current_location_id)
+		graph.free()
+		map_view.free()
+		map_view = null
+		graph = null
+		return false
 	for route in route_network.routes.values():
 		if not map_nodes.has(route.origin_id) or not map_nodes.has(route.destination_id):
 			continue
