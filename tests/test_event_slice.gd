@@ -130,17 +130,27 @@ func _run() -> void:
 	registry = DefinitionRegistry.new()
 	registry.load_defaults()
 
-	# World-driven Assignment loop: three distinct opportunities are derived
+	# World-driven Assignment loop: three grounded work opportunities plus one career-path docket are derived
 	# from the seeded form, active hazard, and actual institutional ledgers.
 	var assignment_world := WorldState.new()
 	var assignment_actor := UrukSeeder.seed_campaign(assignment_world, 44004400)
 	_check(assignment_actor.skills.levels.values().all(func(level: int) -> bool: return level >= 1), "All six core skills should begin at level one")
 	var opportunities := AssignmentPipeline.generate_opportunities(assignment_world, assignment_actor, &"path_civil")
-	_check(opportunities.size() == 3, "AssignmentPipeline should present exactly three opportunities")
+	_check(opportunities.size() == 4, "AssignmentPipeline should present three world opportunities and one career-path docket")
 	var opportunity_kinds: Array[StringName] = []
 	for opportunity in opportunities:
 		opportunity_kinds.append(StringName(opportunity.get("kind", "")))
-	_check(opportunity_kinds.has(&"form") and opportunity_kinds.has(&"hazard") and opportunity_kinds.has(&"ledger"), "Initial opportunities should be grounded in a pending form, active hazard, and real institution ledger")
+	_check(opportunity_kinds.has(&"form") and opportunity_kinds.has(&"hazard") and opportunity_kinds.has(&"ledger") and opportunity_kinds.has(&"procedural_docket"), "Board should retain grounded form, hazard, ledger, and procedural career work")
+	var career_docket: Dictionary = {}
+	for opportunity in opportunities:
+		if StringName(opportunity.get("kind", "")) == &"procedural_docket": career_docket = opportunity
+	var career_payload: Dictionary = career_docket.get("source_data", {})
+	_check(StringName(career_payload.get("path_id", "")) == &"path_civil" and String(career_payload.get("docket_kind", "")) == "local_path", "The normal assignment board should carry a docket authored for the selected career path")
+	_check(assignment_world.recent_archetypes.size() == 1 and assignment_world.recent_npc_pairs.size() == 1, "Generating a career docket should record its archetype and NPC pair for saveable diversity history")
+	var review_baseline := {"stage": "survey", "last_reviewed_progress": 40, "last_reviewed_stage": "survey"}
+	_check(not AssignmentPipeline._project_review_due(assignment_world, &"great_canal_cut", review_baseline, 40), "A project review should not recur without material change")
+	_check(AssignmentPipeline._project_review_due(assignment_world, &"great_canal_cut", review_baseline, 60), "A project review may recur after twenty points of progress")
+	_check(AssignmentPipeline._project_review_due(assignment_world, &"great_canal_cut", review_baseline, 40) == false and AssignmentPipeline._project_review_due(assignment_world, &"great_canal_cut", {"stage": "cutting", "last_reviewed_progress": 40, "last_reviewed_stage": "survey"}, 40), "A stage transition should reopen a project review")
 	var martial_opportunities := AssignmentPipeline.generate_opportunities(assignment_world, assignment_actor, &"path_martial")
 	var civil_hazard_priority := 0
 	var martial_hazard_priority := 0
@@ -148,7 +158,7 @@ func _run() -> void:
 		if StringName(opportunity.get("kind", "")) == &"hazard": civil_hazard_priority = int(opportunity.get("priority", 0))
 	for opportunity in martial_opportunities:
 		if StringName(opportunity.get("kind", "")) == &"hazard": martial_hazard_priority = int(opportunity.get("priority", 0))
-	_check(martial_opportunities.size() == 3 and martial_hazard_priority > civil_hazard_priority, "Career path should influence opportunity priority without gating access")
+	_check(martial_opportunities.size() == 4 and martial_hazard_priority > civil_hazard_priority, "Career path should influence opportunity priority without gating access")
 	var form_opportunity: Dictionary = {}
 	var hazard_opportunity: Dictionary = {}
 	var ledger_opportunity: Dictionary = {}
