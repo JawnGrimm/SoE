@@ -92,12 +92,16 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			continue
 		var progress := world.get_resource(StringName(epic.get("progress_resource", "")))
 		var target := int(epic.get("target", 100))
+		var sponsor_id := StringName(epic.get("sponsor_institution", ""))
+		if not _is_local_to_current_location(world, sponsor_id):
+			continue
 		if target <= 0 or progress >= target or not _project_review_due(world, StringName(epic_id), epic, progress):
 			continue
 		candidates.append({
 			"id": StringName("work_project_%s_%d" % [epic_id, world.current_period_index()]),
 			"kind": &"project_review",
 			"source_id": StringName(epic_id),
+			"sponsor_institution": sponsor_id,
 			"title": "%s / Progress Review" % String(epic.get("title", epic_id)),
 			"summary": "The active public work stands at %d of %d. Its current labor and provisioning position requires review." % [progress, target],
 			"priority": 2 + _career_bonus(selected_path, &"project"),
@@ -124,7 +128,11 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 		})
 
 	# The career-path docket joins ordinary world work on the same board.
-	var procedural_payload := AssignmentGeneratorScript.generate(world, actor, selected_path)
+	# Board construction is a preview. Keep narrative RNG and rotation history
+	# untouched until the player actually opens the procedural docket.
+	var prior_narrative_rng_state := world.rng_narrative.state
+	var procedural_payload := AssignmentGeneratorScript.generate(world, actor, selected_path, false)
+	world.rng_narrative.state = prior_narrative_rng_state
 	if not procedural_payload.is_empty():
 		var procedural_archetype := StringName(procedural_payload.get("archetype", "docket"))
 		candidates.append({
@@ -138,6 +146,22 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			"source_data": procedural_payload.duplicate(true),
 			"path_id": selected_path
 		})
+
+	# Abandoning an assignment removes that period-keyed docket from this board.
+	# Its source may return naturally next period under a fresh opportunity ID.
+	var filtered_candidates: Array[Dictionary] = []
+	var seen_sources: Dictionary = {}
+	for candidate in candidates:
+		var source_key := "%s:%s" % [String(candidate.get("kind", "")), String(candidate.get("source_id", ""))]
+		if seen_sources.has(source_key):
+			continue
+		seen_sources[source_key] = true
+		var candidate_id := StringName(candidate.get("id", ""))
+		var prior_assignment: Dictionary = world.assignments.get(candidate_id, {})
+		if String(prior_assignment.get("status", "")) == "abandoned" and int(prior_assignment.get("started_period", -1)) == world.current_period_index():
+			continue
+		filtered_candidates.append(candidate)
+	candidates = filtered_candidates
 
 	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		if int(a.get("priority", 0)) == int(b.get("priority", 0)):
