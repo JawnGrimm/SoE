@@ -161,8 +161,8 @@ func _build_route_graph() -> bool:
 	var place_ids: Array[StringName] = []
 	for place_id in plotted_places:
 		var place: PlaceDef = plotted_places[place_id]
-		if place == null or place.survey_position == Vector2.ZERO:
-			push_warning("RegionalSurveyMap: route endpoint '%s' has no authored survey position." % place_id)
+		if place == null or place.survey_position == Vector2.ZERO or not place.survey_position.is_finite():
+			push_warning("RegionalSurveyMap: route endpoint '%s' has a missing or invalid survey position; refusing to build the route graph." % place_id)
 			graph.free()
 			map_view.free()
 			map_view = null
