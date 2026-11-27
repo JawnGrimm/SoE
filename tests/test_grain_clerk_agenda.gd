@@ -71,13 +71,13 @@ func _run() -> void:
 		var evidence: Dictionary = evidence_result.get("evidence", {})
 		var facts := String(evidence.get("facts", ""))
 		_check(bool(evidence_result.get("success", false)) and facts.contains("DISPATCH DOCKET") and facts.contains("THRESHOLD TALLY") and facts.contains("DISCREPANCY"), "Investigating the docket reveals both conflicting records and their discrepancy")
-		var opinion_before_referral := ur_nanna.get_opinion(player.id)
+		var opinion_before_referral := clerk.get_opinion(player.id)
 		var second_evidence := AssignmentPipelineScript.perform_action(world, player, assignment_id, &"reconcile_accounts")
 		var referral := AssignmentPipelineScript.resolve(world, player, assignment_id, &"refer")
 		var corrected_records: Dictionary = world.institutions.get(&"eanna_household", {}).get("stock_records", {})
 		_check(bool(second_evidence.get("success", false)) and bool(referral.get("success", false)), "Two inquiries permit a formal cover-up referral")
 		_check(not bool(corrected_records.get("concealed_spoilage", true)) and not corrected_records.has("barley_quality_declaration"), "Referring Ur-Nanna clears the concealed spoilage declaration")
-		_check(ur_nanna.get_opinion(player.id) == opinion_before_referral - 3 and world.get_person(&"shuruppak_ilu").get_opinion(player.id) >= 2, "Referral costs Ur-Nanna three opinion and earns archive standing")
+		_check(clerk.get_opinion(player.id) == opinion_before_referral - 3 and world.get_person(&"shuruppak_ilu").get_opinion(player.id) >= 2, "Referral costs Ur-Nanna three opinion and earns archive standing")
 	_check(int(institution.get("agenda_evaluation_count", 0)) == 2, "Ur-Nanna's tree is evaluated exactly once on each of two period advances")
 
 	# Rubber-stamping the same kind of concealed docket pays more and creates audit exposure.
