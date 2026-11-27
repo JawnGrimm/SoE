@@ -113,7 +113,8 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 		var title_suffix := stage_label if review_reason in ["project_opened", "stage_reached"] else _epic_problem_label(review_reason)
 		var review_summary := String(epic.get("review_summary", "Review labor, supply, and project progress."))
 		candidates.append({
-			"id": StringName("epic:%s:s%d" % [epic_id, review_stage]),
+			"id": StringName("epic:%s:r%d:s%d" % [epic_id, int(epic.get("review_cycle", 0)), review_stage]),
+			"review_cycle": int(epic.get("review_cycle", 0)),
 			"kind": &"project_review",
 			"source_id": StringName(epic_id),
 			"sponsor_institution": sponsor_id,
