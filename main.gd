@@ -1847,7 +1847,7 @@ func _refresh_compound() -> void:
 		survey_button.disabled = world.get_player() == null
 	var mentor_trait := "unmarked"
 	for trait_id in actor.traits:
-		if trait_id in [&"exacting", &"stubborn", &"protective", &"diplomatic"]:
+		if trait_id in [&"exacting", &"stubborn", &"protective", &"diplomatic", &"pliable", &"severe", &"cautious"]:
 			mentor_trait = String(trait_id)
 	heirloom_label.text = "MENTOR MARK: %s" % mentor_trait.to_upper()
 	dossier_label.text = _build_dossier_text()

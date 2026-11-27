@@ -40,6 +40,16 @@ func _run() -> void:
 	var network := NetworkScript.new()
 	_check(network.configure(world, registry.all_places(), registry.all_routes(), &"uruk_storehouse"), "Regional route graph configures for Umma")
 	var simulator := SimulatorScript.new(registry)
+	var umma_initial_state: Dictionary = world.institutions.get(&"umma_canal_bailiff", {})
+	var umma_initial_stock: Dictionary = umma_initial_state.get("stockpiles", {}).duplicate(true)
+	simulator._simulate_institutions(world)
+	_check(int(world.institutions.get(&"umma_canal_bailiff", {}).get("resource_pressure", -1)) == 0, "Umma's authored local thresholds should be calm at initial/harvest stock levels")
+	umma_initial_state["stockpiles"] = {&"barley": 90, &"labor": 6, &"textiles": 4}
+	world.institutions[&"umma_canal_bailiff"] = umma_initial_state
+	simulator._simulate_institutions(world)
+	_check(int(world.institutions.get(&"umma_canal_bailiff", {}).get("resource_pressure", 0)) >= 2, "Umma should register real pressure during lean barley and labor months")
+	# Keep the office in the lean-month state for the regional circuit test.
+	# The player should see local shortage work because Umma itself is strained.
 	var travel := TravelScript.new()
 	_check(travel.configure(network, simulator), "Travel service uses the authoritative simulator")
 	var outbound := travel.travel(world, &"land_uruk_umma", &"umma")
@@ -99,6 +109,8 @@ func _run() -> void:
 		var restored_institution: Dictionary = restored.institutions.get(&"umma_canal_bailiff", {})
 		var restored_stock: Dictionary = restored_institution.get("stockpiles", {})
 		_check(restored_stock.has(&"barley") and int(restored_stock.get(&"barley", -1)) == int(umma_stock_before_save.get(&"barley", -2)), "Institution stockpile keys restore as StringName after save/load")
+		var restored_thresholds: Dictionary = restored_institution.get("pressure_thresholds", {})
+		_check(restored_thresholds.has(&"barley_warn") and int(restored_thresholds.get(&"barley_warn", -1)) == 95, "Institution pressure thresholds survive save/load with StringName keys")
 		_check(restored.resolved_forms.size() == world.resolved_forms.size() and restored.cedar_desk_log.size() == world.cedar_desk_log.size(), "Resolved local forms and cedar desk entries survive save/load")
 		for person_id in seated_ids:
 			_check(restored.get_person(person_id).get_opinion(player.id) == opinions_before_save[person_id], "Umma resident opinion survives save/load")

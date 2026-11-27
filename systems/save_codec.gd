@@ -105,10 +105,18 @@ static func _world_from_data(data: Dictionary) -> WorldState:
 		institution["stockpiles"] = _name_int_map(institution.get("stockpiles", {}))
 		institution["periodic_deltas"] = _name_int_map(institution.get("periodic_deltas", {}))
 		institution["harvest_deltas"] = _name_int_map(institution.get("harvest_deltas", {}))
+		institution["pressure_thresholds"] = _name_int_map(institution.get("pressure_thresholds", {}))
 		institution["offices"] = _name_name_map(institution.get("offices", {}))
 		world.institutions[institution_id] = institution
 	world.social_groups = _name_dictionary_map(data.get("social_groups", {}))
 	world.assignments = _name_dictionary_map(data.get("assignments", {}))
+	for assignment_id in world.assignments.keys():
+		var assignment: Dictionary = world.assignments[assignment_id]
+		for field in [&"kind", &"source_id", &"employer_id", &"actor_id", &"path_id"]:
+			assignment[field] = StringName(assignment.get(field, ""))
+		assignment["actions"] = _name_key_map(assignment.get("actions", {}))
+		assignment["evidence"] = _name_key_map(assignment.get("evidence", {}))
+		world.assignments[assignment_id] = assignment
 	world.hazards = _dictionary_array(data.get("hazards", []))
 	world.recent_archetypes = _name_array(data.get("recent_archetypes", []))
 	world.recent_npc_pairs = _string_array(data.get("recent_npc_pairs", []))
@@ -185,6 +193,13 @@ static func _json_safe(value: Variant) -> Variant:
 			result.append(_json_safe(item))
 		return result
 	return value
+
+static func _name_key_map(source: Variant) -> Dictionary:
+	var result: Dictionary = {}
+	if source is Dictionary:
+		for key in source:
+			result[StringName(key)] = source[key]
+	return result
 
 static func _name_int_map(source: Variant) -> Dictionary[StringName, int]:
 	var result: Dictionary[StringName, int] = {}
