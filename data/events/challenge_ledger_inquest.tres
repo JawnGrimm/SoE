@@ -1,41 +1,45 @@
-[gd_resource type="Resource" script_class="EventTemplate" load_steps=13 format=3]
+[gd_resource type="Resource" script_class="EventTemplate" format=3 uid="uid://djj6tojhdkwx4"]
 
-[ext_resource type="Script" path="res://data/definitions/event_template.gd" id="1"]
-[ext_resource type="Script" path="res://data/definitions/event_outcome.gd" id="2"]
-[ext_resource type="Script" path="res://data/definitions/event_effect.gd" id="3"]
-[ext_resource type="Script" path="res://data/definitions/event_condition.gd" id="4"]
+[ext_resource type="Script" uid="uid://cu1doop675avl" path="res://data/definitions/event_template.gd" id="1"]
+[ext_resource type="Script" uid="uid://rftfpp5ciyrb" path="res://data/definitions/event_outcome.gd" id="2"]
+[ext_resource type="Script" uid="uid://c8yvb5uql0l22" path="res://data/definitions/event_effect.gd" id="3"]
+[ext_resource type="Script" uid="uid://dn3vosyim7ss3" path="res://data/definitions/event_condition.gd" id="4"]
 
 [sub_resource type="Resource" id="condition_record_trait"]
 script = ExtResource("4")
 condition_type = &"has_trait"
-target = "actor"
-parameters = {"trait_ids": Array[StringName]([&"complicit", &"pliable"]), "match": "any"}
+parameters = {
+"match": "any",
+"trait_ids": Array[StringName]([&"complicit", &"pliable"])
+}
 
 [sub_resource type="Resource" id="condition_record_pattern"]
 script = ExtResource("4")
 condition_type = &"flag_set"
-target = "actor"
-parameters = {"flags": Array[StringName]([&"entangled_brewery_accounts", &"phantom_barley_measure"]), "scope": "world", "match": "any"}
+parameters = {
+"flags": Array[StringName]([&"entangled_brewery_accounts", &"phantom_barley_measure"]),
+"match": "any",
+"scope": "world"
+}
 
 [sub_resource type="Resource" id="fx_1"]
 script = ExtResource("3")
 effect_type = &"add_memory"
-parameters = {"memory_id": &"ledger_inquest_cooperated", "text": "The apprentice opened the brewery and barley accounts to formal scrutiny.", "involved": [&"shuruppak_ilu", &"nin_kasi"]}
+parameters = {
+"involved": [&"shuruppak_ilu", &"nin_kasi"],
+"memory_id": &"ledger_inquest_cooperated",
+"text": "The apprentice opened the brewery and barley accounts to formal scrutiny."
+}
 
 [sub_resource type="Resource" id="fx_2"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
-parameters = {"subject": &"shuruppak_ilu", "other": &"actor", "amount": 6, "reason": "Produced the disputed accounts for review"}
-
-[sub_resource type="Resource" id="fx_3"]
-script = ExtResource("3")
-effect_type = &"set_flag"
-parameters = {"flag": &"ledger_inquest_suppressed", "scope": "world", "years": 2}
-
-[sub_resource type="Resource" id="fx_4"]
-script = ExtResource("3")
-effect_type = &"add_memory"
-parameters = {"memory_id": &"ledger_inquest_buried", "text": "The apprentice sealed the brewery and barley discrepancies rather than submit them to the inquest.", "involved": [&"shuruppak_ilu", &"nin_kasi"]}
+parameters = {
+"amount": 6,
+"other": &"actor",
+"reason": "Produced the disputed accounts for review",
+"subject": &"shuruppak_ilu"
+}
 
 [sub_resource type="Resource" id="outcome_1"]
 script = ExtResource("2")
@@ -43,6 +47,24 @@ label = "Open the accounts"
 title_override = "THE LEDGER IS BROUGHT INTO DAYLIGHT"
 description_override = "The brewery tallies and phantom barley measures are laid before the archive keeper. The figures do not explain themselves, but they can no longer be quietly misplaced."
 effects = Array[ExtResource("3")]([SubResource("fx_1"), SubResource("fx_2")])
+
+[sub_resource type="Resource" id="fx_3"]
+script = ExtResource("3")
+effect_type = &"set_flag"
+parameters = {
+"flag": &"ledger_inquest_suppressed",
+"scope": "world",
+"years": 2
+}
+
+[sub_resource type="Resource" id="fx_4"]
+script = ExtResource("3")
+effect_type = &"add_memory"
+parameters = {
+"involved": [&"shuruppak_ilu", &"nin_kasi"],
+"memory_id": &"ledger_inquest_buried",
+"text": "The apprentice sealed the brewery and barley discrepancies rather than submit them to the inquest."
+}
 
 [sub_resource type="Resource" id="outcome_2"]
 script = ExtResource("2")
