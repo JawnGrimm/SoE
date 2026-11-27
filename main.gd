@@ -10,7 +10,11 @@ const RouteNetworkScript = preload("res://systems/route_network.gd")
 const TravelServiceScript = preload("res://systems/travel_service.gd")
 const RegionalSurveyMapScript = preload("res://components/regional_survey_map.gd")
 const WorkQueueOverlayScript = preload("res://ui/work_queue_overlay.gd")
-const CUNEIFORM_FONT = preload("res://assets/Noto_Sans_Cuneiform,Noto_Sans_Egyptian_Hieroglyphs/Noto_Sans_Cuneiform/NotoSansCuneiform-Regular.ttf")
+const CedarDeskHeaderScript = preload("res://ui/cedar_desk_header.gd")
+const ClayDocketPropScript = preload("res://ui/clay_docket_prop.gd")
+const ArchiveStackPropScript = preload("res://ui/archive_stack_prop.gd")
+const CedarDeskLayoutScript = preload("res://ui/cedar_desk_layout.gd")
+const CUNEIFORM_FONT = preload("res://assets/fonts/NotoSansCuneiform-Regular.ttf")
 const CAMPAIGN_SEED: int = 32003200
 const ROSTER_CAST: Array[StringName] = [&"shuruppak_ilu", &"utu_mansum", &"enlil_kisu", &"ur_nanna", &"nin_kasi", &"geme_inana", &"lu_nanshe"]
 const FACTION_LABELS := {
@@ -115,7 +119,11 @@ var last_stock_snapshot: Dictionary = {}
 var last_delta_period: int = -1
 var docket_overlay: PanelContainer
 var docket_motion_layer: Control
-var archive_prop: TextureButton
+var archive_prop: Control
+var cedar_header: CedarDeskHeader
+var clay_docket: ClayDocketProp
+var archive_stack: ArchiveStackProp
+var upper_workspace_control: VBoxContainer
 var stylus_prop: TextureRect
 var heirloom_label: Label
 var secret_toggle: Button
@@ -161,6 +169,8 @@ func _open_pause_menu() -> void:
 
 func _set_phase(next_phase: String) -> void:
 	phase = next_phase
+	if upper_workspace_control != null:
+		_set_evidence_visible(CedarDeskLayoutScript.evidence_visible(phase, survey_map != null and survey_map.visible))
 	MusicDirector.play_for_phase(phase)
 
 
@@ -183,20 +193,26 @@ func _build_interface() -> void:
 	var root := VBoxContainer.new()
 	root.add_theme_constant_override("separation", 4)
 	margin.add_child(root)
+	cedar_header = CedarDeskHeaderScript.new()
+	cedar_header.custom_minimum_size.y = 42
+	cedar_header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	root.add_child(cedar_header)
 	var header := HBoxContainer.new()
 	root.add_child(header)
 	var title := Label.new()
-	title.text = "SCRIBE OF ERAS  /  REGIONAL COMPOUND"
+	title.text = "SCRIBE OF ERAS  /  CEDAR DESK"
 	location_label = title
 	title.add_theme_font_size_override("font_size", 23)
 	title.add_theme_color_override("font_color", Color("#e5d2a8"))
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
 	year_label = Label.new()
+	year_label.visible = false
 	year_label.add_theme_font_size_override("font_size", 14)
 	year_label.add_theme_color_override("font_color", Color("#c4ad7c"))
 	header.add_child(year_label)
 	header_resource_label = Label.new()
+	header_resource_label.visible = false
 	header_resource_label.add_theme_font_size_override("font_size", 12)
 	header_resource_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	header_resource_label.add_theme_color_override("font_color", Color("#e5d2a8"))
@@ -252,7 +268,7 @@ func _build_interface() -> void:
 	desk_caption.add_theme_color_override("font_color", Color("#a99570"))
 	desk_toolbar.add_child(desk_caption)
 	survey_button = Button.new()
-	survey_button.text = "UNROLL REGIONAL SURVEY"
+	survey_button.text = "UNROLL SURVEY MAP"
 	survey_button.tooltip_text = "Unroll the regional river-and-road survey on the cedar desk."
 	survey_button.add_theme_font_size_override("font_size", 12)
 	survey_button.add_theme_stylebox_override("normal", _panel_style("#3a2b1d", "#80653b"))
@@ -260,46 +276,59 @@ func _build_interface() -> void:
 	survey_button.pressed.connect(_toggle_regional_survey)
 	desk_toolbar.add_child(survey_button)
 	var upper_workspace := VBoxContainer.new()
+	upper_workspace_control = upper_workspace
 	upper_workspace.custom_minimum_size.y = 0
 	upper_workspace.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	# Evidence cards are fixed-height; the docket receives the remaining vertical space.
-	upper_workspace.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	upper_workspace.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	upper_workspace.size_flags_stretch_ratio = CedarDeskLayoutScript.UPPER_WORKSPACE_RATIO
 	upper_workspace.add_theme_constant_override("separation", 6)
 	desk_box.add_child(upper_workspace)
 	var evidence_row := HBoxContainer.new()
 	evidence_workspace = evidence_row
-	evidence_row.custom_minimum_size.y = 172
+	evidence_row.custom_minimum_size.y = 0
 	evidence_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	evidence_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	evidence_row.add_theme_constant_override("separation", 12)
 	upper_workspace.add_child(evidence_row)
 	evidence_left = _make_evidence_panel(evidence_row, "GRANARY TERRACES  /  TEMPLE", "Ur-Nanna", "The temple cellars are cold, dry, and exact. The gods demand honest measures.", &"ur_nanna")
 	evidence_right = _make_evidence_panel(evidence_row, "RIVER QUAYS  /  LANDING", "Enlil-kisu", "The river road is dangerous and hungry. We respect the scribe who knows what a boatman endures.", &"enlil_kisu")
+	var lower_workspace := HBoxContainer.new()
+	lower_workspace.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lower_workspace.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	lower_workspace.size_flags_stretch_ratio = CedarDeskLayoutScript.LOWER_WORKSPACE_RATIO
+	lower_workspace.add_theme_constant_override("separation", 8)
+	desk_box.add_child(lower_workspace)
 	docket_motion_layer = Control.new()
 	docket_motion_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	docket_motion_layer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	docket_motion_layer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	docket_motion_layer.custom_minimum_size.y = 256
-	desk_box.add_child(docket_motion_layer)
+	docket_motion_layer.size_flags_stretch_ratio = CedarDeskLayoutScript.ACTION_BOX_RATIO
+	lower_workspace.add_child(docket_motion_layer)
 	docket_overlay = PanelContainer.new()
 	docket_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	var tablet_style := StyleBoxTexture.new()
-	tablet_style.texture = load("res://assets/desk/clay_docket.png")
-	tablet_style.texture_margin_left = 96.0
-	tablet_style.texture_margin_right = 96.0
-	tablet_style.texture_margin_top = 82.0
-	tablet_style.texture_margin_bottom = 82.0
-	# Extend the clay surface beyond the control bounds so the visible tablet
-	# fills the docket bay instead of leaving a dark halo around the asset.
-	tablet_style.expand_margin_left = 14.0
-	tablet_style.expand_margin_right = 14.0
-	tablet_style.expand_margin_top = 12.0
-	tablet_style.expand_margin_bottom = 12.0
-	tablet_style.content_margin_left = 0.0
-	tablet_style.content_margin_right = 0.0
-	tablet_style.content_margin_top = 0.0
-	tablet_style.content_margin_bottom = 0.0
-	docket_overlay.add_theme_stylebox_override("panel", tablet_style)
+	var action_style := StyleBoxFlat.new()
+	action_style.bg_color = Color("#1E1913")
+	action_style.border_color = Color("#B88656")
+	action_style.set_border_width_all(2)
+	action_style.set_corner_radius_all(6)
+	action_style.content_margin_left = 16
+	action_style.content_margin_right = 16
+	action_style.content_margin_top = 12
+	action_style.content_margin_bottom = 12
+	docket_overlay.add_theme_stylebox_override("panel", action_style)
 	docket_motion_layer.add_child(docket_overlay)
+	clay_docket = ClayDocketPropScript.new()
+	clay_docket.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	clay_docket.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	clay_docket.size_flags_stretch_ratio = CedarDeskLayoutScript.CLAY_DOCKET_RATIO
+	clay_docket.impression_added.connect(_on_clay_impression_added)
+	lower_workspace.add_child(clay_docket)
+	archive_stack = ArchiveStackPropScript.new()
+	archive_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	archive_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	archive_stack.size_flags_stretch_ratio = CedarDeskLayoutScript.ARCHIVE_STACK_RATIO
+	archive_stack.pressed.connect(_toggle_work_queue)
+	lower_workspace.add_child(archive_stack)
 	survey_map = RegionalSurveyMapScript.new()
 	survey_map.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	survey_map.visible = false
@@ -309,10 +338,10 @@ func _build_interface() -> void:
 	_build_journey_overlay()
 	var tablet_content := MarginContainer.new()
 	tablet_content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	tablet_content.add_theme_constant_override("margin_left", 74)
-	tablet_content.add_theme_constant_override("margin_right", 74)
-	tablet_content.add_theme_constant_override("margin_top", 48)
-	tablet_content.add_theme_constant_override("margin_bottom", 48)
+	tablet_content.add_theme_constant_override("margin_left", 18)
+	tablet_content.add_theme_constant_override("margin_right", 18)
+	tablet_content.add_theme_constant_override("margin_top", 14)
+	tablet_content.add_theme_constant_override("margin_bottom", 14)
 	docket_overlay.add_child(tablet_content)
 	var tablet_scroll := ScrollContainer.new()
 	tablet_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -365,37 +394,7 @@ func _build_interface() -> void:
 	choices.add_theme_constant_override("separation", 5)
 	mat_box.add_child(choices)
 
-	var desk_props := HBoxContainer.new()
-	desk_props.custom_minimum_size.y = 42
-	desk_props.size_flags_vertical = Control.SIZE_SHRINK_END
-	desk_props.add_theme_constant_override("separation", 14)
-	desk_props.alignment = BoxContainer.ALIGNMENT_CENTER
-	root.add_child(desk_props)
-	archive_prop = TextureButton.new()
-	archive_prop.texture_normal = load("res://assets/desk/archive_stack.png")
-	archive_prop.texture_hover = archive_prop.texture_normal
-	archive_prop.texture_pressed = archive_prop.texture_normal
-	archive_prop.ignore_texture_size = true
-	archive_prop.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
-	archive_prop.custom_minimum_size = Vector2(82, 44)
-	archive_prop.focus_mode = Control.FOCUS_ALL
-	archive_prop.add_theme_stylebox_override("focus", _panel_style("#211a12", "#f5e6d0"))
-	archive_prop.tooltip_text = "Open the archive / work queue."
-	archive_prop.pressed.connect(_toggle_work_queue)
-	desk_props.add_child(archive_prop)
-	stylus_prop = TextureRect.new()
-	stylus_prop.texture = load("res://assets/desk/Ancient Wrapped Wooden Stylus.png")
-	stylus_prop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	stylus_prop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	stylus_prop.custom_minimum_size = Vector2(100, 40)
-	stylus_prop.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	stylus_prop.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	stylus_prop.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	desk_props.add_child(stylus_prop)
-	var seal_prop := CylinderSealProp.new()
-	seal_prop.custom_minimum_size = Vector2(52, 52)
-	seal_prop.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	desk_props.add_child(seal_prop)
+	# Clay docket and archive stack are now physical controls in the lower workspace.
 
 	var compound := PanelContainer.new()
 	compound.custom_minimum_size.x = 280
@@ -504,7 +503,7 @@ func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: Strin
 	var header := HBoxContainer.new()
 	box.add_child(header)
 	var portrait := TextureRect.new()
-	portrait.custom_minimum_size = Vector2(44, 44)
+	portrait.custom_minimum_size = Vector2(64, 64)
 	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	portrait.texture = _load_character_portrait(character_id)
@@ -513,7 +512,7 @@ func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: Strin
 	title.text = heading
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.add_theme_font_size_override("font_size", 13)
+	title.add_theme_font_size_override("font_size", 15)
 	title.add_theme_color_override("font_color", Color("#d6bd8b"))
 	header.add_child(title)
 	var speaker_label := Label.new()
@@ -525,7 +524,7 @@ func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: Strin
 	quote_label.text = "“%s”" % quote
 	quote_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	quote_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	quote_label.add_theme_font_size_override("font_size", 14)
+	quote_label.add_theme_font_size_override("font_size", 15)
 	quote_label.add_theme_color_override("font_color", Color("#e0d4bd"))
 	box.add_child(quote_label)
 	# Evidence can contain a complete resource ledger. Keep it inside the card's
@@ -538,7 +537,7 @@ func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: Strin
 	facts_label.custom_minimum_size.y = 0
 	facts_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	facts_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	facts_label.add_theme_font_size_override("normal_font_size", 12)
+	facts_label.add_theme_font_size_override("normal_font_size", 13)
 	facts_label.add_theme_color_override("default_color", Color("#c7ad7e"))
 	box.add_child(facts_label)
 	if heading.begins_with("GRANARY"):
@@ -567,7 +566,7 @@ func _load_character_portrait(character_id: StringName) -> Texture2D:
 		if source_texture != null:
 			var portrait_image := source_texture.get_image()
 			if portrait_image != null and not portrait_image.is_empty():
-				# Center-crop and downsample once for the 44px evidence badge.
+				# Center-crop and downsample once for the 64px evidence portrait.
 				var source_size := portrait_image.get_size()
 				var crop_size := mini(source_size.x, source_size.y)
 				var crop_origin := Vector2i(
@@ -1147,6 +1146,8 @@ func _show_world_engagement() -> void:
 		_show_assignment_board()
 		return
 	record = AssignmentNarratorScript.translate_record(record)
+	if clay_docket != null:
+		clay_docket.set_case_title(String(record.get("title", "Active case")))
 	_clear_choices()
 	_set_phase("world_engagement")
 	var actions: Dictionary = record.get("actions", {})
@@ -1221,6 +1222,8 @@ func _world_assignment_action(action_id: StringName) -> void:
 		status_label.text = String(result.get("message", "Action could not be recorded."))
 		return
 	AudioManager.play_stylus_mark()
+	if clay_docket != null:
+		clay_docket.stamp_inquiry(action_id)
 	if action_id == &"examine_records":
 		var record := AssignmentPipeline.get_record(world, active_world_assignment_id)
 		var evidence: Dictionary = result.get("evidence", {})
@@ -1263,6 +1266,9 @@ func _resolve_world_assignment(verdict: StringName) -> void:
 		return
 	active_world_assignment_id = &""
 	procedural_assignment.clear()
+	if clay_docket != null:
+		clay_docket.seal_verdict()
+	_seal_clay_docket()
 	_show_procedural_result("ASSESSMENT SEALED", String(result.get("message", "The work is entered into the record.")), result.get("consequences", []))
 
 func _abandon_world_assignment() -> void:
@@ -1286,6 +1292,8 @@ func _show_case() -> void:
 	_render_docket_payload(AssignmentNarratorScript.translate_payload(_active_docket_payload()))
 
 func _render_docket_payload(payload: Dictionary, callbacks: Array = []) -> void:
+	if clay_docket != null:
+		clay_docket.set_case_title(String(payload.get("title", "Active case")))
 	if consequence_panel != null:
 		consequence_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 		prompt_label.add_theme_color_override("font_color", Color("#d6bd8b"))
@@ -1347,6 +1355,7 @@ func _resolve_choice(index: int) -> void:
 		if delta != 0:
 			last_opinion_deltas[person_id] = delta
 	_record_case_settlement(silver_before, traits_before)
+	_seal_clay_docket()
 	_show_result(active_event.outcomes[index])
 
 func _resolve_procedural_choice(_index: int, choice: Dictionary) -> void:
@@ -1455,6 +1464,7 @@ func _resolve_procedural_choice(_index: int, choice: Dictionary) -> void:
 	for flag_key in world.world_flags:
 		if not world_flags_before.has(flag_key) or world_flags_before[flag_key] != world.world_flags[flag_key]:
 			consequences.append({"type": "flag", "name": String(flag_key)})
+	_seal_clay_docket()
 	var result_title := String(choice.get("result_title", "MARK MADE"))
 	_show_procedural_result(result_title, result_text, consequences)
 
@@ -1498,6 +1508,9 @@ func _advance_period_once() -> bool:
 		return false
 	assignment_opportunities.clear()
 	active_world_assignment_id = &""
+	if clay_docket != null:
+		clay_docket.clear_impressions()
+		clay_docket.set_case_title("New period")
 	_clear_stamp_history()
 	world_simulator.advance_period(world)
 	last_opinion_deltas.clear()
@@ -2007,8 +2020,8 @@ func _open_regional_survey() -> void:
 	if not survey_map.configure(route_network, world, travel_allowed):
 		status_label.text = "SURVEY UNAVAILABLE / REGIONAL ROUTE DATA IS INCOMPLETE."
 		return
-	_set_evidence_visible(false)
 	survey_map.visible = true
+	_set_evidence_visible(false)
 	if work_queue_button != null:
 		work_queue_button.visible = false
 	docket_overlay.visible = false
@@ -2018,8 +2031,8 @@ func _open_regional_survey() -> void:
 func _close_regional_survey() -> void:
 	if survey_map == null:
 		return
-	_set_evidence_visible(phase != "character_creation")
 	survey_map.visible = false
+	_set_evidence_visible(CedarDeskLayoutScript.evidence_visible(phase, false))
 	if docket_overlay != null:
 		docket_overlay.visible = true
 	if survey_button != null:
@@ -2181,16 +2194,30 @@ func _on_queue_opportunity_selected(index: int) -> void:
 
 
 func _set_evidence_visible(is_visible: bool) -> void:
+	var map_open := survey_map != null and survey_map.visible
+	var full_workspace := phase == "character_creation" or map_open
+	var visible_now := is_visible and CedarDeskLayoutScript.evidence_visible(phase, map_open)
+	if clay_docket != null:
+		clay_docket.visible = not full_workspace
+	if archive_stack != null:
+		archive_stack.visible = not full_workspace
+	if upper_workspace_control != null:
+		upper_workspace_control.visible = visible_now
 	if evidence_workspace != null:
-		evidence_workspace.visible = is_visible
+		evidence_workspace.visible = visible_now
 	if evidence_left != null:
-		evidence_left.visible = is_visible
+		evidence_left.visible = visible_now
 	if evidence_right != null:
-		evidence_right.visible = is_visible
+		evidence_right.visible = visible_now
 
 
 func _refresh_header_status() -> void:
-	if header_resource_label == null or actor == null:
+	if actor == null:
+		return
+	if cedar_header != null:
+		cedar_header.update_status(world, actor, current_era)
+	_refresh_archive_stack()
+	if header_resource_label == null:
 		return
 	var silver := int(actor.resources.get(&"silver", 0))
 	var bread := int(actor.resources.get(&"bread", 0))
@@ -2202,6 +2229,35 @@ func _refresh_header_status() -> void:
 	var currency := String(current_era.currency_name) if current_era != null else "silver"
 	header_resource_label.text = "PURSE %d %s  ·  DEBT %d  ·  BREAD %d  ·  BEER %d  ·  %s" % [silver, currency.to_upper(), debt, bread, beer, audit_text]
 
+
+func _seal_clay_docket() -> void:
+	if clay_docket != null:
+		clay_docket.seal_verdict()
+
+func _on_clay_impression_added(_action_id: StringName, _glyph: String) -> void:
+	AudioManager.play_tablet_snap()
+
+func _refresh_archive_stack() -> void:
+	if archive_stack == null:
+		return
+	var urgent_kind := ""
+	for opportunity in assignment_opportunities:
+		var tags: Array = opportunity.get("tags", [])
+		var tag_text := ""
+		for tag in tags:
+			tag_text += " " + String(tag)
+		var text_value := String(opportunity.get("title", "")) + tag_text
+		if text_value.to_upper().contains("SUMMONS"):
+			urgent_kind = "SUMMONS"
+			break
+		if text_value.to_upper().contains("CHALLENGE"):
+			urgent_kind = "CHALLENGE"
+			break
+		if text_value.to_upper().contains("DISPATCH"):
+			urgent_kind = "DISPATCH"
+	archive_stack.set_queue_status(assignment_opportunities.size(), urgent_kind)
+	if work_queue_button != null:
+		work_queue_button.text = "OPEN WORK QUEUE (%d)" % assignment_opportunities.size() if phase == "opportunity_board" else "ARCHIVE / QUEUE"
 
 func _local_institution_ids() -> Array[StringName]:
 	return CompoundContextScript.institution_ids(world, world.current_location_id)
