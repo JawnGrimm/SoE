@@ -108,6 +108,78 @@ func is_active_epic_complete() -> bool:
 			return true
 	return false
 
+func get_epic_stage_index(progress: int, target: int) -> int:
+	if target <= 0:
+		return 0
+	if progress >= target:
+		return 3
+	if progress >= int(ceil(float(target) * 0.75)):
+		return 2
+	if progress >= int(ceil(float(target) * 0.25)):
+		return 1
+	return 0
+
+func get_epic_stage_label(stage_index: int) -> String:
+	match stage_index:
+		1: return "Canal Cutting"
+		2: return "Approaching Completion"
+		3: return "Completion Account"
+		_: return "Initial Survey"
+
+func ensure_epic_review_state(epic_id: StringName) -> void:
+	if epic_id == &"" or not epics.has(epic_id):
+		return
+	var state: Dictionary = epics[epic_id]
+	var target := int(state.get("target", 100))
+	var resource_id := StringName(state.get("progress_resource", ""))
+	var progress := int(state.get("progress", get_resource(resource_id)))
+	var stage_index := get_epic_stage_index(progress, target)
+	var stage_label := get_epic_stage_label(stage_index)
+	var problem := String(state.get("active_problem", ""))
+
+	if not bool(state.get("review_initialized", false)):
+		state["review_initialized"] = true
+		state["review_stage"] = stage_index
+		state["review_stage_label"] = stage_label
+		state["review_pending"] = true
+		state["review_reason"] = "project_opened"
+		state["review_summary"] = "The project has opened a new account. Establish its stage, labor, and supply position."
+	elif stage_index < int(state.get("review_stage", stage_index)):
+		# A regressed project returns to its lower stage; reaching a higher stage
+		# again will create a fresh review rather than leaving a stale stage latch.
+		state["review_stage"] = stage_index
+		state["review_stage_label"] = stage_label
+		state["review_pending"] = false
+		state["review_reason"] = ""
+		state["review_summary"] = ""
+	elif stage_index > int(state.get("review_stage", stage_index)):
+		state["review_stage"] = stage_index
+		state["review_stage_label"] = stage_label
+		state["review_pending"] = true
+		state["review_reason"] = "stage_reached"
+		state["review_summary"] = "The works have reached %s. Enter the new stage and its obligations." % stage_label
+
+	var prior_problem := String(state.get("last_notified_problem", ""))
+	if problem.is_empty():
+		state["last_notified_problem"] = ""
+	elif problem != prior_problem and not bool(state.get("review_pending", false)):
+		state["last_notified_problem"] = problem
+		state["review_pending"] = true
+		state["review_reason"] = "site_hazard" if problem == "disruption" else problem
+		state["review_summary"] = "The current work conditions have changed. Record the interruption and its effect on labor or provisions."
+	epics[epic_id] = state
+
+func resolve_epic_review(epic_id: StringName) -> void:
+	if epic_id == &"" or not epics.has(epic_id):
+		return
+	var state: Dictionary = epics[epic_id]
+	state["review_pending"] = false
+	state["review_cycle"] = int(state.get("review_cycle", 0)) + 1
+	state["reviewed_problem"] = String(state.get("active_problem", ""))
+	state["last_notified_problem"] = String(state.get("active_problem", ""))
+	state["review_summary"] = ""
+	epics[epic_id] = state
+
 func set_world_seed(new_seed: int) -> void:
 	master_seed = new_seed
 	rng_narrative.seed = new_seed ^ 0x5DEECE66D

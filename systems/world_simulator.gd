@@ -212,6 +212,7 @@ func _simulate_epic(world: WorldState, definition: EpicDef, state: Dictionary) -
 		state["history_notes"] = history
 	world.epics[definition.id] = state
 	world.stockpiles[resource_id] = progress
+	world.ensure_epic_review_state(definition.id)
 
 func _simulate_economy(world: WorldState) -> void:
 	var p := world.period
