@@ -17,7 +17,7 @@ static func evaluate(world: WorldState, actor: PersonEntity) -> Dictionary:
 	var silver := int(actor.resources.get(&"silver", 0))
 	var debt := maxi(0, int(actor.resources.get(&"debt", actor.flags.get(&"debt", 0))))
 	var unpaid_upkeep := maxi(0, int(actor.flags.get(&"unpaid_upkeep", 0)))
-	var corruption_flags := [&"phantom_barley_measure", &"entangled_brewery_accounts", &"complicit"]
+	var corruption_flags := [&"phantom_barley_measure", &"entangled_brewery_accounts", &"complicit", &"bribe_accepted", &"concealed_accounts"]
 	var audit_exposure := maxi(int(world.world_flags.get(&"audit_exposure", 0)), int(actor.flags.get(&"audit_exposure", 0)))
 	var corruption := audit_exposure * 8
 	if &"pliable" in actor.traits:
@@ -27,6 +27,8 @@ static func evaluate(world: WorldState, actor: PersonEntity) -> Dictionary:
 			corruption += 18
 	if actor.traits.has(&"complicit"):
 		corruption += 20
+	if actor.flags.has(&"bribe_accepted") or actor.flags.has(&"concealed_accounts"):
+		corruption += 18
 	var corrections := int(world.world_flags.get(&"honest_corrections", 0))
 	var exposure_clears := int(world.world_flags.get(&"exposure_clears", 0))
 	var mentor_trust := int(actor.relationships.get(&"shuruppak_ilu", {}).get("trust", 0))
@@ -63,15 +65,20 @@ static func evaluate(world: WorldState, actor: PersonEntity) -> Dictionary:
 	var progress := int(epic.get("progress", world.get_resource(&"canal_progress")))
 	var target := int(epic.get("target", 100))
 	var labor_outcome := _labor_outcome(world, epic)
+	var start_year := int(world.world_flags.get(&"career_start_year", -3200))
+	var orientation_label := "Unrecorded"
+	for path_id in [&"path_civil", &"path_religious", &"path_martial", &"path_merchant"]:
+		if int(world.world_flags.get(&"professional_orientation", -1)) == int(path_id.hash()):
+			orientation_label = String(path_id).replace("path_", "").replace("_", " ").capitalize()
 	var law_level := actor.skills.get_level(&"law")
 	var literacy_level := actor.skills.get_level(&"literacy")
 	var epitaph := _epitaph(integrity, corruption, silver - debt - unpaid_upkeep, law_level, labor_outcome, primary_faction, actor)
 	return {
 		"character_name": actor.display_name,
 		"final_office": String(actor.office_id).replace("_", " ").capitalize() if actor.office_id != &"" else "No office held",
-		"starting_orientation": String(world.world_flags.get(&"professional_orientation", "Unrecorded")).replace("_", " ").capitalize(),
-		"years_in_service": maxi(0, int(world.world_flags.get(&"service_years", absi(world.year + 3200)))),
-		"start_year": int(world.world_flags.get(&"career_start_year", -3200)),
+		"starting_orientation": orientation_label,
+		"years_in_service": maxi(0, world.year - start_year),
+		"start_year": start_year,
 		"end_year": world.year,
 		"period": world.period + 1,
 		"total_cases_settled": world.cases_settled,
@@ -125,7 +132,7 @@ static func _epitaph(integrity: int, corruption: int, net_worth: int, law: int, 
 		return "The Silver-Handed Operator of Eanna"
 	if net_worth < 0 and faction in [&"provincial_frontier", &"umma", &"nippur"]:
 		return "The Indentured Scribe of the Umma Reeds"
-	if labor_outcome == "full rations" or actor.traits.has(&"protective_of_crew"):
+	if labor_outcome == "full rations" or actor.traits.has(&"protective_of_crew") or actor.traits.has(&"honors_labor"):
 		return "The Reed-Friend of the Ditch Crews"
 	return "The Diligent Keeper of the Daybook"
 
