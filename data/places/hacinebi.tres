@@ -11,5 +11,4 @@ region = &"upper_euphrates"
 political_relation = &"foreign_enclave"
 exports = Array[StringName]([&"copper", &"silver"])
 imports = Array[StringName]([&"textiles", &"grain", &"beer"])
-connected_to = Array[StringName]([&"uruk"])
 era_id = &"uruk_storehouse"
