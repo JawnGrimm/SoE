@@ -46,8 +46,11 @@ func _run() -> void:
 		if place_copy.id == &"uruk":
 			place_copy.survey_position = Vector2.ZERO
 		invalid_places.append(place_copy)
+	var invalid_routes: Array[RouteDef] = []
+	for route_value in network.routes.values():
+		invalid_routes.append(route_value as RouteDef)
 	var invalid_network := RouteNetworkScript.new()
-	_check(invalid_network.configure(world, invalid_places, network.routes.values(), &"uruk_storehouse"), "A route network can be constructed with a town missing its survey position")
+	_check(invalid_network.configure(world, invalid_places, invalid_routes, &"uruk_storehouse"), "A route network can be constructed with a town missing its survey position")
 	_check(not survey_map.configure(invalid_network, world, false) and survey_map.get_map_node_count() == 0, "The survey fails closed with a warning instead of building a graph from a zero-position town")
 	_check(survey_map.configure(network, world, false), "The survey recovers cleanly when configured with valid authored positions")
 	await process_frame
