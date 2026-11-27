@@ -543,10 +543,13 @@ func _tick_labor_foreman_agenda(world: WorldState, official: PersonEntity, insti
 	var thirsty := world.has_flag(&"thirsty_diggers", world.current_period_index())
 	if not thirsty and labor >= labor_warn:
 		return
+	var now := world.current_period_index()
+	var last_reaction := int(institution.get("last_foreman_reaction_period", -100))
+	if now - last_reaction < 3:
+		return
 	var player := world.get_player()
 	if player != null:
 		official.change_opinion(player.id, -1, "The canal crew lacks provisions or workable labor.", world.year)
-	var now := world.current_period_index()
 	world.set_flag(&"canal_crew_slowdown", now + 2)
 	var epic_id := world.get_active_epic_id()
 	if epic_id != &"" and world.epics.has(epic_id):
@@ -568,7 +571,7 @@ func _find_pending_form(world: WorldState, form_type: StringName, subject_id: St
 func _regional_supply_institution(world: WorldState, place_id: StringName, fallback: StringName) -> StringName:
 	for institution_id in world.institutions.keys():
 		var institution: Dictionary = world.institutions[institution_id]
-		if StringName(institution.get("place_id", "")) == place_id and StringName(institution_id) != fallback and String(institution.get("institution_type", "")).contains("granary"):
+		if StringName(institution.get("place_id", "")) == place_id and StringName(institution_id) != fallback and String(institution.get("institution_type", institution.get("kind", ""))).contains("granary"):
 			return StringName(institution_id)
 	return fallback
 
