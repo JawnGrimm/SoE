@@ -22,7 +22,10 @@ static func tick_official(world: WorldState, actor: PersonEntity, institution_id
 		return false
 	var institution: Dictionary = world.institutions.get(institution_id, {}).duplicate(true)
 	if institution.is_empty(): return false
-	institution["agenda_evaluation_count"] = int(institution.get("agenda_evaluation_count", 0)) + 1
+	institution["office_agenda_evaluation_count"] = int(institution.get("office_agenda_evaluation_count", 0)) + 1
+	if actor.office_id in [&"grain_clerk", &"granary_clerk", &"umma_granary_clerk"]:
+		institution["agenda_evaluation_count"] = int(institution.get("agenda_evaluation_count", 0)) + 1
+		institution["last_grain_clerk_id"] = actor.id
 	institution["last_agenda_official_id"] = actor.id
 	institution["last_agenda_office_id"] = actor.office_id
 	world.institutions[institution_id] = institution
