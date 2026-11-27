@@ -43,6 +43,7 @@ static func apply_choice(world: WorldState, actor: PersonEntity, choice: StringN
 			actor.flags[&"name_on_monument"] = -1
 		_:
 			return false
+	world.world_flags.erase(&"canal_dedication_ready")
 	world.world_flags[&"canal_dedication_concluded"] = 1
 	world.world_flags[&"canal_dedication_choice"] = int(choice.hash())
 	var epic: Dictionary = world.epics.get(&"great_canal_cut", {})
