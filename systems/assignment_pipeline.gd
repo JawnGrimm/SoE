@@ -20,20 +20,28 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 
 	for form in world.pending_forms:
 		var subject_id := StringName(form.get("subject_id", ""))
-		if not _is_local_to_current_location(world, subject_id):
-			continue
 		var form_id := StringName(form.get("id", ""))
 		if form_id == &"":
 			continue
 		var form_type := StringName(form.get("form_type", ""))
-		var subject_name := _place_name(world, subject_id)
+		var institution_id := StringName(form.get("institution_id", _institution_for_location(world, subject_id)))
+		var institution: Dictionary = world.institutions.get(institution_id, {})
+		var place_id := StringName(form.get("place_id", subject_id))
+		if institution_id != &"":
+			place_id = StringName(institution.get("place_id", place_id))
+		var is_local := _is_local_to_current_location(world, subject_id) or _is_local_to_current_location(world, place_id)
+		var created_period := int(form.get("created_period", int(form.get("year", world.year)) * WorldState.PERIODS_PER_YEAR + int(form.get("period", world.period))))
+		var age_periods := maxi(0, world.current_period_index() - created_period)
+		var form_name := String(form.get("form_type", "")).to_lower()
+		var is_requisition := bool(form.get("is_requisition", false)) or form_name.contains("requisition")
+		var is_external := institution_id != &"" and not is_local
+		var is_dispatch := is_external and is_requisition and age_periods > 4
+		if not is_local and not is_dispatch:
+			continue
+		var subject_name := _place_name(world, subject_id if subject_id != &"" else place_id)
 		var urgency := int(form.get("urgency", 1))
 		var form_title := _form_title(form_type)
 		var form_summary := "%s requires an assessment at %s." % [form_title, subject_name]
-		var institution_id := StringName(form.get("institution_id", _institution_for_location(world, subject_id)))
-		var place_id := StringName(form.get("place_id", subject_id))
-		if institution_id != &"":
-			place_id = StringName(world.institutions.get(institution_id, {}).get("place_id", place_id))
 		var form_source := form.duplicate(true)
 		form_source["institution_id"] = institution_id
 		form_source["place_id"] = place_id
@@ -41,13 +49,20 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 		if not npc_evidence.is_empty():
 			form_title = "Contradictory North-Bay Grain Docket"
 			form_summary = "Two records disagree about the barley held at %s. The dispatch docket declares prime seed-corn; the threshold tally records damp, mold-marked grain." % subject_name
+		var dispatch_tag := "DISPATCH FROM %s" % _place_name(world, place_id).to_upper() if is_dispatch else ""
+		if is_dispatch:
+			form_title = "%s / %s" % [dispatch_tag, form_title]
+			form_summary = "A provincial requisition from %s has remained unanswered for %d periods. The provincial office now demands an answer." % [_place_name(world, place_id), age_periods]
 		candidates.append({
 			"id": StringName("work_form_%s_%d" % [form_id, world.current_period_index()]),
 			"kind": &"form",
 			"source_id": form_id,
 			"title": form_title,
 			"summary": form_summary,
-			"priority": 6 if not npc_evidence.is_empty() else 2 + urgency,
+			"priority": 8 if is_dispatch else (6 if not npc_evidence.is_empty() else 2 + urgency),
+			"tags": [dispatch_tag] if is_dispatch else [],
+			"dispatch": is_dispatch,
+			"age_periods": age_periods,
 			"employer_id": _resolve_local_employer(world, institution_id, place_id, _preferred_office(form_type)),
 			"source_data": form_source,
 			"path_id": selected_path
@@ -192,6 +207,12 @@ static func _select_board_candidates(candidates: Array[Dictionary], board_size: 
 	var result: Array[Dictionary] = []
 	var used_kinds: Dictionary = {}
 	var procedural_candidate: Dictionary = {}
+	# Aged provincial dispatches are compulsory board business, like Epic reviews.
+	# Keep the highest-priority dispatch visible even when routine slots are full.
+	for candidate in candidates:
+		if bool(candidate.get("dispatch", false)):
+			result.append(candidate.duplicate(true))
+			break
 	# Active project reviews are obligations, not optional board rotation.
 	# Include every pending review first; BOARD_SIZE limits routine work only.
 	for candidate in candidates:
@@ -615,7 +636,7 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 				facts = "SITE: %s\nHAZARD: %s\nLOSS / PERIOD: %d %s\nTOTAL RECORDED LOSS: %d" % [_place_name(world, StringName(hazard.get("place_id", ""))), String(hazard.get("id", "")), int(hazard.get("rate", 0)), String(hazard.get("resource", "")), int(hazard.get("total_lost", 0))]
 				summary = "The active hazard is physically inspected. The recorded loss is checked against the current site condition."
 			else:
-				var institution_id := StringName(data.get("institution_id", _institution_for_location(world, StringName(data.get("place_id", data.get("subject_id", ""))))))
+				var institution_id := StringName(record.get("sponsor_institution", record.get("source_data", {}).get("sponsor_institution", data.get("institution_id", _institution_for_location(world, StringName(data.get("place_id", data.get("subject_id", ""))))))))
 				var institution: Dictionary = world.institutions.get(institution_id, {})
 				var stock: Dictionary = institution.get("stockpiles", {})
 				var total := 0
