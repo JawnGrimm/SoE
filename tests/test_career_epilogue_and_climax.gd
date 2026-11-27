@@ -76,7 +76,12 @@ func _test_dedication_choices() -> void:
 	assert(Dedication.can_personal_seal(actor))
 	assert(Dedication.apply_choice(world, actor, &"personal_seal"))
 	assert(world.world_flags.has(&"canal_dedication_concluded"))
+	assert(world.world_flags.has(&"official_seal_on_monument"))
 	assert(not world.world_flags.has(&"canal_dedication_ready"))
+	world.stockpiles[&"canal_progress"] = 100
+	world.reset_active_epics()
+	assert(world.get_resource(&"canal_progress") == 100, "Era reset must preserve dedicated canal progress.")
+	assert(not bool(world.epics[&"great_canal_cut"].get("active", true)), "A dedicated canal must remain inactive.")
 	assert(not Dedication.apply_choice(world, actor, &"honor_crews"))
 
 func _test_event_definition_and_fresh_world() -> void:
