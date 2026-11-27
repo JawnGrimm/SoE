@@ -16,7 +16,7 @@ static func encode_world(world: WorldState, session: Dictionary = {}) -> Diction
 		"format": FORMAT_ID, "version": CURRENT_VERSION,
 		"saved_at": Time.get_datetime_string_from_system(true, true),
 		"world": {
-			"year": world.year, "period": world.period, "master_seed": world.master_seed,
+			"year": world.year, "period": world.period, "current_location_id": String(world.current_location_id), "master_seed": world.master_seed,
 			"rng": {
 				"narrative_seed": str(world.rng_narrative.seed), "narrative_state": str(world.rng_narrative.state),
 				"simulation_seed": str(world.rng_sim.seed), "simulation_state": str(world.rng_sim.state),
@@ -65,6 +65,7 @@ static func _world_from_data(data: Dictionary) -> WorldState:
 	var world := WorldState.new()
 	world.year = int(data.get("year", -3200))
 	world.period = clampi(int(data.get("period", 0)), 0, 11)
+	world.current_location_id = StringName(data.get("current_location_id", "uruk"))
 	world.master_seed = int(data.get("master_seed", 0))
 	var rng: Dictionary = data.get("rng", {})
 	world.rng_narrative.seed = int(String(rng.get("narrative_seed", world.master_seed)))
