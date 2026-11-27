@@ -48,10 +48,8 @@ func _run() -> void:
 	world.institutions[&"umma_canal_bailiff"] = umma_initial_state
 	simulator._simulate_institutions(world)
 	_check(int(world.institutions.get(&"umma_canal_bailiff", {}).get("resource_pressure", 0)) >= 2, "Umma should register real pressure during lean barley and labor months")
-	umma_initial_state = world.institutions[&"umma_canal_bailiff"]
-	umma_initial_state["stockpiles"] = umma_initial_stock
-	world.institutions[&"umma_canal_bailiff"] = umma_initial_state
-	simulator._simulate_institutions(world)
+	# Keep the office in the lean-month state for the regional circuit test.
+	# The player should see local shortage work because Umma itself is strained.
 	var travel := TravelScript.new()
 	_check(travel.configure(network, simulator), "Travel service uses the authoritative simulator")
 	var outbound := travel.travel(world, &"land_uruk_umma", &"umma")
