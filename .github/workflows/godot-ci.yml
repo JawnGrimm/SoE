@@ -69,6 +69,9 @@ jobs:
       - name: Run event and period integration tests
         run: godot --headless --path . --script res://tests/test_event_slice.gd
 
+      - name: Run population generation tests
+        run: godot --headless --path . --script res://tests/test_population_phase_a.gd
+
       - name: Run three-location route network tests
         run: godot --headless --path . --script res://tests/test_route_network.gd
 
