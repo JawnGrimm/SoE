@@ -126,6 +126,11 @@ func _run() -> void:
 		if StringName(memory.get("memory_id", "")) == &"grain_clerk_cover_up":
 			cover_up_memory_found = true
 	_check(cover_up_memory_found, "Ur-Nanna's own chronicle records the cover-up decision made during the journey")
+	var cover_up_memory_count := 0
+	for memory in ur_nanna.memory:
+		if StringName(memory.get("memory_id", "")) == &"grain_clerk_cover_up":
+			cover_up_memory_count += 1
+	_check(cover_up_memory_count == 1, "Repeated LimboAI evaluations do not duplicate an already-recorded cover-up")
 	var return_opportunities := AssignmentPipelineScript.generate_opportunities(world, world.get_player())
 	var returned_grain_docket := false
 	for return_opportunity in return_opportunities:
