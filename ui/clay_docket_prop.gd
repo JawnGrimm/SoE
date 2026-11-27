@@ -16,14 +16,26 @@ const VERDICT_GLYPH := "𒁹"
 
 var title_label: Label
 var grid: GridContainer
+var verdict_label: Label
 var impressions: Array[Dictionary] = []
 var reduced_motion := false
 var verdict_is_sealed := false
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(150, 170)
+	var clay_art := TextureRect.new()
+	clay_art.texture = load("res://assets/svg/clay_docket.svg")
+	clay_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	clay_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	clay_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	clay_art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(clay_art)
 	var box := VBoxContainer.new()
 	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	box.offset_left = 10
+	box.offset_right = -10
+	box.offset_top = 10
+	box.offset_bottom = -10
 	box.add_theme_constant_override("separation", 4)
 	add_child(box)
 	var title := Label.new()
@@ -55,10 +67,21 @@ func _ready() -> void:
 		glyph.add_theme_font_size_override("font_size", 24)
 		cell.add_child(glyph)
 		grid.add_child(cell)
+	verdict_label = Label.new()
+	verdict_label.text = ""
+	verdict_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	verdict_label.add_theme_font_override("font", CUNEIFORM_FONT)
+	verdict_label.add_theme_font_size_override("font_size", 30)
+	verdict_label.tooltip_text = "Concluding verdict impression"
+	verdict_label.visible = false
+	box.add_child(verdict_label)
 
 func clear_impressions() -> void:
 	impressions.clear()
 	verdict_is_sealed = false
+	if verdict_label != null:
+		verdict_label.text = ""
+		verdict_label.visible = false
 	_refresh_grid()
 
 func set_case_title(value: String) -> void:
@@ -85,8 +108,9 @@ func seal_verdict() -> void:
 	if impressions.size() >= 8 or verdict_is_sealed:
 		return
 	verdict_is_sealed = true
-	impressions.append({"glyph": VERDICT_GLYPH, "label": "Verdict sealed", "action_id": &"verdict"})
-	_refresh_grid()
+	if verdict_label != null:
+		verdict_label.text = "VERDICT SEALED  " + VERDICT_GLYPH
+		verdict_label.visible = true
 	verdict_sealed.emit(VERDICT_GLYPH)
 	if not reduced_motion:
 		var tween := create_tween()
