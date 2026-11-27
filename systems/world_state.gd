@@ -134,7 +134,8 @@ func _process_hazards() -> void:
 		var resource_id := StringName(hazard.get("resource", ""))
 		if rate <= 0 or resource_id == &"":
 			continue
-		var institution_id := StringName(hazard.get("institution_id", &"eanna_household"))
+		var place_id := StringName(hazard.get("place_id", ""))
+		var institution_id := StringName(hazard.get("institution_id", _get_place_institution_id(place_id)))
 		var resource_scope := String(hazard.get("resource_scope", "institution"))
 		var available := maxi(0, get_resource(resource_id, resource_scope, "", institution_id))
 		var lost := mini(available, rate)
@@ -143,6 +144,19 @@ func _process_hazards() -> void:
 		modify_resource(resource_id, -lost, resource_scope, "", institution_id)
 		hazard["total_lost"] = int(hazard.get("total_lost", 0)) + lost
 		hazards[index] = hazard
+
+func _get_place_institution_id(place_id: StringName) -> StringName:
+	var cursor := place_id
+	var visited: Dictionary = {}
+	while cursor != &"" and not visited.has(cursor):
+		visited[cursor] = true
+		for institution_id in institutions:
+			var institution: Dictionary = institutions[institution_id]
+			if StringName(institution.get("place_id", "")) == cursor:
+				return StringName(institution_id)
+		var place: Dictionary = places.get(cursor, {})
+		cursor = StringName(place.get("parent", ""))
+	return &""
 
 func has_active_hazard(place_id: StringName, hazard_id: StringName = &"") -> bool:
 	for hazard in hazards:
