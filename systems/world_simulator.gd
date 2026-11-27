@@ -1,5 +1,8 @@
 class_name WorldSimulator
 extends RefCounted
+
+const CANAL_LAUNCH_YEAR := -3199
+const CANAL_CASES_REQUIRED := 8
 ## Autonomous period simulation for the Uruk campaign.
 ## WorldState owns the calendar/deadline/hazard step; this class owns ongoing
 ## economy, institutional activity, and condition-driven docket generation.
@@ -138,7 +141,7 @@ func _simulate_epics(world: WorldState) -> void:
 		state["era_id"] = definition.era_id
 		state["initial_stage"] = definition.initial_stage
 		if not bool(state.get("active", false)):
-			var earned_canal := StringName(epic_id) == &"great_canal_cut" and world.year >= -3199 and world.cases_settled >= 8
+			var earned_canal := StringName(epic_id) == &"great_canal_cut" and world.year >= CANAL_LAUNCH_YEAR and world.cases_settled >= CANAL_CASES_REQUIRED
 			var summoned_canal := StringName(epic_id) == &"great_canal_cut" and world.epic_summon_issued
 			if earned_canal or summoned_canal:
 				state["active"] = true
