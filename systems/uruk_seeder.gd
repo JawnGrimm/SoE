@@ -8,7 +8,10 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 	world.set_world_seed(world_seed)
 	world.year = -3200
 	world.period = 0
-	world.current_location_id = &"uruk"
+	var starting_era := definitions.get_era_for_year(world.year)
+	world.current_location_id = starting_era.starting_place_id if starting_era != null else &""
+	if world.current_location_id == &"":
+		push_error("UrukSeeder: the active EraDef has no starting place.")
 	world.people.clear()
 	world.places.clear()
 	world.institutions.clear()
