@@ -27,7 +27,6 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 		var form_type := StringName(form.get("form_type", ""))
 		var subject_name := _place_name(world, subject_id)
 		var urgency := int(form.get("urgency", 1))
-		var overdue := String(form.get("status", "pending")) == "overdue"
 		var form_title := _form_title(form_type)
 		var form_summary := "%s requires an assessment at %s." % [form_title, subject_name]
 		var institution_id := StringName(form.get("institution_id", _institution_for_location(world, subject_id)))

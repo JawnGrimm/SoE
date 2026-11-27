@@ -408,7 +408,7 @@ func _generate_forms(world: WorldState) -> void:
 		var barley_warn := int(thresholds.get(&"barley_warn", 105))
 		var labor_warn := int(thresholds.get(&"labor_warn", 8))
 		var textiles_warn := int(thresholds.get(&"textiles_warn", 3))
-		var shortage := (stock.has(&"barley") and int(stock.get(&"barley", 0)) <= barley_warn) or (stock.has(&"labor") and int(stock.get(&"labor", 0)) <= labor_warn) or (stock.has(&"textiles") and int(stock.get(&"textiles", 0)) < textiles_warn)
+		var shortage := (stock.has(&"barley") and int(stock.get(&"barley", 0)) < barley_warn) or (stock.has(&"labor") and int(stock.get(&"labor", 0)) < labor_warn) or (stock.has(&"textiles") and int(stock.get(&"textiles", 0)) < textiles_warn)
 		if shortage:
 			_offer_if_ready(world, &"bailiff_requisition", place_id, 2, &"local_institution_shortage", StringName(institution_id))
 
