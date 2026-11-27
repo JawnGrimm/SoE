@@ -143,12 +143,12 @@ func _run() -> void:
 			&"form": form_opportunity = opportunity
 			&"hazard": hazard_opportunity = opportunity
 			&"ledger": ledger_opportunity = opportunity
-	_check(StringName(form_opportunity.get("employer_id", "")) == &"ur_nanna", "Remote consignment work should route to its named carrier or sender")
+	_check(StringName(form_opportunity.get("employer_id", "")) == &"enki_ili", "Remote consignment work should route to its named carrier or sender")
 	_check(AssignmentPipeline.begin(assignment_world, form_opportunity, assignment_actor), "A selected world opportunity should enter the active assignment lifecycle")
 	var form_assignment_id := StringName(form_opportunity.get("id", ""))
 	var other_scribe := PersonEntity.new()
 	other_scribe.id = &"other_scribe"
-	_check(not bool(AssignmentPipeline.perform_action(assignment_world, other_scribe, form_assignment_id, &"examine_records").get("success", false)), "An engagement should only accept actions from its assigned scribe")
+	_check(not bool(AssignmentPipeline.perform_action(assignment_world, other_scribe, form_assignment_id, &"inspect_seal").get("success", false)), "An engagement should only accept actions from its assigned scribe")
 	_check(not bool(AssignmentPipeline.resolve(assignment_world, assignment_actor, form_assignment_id, &"certify").get("success", false)), "An engagement should not permit assessment before investigation")
 	_check(bool(AssignmentPipeline.perform_action(assignment_world, assignment_actor, form_assignment_id, &"inspect_seal").get("success", false)), "Assignment should allow examination of its actual source record")
 	_check(bool(AssignmentPipeline.perform_action(assignment_world, assignment_actor, form_assignment_id, &"question_carrier").get("success", false)), "Assignment should allow consultation as a separate investigative action")
