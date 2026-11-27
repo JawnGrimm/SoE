@@ -22,6 +22,13 @@ func _run() -> void:
 	var umma: Dictionary = world.institutions.get(&"umma_canal_bailiff", {})
 	_check(not umma.is_empty() and StringName(umma.get("place_id", "")) == &"umma", "Registry seeding creates Umma's canal bailiff institution")
 	var office_map: Dictionary = umma.get("offices", {})
+	var staffed_offices: Array = umma.get("staffed_offices", [])
+	_check(staffed_offices.has(&"canal_bailiff") and staffed_offices.has(&"granary_clerk"), "Umma canal institution declares both canal_bailiff and granary_clerk office roles")	
+	var nin_enlil := world.get_person(&"character_0012")
+	var ur_mes := world.get_person(&"character_0013")
+	var granary: Dictionary = world.institutions.get(&"umma_granary", {})
+	_check(nin_enlil != null and nin_enlil.office_id == &"granary_clerk" and nin_enlil.id in granary.get("members", []) and nin_enlil.id not in umma.get("members", []), "Nin-Enlil is seated as granary_clerk only in the Umma granary")
+	_check(ur_mes != null and ur_mes.office_id == &"canal_bailiff" and ur_mes.id in umma.get("members", []) and StringName(office_map.get(&"canal_bailiff", "")) == ur_mes.id, "Ur-Mes is seated as canal_bailiff in the Umma canal institution")
 	var seated_ids: Array[StringName] = []
 	for office_id in [&"canal_bailiff", &"granary_clerk"]:
 		var person_id := StringName(office_map.get(office_id, ""))
