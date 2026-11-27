@@ -226,7 +226,7 @@ static func _select_board_candidates(candidates: Array[Dictionary], board_size: 
 	# Fill the ordinary board around the reviews, preserving one story slot.
 	for candidate in candidates:
 		var kind := StringName(candidate.get("kind", ""))
-		if kind in [&"project_review", &"procedural_docket"]:
+		if bool(candidate.get("dispatch", false)) or kind in [&"project_review", &"procedural_docket"]:
 			continue
 		if result.size() >= maxi(0, board_size - 1):
 			break
