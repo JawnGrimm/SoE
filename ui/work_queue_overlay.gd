@@ -8,6 +8,7 @@ const Narrator = preload("res://systems/assignment_narrator.gd")
 
 var _opportunities: Array[Dictionary] = []
 var _return_focus: Control
+var _can_select := true
 var _buttons: Array[Button] = []
 
 func _ready() -> void:
@@ -15,9 +16,10 @@ func _ready() -> void:
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
-func open_queue(opportunities: Array[Dictionary], return_focus: Control = null) -> void:
+func open_queue(opportunities: Array[Dictionary], return_focus: Control = null, can_select: bool = true) -> void:
 	_opportunities = opportunities
 	_return_focus = return_focus
+	_can_select = can_select
 	_rebuild()
 	visible = true
 	if not _buttons.is_empty():
@@ -109,7 +111,8 @@ func _rebuild() -> void:
 			var item := Narrator.translate_opportunity(_opportunities[index])
 			var button := Button.new()
 			button.text = "%s\n%s" % [String(item.get("title", "Work")), String(item.get("summary", "A matter requires attention."))]
-			button.tooltip_text = "Open this matter at the cedar desk."
+			button.disabled = not _can_select
+			button.tooltip_text = "Open this matter at the cedar desk." if _can_select else "Return to the period board to open work."
 			button.custom_minimum_size = Vector2(0, 64)
 			button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
