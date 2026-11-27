@@ -277,6 +277,7 @@ static func launch_shipment(world: WorldState, details: Dictionary) -> Dictionar
 		"seal_id": String(details.get("seal_id", "")),
 		"seal_valid": bool(details.get("seal_valid", true)),
 		"sender_id": StringName(details.get("sender_id", "")),
+		"carrier_id": StringName(details.get("carrier_id", world.places.get(destination_id, {}).get("regional_agent_id", &"enlil_kisu"))),
 		"destination_institution_id": StringName(details.get("destination_institution_id", "")),
 		"origin_account_quantity": int(details.get("origin_account_quantity", quantity)),
 		"origin_reply_due_period": -1
@@ -314,6 +315,7 @@ static func _finish_shipment_leg(world: WorldState, shipment: Dictionary) -> voi
 		shipment["received_quantity"] = received - lost
 		shipment["loss_quantity"] = int(shipment.get("loss_quantity", 0)) + lost
 		shipment["last_route_loss"] = lost
+		shipment["loss_route_id"] = StringName(route_ids[route_index])
 	else:
 		shipment["last_route_loss"] = 0
 	route_index += 1
@@ -344,6 +346,8 @@ static func _arrive_shipment(world: WorldState, shipment: Dictionary) -> void:
 		"seal_id": String(shipment.get("seal_id", "")),
 		"seal_valid": bool(shipment.get("seal_valid", true)),
 		"sender_id": StringName(shipment.get("sender_id", "")),
+		"carrier_id": StringName(shipment.get("carrier_id", "")),
+		"loss_route_id": StringName(shipment.get("loss_route_id", "")),
 		"route_ids": shipment.get("route_ids", []).duplicate(),
 		"departure_period": int(shipment.get("departure_period", 0)),
 		"arrival_period": int(shipment.get("arrival_period", 0)),
@@ -573,6 +577,8 @@ static func resolve_remote_dispatch(world: WorldState, form_data: Dictionary, ve
 			"origin_account_quantity": int(shipment.get("origin_account_quantity", shipment.get("declared_quantity", 0))),
 			"seal_id": String(shipment.get("seal_id", "")),
 			"sender_id": StringName(shipment.get("sender_id", "")),
+			"carrier_id": StringName(shipment.get("carrier_id", "")),
+			"loss_route_id": StringName(shipment.get("loss_route_id", "")),
 			"due_period": int(shipment.get("origin_reply_due_period", 0)),
 			"urgency": 6, "status": "pending", "generated_by": "regional_world"
 		})
