@@ -28,7 +28,7 @@ The custom LimboAI tasks only query the temporary `GrainClerkAgent` adapter or r
 
 ## Evidence rule
 
-Secret actions queue evidence in the Eanna institution's runtime record. The queue is delivered on the following period and attached to the existing `held_barley` form where possible. The normal assignment board then exposes a contradictory docket; normal investigation reveals both source records and the discrepancy.
+Secret actions queue evidence in the Eanna institution's runtime record. The queue is delivered on the following period as a distinct `held_barley` form, so a later secret act cannot overwrite an earlier unresolved docket. The normal assignment board then exposes a contradictory docket; normal investigation reveals both source records and the discrepancy.
 
 The cover-up records a prime-seed-corn declaration while the independent threshold tally records damp, mold-marked barley. Skimming records a two-measure intake adjustment and queues its own independent tally conflict. Neither action silently changes physical stock.
 

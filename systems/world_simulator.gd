@@ -42,30 +42,17 @@ func _deliver_grain_clerk_dockets(world: WorldState) -> void:
 			continue
 		var form_type := StringName(docket.get("form_type", &"held_barley"))
 		var subject_id := StringName(docket.get("subject_id", &"north_bay"))
-		var attached := false
-		for index in range(world.pending_forms.size()):
-			var pending: Dictionary = world.pending_forms[index]
-			if StringName(pending.get("form_type", "")) != form_type:
-				continue
-			if StringName(pending.get("subject_id", "")) != subject_id:
-				continue
-			pending["npc_evidence"] = npc_evidence.duplicate(true)
-			pending["npc_intent_id"] = StringName(docket.get("intent_id", ""))
-			pending["generated_by"] = &"ur_nanna"
-			world.pending_forms[index] = pending
-			attached = true
-			break
-		if not attached:
-			world.enqueue_form({
-				"form_type": form_type,
-				"subject_id": subject_id,
-				"urgency": int(docket.get("urgency", 3)),
-				"year": world.year,
-				"generated_by": &"ur_nanna",
-				"generation_reason": &"autonomous_grain_clerk_action",
-				"npc_intent_id": StringName(docket.get("intent_id", "")),
-				"npc_evidence": npc_evidence.duplicate(true),
-			})
+		world.enqueue_form({
+			"id": StringName("ur_nanna_grain_docket_%d" % now),
+			"form_type": form_type,
+			"subject_id": subject_id,
+			"urgency": int(docket.get("urgency", 4)),
+			"year": world.year,
+			"generated_by": &"ur_nanna",
+			"generation_reason": &"autonomous_grain_clerk_action",
+			"npc_intent_id": StringName(docket.get("intent_id", "")),
+			"npc_evidence": npc_evidence.duplicate(true),
+		})
 	institution["npc_docket_queue"] = remaining
 	world.institutions[&"eanna_household"] = institution
 

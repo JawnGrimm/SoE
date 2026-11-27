@@ -19,6 +19,7 @@ func _run() -> void:
 	var initial_institution: Dictionary = world.institutions[&"eanna_household"]
 	var initial_stock: Dictionary = initial_institution.get("stockpiles", {})
 	initial_stock[&"silver"] = 2 # Make both emergency and skimming branches eligible; selector priority must win.
+	initial_stock[&"barley"] = 500
 	initial_institution["stockpiles"] = initial_stock
 	world.institutions[&"eanna_household"] = initial_institution
 	var clerk := world.get_person(&"ur_nanna")
