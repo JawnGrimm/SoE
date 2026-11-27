@@ -440,10 +440,10 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 				total += int(amount)
 			if kind == &"form":
 				summary = "The form is checked against the institution's current recorded position."
-				facts = "FORM: %s\nURGENCY: %d\nRECORDED STOCK: %d across %d resource types" % [String(data.get("form_type", "")), int(data.get("urgency", 0)), total, stock.size()]
+				facts = "FORM: %s\nURGENCY: %d\n%s" % [String(data.get("form_type", "")), int(data.get("urgency", 0)), _live_stock_facts(stock, institution)]
 			else:
 				summary = "The institution's current stock records are reconciled. No discrepancy is presumed without a separate expected balance."
-				facts = "INSTITUTION: %s\nMEMBERS: %d / ACTIVITY RECORDS: %d\nRECORDED STOCK: %d across %d resource types" % [String(institution.get("name", institution_id)), int(data.get("member_count", institution.get("members", []).size())), int(data.get("activity_count", institution.get("activity_count", 0))), total, stock.size()]
+				facts = "INSTITUTION: %s\nMEMBERS: %d / ACTIVITY RECORDS: %d\n%s" % [String(institution.get("name", institution_id)), int(data.get("member_count", institution.get("members", []).size())), int(data.get("activity_count", institution.get("activity_count", 0))), _live_stock_facts(stock, institution)]
 			facts += "\n" + _stock_detail(stock, skill_level, "ARITHMETIC")
 		&"examine_records":
 			if kind == &"form":
@@ -455,8 +455,9 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 		&"consult_official":
 			var employer := world.get_person(StringName(record.get("employer_id", "")))
 			var opinion := employer.get_opinion(actor.id) if employer != null else 0
-			summary = "The responsible official's account is recorded. It is testimony, not proof."
-			facts = "OFFICIAL: %s\nOPINION OF SCRIBE: %+d\nOFFICE: %s" % [employer.display_name if employer != null else "No named official", opinion, String(employer.office_id) if employer != null else "Unassigned"]
+			summary = "The responsible official gives a position and a demand. It is testimony, not proof."
+			var stance := _official_stance(world, actor, employer, data, opinion)
+			facts = "OFFICIAL: %s\nOPINION OF SCRIBE: %+d\nOFFICE: %s\nSTANCE: “%s”" % [employer.display_name if employer != null else "No named official", opinion, String(employer.office_id) if employer != null else "Unassigned"]
 		&"inspect_source":
 			if kind == &"hazard":
 				var hazard: Dictionary = record.get("source_data", {})
@@ -530,6 +531,44 @@ static func _institution_for_location(world: WorldState, location_id: StringName
 	if visited.has(&"uruk") and world.institutions.has(&"eanna_household"):
 		return &"eanna_household"
 	return &""
+
+static func _live_stock_facts(stock: Dictionary, institution: Dictionary) -> String:
+	var thresholds: Dictionary = institution.get("pressure_thresholds", {})
+	var barley := int(stock.get(&"barley", 0))
+	var labor := int(stock.get(&"labor", 0))
+	var textiles := int(stock.get(&"textiles", 0))
+	var minimum_labor := int(thresholds.get(&"labor_warn", 8))
+	var barley_warn := int(thresholds.get(&"barley_warn", 105))
+	var textiles_warn := int(thresholds.get(&"textiles_warn", 3))
+	var lines := "Barley: %d (warn < %d) | Labor: %d (min %d) | Textiles: %d (warn < %d)" % [barley, barley_warn, labor, minimum_labor, textiles, textiles_warn]
+	var records: Dictionary = institution.get("stock_records", {})
+	if bool(records.get("concealed_spoilage", false)):
+		lines += "\nHAZARD: concealed spoilage; declaration=%s" % String(records.get("barley_quality_declaration", "unrecorded"))
+	return lines
+
+static func _official_stance(world: WorldState, actor: PersonEntity, official: PersonEntity, data: Dictionary, opinion: int) -> String:
+	if official == null:
+		return "No official will answer for this entry. Ask the archive to name the responsible hand."
+	var form_type := StringName(data.get("form_type", ""))
+	var institution_id := StringName(data.get("institution_id", _institution_for_location(world, StringName(data.get("place_id", data.get("subject_id", ""))))))
+	var institution: Dictionary = world.institutions.get(institution_id, {})
+	var records: Dictionary = institution.get("stock_records", {})
+	var npc_evidence: Dictionary = data.get("npc_evidence", {})
+	if not npc_evidence.is_empty() or bool(records.get("concealed_spoilage", false)):
+		if official.office_id == &"grain_clerk":
+			return "The seed-corn entry stands. The roof was poor, not my measure; certify the tablet and let the household keep its reserve."
+		return "This contradiction will reach the archive unless you refer it. I ask you to preserve the office's standing—and name who bears the loss."
+	if form_type in [&"bailiff_requisition", &"pension_roll"]:
+		if official.office_id == &"canal_bailiff":
+			return "The sluice is choked and the crew is short. Authorize labor now; the fields will pay for delay."
+		return "The roll is not a plea for favor. Certify the shortage and write whose stores must be reassigned."
+	if official.office_id == &"archive_keeper":
+		return "Do not make a patron's seal into evidence. Enter the source, and let the record name the responsible office."
+	if opinion >= 5 and (&"pliable" in official.traits or &"complicit" in official.traits):
+		return "We have kept one another's accounts before. A clean seal now will be remembered in your favor."
+	if opinion <= -5 or &"severe" in official.traits or &"exacting" in official.traits:
+		return "Do not ask me to soften a figure. Show the source and state plainly who carries the consequence."
+	return "The office asks for a clear finding: certify what the source supports, or refer what it cannot explain."
 
 static func _preferred_office(form_type: StringName) -> StringName:
 	match form_type:
