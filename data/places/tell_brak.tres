@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="PlaceDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/place_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"tell_brak"
+display_name = "Tell Brak"
+place_type = &"northern_city"
+region = &"upper_mesopotamia"
+political_relation = &"autonomous_peer"
+exports = Array[StringName]([&"grain", &"wool", &"obsidian"])
+imports = Array[StringName]([&"textiles", &"beer", &"copper"])
+connected_to = Array[StringName]([&"mari", &"hamoukar"])
+era_id = &"uruk_storehouse"
