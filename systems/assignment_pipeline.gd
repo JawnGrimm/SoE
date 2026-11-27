@@ -302,6 +302,7 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 	var accurate := true
 	var opinion_delta_override := 0
 	var silver_award := 2
+	var custom_verdict := false
 	match kind:
 		&"form":
 			var form_data: Dictionary = record.get("source_data", {})
@@ -388,16 +389,55 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 			var presented_stage := int(project.get("review_stage", project_state.get("review_stage", -1)))
 			if presented_stage != int(project_state.get("review_stage", -2)) or String(project.get("review_reason", "")) != String(project_state.get("review_reason", "")):
 				return {"success": false, "message": "The project's conditions changed while this review was in progress. Return to the board for the current docket."}
+			var sponsor_id := StringName(record.get("sponsor_institution", project_state.get("sponsor_institution", &"eanna_household")))
 			var notes: Array = project_state.get("history_notes", [])
 			var reviewed_stage := String(project_state.get("stage", "unrecorded"))
 			work_details = "Progress %d / %d. Current stage: %s. Recorded simulation entries: %d." % [progress, target, reviewed_stage, notes.size()]
+			match verdict:
+				&"epic_emergency":
+					if world.get_resource(&"barley", "institution", "", sponsor_id) < 20 or world.get_resource(&"labor", "institution", "", sponsor_id) < 2:
+						return {"success": false, "message": "The sponsor cannot spare 20 barley and 2 labor. No resources were spent."}
+					if not world.modify_resource(&"barley", -20, "institution", "", sponsor_id):
+						return {"success": false, "message": "The barley allocation failed; the review remains open."}
+					if not world.modify_resource(&"labor", -2, "institution", "", sponsor_id):
+						world.modify_resource(&"barley", 20, "institution", "", sponsor_id)
+						return {"success": false, "message": "The labor allocation failed; the barley was returned."}
+					if not world.modify_resource(progress_resource, 15, "world"):
+						world.modify_resource(&"labor", 2, "institution", "", sponsor_id)
+						world.modify_resource(&"barley", 20, "institution", "", sponsor_id)
+						return {"success": false, "message": "Epic progress could not be advanced; sponsor resources were returned."}
+					project_state["progress"] = world.get_resource(progress_resource)
+					project_state["stalled"] = false
+					project_state["active_problem"] = ""
+					result_text = "Twenty barley and two labor are released from the sponsor. Emergency rations reach the crews; the canal cut advances by fifteen progress."
+				&"epic_audit":
+					var foreman_id := StringName(project_state.get("foreman_id", &"enlil_kisu"))
+					var foreman := world.get_person(foreman_id)
+					if foreman != null:
+						foreman.change_opinion(actor.id, -3, "Halted the canal cut to challenge the foreman's labor roll.", world.year)
+					actor.skills.add_xp(&"law", 15)
+					actor.flags[&"audit_exposure"] = maxi(0, int(actor.flags.get(&"audit_exposure", 0)) - 1)
+					result_text = "The cut is halted pending an audit. The foreman's standing with you falls by three; your law skill gains fifteen experience, and one audit exposure is cleared."
+				&"epic_certify":
+					if not world.modify_resource(progress_resource, 10, "world"):
+						return {"success": false, "message": "Epic progress could not be advanced; no gratuity was accepted."}
+					project_state["progress"] = world.get_resource(progress_resource)
+					actor.resources[&"silver"] = int(actor.resources.get(&"silver", 0)) + 2
+					if not actor.traits.has(&"pliable"):
+						actor.traits.append(&"pliable")
+					actor.flags[&"audit_exposure"] = int(actor.flags.get(&"audit_exposure", 0)) + 1
+					world.world_flags[&"entangled_brewery_accounts"] = true
+					result_text = "The milestone is certified on the crew's estimate. The cut advances by ten; two silver enter your purse, and the account acquires a pliable scribe, one more audit exposure, and entangled brewery accounts."
+				_:
+					return {"success": false, "message": "Choose one of the available Epic verdicts."}
+			custom_verdict = true
+			accurate = false
 			project_state["last_reviewed_progress"] = progress
 			project_state["last_reviewed_stage"] = reviewed_stage
 			world.epics[source_id] = project_state
 			record["reviewed_progress"] = progress
 			record["reviewed_stage"] = reviewed_stage
 			record["review_cycle"] = int(project_state.get("review_cycle", 0))
-			result_text = "The project's actual progress, stage, and recorded interruptions are entered in the archive. The crews continue their work independently."
 			world.resolve_epic_review(source_id)
 		&"pressure":
 			var pressure_institution_id := StringName(record.get("source_data", {}).get("institution_id", source_id))
@@ -409,7 +449,32 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 			for resource_id in resources.keys():
 				lines.append("%s: %d" % [String(resource_id).replace("_", " ").capitalize(), int(resources[resource_id])])
 			work_details = "Pressure index %d. %s" % [int(institution.get("resource_pressure", 0)), "; ".join(lines)]
-			result_text = "The institution's current stockpile position is entered in the archive. The underlying pressure remains the institution's responsibility."
+			match verdict:
+				&"pressure_drawdown":
+					if world.get_resource(&"barley", "institution", "", pressure_institution_id) < 15 or world.get_resource(&"labor", "institution", "", pressure_institution_id) < 15:
+						return {"success": false, "message": "The reserves cannot cover 15 barley and 15 labor. No resources were spent."}
+					if not world.modify_resource(&"barley", -15, "institution", "", pressure_institution_id):
+						return {"success": false, "message": "The barley drawdown failed; no verdict was filed."}
+					if not world.modify_resource(&"labor", -15, "institution", "", pressure_institution_id):
+						world.modify_resource(&"barley", 15, "institution", "", pressure_institution_id)
+						return {"success": false, "message": "The labor drawdown failed; barley was returned."}
+					institution["resource_pressure"] = 0
+					institution["local_opinion"] = int(institution.get("local_opinion", 0)) + 2
+					result_text = "Fifteen barley and fifteen labor are drawn from local reserves. The immediate pressure is cleared; local opinion improves by two."
+				&"pressure_ration":
+					institution["local_opinion"] = int(institution.get("local_opinion", 0)) - 3
+					world.world_flags[&"thirsty_diggers"] = true
+					result_text = "Strict rationing is enforced. The pressure remains active, local opinion falls by three, and the diggers' thirst is entered in the record."
+				&"pressure_falsify":
+					actor.resources[&"silver"] = int(actor.resources.get(&"silver", 0)) + 3
+					actor.flags[&"audit_exposure"] = int(actor.flags.get(&"audit_exposure", 0)) + 2
+					world.world_flags[&"phantom_barley_measure"] = true
+					result_text = "The balance is falsified. Three silver are pocketed; audit exposure rises by two, and the phantom barley measure enters the world record."
+				_:
+					return {"success": false, "message": "Choose one of the available pressure verdicts."}
+			custom_verdict = true
+			accurate = false
+			world.institutions[pressure_institution_id] = institution
 		&"ledger":
 			var ledger_institution_id := StringName(record.get("source_data", {}).get("institution_id", &"eanna_household"))
 			var ledger: Dictionary = world.institutions.get(ledger_institution_id, {})
@@ -427,12 +492,13 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 	var employer_id := StringName(record.get("employer_id", ""))
 	var employer := world.get_person(employer_id)
 	var opinion_delta := opinion_delta_override if opinion_delta_override != 0 else (1 if accurate else -1)
-	if employer != null:
-		employer.change_opinion(actor.id, opinion_delta, "Assignment assessment: %s" % String(record.get("title", "")), world.year)
-	if opinion_delta_override == 0:
-		silver_award = 2 if accurate else 1
-	actor.resources[&"silver"] = int(actor.resources.get(&"silver", 0)) + silver_award
-	actor.skills.add_xp(&"law" if accurate else &"arithmetic", 12 if accurate else 6)
+	if not custom_verdict:
+		if employer != null:
+			employer.change_opinion(actor.id, opinion_delta, "Assignment assessment: %s" % String(record.get("title", "")), world.year)
+		if opinion_delta_override == 0:
+			silver_award = 2 if accurate else 1
+		actor.resources[&"silver"] = int(actor.resources.get(&"silver", 0)) + silver_award
+		actor.skills.add_xp(&"law" if accurate else &"arithmetic", 12 if accurate else 6)
 	record["status"] = "completed"
 	record["assessment"] = verdict
 	record["completed_period"] = world.current_period_index()
@@ -479,7 +545,8 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 		"year": world.year,
 		"involved": [String(source_id)]
 	})
-	world.record_case_settlement(actor, int(actor.resources.get(&"silver", 0)) - (2 if accurate else 1), actor.traits.duplicate())
+	if not custom_verdict:
+		world.record_case_settlement(actor, int(actor.resources.get(&"silver", 0)) - (2 if accurate else 1), actor.traits.duplicate())
 	return {"success": true, "message": result_text, "accurate": accurate}
 
 static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dictionary, action_id: StringName, skill_level: int) -> Dictionary:
