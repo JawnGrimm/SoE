@@ -157,6 +157,32 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			"path_id": selected_path
 		})
 
+
+	# Regional work is generated from actual trade-post stocks and active route
+	# connections at the character's current place.
+	var actor_place_id := actor.current_location_id if actor.current_location_id != &"" else &"uruk"
+	var local_institution_id := &"habuba_trade_post" if actor_place_id == &"habuba_kabira" else &"eanna_household"
+	var local_institution: Dictionary = world.institutions.get(local_institution_id, {})
+	var local_stock: Dictionary = local_institution.get("stockpiles", {})
+	var local_factor_id := &"enki_ili" if actor_place_id == &"habuba_kabira" else &"geme_inana"
+	if actor_place_id in [&"uruk", &"habuba_kabira"] and not local_institution.is_empty():
+		var remote_place_id := &"habuba_kabira" if actor_place_id == &"uruk" else &"uruk"
+		var remote_institution_id := &"habuba_trade_post" if remote_place_id == &"habuba_kabira" else &"eanna_household"
+		var remote_institution: Dictionary = world.institutions.get(remote_institution_id, {})
+		var remote_stock: Dictionary = remote_institution.get("stockpiles", {})
+		var export_commodity := &"textiles" if actor_place_id == &"uruk" else &"timber"
+		var export_quantity := mini(8 if actor_place_id == &"uruk" else 12, int(local_stock.get(export_commodity, 0)))
+		if export_quantity >= 3 and not RegionalWorldSystem.find_route_path(world, actor_place_id, remote_place_id).is_empty():
+			candidates.append(_regional_work_candidate(world, selected_path, actor_place_id, local_institution_id, local_factor_id, &"dispatch_export", export_commodity, export_quantity, actor_place_id, remote_place_id, local_institution_id, remote_institution_id, &""))
+		var import_commodity := &"timber" if actor_place_id == &"uruk" else &"textiles"
+		var import_quantity := mini(8 if actor_place_id == &"uruk" else 6, int(remote_stock.get(import_commodity, 0)))
+		if import_quantity >= 3 and not RegionalWorldSystem.find_route_path(world, remote_place_id, actor_place_id).is_empty():
+			candidates.append(_regional_work_candidate(world, selected_path, actor_place_id, local_institution_id, local_factor_id, &"request_import", import_commodity, import_quantity, remote_place_id, actor_place_id, remote_institution_id, local_institution_id, &""))
+		var provision_route_id := _highest_risk_route(world, actor_place_id)
+		var beer_quantity := mini(4, int(local_stock.get(&"beer", 0)))
+		if provision_route_id != &"" and beer_quantity >= 2:
+			candidates.append(_regional_work_candidate(world, selected_path, actor_place_id, local_institution_id, local_factor_id, &"route_provisions", &"beer", beer_quantity, actor_place_id, StringName(world.routes[provision_route_id].get("to_place_id", "")), local_institution_id, &"", provision_route_id))
+
 	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		if int(a.get("priority", 0)) == int(b.get("priority", 0)):
 			return String(a.get("id", "")) < String(b.get("id", ""))
@@ -528,6 +554,70 @@ static func _form_title(form_type: StringName) -> String:
 	}
 	return String(labels.get(form_type, String(form_type).replace("_", " ").capitalize()))
 
+
+
+static func _regional_work_candidate(world: WorldState, path_id: StringName, place_id: StringName, institution_id: StringName, employer_id: StringName, work_type: StringName, commodity_id: StringName, quantity: int, origin_id: StringName, destination_id: StringName, source_institution_id: StringName, destination_institution_id: StringName, route_id: StringName) -> Dictionary:
+	var work_id := StringName("regional_%s_%s_%d" % [String(work_type), String(place_id), world.current_period_index()])
+	var title := ""
+	var summary := ""
+	var priority := 3
+	match work_type:
+		&"dispatch_export":
+			title = "%s / Outbound %s Dispatch" % [_place_name(world, place_id), String(commodity_id).replace("_", " ").capitalize()]
+			summary = "The local trade post has %d %s available for a sealed shipment to %s." % [quantity, String(commodity_id).replace("_", " "), _place_name(world, destination_id)]
+			priority = 7
+		&"request_import":
+			title = "%s / Import Request" % _place_name(world, place_id)
+			summary = "The connected trade post can send %d %s from %s to %s." % [quantity, String(commodity_id).replace("_", " "), _place_name(world, origin_id), _place_name(world, destination_id)]
+			priority = 6
+		&"route_provisions":
+			title = "%s / Route Provisioning" % _place_name(world, place_id)
+			summary = "A local allocation of %d beer can provision the route toward %s and reduce exposure for the next three periods." % [quantity, _place_name(world, destination_id)]
+			priority = 3
+	return {
+		"id": work_id, "kind": &"regional_work", "source_id": work_id,
+		"title": title, "summary": summary,
+		"priority": priority + _career_bonus(path_id, &"regional_work"),
+		"employer_id": employer_id,
+		"source_data": {
+			"work_type": work_type, "place_id": place_id,
+			"institution_id": institution_id,
+			"source_institution_id": source_institution_id,
+			"destination_institution_id": destination_institution_id,
+			"origin_id": origin_id, "destination_id": destination_id,
+			"commodity_id": commodity_id, "quantity": quantity, "route_id": route_id
+		},
+		"path_id": path_id
+	}
+
+static func _highest_risk_route(world: WorldState, origin_id: StringName) -> StringName:
+	var selected_route := &""
+	var highest_risk := -1
+	for route_id in world.routes.keys():
+		var route: Dictionary = world.routes[route_id]
+		if not bool(route.get("active", true)) or StringName(route.get("from_place_id", "")) != origin_id:
+			continue
+		var risk := RegionalWorldSystem.effective_route_risk(world, StringName(route_id))
+		if risk > highest_risk:
+			highest_risk = risk
+			selected_route = StringName(route_id)
+	return selected_route
+
+static func _is_local_to_actor(world: WorldState, actor: PersonEntity, place_id: StringName) -> bool:
+	if world == null or actor == null:
+		return false
+	var actor_place_id := actor.current_location_id if actor.current_location_id != &"" else &"uruk"
+	if place_id == &"":
+		return actor_place_id == &"uruk"
+	var cursor := place_id
+	for depth in range(8):
+		if cursor == actor_place_id:
+			return true
+		var place: Dictionary = world.places.get(cursor, {})
+		cursor = StringName(place.get("parent", ""))
+		if cursor == &"":
+			break
+	return false
 
 static func _form_summary(world: WorldState, form: Dictionary) -> String:
 	var form_type := StringName(form.get("form_type", ""))
