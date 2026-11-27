@@ -887,7 +887,7 @@ func _show_assignment_board() -> void:
 		summaries.append("%d. %s / %s" % [index + 1, String(opportunity.get("kind", "work")).replace("_", " ").to_upper(), String(opportunity.get("title", "Work"))])
 	var payload := {
 		"title": "THE SCRIBE'S DESK / THREE OPPORTUNITIES",
-		"left_card": {"title": "THE LIVING WORLD", "speaker_id": &"", "quote": "The city has continued its business while you were away from the desk.", "facts": "YEAR: %s\nPERIOD: %d / 12\nPENDING FORMS: %d\nACTIVE HAZARDS: %d" % [CalendarFormatter.format_year(world.year), world.period + 1, world.pending_forms.size(), world.hazards.filter(func(h: Dictionary) -> bool: return bool(h.get("active", false))).size()]},
+		"left_card": {"title": "THE LIVING WORLD", "speaker_id": &"", "quote": "The city has continued its business while you were away from the desk.", "facts": "YEAR: %s\nPERIOD: %d / 12\nCURRENT PLACE: %s\nPENDING FORMS: %d / HAZARDS: %d" % [CalendarFormatter.format_year(world.year), world.period + 1, String(world.places.get(actor.current_location_id, {}).get("name", actor.current_location_id)), world.pending_forms.size(), world.hazards.filter(func(h: Dictionary) -> bool: return bool(h.get("active", false))).size()]},
 		"right_card": {"title": "AVAILABLE WORK", "speaker_id": &"shuruppak_ilu", "quote": "Choose the matter you will take responsibility for this period. The others remain in the world, whether you attend to them or not.", "facts": "\n".join(summaries)},
 		"prompt": "Three matters have reached your desk. Select one engagement, or pass without penalty.",
 		"choices": choices_payload
@@ -1547,9 +1547,7 @@ func _refresh_compound() -> void:
 	canal_label.text = "ERA EPIC / BACKDROP\n%s\n[%s%s] %d / %d\nYour docket can move the project" % [epic_title.to_upper(), "=".repeat(bar_fill), "-".repeat(10 - bar_fill), epic_progress, epic_target]
 	_refresh_faction_standings()
 	year_label.text = CalendarFormatter.format_date(current_era, world.year, world.period)
-	var location_id := actor.current_location_id if actor.current_location_id != &"" else &"uruk"
-	var location_name := String(world.places.get(location_id, {}).get("name", location_id))
 	if String(world.player_travel.get("status", "")) == "in_transit":
-		status_label.text = "TRAVEL / %s  /  %d PERIODS REMAINING" % [location_name, int(world.player_travel.get("remaining_periods", 0))]
+		status_label.text = "TRAVEL / %d PERIODS LEFT" % int(world.player_travel.get("remaining_periods", 0))
 	else:
-		status_label.text = "%s  /  SEED %d  /  PERIOD %02d OF 12" % [location_name.to_upper(), world.master_seed, world.period + 1]
+		status_label.text = "SEED %d  /  PERIOD %02d OF 12" % [world.master_seed, world.period + 1]
