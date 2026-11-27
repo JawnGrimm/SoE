@@ -52,9 +52,22 @@ func validate_world_references() -> bool:
 		if place.parent_place_id != &"" and get_place(place.parent_place_id) == null:
 			_warn("DefinitionRegistry: place '%s' references missing parent '%s'" % [place.id, place.parent_place_id])
 			valid = false
+		if place.era_id != &"" and get_era(place.era_id) == null:
+			_warn("DefinitionRegistry: place '%s' references missing era '%s'" % [place.id, place.era_id])
+			valid = false
 	for institution in all_institutions():
 		if get_place(institution.place_id) == null:
 			_warn("DefinitionRegistry: institution '%s' references missing place '%s'" % [institution.id, institution.place_id])
+			valid = false
+		if get_era(institution.era_id) == null:
+			_warn("DefinitionRegistry: institution '%s' references missing era '%s'" % [institution.id, institution.era_id])
+			valid = false
+	for route in all_routes():
+		if get_place(route.origin_id) == null or get_place(route.destination_id) == null:
+			_warn("DefinitionRegistry: route '%s' references an unknown endpoint" % route.id)
+			valid = false
+		if route.era_id != &"" and get_era(route.era_id) == null:
+			_warn("DefinitionRegistry: route '%s' references missing era '%s'" % [route.id, route.era_id])
 			valid = false
 	return valid
 
