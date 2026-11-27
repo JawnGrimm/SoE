@@ -56,6 +56,11 @@ func _ready() -> void:
 		cell.add_child(glyph)
 		grid.add_child(cell)
 
+func clear_impressions() -> void:
+	impressions.clear()
+	verdict_is_sealed = false
+	_refresh_grid()
+
 func set_case_title(value: String) -> void:
 	if title_label != null:
 		title_label.text = value.left(42) if not value.is_empty() else "No active case"
