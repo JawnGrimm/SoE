@@ -52,3 +52,4 @@ General project rules:
 - Challenge conditions must be linked to world flags/resources produced by actual assignment verdicts. Resource-gated Challenge outcomes must validate affordability before effects/rewards. For Quayside, gate only the personal-silver outcome; keep its non-silver verdicts available to broke scribes.
 - An Epic audit verdict applies a bounded one-period audit hold through the existing Epic simulator. It must not create a permanent stall or a second project simulation.
 - Keep these regressions covered by headless tests: queue routing, verdict stock/flags/progress/opinion/traits, Challenge eligibility, silver affordability, and save/load of active docket state.
+- Headless SceneTree tests must not preload `main.gd` merely to reach UI helpers: it depends on project autoload singletons that are absent in `--script` test runs. Extract reusable pure decision logic into a small `RefCounted` system/helper and test that directly.
