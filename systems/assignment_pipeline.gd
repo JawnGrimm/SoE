@@ -11,6 +11,29 @@ const INVESTIGATION_ACTIONS := [
 	{"id": &"inspect_source", "label": "Inspect the goods, stores, or site", "skill": &"stewardship", "xp": 8}
 ]
 
+
+const REMOTE_DISPATCH_ACTIONS := [
+	{"id": &"inspect_seal", "label": "Examine the shipment seal", "skill": &"literacy", "xp": 8},
+	{"id": &"compare_manifest", "label": "Compare manifest and received cargo", "skill": &"arithmetic", "xp": 8},
+	{"id": &"question_carrier", "label": "Question the carrier", "skill": &"rhetoric", "xp": 8},
+	{"id": &"inspect_cargo", "label": "Inspect the cargo at landing", "skill": &"stewardship", "xp": 8}
+]
+const ORIGIN_REPLY_ACTIONS := [
+	{"id": &"examine_origin_copy", "label": "Read the origin-side copy", "skill": &"literacy", "xp": 8},
+	{"id": &"compare_origin_copy", "label": "Compare origin and arrival accounts", "skill": &"arithmetic", "xp": 8},
+	{"id": &"question_carrier", "label": "Question the carrier again", "skill": &"rhetoric", "xp": 8},
+	{"id": &"inspect_seal", "label": "Recheck the seal against the copy", "skill": &"intrigue", "xp": 8}
+]
+
+static func get_actions(record: Dictionary) -> Array:
+	var data: Dictionary = record.get("source_data", {})
+	var form_type := StringName(data.get("form_type", ""))
+	if StringName(record.get("kind", "")) == &"form" and form_type == &"remote_dispatch":
+		return REMOTE_DISPATCH_ACTIONS
+	if StringName(record.get("kind", "")) == &"form" and form_type == &"remote_origin_reply":
+		return ORIGIN_REPLY_ACTIONS
+	return INVESTIGATION_ACTIONS
+
 static func generate_opportunities(world: WorldState, actor: PersonEntity, selected_path: StringName = &"") -> Array[Dictionary]:
 	var candidates: Array[Dictionary] = []
 	if world == null or actor == null:
@@ -21,6 +44,8 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 		if form_id == &"":
 			continue
 		var form_type := StringName(form.get("form_type", ""))
+		if int(form.get("due_period", world.current_period_index())) > world.current_period_index():
+			continue
 		var subject_id := StringName(form.get("subject_id", ""))
 		var subject_name := _place_name(world, subject_id)
 		var urgency := int(form.get("urgency", 1))
@@ -30,9 +55,9 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			"kind": &"form",
 			"source_id": form_id,
 			"title": _form_title(form_type),
-			"summary": "%s requires an assessment at %s." % [_form_title(form_type), subject_name],
+			"summary": _form_summary(world, form),
 			"priority": urgency + (3 if overdue else 0) + _career_bonus(selected_path, form_type),
-			"employer_id": _form_employer(world, form_type),
+			"employer_id": StringName(form.get("sender_id", form.get("employer_id", _form_employer(world, form_type)))),
 			"source_data": form.duplicate(true),
 			"path_id": selected_path
 		})
@@ -165,7 +190,7 @@ static func perform_action(world: WorldState, actor: PersonEntity, assignment_id
 	if actions.has(action_id):
 		return {"success": false, "message": "That action has already been recorded."}
 	var action: Dictionary = {}
-	for candidate in INVESTIGATION_ACTIONS:
+	for candidate in get_actions(record):
 		if StringName(candidate.id) == action_id:
 			action = candidate
 			break
@@ -428,6 +453,8 @@ static func _career_bonus(path_id: StringName, work_kind: StringName) -> int:
 
 static func _form_title(form_type: StringName) -> String:
 	var labels := {
+		&"remote_dispatch": "Remote Consignment / Arrival Docket",
+		&"remote_origin_reply": "Origin-Side Shipment Reply",
 		&"grain_levy": "Grain Levy Assessment",
 		&"pension_roll": "Workforce Roll",
 		&"consignment_receipt": "Consignment Receipt",
@@ -435,6 +462,15 @@ static func _form_title(form_type: StringName) -> String:
 		&"load_claim": "Load Allocation Claim"
 	}
 	return String(labels.get(form_type, String(form_type).replace("_", " ").capitalize()))
+
+
+static func _form_summary(world: WorldState, form: Dictionary) -> String:
+	var form_type := StringName(form.get("form_type", ""))
+	if form_type == &"remote_dispatch":
+		return "A sealed consignment from %s has arrived at %s. Its arrival must be entered." % [_place_name(world, StringName(form.get("origin_id", ""))), _place_name(world, StringName(form.get("destination_id", "")))]
+	if form_type == &"remote_origin_reply":
+		return "A delayed account from %s has reached %s. The origin and landing records can now be compared." % [_place_name(world, StringName(form.get("origin_id", ""))), _place_name(world, StringName(form.get("destination_id", "")))]
+	return "%s requires an assessment at %s." % [_form_title(form_type), _place_name(world, StringName(form.get("subject_id", "")))]
 
 static func _place_name(world: WorldState, place_id: StringName) -> String:
 	if place_id == &"":
