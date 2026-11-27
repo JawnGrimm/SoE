@@ -49,7 +49,11 @@ func _run() -> void:
 	_check(int(world.institutions[&"umma_granary"].get("agenda_evaluation_count", 0)) > 0, "Umma granary agenda ticks independently of Uruk")
 	_check(_has_form_from(world, &"bailiff_requisition", &"character_0013"), "Umma canal pressure generates Ur-Mes's requisition")
 	var requisition := _find_form(world, &"bailiff_requisition", &"umma")
-	_check(StringName(requisition.get("target_institution_id", "")) != &"", "Bailiff requisition targets a regional supply institution")
+	_check(StringName(requisition.get("target_institution_id", "")) == &"umma_granary", "Bailiff requisition targets the regional Umma granary")
+	world.periods_elapsed = 6
+	simulator._simulate_people(world)
+	requisition = _find_form(world, &"bailiff_requisition", &"umma")
+	_check(bool(requisition.get("agenda_escalated", false)) and int(requisition.get("urgency", 0)) >= 8, "An unanswered requisition older than four periods escalates")
 
 	# Replace the named archivist with a generated successor; agenda ownership
 	# follows the seated office, not the old character ID.
@@ -86,9 +90,10 @@ func _run() -> void:
 	# by the canal simulator's inundation/regression logic.
 	var foreman := _find_official(world, [&"carrier_foreman", &"labor_foreman"])
 	_check(foreman != null, "A carrier/labor foreman is seated in the transport institution")
-	world.set_flag(&"thirsty_diggers", -1)
+	world.epics[&"great_canal_cut"]["active"] = true
+	world.set_flag(&"thirsty_diggers", world.current_period_index())
 	if foreman != null:
-		simulator._simulate_people(world)
+		simulator.advance_period(world)
 	_check(world.has_flag(&"canal_crew_slowdown", world.current_period_index()), "Thirsty diggers trigger canal crew slowdown")
 	var epic_state: Dictionary = world.epics.get(&"great_canal_cut", {})
 	_check(bool(epic_state.get("crew_disruption", false)), "Foreman marks the active Epic as disrupted")
