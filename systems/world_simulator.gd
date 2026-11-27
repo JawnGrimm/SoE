@@ -149,6 +149,8 @@ func _simulate_epic(world: WorldState, definition: EpicDef, state: Dictionary) -
 	var progress := clampi(world.get_resource(resource_id), 0, definition.target)
 	if bool(state.get("completed", false)):
 		state["progress"] = progress
+		state["stalled"] = false
+		state["active_problem"] = ""
 		world.epics[definition.id] = state
 		return
 
