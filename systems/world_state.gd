@@ -276,7 +276,7 @@ func _process_period_deadlines() -> void:
 	for route_id in routes.keys():
 		var route_state: Dictionary = routes[route_id]
 		var expiry := int(route_state.get("expiry_period", -1))
-		if expiry >= 0 and now >= expiry:
+		if bool(route_state.get("has_expiry", false)) and now >= expiry:
 			routes.erase(route_id)
 	for person in people.values():
 		for flag in person.flags.keys():

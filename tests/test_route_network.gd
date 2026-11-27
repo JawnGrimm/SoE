@@ -38,7 +38,7 @@ func _run() -> void:
 	var encoded := SaveCodecScript.encode_world(world)
 	var decoded := SaveCodecScript.decode_save(encoded)
 	var restored: WorldState = decoded.get("world") as WorldState
-	_check(bool(decoded.get("success", false)) and restored != null and restored.routes.has(LAND.id) and restored.routes[LAND.id] == world.routes[LAND.id] and RIVER.base_transit_periods == 1 and RIVER.downstream_destination_id == &"uruk", "Save/load preserves runtime disruption without mutating shared route definitions")
+	_check(bool(decoded.get("success", false)) and restored != null and restored.routes.has(LAND.id) and StringName(restored.routes[LAND.id].get("status", "")) == &"disrupted" and int(restored.routes[LAND.id].get("expiry_period", 0)) == world.total_periods + 3 and int(restored.routes[LAND.id].get("transit_penalty_periods", 0)) == 1 and RIVER.base_transit_periods == 1 and RIVER.downstream_destination_id == &"uruk", "Save/load preserves runtime disruption without mutating shared route definitions")
 	print("Route network: %d checks, %d failures" % [checks, failures.size()])
 	for failure in failures:
 		printerr(failure)

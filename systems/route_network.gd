@@ -49,6 +49,7 @@ func set_route_disruption(route_id: StringName, status: StringName, expiry_perio
 	world.routes[route_id] = {
 		"status": status,
 		"expiry_period": expiry_period,
+		"has_expiry": expiry_period != -1,
 		"transit_penalty_periods": maxi(0, transit_penalty_periods),
 	}
 	return true
