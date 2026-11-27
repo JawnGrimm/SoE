@@ -19,7 +19,7 @@ func _run() -> void:
 	var second := _generate_world(84217, definitions)
 	_check(first["people"].size() == 9 and second["people"].size() == 9, "Seeded Tier 2 roster creates three residents in each regional settlement")
 	_check(_roster_signature(first) == _roster_signature(second), "Same world seed produces the same names, roles, and skills")
-	_check(_all_ids_unique(first), "Generated people have unique persistent entity IDs")
+	_check(_all_ids_unique(first["people"]), "Generated people have unique persistent entity IDs")
 	_check(_all_locations_valid(first), "Every generated person has a registered place")
 	_check(_all_have_occupation_and_traits(first), "Generated people receive valid occupations, initialized skills, and defined traits")
 
