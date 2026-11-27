@@ -162,6 +162,14 @@ These are current implementation details, not restrictions on the final design. 
 
 The project favors composition over inheritance. Systems operate on runtime state; definitions describe available content. The same underlying systems should support different eras through data rather than era-specific script branches.
 
+## Accepted design decisions
+
+Major architectural decisions are preserved in `docs/design/decisions/`. These documents are canonical references for future implementation work, not informal notes.
+
+- [Population and Institutional Labor System](docs/design/decisions/population_and_institutional_labor.md) — the three-tier population model, procedural generation, institutional staffing and succession, administrative labor availability, and population lifecycle.
+
+Coding agents must read the repository-root `AGENTS.md` and the relevant decision documents before changing the systems they govern. New major architectural decisions should be recorded in this directory and linked here.
+
 ## Run it
 
 Open the repository root in Godot **4.7.x stable** and press **F5**. The root project launches the case-file interface.
