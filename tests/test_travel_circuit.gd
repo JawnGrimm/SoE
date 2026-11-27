@@ -193,7 +193,7 @@ func _run() -> void:
 		if StringName(candidate.get("source_id", "")) == dispatch_form_id:
 			arrived_dispatch = candidate
 			break
-	_check(not arrived_dispatch.is_empty() and not bool(arrived_dispatch.get("requires_travel", true)), "The Umma requisition becomes a local assignment after arrival")
+	_check(not arrived_dispatch.is_empty() and bool(arrived_dispatch.get("dispatch", false)) and not bool(arrived_dispatch.get("requires_travel", true)) and StringName("DISPATCH FROM UMMA") in arrived_dispatch.get("tags", []), "The aged Umma requisition keeps dispatch priority and tag but becomes local after arrival")
 	_check(AssignmentPipelineScript.begin(world, arrived_dispatch, dispatch_actor), "The player can open form_000005 after disembarking in Umma")
 
 	print("Nippur and Umma travel circuits: %d checks, %d failures" % [checks, failures.size()])
