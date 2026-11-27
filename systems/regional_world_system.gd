@@ -29,6 +29,7 @@ static func seed_routes(world: WorldState) -> int:
 			"to_place_id": definition.to_place_id, "route_type": definition.route_type,
 			"travel_periods": definition.travel_periods,
 			"loss_risk_percent": definition.loss_risk_percent,
+			"risk_modifier": 0, "risk_modifier_until": -1,
 			"era_id": definition.era_id, "active": true
 		}
 		loaded += 1
@@ -96,7 +97,7 @@ static func get_destination_options(world: WorldState, origin_id: StringName) ->
 			continue
 		var total_risk := 0
 		for route_id in route_ids:
-			total_risk += int(world.routes.get(route_id, {}).get("loss_risk_percent", 0))
+			total_risk += effective_route_risk(world, route_id)
 		options.append({
 			"place_id": StringName(place_id),
 			"name": String(world.places[place_id].get("name", place_id)),
@@ -166,7 +167,7 @@ static func _finish_shipment_leg(world: WorldState, shipment: Dictionary) -> voi
 		_arrive_shipment(world, shipment)
 		return
 	var route: Dictionary = world.routes.get(StringName(route_ids[route_index]), {})
-	var risk := int(route.get("loss_risk_percent", 0))
+	var risk := effective_route_risk(world, StringName(route_ids[route_index]))
 	var received := int(shipment.get("received_quantity", 0))
 	if risk > 0 and received > 0 and world.rng_sim.randi_range(1, 100) <= risk:
 		var lost := mini(received, world.rng_sim.randi_range(1, mini(4, received)))
@@ -251,7 +252,7 @@ static func _advance_player_travel(world: WorldState) -> void:
 	var actor := world.get_person(StringName(travel.get("actor_id", "")))
 	if actor != null and next_place != &"":
 		actor.current_location_id = next_place
-	var risk := int(route.get("loss_risk_percent", 0))
+	var risk := effective_route_risk(world, route_id)
 	if risk > 0 and world.rng_sim.randi_range(1, 100) <= risk:
 		var incident := {"route_id": route_id, "period": world.current_period_index(), "kind": "travel_disruption"}
 		var incidents: Array = travel.get("incidents", [])
@@ -269,6 +270,27 @@ static func _advance_player_travel(world: WorldState) -> void:
 		travel["remaining_periods"] = maxi(1, int(world.routes.get(StringName(route_ids[route_index]), {}).get("travel_periods", 1)))
 	world.player_travel = travel
 
+
+
+static func effective_route_risk(world: WorldState, route_id: StringName) -> int:
+	if world == null or not world.routes.has(route_id):
+		return 100
+	var route: Dictionary = world.routes[route_id]
+	var risk := int(route.get("loss_risk_percent", 0))
+	if world.current_period_index() < int(route.get("risk_modifier_until", -1)):
+		risk += int(route.get("risk_modifier", 0))
+	return clampi(risk, 0, 100)
+
+static func provision_route(world: WorldState, route_id: StringName, risk_reduction: int = 8, duration_periods: int = 3) -> bool:
+	if world == null or not world.routes.has(route_id) or risk_reduction <= 0 or duration_periods <= 0:
+		return false
+	var route: Dictionary = world.routes[route_id]
+	if not bool(route.get("active", true)):
+		return false
+	route["risk_modifier"] = -risk_reduction
+	route["risk_modifier_until"] = world.current_period_index() + duration_periods
+	world.routes[route_id] = route
+	return true
 
 static func simulate_regional_flows(world: WorldState) -> void:
 	if world == null or not world.institutions.has(&"habuba_trade_post"):
