@@ -20,6 +20,7 @@ func _init(registry: DefinitionRegistry = null) -> void:
 func advance_period(world: WorldState) -> void:
 	if world == null:
 		return
+	world.last_period_deltas.clear()
 	world.advance_period()
 	_deliver_grain_clerk_dockets(world)
 	_simulate_economy(world)
@@ -247,7 +248,19 @@ func _simulate_epic(world: WorldState, definition: EpicDef, state: Dictionary) -
 		state["history_notes"] = history
 	world.epics[definition.id] = state
 	world.stockpiles[resource_id] = progress
+	if definition.id == &"great_canal_cut":
+		if progress < previous_progress:
+			_record_period_delta(world, "epic", "Great Canal Cut: Inundation silt (%d progress, %d/%d)" % [progress - previous_progress, progress, definition.target])
+		elif disruption and progress == previous_progress:
+			_record_period_delta(world, "epic", "Great Canal Cut: Work stalled by crew disruption")
 	world.ensure_epic_review_state(definition.id)
+
+func _record_period_delta(world: WorldState, category: String, text: String) -> void:
+	if world == null or text.strip_edges().is_empty():
+		return
+	world.last_period_deltas.append({"category": category, "text": text})
+	while world.last_period_deltas.size() > 12:
+		world.last_period_deltas.pop_front()
 
 func _simulate_personal_upkeep(world: WorldState) -> void:
 	if world.periods_elapsed <= 0 or world.periods_elapsed % 3 != 0:
@@ -260,6 +273,7 @@ func _simulate_personal_upkeep(world: WorldState) -> void:
 		player.resources[&"silver"] = silver - 2
 		player.flags[&"unpaid_upkeep"] = 0
 		world.cedar_desk_log.append({"year": world.year, "period": world.period, "title": "HOUSEHOLD UPKEEP", "summary": "Two silver paid for seasonal lodging and meals."})
+		_record_period_delta(world, "upkeep", "Upkeep paid: -2 silver")
 	else:
 		player.flags[&"unpaid_upkeep"] = int(player.flags.get(&"unpaid_upkeep", 0)) + 2 - silver
 		player.resources[&"silver"] = 0
@@ -267,6 +281,7 @@ func _simulate_personal_upkeep(world: WorldState) -> void:
 		if senior != null:
 			senior.change_opinion(player.id, -1, "The apprentice's household account fell into arrears.", world.year)
 		world.cedar_desk_log.append({"year": world.year, "period": world.period, "title": "UPKEEP IN ARREARS", "summary": "The household could not pay its two-silver seasonal account. Debt is recorded; work remains available."})
+		_record_period_delta(world, "arrears", "Upkeep in arrears: %d silver held (%d debt accrued)" % [silver, 2 - silver])
 
 func _tick_audit_reprimands(world: WorldState) -> void:
 	if world.periods_elapsed <= 0 or world.periods_elapsed % 6 != 0:
@@ -288,6 +303,7 @@ func _tick_audit_reprimands(world: WorldState) -> void:
 	if archivist != null:
 		archivist.change_opinion(player.id, -2, "A concealed account was found in the archive audit.", world.year)
 	world.cedar_desk_log.append({"year": world.year, "period": world.period, "title": "ARCHIVE REPRIMAND", "summary": "Shuruppak-ilu found a concealed account. Two silver were fined or entered as debt."})
+	_record_period_delta(world, "audit", "Archive reprimand: -2 silver debt to Shuruppak-ilu" if silver < 2 else "Archive reprimand: -2 silver fine to Shuruppak-ilu")
 
 func _simulate_economy(world: WorldState) -> void:
 	var p := world.period

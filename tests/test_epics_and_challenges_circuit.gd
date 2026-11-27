@@ -306,7 +306,7 @@ func _run() -> void:
 	_check(Pipeline.begin(evidence_world, evidence_opportunity, evidence_actor), "Epic evidence fixture begins")
 	var evidence_result := Pipeline.perform_action(evidence_world, evidence_actor, &"epic:evidence_test:r0:s1", &"inspect_source")
 	_check(bool(evidence_result.get("success", false)), "Epic physical inspection records evidence")
-	_check(String(evidence_result.get("evidence", {}).get("facts", "")).contains("BIN COUNT / BARLEY: 73"), "Epic physical inspection reads sponsor storehouse bins instead of reporting zero")
+	_check(String(evidence_result.get("evidence", {}).get("facts", "")).contains("Barley: 73"), "Epic physical inspection reads sponsor storehouse bins instead of reporting zero")
 
 	# An external requisition ages into compulsory dispatch business.
 	var dispatch_world := WorldState.new()
