@@ -72,15 +72,24 @@ func _run() -> void:
 	reaction_player.id = &"successor_character"
 	var reaction_clerk := PersonEntity.new()
 	reaction_clerk.id = &"ur_nanna"
+	reaction_clerk.office_id = &"grain_clerk"
 	var reaction_foreman := PersonEntity.new()
 	reaction_foreman.id = &"enlil_kisu"
+	reaction_foreman.office_id = &"carrier_foreman"
 	var reaction_senior := PersonEntity.new()
 	reaction_senior.id = &"shuruppak_ilu"
+	reaction_senior.office_id = &"archive_keeper"
 	for reaction_person in [reaction_old_player, reaction_player, reaction_clerk, reaction_foreman, reaction_senior]:
 		reaction_world.people[reaction_person.id] = reaction_person
 	reaction_world.set_player(reaction_old_player)
 	reaction_world.set_player(reaction_player)
 	reaction_world.stockpiles[&"labor"] = 0
+	reaction_world.institutions[&"eanna_household"] = {
+		"place_id": &"eanna_precinct",
+		"members": [reaction_clerk.id, reaction_foreman.id, reaction_senior.id],
+		"stockpiles": {&"labor": 0},
+		"pressure_thresholds": {&"labor_warn": 8}
+	}
 	WorldSimulator.new(registry)._simulate_people(reaction_world)
 	_check(reaction_foreman.get_opinion(reaction_player.id) == -1 and reaction_foreman.get_opinion(reaction_old_player.id) == 0, "WorldSimulator reactions should follow the successor, not the former character")
 	var opinion_before_actor_effect := reaction_senior.get_opinion(reaction_player.id)
