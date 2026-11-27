@@ -32,7 +32,7 @@ func _run() -> void:
 	_check(world.current_location_id == &"uruk", "A new campaign begins in Uruk")
 	_check(network.configure(world, [URUK, NIPPUR, UMMA], [RIVER, LAND]), "The existing three-place route network configures for the campaign")
 	_check(travel.configure(network, simulator), "TravelService configures with the route graph and authoritative world simulator")
-	var survey_map: RegionalSurveyMap = RegionalSurveyMapScript.new()
+	var survey_map: Variant = RegionalSurveyMapScript.new()
 	root.add_child(survey_map)
 	_check(survey_map.configure(network, world), "The Worldmap Builder survey opens against the authoritative route graph")
 	await process_frame
@@ -49,11 +49,11 @@ func _run() -> void:
 	var upstream_periods := network.get_transit_periods(&"river_uruk_nippur", &"uruk", &"nippur")
 	_check(upstream_periods == 2, "Uruk-to-Nippur river passage is two periods")
 	var nippur_index: int = survey_map.map_nodes.get(&"nippur", -1)
-	var nippur_data: WorldmapNodeData = survey_map.graph.get_node_data(nippur_index)
+	var nippur_data: Variant = survey_map.graph.get_node_data(nippur_index)
 	var map_click := InputEventMouseButton.new()
 	map_click.button_index = MOUSE_BUTTON_LEFT
 	map_click.pressed = true
-	survey_map.map_view.emit_signal("node_gui_input", map_click, NodePath("RegionalRouteGraph"), nippur_index, nippur_data)
+	survey_map.graph.emit_signal("node_gui_input", map_click, nippur_index, nippur_data)
 	_check(survey_map.get_selected_destination_id() == &"nippur" and survey_map.can_board_selected_route(), "A Worldmap Builder node click selects the upstream river destination")
 	_check(survey_map.board_selected_route() and journey_results.size() == 1, "The survey's Board Barge action invokes the authoritative travel service")
 	var upstream_result: Dictionary = journey_results[0]
@@ -89,8 +89,8 @@ func _run() -> void:
 	_check(survey_map.configure(network, world), "The survey rebuilds from the new current location after arrival")
 	await process_frame
 	var uruk_index: int = survey_map.map_nodes.get(&"uruk", -1)
-	var uruk_data: WorldmapNodeData = survey_map.graph.get_node_data(uruk_index)
-	survey_map.map_view.emit_signal("node_gui_input", map_click, NodePath("RegionalRouteGraph"), uruk_index, uruk_data)
+	var uruk_data: Variant = survey_map.graph.get_node_data(uruk_index)
+	survey_map.graph.emit_signal("node_gui_input", map_click, uruk_index, uruk_data)
 	_check(survey_map.get_selected_destination_id() == &"uruk" and survey_map.can_board_selected_route(), "The return journey is selectable from the Nippur survey")
 	_check(survey_map.board_selected_route() and journey_results.size() == 2, "The survey's return action invokes TravelService")
 	var downstream_result: Dictionary = journey_results[1]
