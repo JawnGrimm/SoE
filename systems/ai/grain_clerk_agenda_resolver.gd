@@ -1,37 +1,40 @@
 class_name GrainClerkAgendaResolver
 extends RefCounted
-## Resolves Ur-Nanna's intent against authoritative SoE state.
+## Resolves a seated grain clerk's intent against authoritative SoE state.
 ## LimboAI selects intent; this class validates and applies its consequences.
 
-const INSTITUTION_ID: StringName = &"eanna_household"
-const CLERK_ID: StringName = &"ur_nanna"
-
-func resolve_intent(world: WorldState, clerk: PersonEntity, intent_id: StringName) -> Dictionary:
-	if world == null or clerk == null or clerk.id != CLERK_ID or clerk.office_id != &"grain_clerk":
+func resolve_intent(world: WorldState, clerk: PersonEntity, intent_id: StringName, institution_id: StringName = &"eanna_household") -> Dictionary:
+	if world == null or clerk == null or not (clerk.office_id in [&"grain_clerk", &"granary_clerk"]):
 		return {"success": false, "reason": "The grain-clerk intent has no valid office-holder."}
 	match intent_id:
 		&"intent_hide_spoilage":
-			return _hide_spoilage(world, clerk)
+			return _hide_spoilage(world, clerk, institution_id)
 		&"intent_pocket_measures":
-			return _pocket_measures(world, clerk)
+			return _pocket_measures(world, clerk, institution_id)
 		&"intent_log_deliveries":
-			return _log_deliveries(world, clerk)
+			return _log_deliveries(world, clerk, institution_id)
 		_:
 			push_warning("GrainClerkAgendaResolver: unknown intent '%s'" % intent_id)
 			return {"success": false, "reason": "Unknown grain-clerk intent."}
 
-func _hide_spoilage(world: WorldState, clerk: PersonEntity) -> Dictionary:
-	if not world.has_active_hazard(&"north_bay", &"roof_leak"):
-		return {"success": false, "reason": "The North-Bay roof leak is no longer active."}
+func _hide_spoilage(world: WorldState, clerk: PersonEntity, institution_id: StringName) -> Dictionary:
+	var place_id := StringName(world.institutions.get(institution_id, {}).get("place_id", ""))
+	var has_roof_leak := false
+	for hazard in world.hazards:
+		if bool(hazard.get("active", false)) and StringName(hazard.get("place_id", "")) == place_id and StringName(hazard.get("id", "")) == &"roof_leak":
+			has_roof_leak = true
+			break
+	if not has_roof_leak:
+		return {"success": false, "reason": "The local roof leak is no longer active."}
 	if int(clerk.vulnerabilities.get(&"personal_fear", 0)) <= 5:
 		return {"success": false, "reason": "Ur-Nanna's fear is not high enough to justify concealment."}
-	var institution: Dictionary = world.institutions.get(INSTITUTION_ID, {}).duplicate(true)
+	var institution: Dictionary = world.institutions.get(institution_id, {}).duplicate(true)
 	if institution.is_empty():
 		return {"success": false, "reason": "The Eanna institutional household is unavailable."}
 	var records: Dictionary = institution.get("stock_records", {}).duplicate(true)
 	if bool(records.get("concealed_spoilage", false)):
 		return {"success": false, "reason": "The false quality declaration is already on the record."}
-	var physical_barley := world.get_resource(&"barley", "institution", "", INSTITUTION_ID)
+	var physical_barley := world.get_resource(&"barley", "institution", "", institution_id)
 	records["barley_quality_declaration"] = "prime_seed_corn"
 	records["concealed_spoilage"] = true
 	records["declared_at_period"] = world.current_period_index()
@@ -43,21 +46,21 @@ func _hide_spoilage(world: WorldState, clerk: PersonEntity) -> Dictionary:
 		"discrepancy": "The dispatch certifies prime seed-corn while the independent threshold tally records damp, mold-marked grain.",
 	})
 	_record_intent(institution, world, &"intent_hide_spoilage")
-	world.institutions[INSTITUTION_ID] = institution
+	world.institutions[institution_id] = institution
 	clerk.memory.append({
 		"memory_id": &"grain_clerk_cover_up",
 		"text": "I entered the North-Bay barley as prime seed-corn. The roof leak remains active.",
 		"year": world.year,
-		"involved": [&"north_bay", &"roof_leak"]
+		"involved": [place_id, &"roof_leak"]
 	})
 	return {"success": true, "intent_id": &"intent_hide_spoilage", "period": world.current_period_index()}
 
-func _pocket_measures(world: WorldState, clerk: PersonEntity) -> Dictionary:
-	var barley := world.get_resource(&"barley", "institution", "", INSTITUTION_ID)
-	var household_silver := world.get_resource(&"silver", "institution", "", INSTITUTION_ID)
+func _pocket_measures(world: WorldState, clerk: PersonEntity, institution_id: StringName) -> Dictionary:
+	var barley := world.get_resource(&"barley", "institution", "", institution_id)
+	var household_silver := world.get_resource(&"silver", "institution", "", institution_id)
 	if barley <= 400 or household_silver >= 5:
 		return {"success": false, "reason": "The surplus and household-debt conditions are no longer both true."}
-	var institution: Dictionary = world.institutions.get(INSTITUTION_ID, {}).duplicate(true)
+	var institution: Dictionary = world.institutions.get(institution_id, {}).duplicate(true)
 	if institution.is_empty():
 		return {"success": false, "reason": "The Eanna institutional household is unavailable."}
 	var records: Dictionary = institution.get("stock_records", {}).duplicate(true)
@@ -73,7 +76,7 @@ func _pocket_measures(world: WorldState, clerk: PersonEntity) -> Dictionary:
 		"discrepancy": "The intake record is short by two measures despite the dispatch certification.",
 	})
 	_record_intent(institution, world, &"intent_pocket_measures")
-	world.institutions[INSTITUTION_ID] = institution
+	world.institutions[institution_id] = institution
 	clerk.memory.append({
 		"memory_id": &"grain_clerk_skimming",
 		"text": "I reduced the entered intake tally by two measures.",
@@ -82,12 +85,12 @@ func _pocket_measures(world: WorldState, clerk: PersonEntity) -> Dictionary:
 	})
 	return {"success": true, "intent_id": &"intent_pocket_measures", "period": world.current_period_index()}
 
-func _log_deliveries(world: WorldState, _clerk: PersonEntity) -> Dictionary:
-	var institution: Dictionary = world.institutions.get(INSTITUTION_ID, {}).duplicate(true)
+func _log_deliveries(world: WorldState, _clerk: PersonEntity, institution_id: StringName) -> Dictionary:
+	var institution: Dictionary = world.institutions.get(institution_id, {}).duplicate(true)
 	if institution.is_empty():
 		return {"success": false, "reason": "The Eanna institutional household is unavailable."}
 	_record_intent(institution, world, &"intent_log_deliveries")
-	world.institutions[INSTITUTION_ID] = institution
+	world.institutions[institution_id] = institution
 	return {"success": true, "intent_id": &"intent_log_deliveries", "period": world.current_period_index()}
 
 func _queue_docket(institution: Dictionary, world: WorldState, intent_id: StringName, evidence: Dictionary) -> void:
@@ -95,9 +98,11 @@ func _queue_docket(institution: Dictionary, world: WorldState, intent_id: String
 	queue.append({
 		"due_period": world.current_period_index() + 1,
 		"form_type": &"held_barley",
-		"subject_id": &"north_bay",
+		"subject_id": StringName(institution.get("place_id", "north_bay")),
 		"urgency": 3,
 		"intent_id": intent_id,
+		"clerk_id": StringName(institution.get("last_grain_clerk_id", "")),
+		"institution_id": StringName(institution.get("id", "")),
 		"npc_evidence": evidence.duplicate(true),
 	})
 	institution["npc_docket_queue"] = queue
