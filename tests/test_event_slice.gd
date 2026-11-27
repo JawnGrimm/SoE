@@ -339,7 +339,7 @@ func _run() -> void:
 	_check(uruk_a.master_seed == 987654321, "Uruk seeder should retain the campaign seed")
 	_check(uruk_a.year == -3200 and uruk_a.period == 0, "Uruk campaign should begin at its era start")
 	_check(uruk_a.people.size() == 17, "Uruk seeder should create the expanded seventeen-person roster")
-	_check(uruk_a.places.size() == 14, "Uruk seed should establish seven canonical settlements plus seven local and connected places")
+	_check(uruk_a.places.size() == 19, "Uruk seed should establish twelve regional settlements plus seven local and connected places")
 	_check(uruk_a.institutions.size() == 3, "Uruk seed should establish three institutions and exchange networks")
 	_check(uruk_a.social_groups.size() == 5, "Uruk seed should establish five working and household groups")
 	var seeded_tie_count := 0
@@ -349,6 +349,26 @@ func _run() -> void:
 	_check(uruk_a.get_person(&"geme_tur").relationships.has(uruk_player_a.id), "The player's household member should have an explicit family tie")
 	_check(uruk_a.get_person(&"ur_gula").relationships.has(&"nin_dada"), "Pastoral wool supply should connect to textile production")
 	_check(uruk_a.places.has(&"susa") and uruk_a.places.has(&"habuba_kabira"), "Uruk seed should include both external exchange settlements")
+	_check(uruk_a.routes.size() >= 20, "Uruk seed should load a regional route graph from RouteDef resources")
+	_check(uruk_a.shipments.size() == 1, "Uruk seed should launch a remote timber consignment from Habuba Kabira")
+	var regional_path := RegionalWorldSystem.find_route_path(uruk_a, &"habuba_kabira", &"uruk")
+	_check(not regional_path.is_empty() and RegionalWorldSystem.route_path_periods(uruk_a, regional_path) == 3, "Habuba-to-Uruk river route should take three periods")
+	var regional_arrival_world := WorldState.new()
+	var regional_arrival_player := UrukSeeder.seed_campaign(regional_arrival_world, 32003209)
+	for period_tick in range(3):
+		regional_arrival_world.advance_period()
+	var arrived_dispatch := false
+	for regional_form in regional_arrival_world.pending_forms:
+		if StringName(regional_form.get("form_type", "")) == &"remote_dispatch":
+			arrived_dispatch = true
+			_check(int(regional_form.get("declared_quantity", 0)) == 40 and int(regional_form.get("received_quantity", 0)) <= 40, "Remote arrival should preserve declared quantity and simulate actual received cargo")
+	_check(arrived_dispatch, "A remote shipment should create an arrival docket after its route travel time")
+	var travel_start := RegionalWorldSystem.start_player_travel(regional_arrival_world, regional_arrival_player, &"habuba_kabira")
+	_check(bool(travel_start.get("success", false)) and int(travel_start.get("travel_periods", 0)) == 3, "Player should be able to accept a three-period regional journey")
+	for travel_tick in range(3):
+		regional_arrival_world.advance_period()
+	_check(regional_arrival_player.current_location_id == &"habuba_kabira" and String(regional_arrival_world.player_travel.get("status", "")) == "arrived", "Player travel should advance through the route and update character location")
+
 	var world_graph_is_closed := true
 	for person in uruk_a.people.values():
 		for other_id in person.relationships:
