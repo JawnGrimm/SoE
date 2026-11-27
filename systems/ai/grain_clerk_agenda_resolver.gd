@@ -4,7 +4,7 @@ extends RefCounted
 ## LimboAI selects intent; this class validates and applies its consequences.
 
 func resolve_intent(world: WorldState, clerk: PersonEntity, intent_id: StringName, institution_id: StringName = &"eanna_household") -> Dictionary:
-	if world == null or clerk == null or not (clerk.office_id in [&"grain_clerk", &"granary_clerk"]):
+	if world == null or clerk == null or not (clerk.office_id in [&"grain_clerk", &"granary_clerk", &"umma_granary_clerk"]):
 		return {"success": false, "reason": "The grain-clerk intent has no valid office-holder."}
 	match intent_id:
 		&"intent_hide_spoilage":
@@ -21,7 +21,7 @@ func _hide_spoilage(world: WorldState, clerk: PersonEntity, institution_id: Stri
 	var place_id := StringName(world.institutions.get(institution_id, {}).get("place_id", ""))
 	var has_roof_leak := false
 	for hazard in world.hazards:
-		if bool(hazard.get("active", false)) and StringName(hazard.get("place_id", "")) == place_id and StringName(hazard.get("id", "")) == &"roof_leak":
+		if bool(hazard.get("active", false)) and (StringName(hazard.get("place_id", "")) == place_id or (institution_id == &"eanna_household" and StringName(hazard.get("place_id", "")) == &"north_bay")) and StringName(hazard.get("id", "")) == &"roof_leak":
 			has_roof_leak = true
 			break
 	if not has_roof_leak:
@@ -98,7 +98,7 @@ func _queue_docket(institution: Dictionary, world: WorldState, intent_id: String
 	queue.append({
 		"due_period": world.current_period_index() + 1,
 		"form_type": &"held_barley",
-		"subject_id": StringName(institution.get("place_id", "north_bay")),
+		"subject_id": &"north_bay" if institution_id == &"eanna_household" else StringName(institution.get("place_id", "north_bay")),
 		"urgency": 3,
 		"intent_id": intent_id,
 		"clerk_id": clerk_id,
