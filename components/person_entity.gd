@@ -10,6 +10,7 @@ var generation_source: StringName = &""
 var generation_key: StringName = &""
 var name_provenance: StringName = &""
 var name_source: String = ""
+var name_gender: StringName = &""
 var skills := SkillsComponent.new()
 var office_id: StringName = &""
 var traits: Array[StringName] = []
