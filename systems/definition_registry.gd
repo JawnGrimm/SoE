@@ -4,6 +4,8 @@ extends RefCounted
 const DEFAULT_FOLDERS: Dictionary = {
 	"events": "res://data/events",
 	"traits": "res://data/traits",
+	"occupations": "res://data/occupations",
+	"character_templates": "res://data/characters",
 	"forms": "res://data/forms",
 	"eras": "res://data/eras",
 	"assignments": "res://data/assignments",
@@ -120,6 +122,21 @@ func register_definition(definition: Resource, category: String) -> bool:
 	if not _has_id_property(definition):
 		_warn("DefinitionRegistry: resource has no 'id' property")
 		return false
+	if category == "traits":
+		var trait_def := definition as TraitDef
+		if trait_def == null or not trait_def.is_valid():
+			_warn("DefinitionRegistry: rejected malformed TraitDef")
+			return false
+	if category == "occupations":
+		var occupation := definition as OccupationDef
+		if occupation == null or not occupation.is_valid():
+			_warn("DefinitionRegistry: rejected malformed OccupationDef")
+			return false
+	if category == "character_templates":
+		var template := definition as CharacterTemplate
+		if template == null or not template.is_valid():
+			_warn("DefinitionRegistry: rejected malformed CharacterTemplate")
+			return false
 	if category == "assignments":
 		var assignment := definition as AssignmentDef
 		if assignment == null or not assignment.is_valid():
@@ -220,8 +237,30 @@ func get_era_for_year(year: int) -> EraDef:
 			return definition
 	return null
 
-func get_trait(definition_id: StringName) -> Resource:
-	return get_definition(definition_id)
+func get_trait(definition_id: StringName) -> TraitDef:
+	return get_definition(definition_id) as TraitDef
+
+func get_occupation(definition_id: StringName) -> OccupationDef:
+	return get_definition(definition_id) as OccupationDef
+
+func get_character_template(definition_id: StringName) -> CharacterTemplate:
+	return get_definition(definition_id) as CharacterTemplate
+
+func all_occupations() -> Array[OccupationDef]:
+	var result: Array[OccupationDef] = []
+	for definition in _definitions_by_category.get("occupations", []):
+		if definition is OccupationDef:
+			result.append(definition)
+	result.sort_custom(func(a: OccupationDef, b: OccupationDef) -> bool: return String(a.id) < String(b.id))
+	return result
+
+func all_character_templates() -> Array[CharacterTemplate]:
+	var result: Array[CharacterTemplate] = []
+	for definition in _definitions_by_category.get("character_templates", []):
+		if definition is CharacterTemplate:
+			result.append(definition)
+	result.sort_custom(func(a: CharacterTemplate, b: CharacterTemplate) -> bool: return String(a.id) < String(b.id))
+	return result
 
 func get_form(definition_id: StringName) -> Resource:
 	return get_definition(definition_id)
