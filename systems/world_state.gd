@@ -2,6 +2,66 @@ class_name WorldState
 extends RefCounted
 
 const PERIODS_PER_YEAR := 12
+const DEFAULT_EPIC_STAGE_PCTS: Array[int] = [0, 25, 50, 75]
+
+func ensure_epic_review_state(epic_id: StringName, epic_def: EpicDef = null) -> void:
+	if not epics.has(epic_id):
+		return
+	var entry: Dictionary = epics[epic_id]
+	var target := maxi(1, int(entry.get("target", epic_def.target if epic_def != null else 100)))
+	var progress := int(entry.get("progress", 0))
+	var stage := get_epic_stage_index(progress, target, epic_def)
+	if not entry.has("review_pending"):
+		entry["review_pending"] = bool(entry.get("active", false)) and not bool(entry.get("completed", false))
+	if not entry.has("review_stage"):
+		entry["review_stage"] = stage
+	if not entry.has("reviewed_stage"):
+		entry["reviewed_stage"] = -1
+	if not entry.has("last_reviewed_period"):
+		entry["last_reviewed_period"] = -1
+	epics[epic_id] = entry
+
+func get_epic_stage_index(progress: int, target: int, epic_def: EpicDef = null) -> int:
+	var safe_target := maxi(1, target)
+	if epic_def != null and not epic_def.stages.is_empty():
+		var custom_stage := 0
+		for i in range(epic_def.stages.size()):
+			if progress >= int(epic_def.stages[i].get("threshold", 0)):
+				custom_stage = i
+		return custom_stage
+	var pct := int(floor(float(progress) / float(safe_target) * 100.0))
+	var resolved := 0
+	for i in range(DEFAULT_EPIC_STAGE_PCTS.size()):
+		if pct >= DEFAULT_EPIC_STAGE_PCTS[i]:
+			resolved = i
+	return resolved
+
+func get_epic_stage_label(stage_index: int, epic_def: EpicDef = null) -> String:
+	if epic_def != null and stage_index >= 0 and stage_index < epic_def.stages.size():
+		var custom_title := str(epic_def.stages[stage_index].get("title", "")).strip_edges()
+		if not custom_title.is_empty():
+			return custom_title
+	match stage_index:
+		0: return "Charter & Survey"
+		1: return "Excavation & Earthworks"
+		2: return "Channel Cut & Revetment"
+		3: return "Weir & Headgate Masonry"
+		_: return "Stage %d" % (stage_index + 1)
+
+func resolve_epic_review(epic_id: StringName, epic_def: EpicDef = null) -> void:
+	if not epics.has(epic_id):
+		return
+	ensure_epic_review_state(epic_id, epic_def)
+	var entry: Dictionary = epics[epic_id]
+	var target := maxi(1, int(entry.get("target", 100)))
+	var stage := get_epic_stage_index(int(entry.get("progress", 0)), target, epic_def)
+	entry["reviewed_stage"] = maxi(int(entry.get("reviewed_stage", -1)), stage)
+	entry["review_stage"] = stage
+	entry["review_pending"] = false
+	entry["last_reviewed_period"] = current_period_index()
+	epics[epic_id] = entry
+
+
 
 var year: int = 1200
 var period: int = 0
