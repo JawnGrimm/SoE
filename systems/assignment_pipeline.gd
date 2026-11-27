@@ -17,11 +17,13 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 		return candidates
 
 	for form in world.pending_forms:
+		var subject_id := StringName(form.get("subject_id", ""))
+		if not _is_local_to_current_location(world, subject_id):
+			continue
 		var form_id := StringName(form.get("id", ""))
 		if form_id == &"":
 			continue
 		var form_type := StringName(form.get("form_type", ""))
-		var subject_id := StringName(form.get("subject_id", ""))
 		var subject_name := _place_name(world, subject_id)
 		var urgency := int(form.get("urgency", 1))
 		var overdue := String(form.get("status", "pending")) == "overdue"
@@ -48,6 +50,8 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			continue
 		var hazard_id := StringName(hazard.get("id", ""))
 		var place_id := StringName(hazard.get("place_id", ""))
+		if not _is_local_to_current_location(world, place_id):
+			continue
 		candidates.append({
 			"id": StringName("work_hazard_%s_%d" % [hazard_id, world.current_period_index()]),
 			"kind": &"hazard",
@@ -110,9 +114,9 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			"id": routine_id,
 			"kind": &"ledger",
 			"source_id": StringName(institution_id),
-			"title": "%s / Periodic Account" % String(institution.get("name", institution_id)),
-			"summary": "Reconcile the institution's current membership, activity, and resource records.",
-			"priority": (2 if StringName(institution_id) == &"eanna_household" else 1) + _career_bonus(selected_path, &"ledger"),
+			"title": String(institution.get("ledger_work_title", "")) if not String(institution.get("ledger_work_title", "")).is_empty() else "%s / Periodic Account" % String(institution.get("name", institution_id)),
+			"summary": String(institution.get("ledger_work_summary", "")) if not String(institution.get("ledger_work_summary", "")).is_empty() else "Reconcile the institution's current membership, activity, and resource records.",
+			"priority": int(institution.get("ledger_work_priority", 1)) + _career_bonus(selected_path, &"ledger"),
 			"employer_id": &"shuruppak_ilu" if world.get_person(&"shuruppak_ilu") != null else &"",
 			"source_data": {"institution_id": StringName(institution_id), "member_count": institution.get("members", []).size(), "activity_count": int(institution.get("activity_count", 0))},
 			"path_id": selected_path
