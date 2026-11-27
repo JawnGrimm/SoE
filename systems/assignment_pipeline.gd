@@ -3,7 +3,7 @@ extends RefCounted
 ## Converts persistent world conditions into professional opportunities.
 ## It never invents economic quantities: all facts are read from WorldState.
 
-const BOARD_SIZE := 3
+const BOARD_SIZE := 4
 const AssignmentGeneratorScript = preload("res://systems/assignment_generator.gd")
 const INVESTIGATION_ACTIONS := [
 	{"id": &"examine_records", "label": "Examine the written record", "skill": &"literacy", "xp": 8},
@@ -146,15 +146,21 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 	)
 	var result: Array[Dictionary] = []
 	var used_kinds: Dictionary = {}
+	var procedural_candidate: Dictionary = {}
 	for candidate in candidates:
+		if StringName(candidate.get("kind", "")) == &"procedural_docket":
+			procedural_candidate = candidate
+			continue
 		var kind := StringName(candidate.get("kind", ""))
-		# Prefer three different kinds of work when the world offers them.
-		if used_kinds.has(kind) and result.size() < BOARD_SIZE:
+		# Reserve one board slot for the career-path story, then diversify world work.
+		if used_kinds.has(kind) and result.size() < BOARD_SIZE - 1:
 			continue
 		result.append(candidate.duplicate(true))
 		used_kinds[kind] = true
-		if result.size() >= BOARD_SIZE:
+		if result.size() >= BOARD_SIZE - 1:
 			break
+	if not procedural_candidate.is_empty() and result.size() < BOARD_SIZE:
+		result.append(procedural_candidate.duplicate(true))
 	if result.size() < BOARD_SIZE:
 		for candidate in candidates:
 			if candidate not in result:
