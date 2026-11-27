@@ -106,3 +106,15 @@ Run the focused regression with `godot --headless --path . -s tests/test_consequ
 - The Great Canal Cut remains visible from Uruk as backdrop and sends an urgent capital dispatch to a remote player in Umma or Nippur while stalled, disrupted, or awaiting review. Do not expose raw internal problem keys in courier prose.
 - Pending Great Canal Cut reviews appear in the remote work queue with `[REQUIRES TRAVEL TO URUK]`; selecting one explains that passage must be booked on the regional survey map and must not open a remote verdict.
 - Period audit/arrears deltas must be surfaced as archive notices after the desk board refreshes, so routine HUD refreshes cannot immediately erase them.
+
+
+## Tactile Cedar Desk / Slice B invariants
+
+- The Cedar Desk uses a 58:42 upper evidence / lower action workspace split; the lower row is 62:22:16 action docket, clay prop, archive prop. Ratios are centralized in `ui/cedar_desk_layout.gd`.
+- Evidence panels expand with their workspace and use readable 64px portraits, 15px spoken quotes, and 13px facts. Hide the entire evidence workspace during character creation and while the regional survey is open; the remaining workspace receives the available height.
+- `CedarDeskHeader` is a presentation-only view of live player/world state. Purse, arrears, audit exposure, office, place, season/month, and year are derived; never store these values on the UI or serialize header state.
+- `ClayDocketProp` and `ArchiveStackProp` are transient presentation components. Cuneiform marks are paired with plain-language tooltip descriptions; inquiry marks map only the four supported investigation actions. Verdict seals stop further inquiry marks. UI prop state, open/closed drawers, animations, and notification badges must not enter SaveCodec.
+- Use the canonical font at `res://assets/fonts/NotoSansCuneiform-Regular.ttf`. Stylus/seal audio has visible state feedback and must respect the project's audio/reduced-motion behavior.
+- The archive stack is keyboard-operable and mirrors queue access with a named button. Queue categories remain Epics, Challenges, and Assignments; the props do not implement queue logic or mutate assignment state.
+- Root `main.tscn` remains a thin scene host; the desk hierarchy is composed in `main.gd`. Do not create a competing static scene layout.
+- Run `tests/test_cedar_desk_overhaul.gd` and the existing consequence, office, evidence, travel, and Epic/Challenge regressions plus editor import validation. Manually verify visual proportions, resize/scaling, focus restoration, contrast, and reduced motion in a running build; headless tests do not prove those.
