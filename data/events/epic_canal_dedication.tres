@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="EventTemplate" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/event_template.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"epic_canal_dedication"
+title = "Dedication of the Sluice Gates"
+description = "The assembly of Uruk gathers at the Iturungal regulator sluice. The waters are ready to be loosed into the desert canal. The High Priest of Eanna, the Carrier Foreman, and the city elders stand before a monolithic limestone monument. The final act belongs to the scribe: choose what the monument will remember."
+era_tags = Array[StringName]([&"uruk_storehouse"])
+weight = 1.0
+cooldown_years = 0
+once_per_character = true
+once_per_world = true
+conditions = []
+outcomes = []
+records = Array[Dictionary]([{"label": "PLACE", "value": "Iturungal regulator sluice"}, {"label": "WITNESSES", "value": "Eanna priesthood, carrier foreman, city elders"}, {"label": "WORKS", "value": "The Great Canal Cut"}])
+evidence_left_title = "THE MONUMENT"
+evidence_right_title = "THE ASSEMBLY"
+evidence_left_speaker = "STONE CUTTER"
+evidence_right_speaker = "SHURUPPAK-ILU"
+evidence_left_quote = "A name cut here will outlast the hand that holds the stylus."
+evidence_right_quote = "No one can amend a monument after the water has passed beneath it."
+evidence_left_portrait = &""
+evidence_right_portrait = &"shuruppak_ilu"
