@@ -663,6 +663,9 @@ func load_game() -> Dictionary:
 		return {"success": false, "error": "The save has no current player."}
 	world = restored_world
 	actor = restored_actor
+	# Saves made before the intake mentor beat are already past the first workday.
+	if not world.world_flags.has(&"first_workday_mentor_seen"):
+		world.world_flags[&"first_workday_mentor_seen"] = -1
 	_configure_route_network()
 	current_era = Registry.get_era_for_year(world.year)
 	context = EventContext.new()
