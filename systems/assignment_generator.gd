@@ -319,7 +319,7 @@ static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_
 	var opposing_name := "LOCAL WITNESS" if local_mode else String(PATH_FACTION_DISPLAY_NAMES.get(opposing_faction, String(opposing_faction).replace("_", " ").capitalize()))
 	var title := String(template.get("title", "LOCAL DOCKET"))
 	var payload := {
-		"title": title, "archetype": archetype_id, "docket_kind": "local_path",
+		"title": title, "archetype": archetype_id, "docket_kind": "regional_local" if local_mode else "local_path",
 		"path_id": path_id, "npc_pair": pair, "client_faction": client_faction,
 		"opposing_faction": opposing_faction, "client_name": "CLIENT / " + client_name,
 		"opposing_name": "OPPOSING PARTY / " + opposing_name,
@@ -332,6 +332,11 @@ static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_
 			{"label": "Accept the opposing party's account", "result_title": "OPPOSING ACCOUNT ACCEPTED", "result_text": "The opposing account is entered. The client may appeal the mark.", "effects": {"opinion_left": -2, "opinion_right": 3, "epic_progress": 2, "skill": "rhetoric", "xp": 12}}
 		]
 	}
+	if local_mode:
+		for docket_choice in payload.get("choices", []):
+			var choice_effects: Dictionary = docket_choice.get("effects", {})
+			choice_effects["epic_progress"] = 0
+			docket_choice["effects"] = choice_effects
 	var geography := get_geographic_vector(StringName(template.get("id", "")))
 	if local_mode:
 		geography = {
