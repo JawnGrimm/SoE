@@ -10,5 +10,4 @@ place_type = &"uruk_related_settlement"
 region = &"upper_euphrates"
 parent_place_id = &""
 political_relation = &"autonomous_peer"
-connected_to = Array[StringName]([&"habuba_kabira"])
 era_id = &"uruk_storehouse"
