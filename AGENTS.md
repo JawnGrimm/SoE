@@ -118,3 +118,14 @@ Run the focused regression with `godot --headless --path . -s tests/test_consequ
 - The archive stack is keyboard-operable and mirrors queue access with a named button. Queue categories remain Epics, Challenges, and Assignments; the props do not implement queue logic or mutate assignment state.
 - Root `main.tscn` remains a thin scene host; the desk hierarchy is composed in `main.gd`. Do not create a competing static scene layout.
 - Run `tests/test_cedar_desk_overhaul.gd` and the existing consequence, office, evidence, travel, and Epic/Challenge regressions plus editor import validation. Manually verify visual proportions, resize/scaling, focus restoration, contrast, and reduced motion in a running build; headless tests do not prove those.
+
+
+## Canal Dedication and Era I career epilogue invariants
+
+- The Great Canal Cut is a terminal Era I project. When its progress reaches its authored target, or the world reaches the 3160 BCE boundary, present the Dedication of the Sluice Gates exactly once. BCE year values increase toward the boundary: the start at 3200 BCE is represented by -3200, so the boundary test is `year >= -3160`, not `year <= -3160`.
+- Dedication never resets canal progress and never re-enters the Epic simulation loop. The terminal record is latched by `canal_dedication_concluded`; the Epic is marked inactive/dedicated after a valid final act.
+- The three dedication acts are asymmetric and authored: honor work crews, credit Eanna alone, or apply the scribe's personal cylinder seal. The personal seal requires both Law 2 and Literacy 2. Resolve consequences through `systems/canal_dedication_service.gd`, not by mutating the world from the view.
+- `CareerEvaluator` is a pure `RefCounted` reader of `WorldState` and `PersonEntity`. It must not mutate either object or definitions. It returns the four legacy axes, final metrics, a deterministic epitaph, and clipboard-ready Markdown.
+- The memorial tablet is a derived presentation. It must not serialize UI state, alter career metrics, or become a second save system. Copy/export text comes from `CareerEvaluator.generate_export_text()`.
+- The terminal flow is reached both after canal progress completion and when the Era I calendar boundary is crossed. The first-workday mentor induction remains before ordinary assignments and explicitly introduces the Clay Docket, Archive Stack, reed stylus, cylinder seal, and two-silver starting purse.
+- Run `godot --headless --path . -s tests/test_career_epilogue_and_climax.gd`, `tests/test_cedar_desk_overhaul.gd`, `tests/test_consequence_visibility.gd`, `tests/test_living_offices.gd`, `tests/test_travel_circuit.gd`, and `tests/test_epics_and_challenges_circuit.gd`, followed by `godot --headless --editor --path . --quit`. Manually verify the tablet's contrast, scaling, focus order, clipboard action, and title/restart flow in a running build; headless tests do not establish visual accessibility.
