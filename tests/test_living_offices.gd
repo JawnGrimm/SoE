@@ -63,7 +63,7 @@ func _run() -> void:
 	successor.id = world.allocate_person_id()
 	successor.display_name = "Generated Archive Keeper"
 	successor.location_id = &"uruk"
-	successor.office_id = &"archive_keeper"
+	successor.office_id = &""
 	successor.generation_source = &"tier2"
 	world.people[successor.id] = successor
 	if original != null:
@@ -74,7 +74,11 @@ func _run() -> void:
 	var archive_members: Array = archive.get("members", []).duplicate()
 	archive_members.append(successor.id)
 	archive["members"] = archive_members
-	world.institutions[&"eanna_archive" if world.institutions.has(&"eanna_archive") else &"eanna_household"] = archive
+	var archive_institution_id := &"eanna_archive" if world.institutions.has(&"eanna_archive") else &"eanna_household"
+	world.institutions[archive_institution_id] = archive
+	PopulationService.new().seat_institution_staff(world, definitions)
+	_check(successor.office_id == &"archive_keeper", "Generated successor is seated into the vacant archive keeper office")
+	_check(StringName(world.institutions[archive_institution_id].get("offices", {}).get(&"archive_keeper", "")) == successor.id, "Office map points to the successor rather than the former archivist")
 	var player := world.get_player()
 	player.resources[&"silver"] = 0
 	player.flags[&"audit_exposure"] = 2
@@ -109,6 +113,7 @@ func _run() -> void:
 		_check(loaded_grain != null and loaded_grain.office_id == &"granary_clerk", "Save/load preserves Nin-Enlil's seated office")
 		_check(_has_form_from(loaded, &"bailiff_requisition", &"character_0013"), "Save/load preserves pending bailiff agenda forms")
 		_check(StringName(loaded.institutions[&"umma_granary"].get("last_grain_clerk_agenda", {}).get("official_id", "")) == &"character_0012", "Save/load preserves the institution's last agenda state")
+		_check(loaded.get_person(successor.id).office_id == &"archive_keeper" and StringName(loaded.institutions[archive_institution_id].get("offices", {}).get(&"archive_keeper", "")) == successor.id, "Save/load preserves successor office mapping without stale archivist pointers")
 
 	_finish()
 
