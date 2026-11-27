@@ -2147,6 +2147,8 @@ func _refresh_local_stock_facts() -> void:
 	for institution_id in institution_ids:
 		var institution: Dictionary = world.institutions.get(institution_id, {})
 		lines.append(String(institution.get("name", institution_id)))
+		if institution.has("resource_pressure"):
+			lines.append("  Current pressure: %d" % int(institution.get("resource_pressure", 0)))
 		var stocks: Dictionary = institution.get("stockpiles", {})
 		var stock_keys := stocks.keys()
 		stock_keys.sort()
@@ -2196,6 +2198,7 @@ func _refresh_compound() -> void:
 			mentor_trait = String(trait_id)
 	heirloom_label.text = "MENTOR MARK: %s" % mentor_trait.to_upper()
 	dossier_label.text = _build_dossier_text()
+	canal_label.visible = world.current_location_id == &"uruk"
 	var active_epic_id := world.get_active_epic_id()
 	var active_epic := Registry.get_epic(active_epic_id)
 	if active_epic == null and current_era != null:
