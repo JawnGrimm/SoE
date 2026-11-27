@@ -893,8 +893,45 @@ func _show_assignment_board() -> void:
 		"choices": choices_payload
 	}
 	_render_docket_payload(payload, callbacks)
+	_add_choice("Regional Map / Travel", _show_regional_map)
 	_add_choice("Pass / End Period", _decline_opportunities)
 	_refresh_compound()
+
+func _show_regional_map() -> void:
+	if phase != "opportunity_board" and phase != "regional_map":
+		return
+	_clear_choices()
+	_set_phase("regional_map")
+	var origin_id := actor.current_location_id if actor.current_location_id != &"" else &"uruk"
+	var origin_name := String(world.places.get(origin_id, {}).get("name", origin_id))
+	var options := RegionalWorldSystem.get_destination_options(world, origin_id)
+	var payload := {
+		"title": "REGIONAL NETWORK / ROUTE DOCKET",
+		"left_card": {"title": "CURRENT LOCATION", "speaker_id": &"", "quote": origin_name, "facts": "PLACE: %s\nROUTES AVAILABLE: %d" % [String(origin_id), options.size()]},
+		"right_card": {"title": "THE ROAD AND RIVER", "speaker_id": &"", "quote": "Distance is time, exposure, and the chance that the world changes before you arrive.", "facts": "Travel advances with the world calendar. Route incidents are recorded along the way."},
+		"prompt": "Choose a destination. This begins travel; each End Period advances the journey and the world.",
+		"choices": []
+	}
+	var callbacks: Array[Callable] = []
+	for option in options:
+		var destination_id: StringName = option.place_id
+		payload.choices.append({"label": "%s / %d periods / route risk %d" % [String(option.name), int(option.travel_periods), int(option.route_risk_percent)]})
+		callbacks.append(_begin_regional_travel.bind(destination_id))
+	_render_docket_payload(payload, callbacks)
+	_add_choice("Return to Work Board", _show_assignment_board)
+	_refresh_compound()
+
+func _begin_regional_travel(destination_id: StringName) -> void:
+	if phase != "regional_map":
+		return
+	var travel_result := RegionalWorldSystem.start_player_travel(world, actor, destination_id)
+	if not bool(travel_result.get("success", false)):
+		status_label.text = String(travel_result.get("error", "Travel could not begin."))
+		_show_regional_map()
+		return
+	var destination_name := String(world.places.get(destination_id, {}).get("name", destination_id))
+	var periods := int(travel_result.get("travel_periods", 0))
+	_show_procedural_result("REGIONAL JOURNEY ACCEPTED", "You depart for %s. The route requires %d periods. The world advances while you travel; delays and incidents will be recorded." % [destination_name, periods])
 
 func _select_assignment_opportunity(index: int) -> void:
 	if phase != "opportunity_board" or index < 0 or index >= assignment_opportunities.size():
@@ -1495,4 +1532,9 @@ func _refresh_compound() -> void:
 	canal_label.text = "ERA EPIC / BACKDROP\n%s\n[%s%s] %d / %d\nYour docket can move the project" % [epic_title.to_upper(), "=".repeat(bar_fill), "-".repeat(10 - bar_fill), epic_progress, epic_target]
 	_refresh_faction_standings()
 	year_label.text = CalendarFormatter.format_date(current_era, world.year, world.period)
-	status_label.text = "SEED %d  /  PERIOD %02d OF 12" % [world.master_seed, world.period + 1]
+	var location_id := actor.current_location_id if actor.current_location_id != &"" else &"uruk"
+	var location_name := String(world.places.get(location_id, {}).get("name", location_id))
+	if String(world.player_travel.get("status", "")) == "in_transit":
+		status_label.text = "TRAVEL / %s  /  %d PERIODS REMAINING" % [location_name, int(world.player_travel.get("remaining_periods", 0))]
+	else:
+		status_label.text = "%s  /  SEED %d  /  PERIOD %02d OF 12" % [location_name.to_upper(), world.master_seed, world.period + 1]
