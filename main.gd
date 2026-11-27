@@ -940,8 +940,6 @@ func _show_assignment_board() -> void:
 	}
 	_render_docket_payload(payload, callbacks)
 	_add_choice("Pass / End Period", _decline_opportunities)
-	if world.current_location_id == &"uruk":
-		_add_choice("Itinerary Docket / Travel", _show_itinerary_docket)
 	_refresh_compound()
 
 func _select_assignment_opportunity(index: int) -> void:
