@@ -412,6 +412,11 @@ func _build_interface() -> void:
 	compound_title.add_theme_font_size_override("font_size", 17)
 	compound_title.add_theme_color_override("font_color", Color("#d6bd8b"))
 	compound_box.add_child(compound_title)
+	period_delta_label = Label.new()
+	period_delta_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	period_delta_label.add_theme_font_size_override("font_size", 12)
+	period_delta_label.add_theme_color_override("font_color", Color("#c4ad7c"))
+	compound_box.add_child(period_delta_label)
 	var stores_title := Label.new()
 	stores_title.text = "SCRIBE DOSSIER  /  IDENTITY & PURSE"
 	stores_title.add_theme_font_size_override("font_size", 11)
@@ -431,11 +436,6 @@ func _build_interface() -> void:
 	local_stock_label.add_theme_font_size_override("font_size", 13)
 	local_stock_label.add_theme_color_override("font_color", Color("#e5d2a8"))
 	compound_box.add_child(local_stock_label)
-	period_delta_label = Label.new()
-	period_delta_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	period_delta_label.add_theme_font_size_override("font_size", 12)
-	period_delta_label.add_theme_color_override("font_color", Color("#c4ad7c"))
-	compound_box.add_child(period_delta_label)
 	var roster_title := Label.new()
 	roster_title.text = "FACTION STANDINGS  /  OPINION OF YOU"
 	roster_title.add_theme_font_size_override("font_size", 11)
