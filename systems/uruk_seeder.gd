@@ -74,6 +74,7 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 	_seed_places(world)
 	RegionalWorldSystem.seed_routes(world)
 	_seed_institutions_and_groups(world)
+	RegionalWorldSystem.seed_regional_institutions(world)
 	_seed_relationships(world)
 	if add_player_to_world:
 		attach_player(world, player)
