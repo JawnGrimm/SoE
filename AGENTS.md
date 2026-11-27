@@ -70,9 +70,11 @@ General project rules:
 
 ## Living office agenda invariants
 
-- WorldSimulator._simulate_people() dispatches by the office held by a seated member, never by named NPC IDs. Pass the institution runtime state into the agenda; a successor inherits office behavior without inheriting the former holder's identity or pointers.
-- Canonical office tokens include grain_clerk, granary_clerk, canal_bailiff, archive_keeper, labor_foreman, and carrier_foreman. Legacy umma_granary_clerk is normalized to granary_clerk at seating boundaries.
-- Institution membership and offices maps are runtime state. Remove missing/deceased references, rebuild mappings from actual seated people, and fill vacancies only with eligible unseated local people. Never leave an orphaned office-holder reference.
-- Grain clerks retain the authored LimboAI agenda, but its agent and resolver receive the current official and institution. Use institution-local stockpiles, thresholds, forms, and agenda state for both Uruk and Umma.
-- Bailiff requisitions retain issuing institution and created_period; a request unanswered for more than four periods escalates through the existing provincial dispatch circuit. Office agenda state and pending forms must round-trip through SaveCodec.
-- Archive audits and foreman disruptions are office-driven. Record the acting official in consequences and period deltas; the Great Canal Cut consumes the existing thirsty_diggers / canal_crew_slowdown disruption flags rather than a parallel Epic simulator.
+- `WorldSimulator._simulate_people()` iterates institution members and invokes one generic `OfficeRunner`; no named-character dispatch or per-office decision logic belongs there.
+- `OfficeRunner` selects a LimboAI `.tres` by office ID, seeds Blackboard with `actor`, `institution`, and `world` (plus institution ID), and ticks manually once per period.
+- BT resources own decision flow. Shared condition/action tasks read Blackboard; one `OfficeAgendaResolver` validates and commits typed mutations. Never create per-office agent or resolver classes.
+- Grain-clerk and granary-clerk tokens share the grain BT. Umma granary and canal office are separate institutions. Nin-Enlil is seated only in `umma_granary`; Ur-Mes only in `umma_canal_bailiff`.
+- Runtime membership and office maps rebuild from living valid members. Vacancies may be filled by eligible unseated people in the institution's place or parent settlement; do not retain orphan pointers.
+- `umma_granary` is registry-loaded from a Resource, uses a child place under Umma, and owns local stockpiles. Definitions remain immutable.
+- Bailiff forms retain issuing/target institution IDs and `created_period`; requests older than four periods escalate through the existing dispatch circuit. Archive and foreman consequences name the acting official and use existing debt/opinion/period-delta/Epic state.
+- Office agendas, seats, pending forms, and local state round-trip through `SaveCodec`.

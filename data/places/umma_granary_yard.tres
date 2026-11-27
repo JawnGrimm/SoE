@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="PlaceDef" load_steps=2 format=3]
+[ext_resource type="Script" path="res://data/definitions/place_def.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"umma_granary_yard"
+display_name = "Umma Granary Yard"
+place_type = &"institutional_site"
+region = &"lower_mesopotamia"
+parent_place_id = &"umma"
+political_relation = &"provincial_institution"
+exports = Array[StringName]([&"barley"])
+imports = Array[StringName]([&"labor", &"canal_access"])
+era_id = &"uruk_storehouse"
+survey_position = Vector2.ZERO

@@ -243,7 +243,7 @@ func seat_institution_staff(world: WorldState, definitions: DefinitionRegistry) 
 			var candidates: Array[PersonEntity] = []
 			for person_value in world.people.values():
 				var person: PersonEntity = person_value
-				if person != null and not bool(person.flags.get(&"dead", false)) and person.location_id == place_id and not seated_people.has(person.id) and person.generation_source == &"tier2" and (person.office_id == &"" or _canonical_office_id(person.office_id) == office_id):
+				if person != null and not bool(person.flags.get(&"dead", false)) and _is_local_to_institution(world, person, place_id) and not seated_people.has(person.id) and person.generation_source == &"tier2" and (person.office_id == &"" or _canonical_office_id(person.office_id) == office_id):
 					candidates.append(person)
 			candidates.sort_custom(func(a: PersonEntity, b: PersonEntity) -> bool:
 				var a_exact := _canonical_office_id(a.office_id) == office_id
@@ -267,6 +267,11 @@ func seat_institution_staff(world: WorldState, definitions: DefinitionRegistry) 
 		institution["members"] = members
 		institution["offices"] = office_map
 		world.institutions[institution_id] = institution
+
+static func _is_local_to_institution(world: WorldState, person: PersonEntity, place_id: StringName) -> bool:
+	if person.location_id == place_id:
+		return true
+	return person.location_id == StringName(world.places.get(place_id, {}).get("parent", ""))
 
 static func _canonical_office_id(office_id: StringName) -> StringName:
 	match office_id:

@@ -9,8 +9,7 @@ const CANAL_CASES_REQUIRED := 8
 
 const MIN_STOCK := 0
 const FORM_COOLDOWN_PERIODS := 3
-const GrainClerkAgendaTree = preload("res://data/behavior_trees/bt_grain_clerk_agenda.tres")
-const GrainClerkAgentScript = preload("res://systems/ai/grain_clerk_agent.gd")
+const OfficeRunnerScript = preload("res://systems/ai/office_runner.gd")
 
 var definition_registry: DefinitionRegistry
 
@@ -22,7 +21,7 @@ func advance_period(world: WorldState) -> void:
 		return
 	world.last_period_deltas.clear()
 	world.advance_period()
-	_deliver_grain_clerk_dockets(world)
+	_deliver_office_dockets(world)
 	_simulate_economy(world)
 	_simulate_institutions(world)
 	_simulate_epics(world)
@@ -30,7 +29,7 @@ func advance_period(world: WorldState) -> void:
 	_simulate_people(world)
 	_generate_forms(world)
 
-func _deliver_grain_clerk_dockets(world: WorldState) -> void:
+func _deliver_office_dockets(world: WorldState) -> void:
 	for institution_id in world.institutions.keys():
 		var institution: Dictionary = world.institutions[institution_id]
 		var queue: Array = institution.get("npc_docket_queue", []).duplicate(true)
@@ -374,207 +373,23 @@ func _simulate_institutions(world: WorldState) -> void:
 		world.institutions[institution_id] = institution
 
 func _simulate_people(world: WorldState) -> void:
-	# Every seated official runs the agenda attached to their office. Institution
-	# state is passed in so a successor inherits the job without inheriting a name.
-	var player := world.get_player()
-	if player == null:
+	if world == null:
 		return
 	var institution_ids: Array[StringName] = []
-	var simulated_officials: Dictionary = {}
 	for value in world.institutions.keys():
 		institution_ids.append(StringName(value))
 	institution_ids.sort()
+	var simulated_officials: Dictionary = {}
 	for institution_id in institution_ids:
 		var institution: Dictionary = world.institutions.get(institution_id, {})
-		var member_ids: Array = institution.get("members", []).duplicate()
-		for member_value in member_ids:
+		for member_value in institution.get("members", []):
 			var official := world.get_person(StringName(member_value))
-			if official == null or official.office_id == &"" or simulated_officials.has(official.id):
+			if official == null or official.office_id == &"" or bool(official.flags.get(&"dead", false)):
+				continue
+			if simulated_officials.has(official.id):
 				continue
 			simulated_officials[official.id] = true
-			_tick_office_agenda(world, official, institution, institution_id)
-
-func _tick_office_agenda(world: WorldState, official: PersonEntity, institution: Dictionary, institution_id: StringName = &"") -> void:
-	match official.office_id:
-		&"grain_clerk", &"granary_clerk", &"umma_granary_clerk":
-			_tick_grain_clerk_agenda_for(world, official, institution, institution_id)
-		&"canal_bailiff":
-			_tick_canal_bailiff_agenda(world, official, institution, institution_id)
-		&"archive_keeper":
-			_tick_archive_keeper_agenda(world, official, institution, institution_id)
-		&"labor_foreman", &"carrier_foreman":
-			_tick_labor_foreman_agenda(world, official, institution, institution_id)
-
-func _tick_grain_clerk_agenda_for(world: WorldState, official: PersonEntity, institution: Dictionary, institution_id: StringName) -> void:
-	var now := world.current_period_index()
-	institution["agenda_evaluation_count"] = int(institution.get("agenda_evaluation_count", 0)) + 1
-	institution["last_grain_clerk_id"] = official.id
-	world.institutions[institution_id] = institution
-	var main_loop := Engine.get_main_loop()
-	if main_loop is SceneTree:
-		var scene_tree := main_loop as SceneTree
-		var agent: Node = GrainClerkAgentScript.new()
-		agent.set("world", world)
-		agent.set("clerk", official)
-		agent.set("institution_id", institution_id)
-		scene_tree.root.add_child(agent)
-		var bt_player := BTPlayer.new()
-		bt_player.set_active(false)
-		bt_player.set_update_mode(BTPlayer.MANUAL)
-		bt_player.set_agent_node(NodePath(".."))
-		bt_player.set_scene_root_hint(agent)
-		bt_player.set_behavior_tree(GrainClerkAgendaTree)
-		agent.add_child(bt_player)
-		bt_player.set_active(true)
-		bt_player.update(0.0)
-		bt_player.set_active(false)
-		agent.free()
-	else:
-		push_warning("WorldSimulator: grain clerk agenda requires a SceneTree for LimboAI evaluation")
-
-	# A local shortage also creates a contradictory delivery record. The tree
-	# remains responsible for authored cover-up/skimming/custody behavior.
-	var updated: Dictionary = world.institutions.get(institution_id, {}).duplicate(true)
-	var resources: Dictionary = updated.get("stockpiles", {})
-	var thresholds: Dictionary = updated.get("pressure_thresholds", {})
-	var barley := int(resources.get(&"barley", 0))
-	var warning := int(thresholds.get(&"barley_warn", 105))
-	var records: Dictionary = updated.get("stock_records", {}).duplicate(true)
-	if barley < warning and not bool(records.get("shortage_docket_issued", false)):
-		records["shortage_docket_issued"] = true
-		records["shortage_docket_period"] = now
-		updated["stock_records"] = records
-		var place_id := StringName(updated.get("place_id", institution_id))
-		world.enqueue_form({
-			"form_type": &"contradictory_grain_docket",
-			"subject_id": place_id,
-			"institution_id": institution_id,
-			"urgency": 4,
-			"year": world.year,
-			"generated_by": official.id,
-			"generation_reason": &"local_granary_shortage",
-			"generated_period": now,
-			"created_period": now,
-			"evidence": {"physical_barley": barley, "declared_status": "delivery_balance_pending"}
-		})
-		_record_period_delta(world, "grain", "%s recorded a local barley discrepancy at %s (%d barley)" % [official.display_name, String(updated.get("name", institution_id)), barley])
-	updated["last_grain_clerk_agenda"] = updated.get("last_grain_clerk_agenda", {})
-	world.institutions[institution_id] = updated
-
-func _tick_canal_bailiff_agenda(world: WorldState, official: PersonEntity, institution: Dictionary, institution_id: StringName) -> void:
-	var resources: Dictionary = institution.get("stockpiles", {})
-	var thresholds: Dictionary = institution.get("pressure_thresholds", {})
-	var labor_warn := int(thresholds.get(&"labor_warn", 7))
-	var pressure := int(institution.get("resource_pressure", 0))
-	var labor := int(resources.get(&"labor", 0))
-	var silt_hazard := false
-	for hazard in world.hazards:
-		if bool(hazard.get("active", false)) and StringName(hazard.get("place_id", "")) == StringName(institution.get("place_id", "")) and String(hazard.get("id", "")).to_lower().contains("silt"):
-			silt_hazard = true
-			break
-	if pressure <= 0 and labor >= labor_warn and not silt_hazard:
-		return
-	var now := world.current_period_index()
-	var form_index := _find_pending_form(world, &"bailiff_requisition", StringName(institution.get("place_id", "umma")))
-	if form_index >= 0:
-		var existing: Dictionary = world.pending_forms[form_index]
-		var created := int(existing.get("generated_period", existing.get("created_period", now)))
-		if now - created > 4:
-			existing["urgency"] = maxi(8, int(existing.get("urgency", 2)))
-			existing["priority"] = maxi(8, int(existing.get("priority", 0)))
-			existing["agenda_escalated"] = true
-			existing["generated_by"] = official.id
-			world.pending_forms[form_index] = existing
-		return
-	var form := {
-		"form_type": &"bailiff_requisition",
-		"subject_id": StringName(institution.get("place_id", "umma")),
-		"institution_id": institution_id,
-		"target_institution_id": _regional_supply_institution(world, StringName(institution.get("place_id", "umma")), institution_id),
-		"urgency": 3,
-		"year": world.year,
-		"generated_by": official.id,
-		"generation_reason": &"canal_pressure_requisition",
-		"generated_period": now,
-		"created_period": now,
-		"resource_pressure": pressure,
-		"local_labor": labor,
-		"canal_silt_hazard": silt_hazard
-	}
-	world.enqueue_form(form)
-	institution["last_bailiff_requisition_period"] = now
-	world.institutions[institution_id] = institution
-	_record_period_delta(world, "requisition", "%s petitioned for canal labor and provisions at %s" % [official.display_name, String(institution.get("name", institution_id))])
-
-func _tick_archive_keeper_agenda(world: WorldState, official: PersonEntity, institution: Dictionary, institution_id: StringName) -> void:
-	var player := world.get_player()
-	if player == null:
-		return
-	var now := world.current_period_index()
-	if now % 6 != 0:
-		return
-	var exposure := int(player.flags.get(&"audit_exposure", 0))
-	var pliable := &"pliable" in player.traits
-	var falsification := world.has_flag(&"phantom_barley_measure", now)
-	if exposure <= 0 and not pliable and not falsification:
-		return
-	var last_audit := int(institution.get("last_archive_audit_period", -100))
-	if now - last_audit < 6:
-		return
-	institution["last_archive_audit_period"] = now
-	if exposure > 0:
-		player.flags[&"audit_exposure"] = exposure - 1
-	var silver := int(player.resources.get(&"silver", 0))
-	if silver >= 2:
-		player.resources[&"silver"] = silver - 2
-	else:
-		player.flags[&"audit_debt"] = int(player.flags.get(&"audit_debt", 0)) + 2 - silver
-		player.resources[&"silver"] = 0
-	official.change_opinion(player.id, -2, "A concealed account was found in the archive audit.", world.year)
-	var disposition := "fine" if silver >= 2 else "debt"
-	_record_period_delta(world, "audit", "Archive reprimand: -2 silver %s to %s" % [disposition, official.display_name])
-	world.cedar_desk_log.append({"year": world.year, "period": world.period, "title": "ARCHIVE REPRIMAND", "summary": "%s found a concealed account. Two silver were fined or entered as debt." % official.display_name, "official_id": official.id})
-	world.institutions[institution_id] = institution
-
-func _tick_labor_foreman_agenda(world: WorldState, official: PersonEntity, institution: Dictionary, institution_id: StringName) -> void:
-	var resources: Dictionary = institution.get("stockpiles", {})
-	var labor_warn := int(institution.get("pressure_thresholds", {}).get(&"labor_warn", 8))
-	var labor := int(resources.get(&"labor", world.get_resource(&"labor")))
-	var now := world.current_period_index()
-	var thirsty_expiry := int(world.world_flags.get(&"thirsty_diggers", -100))
-	var thirsty := world.has_flag(&"thirsty_diggers", now) or thirsty_expiry >= now - 1
-	if not thirsty and labor >= labor_warn:
-		return
-	var last_reaction := int(institution.get("last_foreman_reaction_period", -100))
-	if now - last_reaction < 3:
-		return
-	var player := world.get_player()
-	if player != null:
-		official.change_opinion(player.id, -1, "The canal crew lacks provisions or workable labor.", world.year)
-	world.set_flag(&"canal_crew_slowdown", now + 2)
-	var epic_id := world.get_active_epic_id()
-	if epic_id != &"" and world.epics.has(epic_id):
-		var state: Dictionary = world.epics[epic_id]
-		state["crew_disruption"] = true
-		state["crew_disruption_period"] = now
-		world.epics[epic_id] = state
-	_record_period_delta(world, "crew", "%s reports crew unrest; canal work faces disruption" % official.display_name)
-	institution["last_foreman_reaction_period"] = now
-	world.institutions[institution_id] = institution
-
-func _find_pending_form(world: WorldState, form_type: StringName, subject_id: StringName) -> int:
-	for index in range(world.pending_forms.size()):
-		var form: Dictionary = world.pending_forms[index]
-		if StringName(form.get("form_type", "")) == form_type and StringName(form.get("subject_id", "")) == subject_id:
-			return index
-	return -1
-
-func _regional_supply_institution(world: WorldState, place_id: StringName, fallback: StringName) -> StringName:
-	for institution_id in world.institutions.keys():
-		var institution: Dictionary = world.institutions[institution_id]
-		if StringName(institution.get("place_id", "")) == place_id and StringName(institution_id) != fallback and String(institution.get("institution_type", institution.get("kind", ""))).contains("granary"):
-			return StringName(institution_id)
-	return fallback
+			OfficeRunnerScript.tick_official(world, official, institution_id)
 
 func _generate_forms(world: WorldState) -> void:
 	var barley := world.get_resource(&"barley")
@@ -621,19 +436,6 @@ func _generate_forms(world: WorldState) -> void:
 	if barley >= 40 and barley < 180 and labor <= 16:
 		_offer_if_ready(world, &"load_claim", &"south_court_storehouse", 2, &"reserve_transport_allocation_conflict")
 
-	for institution_id in world.institutions.keys():
-		var institution: Dictionary = world.institutions[institution_id]
-		var place_id := StringName(institution.get("place_id", ""))
-		if place_id == &"" or _place_is_uruk(world, place_id):
-			continue
-		var stock: Dictionary = institution.get("stockpiles", {})
-		var thresholds: Dictionary = institution.get("pressure_thresholds", {})
-		var barley_warn := int(thresholds.get(&"barley_warn", 105))
-		var labor_warn := int(thresholds.get(&"labor_warn", 8))
-		var textiles_warn := int(thresholds.get(&"textiles_warn", 3))
-		var shortage := (stock.has(&"barley") and int(stock.get(&"barley", 0)) < barley_warn) or (stock.has(&"labor") and int(stock.get(&"labor", 0)) < labor_warn) or (stock.has(&"textiles") and int(stock.get(&"textiles", 0)) < textiles_warn)
-		if shortage:
-			_offer_if_ready(world, &"bailiff_requisition", place_id, 2, &"local_institution_shortage", StringName(institution_id))
 
 func _offer_if_ready(world: WorldState, form_type: StringName, subject_id: StringName, urgency: int, reason: StringName, institution_id: StringName = &"") -> void:
 	if world.has_pending_form(form_type, subject_id):

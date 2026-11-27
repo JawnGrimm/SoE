@@ -241,18 +241,35 @@ static func _person(id: StringName, display_name: String, office: StringName, va
 
 
 static func _seed_tier_two_population(world: WorldState, definitions: DefinitionRegistry, era_id: StringName) -> void:
-	# Existing authored characters remain Tier 1 anchors. Give them an initial
-	# residence before adding the persistent generated regional population.
 	for person in world.people.values():
 		person.location_id = &"uruk"
 	for rural_id in [&"ama_edin", &"ur_gula", &"geme_tur"]:
 		var rural_person := world.get_person(rural_id)
-		if rural_person != null:
-			rural_person.location_id = &"agricultural_hinterland"
+		if rural_person != null: rural_person.location_id = &"agricultural_hinterland"
+	var nin_enlil := _person(&"character_0012", "Nin-Enlil", &"granary_clerk", {"literacy": 3, "arithmetic": 3, "law": 2, "stewardship": 4}, [&"diligent", &"wary"])
+	nin_enlil.location_id = &"umma"
+	nin_enlil.generation_source = &"tier2"
+	nin_enlil.generation_key = &"regional_office_anchor"
+	world.people[nin_enlil.id] = nin_enlil
+	var ur_mes := _person(&"character_0013", "Ur-Mes", &"canal_bailiff", {"literacy": 2, "arithmetic": 2, "law": 3, "stewardship": 3}, [&"watchful", &"practical"])
+	ur_mes.location_id = &"umma"
+	ur_mes.generation_source = &"tier2"
+	ur_mes.generation_key = &"regional_office_anchor"
+	world.people[ur_mes.id] = ur_mes
+	var granary: Dictionary = world.institutions.get(&"umma_granary", {})
+	granary["members"] = [nin_enlil.id]
+	world.institutions[&"umma_granary"] = granary
+	var canal: Dictionary = world.institutions.get(&"umma_canal_bailiff", {})
+	var canal_members: Array = canal.get("members", []).duplicate()
+	canal_members.erase(nin_enlil.id)
+	if ur_mes.id not in canal_members: canal_members.append(ur_mes.id)
+	canal["members"] = canal_members
+	world.institutions[&"umma_canal_bailiff"] = canal
 	var population := PopulationService.new()
 	if not population.load_name_table():
 		push_warning("UrukSeeder: Tier 2 population skipped because the name table could not load")
 		return
-	for place_id in [&"uruk", &"nippur", &"umma"]:
-		population.generate_people(world, definitions, place_id, &"sumerian", era_id, 4, &"initial_regional_roster")
+	population.generate_people(world, definitions, &"uruk", &"sumerian", era_id, 4, &"initial_regional_roster")
+	population.generate_people(world, definitions, &"nippur", &"sumerian", era_id, 4, &"initial_regional_roster")
+	population.generate_people(world, definitions, &"umma", &"sumerian", era_id, 2, &"initial_regional_roster")
 	population.seat_institution_staff(world, definitions)
