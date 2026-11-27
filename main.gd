@@ -971,6 +971,8 @@ func _show_world_engagement() -> void:
 	var left_quote := String(record.get("summary", "A matter requires professional attention."))
 	var employer := world.get_person(StringName(record.get("employer_id", "")))
 	var right_quote := "The record is incomplete. Read it, reconcile the figures, hear the responsible official, and inspect the source before making your assessment."
+	if StringName(record.get("kind", "")) == &"regional_work":
+		right_quote = "Trade decisions move goods along the route. The seal you issue will arrive before you can see its consequences."
 	var payload := {
 		"title": String(record.get("title", "ASSIGNMENT")),
 		"left_card": {"title": "WORLD SITUATION / %s" % String(record.get("kind", "work")).to_upper(), "speaker_id": &"", "quote": left_quote, "facts": "SOURCE: %s\nOPENED: %s / PERIOD %d" % [String(record.get("source_id", "")), CalendarFormatter.format_year(world.year), world.period + 1]},
@@ -1003,6 +1005,18 @@ func _show_world_engagement() -> void:
 					_add_choice("Certify and close the form", _resolve_world_assignment.bind(&"certify"))
 					_add_choice("Refer the matter for senior review", _resolve_world_assignment.bind(&"refer"))
 					_add_choice("Defer the assessment", _resolve_world_assignment.bind(&"defer"))
+			&"regional_work":
+				var work_data: Dictionary = record.get("source_data", {})
+				match StringName(work_data.get("work_type", "")):
+					&"dispatch_export":
+						_add_choice("Seal and dispatch the export", _resolve_world_assignment.bind(&"dispatch"))
+						_add_choice("Hold the cargo in reserve", _resolve_world_assignment.bind(&"hold"))
+					&"request_import":
+						_add_choice("Authorize the import request", _resolve_world_assignment.bind(&"authorize"))
+						_add_choice("Decline the purchase this period", _resolve_world_assignment.bind(&"hold"))
+					&"route_provisions":
+						_add_choice("Issue beer to provision the route", _resolve_world_assignment.bind(&"issue"))
+						_add_choice("Keep the beer in reserve", _resolve_world_assignment.bind(&"hold"))
 			&"hazard":
 				_add_choice("Allocate three labor and repair", _resolve_world_assignment.bind(&"repair"), world.get_resource(&"labor", "institution", "", &"eanna_household") < 3)
 				_add_choice("Record the loss and defer repair", _resolve_world_assignment.bind(&"defer"))
