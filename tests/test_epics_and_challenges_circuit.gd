@@ -12,9 +12,17 @@ const SiltBreach: EventTemplate = preload("res://data/events/challenge_dry_kettl
 
 var _checks := 0
 var _failures: Array[String] = []
+var _finished := false
 
 func _initialize() -> void:
 	call_deferred("_run")
+	call_deferred("_watchdog")
+
+func _watchdog() -> void:
+	await create_timer(45.0).timeout
+	if not _finished:
+		printerr("TEST WATCHDOG: Epic/Challenge circuit did not reach completion")
+		quit(2)
 
 func _run() -> void:
 	_check(QueueScript.category_for({"kind": &"project_review"}) == "epics", "Epic milestone reviews route to Epics")
@@ -202,6 +210,7 @@ func _run() -> void:
 		_check(not MainScript._is_outcome_disabled_for_actor(Quayside.id, silver_outcome, 4), "Four personal silver enables the four-shekel verdict")
 		_check(not MainScript._is_outcome_disabled_for_actor(&"challenge_other", silver_outcome, 0), "The Quayside-specific cost guard does not affect other challenges")
 
+	_finished = true
 	if _failures.is_empty():
 		print("PASS: %d Epic/Challenge circuit checks" % _checks)
 		quit(0)
