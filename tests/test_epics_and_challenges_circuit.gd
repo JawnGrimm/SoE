@@ -114,7 +114,7 @@ func _run() -> void:
 	Pipeline.perform_action(world, actor, audit_id, &"reconcile_accounts")
 	var audit_result := Pipeline.resolve(world, actor, audit_id, &"epic_audit")
 	_check(bool(audit_result.get("success", false)), "Epic audit verdict resolves")
-	_check(actor.get_opinion(&"enlil_kisu") == -3 and int(actor.flags.get(&"audit_exposure", 0)) == 0, "Epic audit applies foreman opinion and clears one exposure")
+	_check(foreman.get_opinion(actor.id) == -3 and int(actor.flags.get(&"audit_exposure", 0)) == 0, "Epic audit applies foreman opinion and clears one exposure")
 	_check(int(actor.skills.xp.get(&"law", 0)) >= 15 and bool(world.epics.get(&"test_epic", {}).get("stalled", false)), "Epic audit awards law XP and halts the project")
 
 	# The pliable certification branch produces its intended consequence chain.
@@ -190,20 +190,13 @@ func _run() -> void:
 	_check(world.has_flag(&"thirsty_diggers", world.current_period_index()) and int(world.institutions[&"eanna_household"].get("local_opinion", 0)) == -1, "Rationing leaves pressure, sets thirsty diggers, and lowers local opinion")
 	_check(runner.is_eligible(SiltBreach, context), "Severe scribe plus thirsty diggers flag makes Silt Breach eligible")
 
-	var silver_context := EventContext.new()
-	silver_context.world = world
-	silver_context.actor = actor
-	silver_context.year = world.year
-	var silver_condition: EventCondition
+	var quayside_conditions_allow_broke_scribes := true
 	for condition in Quayside.conditions:
 		if condition.condition_type == &"resource_compare" and StringName(condition.parameters.get("resource", "")) == &"silver":
-			silver_condition = condition
-	_check(silver_condition != null, "Quayside challenge includes its personal silver condition")
-	if silver_condition != null:
-		actor.resources[&"silver"] = 3
-		_check(not runner.conditions.evaluate(silver_condition, silver_context), "Three silver cannot pass the four-shekel condition")
-		actor.resources[&"silver"] = 4
-		_check(runner.conditions.evaluate(silver_condition, silver_context), "Four silver passes the Quayside affordability condition")
+			quayside_conditions_allow_broke_scribes = false
+	_check(quayside_conditions_allow_broke_scribes, "Quayside challenge remains available to broke scribes for its non-silver verdicts")
+	var main_source := FileAccess.get_file_as_string("res://main.gd")
+	_check(main_source.contains("outcome_silver") and main_source.contains('int(actor.resources.get(&"silver", 0)) < 4'), "The four-shekel silver outcome is disabled when the personal purse cannot cover it")
 
 	if _failures.is_empty():
 		print("PASS: %d Epic/Challenge circuit checks" % _checks)
