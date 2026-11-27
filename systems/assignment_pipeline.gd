@@ -629,7 +629,7 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 	for person_value in world.people.values():
 		if person_value == null or person_value.id == actor.id:
 			continue
-		var opinion_change := person_value.get_opinion(actor.id) - int(opinion_before.get(person_value.id, person_value.get_opinion(actor.id)))
+		var opinion_change: int = person_value.get_opinion(actor.id) - int(opinion_before.get(person_value.id, person_value.get_opinion(actor.id)))
 		if opinion_change == 0:
 			continue
 		var office_title := String(person_value.office_id).replace("_", " ").capitalize() if person_value.office_id != &"" else "Official"
