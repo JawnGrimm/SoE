@@ -62,13 +62,14 @@ static func seed_regional_institutions(world: WorldState) -> int:
 					"resource_pressure": world.rng_sim.randi_range(0, 2)
 				}
 				world.institutions[institution_id] = institution
+				place["regional_agent_id"] = agent_id
 				created += 1
 		else:
 			var members: Array = institution.get("members", [])
-			var agent_id := StringName(members[0]) if not members.is_empty() else &""
-			if agent_id != &"" and world.people.has(agent_id):
-				world.people[agent_id].current_location_id = place_id
-				place["regional_agent_id"] = agent_id
+			var existing_agent_id := StringName(members[0]) if not members.is_empty() else &""
+			if existing_agent_id != &"" and world.people.has(existing_agent_id):
+				world.people[existing_agent_id].current_location_id = place_id
+				place["regional_agent_id"] = existing_agent_id
 		place["regional_institution_id"] = institution_id
 		world.places[place_id] = place
 	return created
