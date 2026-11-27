@@ -193,6 +193,7 @@ static func _arrive_shipment(world: WorldState, shipment: Dictionary) -> void:
 	var shipment_id := StringName(shipment.get("id", ""))
 	world.enqueue_form({
 		"form_type": &"remote_dispatch", "subject_id": StringName(shipment.get("destination_id", "")),
+		"institution_id": StringName(shipment.get("destination_institution_id", "")),
 		"origin_id": StringName(shipment.get("origin_id", "")),
 		"destination_id": StringName(shipment.get("destination_id", "")),
 		"shipment_id": shipment_id,
