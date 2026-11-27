@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RouteDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/route_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"susa_godin_tepe"
+from_place_id = &"susa"
+to_place_id = &"godin_tepe"
+route_type = &"highland_caravan"
+travel_periods = 2
+loss_risk_percent = 28
+era_id = &"uruk_storehouse"
