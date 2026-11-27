@@ -671,7 +671,7 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 		if consulted != null:
 			var tie: Dictionary = consulted.relationships.get(actor.id, {})
 			facts += "\nRECORDED TRUST: %d / RELATIONSHIP: %s" % [int(tie.get("trust", 0)), String(tie.get("type", "unknown"))]
-	var action_label := {&"examine_records": "Written record", &"reconcile_accounts": "Account reconciliation", &"consult_official": "Official testimony", &"inspect_source": "Physical inspection"}.get(action_id, "Investigation")
+	var action_label: String = String({&"examine_records": "Written record", &"reconcile_accounts": "Account reconciliation", &"consult_official": "Official testimony", &"inspect_source": "Physical inspection"}.get(action_id, "Investigation"))
 	facts += "\n%s finding reflects your skill level %d." % [action_label, skill_level]
 	facts = _sanitize_evidence_text(facts)
 	summary = _sanitize_evidence_text(summary)
