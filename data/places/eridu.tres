@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="PlaceDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/place_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"eridu"
+display_name = "Eridu"
+place_type = &"sacred_city"
+region = &"lower_mesopotamia"
+political_relation = &"temple_partner"
+exports = Array[StringName]([&"fish", &"bitumen"])
+imports = Array[StringName]([&"textiles", &"beer"])
+connected_to = Array[StringName]([&"uruk"])
+era_id = &"uruk_storehouse"
