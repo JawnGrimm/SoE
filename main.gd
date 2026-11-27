@@ -925,6 +925,7 @@ func _show_world_engagement() -> void:
 	_clear_choices()
 	_set_phase("world_engagement")
 	var actions: Dictionary = record.get("actions", {})
+	var available_actions: Array = AssignmentPipeline.get_actions(record)
 	var evidence: Dictionary = record.get("evidence", {})
 	var evidence_lines := PackedStringArray()
 	for action_id in evidence.keys():
@@ -936,12 +937,12 @@ func _show_world_engagement() -> void:
 	var payload := {
 		"title": String(record.get("title", "ASSIGNMENT")),
 		"left_card": {"title": "WORLD SITUATION / %s" % String(record.get("kind", "work")).to_upper(), "speaker_id": &"", "quote": left_quote, "facts": "SOURCE: %s\nOPENED: %s / PERIOD %d" % [String(record.get("source_id", "")), CalendarFormatter.format_year(world.year), world.period + 1]},
-		"right_card": {"title": "RESPONSIBLE OFFICE", "speaker_id": employer.id if employer != null else &"", "quote": right_quote, "facts": "INVESTIGATIONS RECORDED: %d / 4\n\n%s" % [actions.size(), "\n\n".join(evidence_lines)]},
-		"prompt": "Investigate the situation. Your skills affect what you can establish; your judgment determines what is entered.",
+		"right_card": {"title": "RESPONSIBLE OFFICE", "speaker_id": employer.id if employer != null else &"", "quote": right_quote, "facts": "WORK STEPS RECORDED: %d / %d\n\n%s" % [actions.size(), available_actions.size(), "\n\n".join(evidence_lines)]},
+		"prompt": "Choose how to approach the work. Your skills shape what you can establish; your judgment determines what is entered.",
 		"choices": []
 	}
 	var callbacks: Array[Callable] = []
-	for action in AssignmentPipeline.INVESTIGATION_ACTIONS:
+	for action in available_actions:
 		var action_id: StringName = action.id
 		var done := actions.has(action_id)
 		payload.choices.append({"label": String(action.label) + (" / RECORDED" if done else "")})
@@ -951,9 +952,20 @@ func _show_world_engagement() -> void:
 	if actions.size() >= 2:
 		match StringName(record.get("kind", "")):
 			&"form":
-				_add_choice("Certify and close the form", _resolve_world_assignment.bind(&"certify"))
-				_add_choice("Refer the matter for senior review", _resolve_world_assignment.bind(&"refer"))
-				_add_choice("Defer the assessment", _resolve_world_assignment.bind(&"defer"))
+				var form_data: Dictionary = record.get("source_data", {})
+				var form_type := StringName(form_data.get("form_type", ""))
+				if form_type == &"remote_dispatch":
+					_add_choice("Accept received cargo and certify", _resolve_world_assignment.bind(&"certify"))
+					_add_choice("Hold cargo / request origin account", _resolve_world_assignment.bind(&"refer"))
+					_add_choice("Defer entry / return to docket", _resolve_world_assignment.bind(&"defer"))
+				elif form_type == &"remote_origin_reply":
+					_add_choice("Accept cargo on the origin account", _resolve_world_assignment.bind(&"certify"))
+					_add_choice("Keep cargo held / request another account", _resolve_world_assignment.bind(&"refer"))
+					_add_choice("Defer settlement", _resolve_world_assignment.bind(&"defer"))
+				else:
+					_add_choice("Certify and close the form", _resolve_world_assignment.bind(&"certify"))
+					_add_choice("Refer the matter for senior review", _resolve_world_assignment.bind(&"refer"))
+					_add_choice("Defer the assessment", _resolve_world_assignment.bind(&"defer"))
 			&"hazard":
 				_add_choice("Allocate three labor and repair", _resolve_world_assignment.bind(&"repair"), world.get_resource(&"labor", "institution", "", &"eanna_household") < 3)
 				_add_choice("Record the loss and defer repair", _resolve_world_assignment.bind(&"defer"))
