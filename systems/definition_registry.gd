@@ -8,6 +8,7 @@ const DEFAULT_FOLDERS: Dictionary = {
 	"eras": "res://data/eras",
 	"assignments": "res://data/assignments",
 	"places": "res://data/places",
+	"routes": "res://data/routes",
 	"epics": "res://data/epics",
 }
 
@@ -67,6 +68,12 @@ func register_place(definition: PlaceDef) -> bool:
 		return false
 	return register_definition(definition, "places")
 
+func register_route(definition: RouteDef) -> bool:
+	if definition == null or not definition.is_valid():
+		_warn("DefinitionRegistry: rejected malformed RouteDef")
+		return false
+	return register_definition(definition, "routes")
+
 func register_trait(definition: Resource) -> bool:
 	return register_definition(definition, "traits")
 
@@ -89,6 +96,11 @@ func register_definition(definition: Resource, category: String) -> bool:
 		var place := definition as PlaceDef
 		if place == null or not place.is_valid():
 			_warn("DefinitionRegistry: rejected malformed PlaceDef")
+			return false
+	if category == "routes":
+		var route := definition as RouteDef
+		if route == null or not route.is_valid():
+			_warn("DefinitionRegistry: rejected malformed RouteDef")
 			return false
 
 	var definition_id := StringName(str(definition.get("id")))
@@ -133,6 +145,17 @@ func get_assignment(definition_id: StringName) -> AssignmentDef:
 
 func get_place(definition_id: StringName) -> PlaceDef:
 	return get_definition(definition_id) as PlaceDef
+
+func get_route(definition_id: StringName) -> RouteDef:
+	return get_definition(definition_id) as RouteDef
+
+func all_routes() -> Array[RouteDef]:
+	var result: Array[RouteDef] = []
+	for definition in _definitions_by_category.get("routes", []):
+		if definition is RouteDef:
+			result.append(definition)
+	result.sort_custom(func(a: RouteDef, b: RouteDef) -> bool: return String(a.id) < String(b.id))
+	return result
 
 func all_places() -> Array[PlaceDef]:
 	var result: Array[PlaceDef] = []

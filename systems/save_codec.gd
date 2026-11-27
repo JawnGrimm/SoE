@@ -24,7 +24,7 @@ static func encode_world(world: WorldState, session: Dictionary = {}) -> Diction
 			},
 			"stockpiles": _json_safe(world.stockpiles), "epics": _json_safe(world.epics),
 			"faction_standings": _json_safe(world.faction_standings),
-			"world_flags": _json_safe(world.world_flags), "pending_forms": _json_safe(world.pending_forms),
+			"world_flags": _json_safe(world.world_flags), "routes": _json_safe(world.routes), "pending_forms": _json_safe(world.pending_forms),
 			"resolved_forms": _json_safe(world.resolved_forms), "event_history": _json_safe(world.event_history),
 			"character_event_history": _json_safe(world.character_event_history), "people": people_data,
 			"player_id": String(world.player_id), "next_person_sequence": world._next_person_sequence,
@@ -77,6 +77,7 @@ static func _world_from_data(data: Dictionary) -> WorldState:
 	world.epics = _name_dictionary_map(data.get("epics", {}))
 	world.faction_standings = _name_int_map(data.get("faction_standings", {}))
 	world.world_flags = _name_int_map(data.get("world_flags", {}))
+	world.routes = _name_dictionary_map(data.get("routes", {}))
 	world.pending_forms = _dictionary_array(data.get("pending_forms", []))
 	world.resolved_forms = _dictionary_array(data.get("resolved_forms", []))
 	world.event_history = _dictionary_array(data.get("event_history", []))
