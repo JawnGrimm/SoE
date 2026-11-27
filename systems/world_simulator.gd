@@ -147,6 +147,24 @@ func _simulate_epics(world: WorldState) -> void:
 		var latest: Dictionary = world.epics.get(epic_id, state)
 		world.ensure_epic_review_state(StringName(epic_id), definition)
 		latest = world.epics.get(epic_id, latest)
+		var problem := _detect_epic_problem(world, definition)
+		var problem_key := str(problem.get("key", ""))
+		latest["active_problem"] = problem_key
+		latest["stalled"] = bool(problem.get("stalls", false))
+		if problem_key.is_empty():
+			latest["last_problem_key"] = ""
+		elif problem_key != str(latest.get("last_problem_key", "")):
+			latest["last_problem_key"] = problem_key
+			world.epics[epic_id] = latest
+			world.open_epic_review(
+				StringName(epic_id),
+				problem_key,
+				str(problem.get("summary", "Project conditions have changed.")),
+				-1,
+				definition
+			)
+			continue
+		world.epics[epic_id] = latest
 		if bool(latest.get("completed", false)):
 			latest["review_pending"] = false
 		else:
@@ -158,6 +176,40 @@ func _simulate_epics(world: WorldState) -> void:
 				latest["review_stage"] = stage
 				latest["review_stage_label"] = world.get_epic_stage_label(stage, definition)
 		world.epics[epic_id] = latest
+
+func _detect_epic_problem(world: WorldState, definition: EpicDef) -> Dictionary:
+	var sponsor_id := definition.sponsor_institution
+	var institution: Dictionary = world.institutions.get(sponsor_id, {})
+	var resources: Dictionary = institution.get("stockpiles", {})
+	var labor := int(resources.get(&"labor", 0))
+	var barley := int(resources.get(&"barley", 0))
+	var place_id := StringName(institution.get("place_id", ""))
+	if labor < definition.regression_labor_below:
+		return {
+			"key": "labor_shortage",
+			"stalls": true,
+			"summary": "Work has stalled: %s labor reserves fell to %d." % [String(sponsor_id), labor],
+		}
+	if barley < definition.partial_barley:
+		return {
+			"key": "barley_shortage",
+			"stalls": true,
+			"summary": "Work has stalled: %s ration reserves fell to %d." % [String(sponsor_id), barley],
+		}
+	if place_id != &"" and world.has_active_hazard(place_id):
+		return {
+			"key": "site_hazard",
+			"stalls": false,
+			"summary": "A hazard at %s is disrupting the project's staging ground." % String(place_id),
+		}
+	for flag in definition.disruption_flags:
+		if world.has_flag(flag, world.current_period_index()):
+			return {
+				"key": "project_disruption_%s" % String(flag),
+				"stalls": true,
+				"summary": "An active disruption requires renewed sign-off on the project's work and stores.",
+			}
+	return {"key": "", "stalls": false, "summary": ""}
 
 func _simulate_epic(world: WorldState, definition: EpicDef, state: Dictionary) -> void:
 	var resource_id := definition.progress_resource
