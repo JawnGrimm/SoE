@@ -161,10 +161,7 @@ static func generate(world: WorldState, actor: PersonEntity, selected_path: Stri
 		world.recent_npc_pairs.append(pair)
 		while world.recent_npc_pairs.size() > 6:
 			world.recent_npc_pairs.pop_front()
-	var place_id: StringName = &"uruk"
-	var place_keys: Array = world.places.keys()
-	if not place_keys.is_empty():
-		place_id = StringName(place_keys[world.rng_narrative.randi_range(0, place_keys.size() - 1)])
+	var place_id: StringName = world.current_location_id if world.current_location_id != &"" else &"uruk"
 	var place_name := String(world.places.get(place_id, {}).get("name", String(place_id).replace("_", " ")))
 	var good: StringName = GOODS[world.rng_narrative.randi_range(0, GOODS.size() - 1)]
 	var good_name := String(good).replace("_", " ")
@@ -267,8 +264,18 @@ static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_
 	var template: Dictionary = eligible[world.rng_narrative.randi_range(0, eligible.size() - 1)]
 	var client_faction := StringName(template.get("client", ""))
 	var opposing_faction := StringName(template.get("opposing", ""))
-	var client_members: Array = PATH_FACTION_MEMBERS.get(client_faction, [])
-	var opposing_members: Array = PATH_FACTION_MEMBERS.get(opposing_faction, [])
+	var local_mode := world.current_location_id != &"" and world.current_location_id != &"uruk"
+	var client_members: Array = []
+	var opposing_members: Array = []
+	if local_mode:
+		for local_person in world.people.values():
+			if local_person == null or local_person.id == _actor.id or local_person.location_id != world.current_location_id:
+				continue
+			client_members.append(local_person.id)
+			opposing_members.append(local_person.id)
+	else:
+		client_members = PATH_FACTION_MEMBERS.get(client_faction, [])
+		opposing_members = PATH_FACTION_MEMBERS.get(opposing_faction, [])
 	if client_members.is_empty() or opposing_members.is_empty():
 		push_warning("AssignmentGenerator: path docket has unresolved faction members: %s / %s" % [client_faction, opposing_faction])
 		return {}
@@ -308,8 +315,8 @@ static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_
 		world.recent_archetypes.append(archetype_id)
 		while world.recent_archetypes.size() > 6:
 			world.recent_archetypes.pop_front()
-	var client_name := String(PATH_FACTION_DISPLAY_NAMES.get(client_faction, String(client_faction).replace("_", " ").capitalize()))
-	var opposing_name := String(PATH_FACTION_DISPLAY_NAMES.get(opposing_faction, String(opposing_faction).replace("_", " ").capitalize()))
+	var client_name := "LOCAL CLAIMANT" if local_mode else String(PATH_FACTION_DISPLAY_NAMES.get(client_faction, String(client_faction).replace("_", " ").capitalize()))
+	var opposing_name := "LOCAL WITNESS" if local_mode else String(PATH_FACTION_DISPLAY_NAMES.get(opposing_faction, String(opposing_faction).replace("_", " ").capitalize()))
 	var title := String(template.get("title", "LOCAL DOCKET"))
 	var payload := {
 		"title": title, "archetype": archetype_id, "docket_kind": "local_path",
@@ -326,6 +333,16 @@ static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_
 		]
 	}
 	var geography := get_geographic_vector(StringName(template.get("id", "")))
+	if local_mode:
+		geography = {
+			"origin_id": world.current_location_id,
+			"destination_id": world.current_location_id,
+			"route_id": StringName("%s_local" % world.current_location_id),
+			"commodity_id": DOCKET_COMMODITIES.get(StringName(template.get("id", "")), &"administrative_record"),
+			"route_mode": "local",
+			"transit_periods": 0,
+		}
+		payload["place_id"] = world.current_location_id
 	payload.merge(geography, true)
 	var origin_name := String(PLACE_LABELS.get(geography.origin_id, String(geography.origin_id).replace("_", " ").capitalize()))
 	var destination_name := String(PLACE_LABELS.get(geography.destination_id, String(geography.destination_id).replace("_", " ").capitalize()))
