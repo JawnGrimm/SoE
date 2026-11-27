@@ -34,6 +34,21 @@ static func evaluate(world: WorldState, actor: PersonEntity) -> Dictionary:
 	var integrity := clampi(corrections * 12 + exposure_clears * 15 + archivist_trust * 4 + actor.skills.get_level(&"law") * 5 - corruption, 0, 100)
 	corruption = clampi(corruption, 0, 100)
 	var faction_scores: Dictionary = world.faction_standings.duplicate(true)
+	var temple_opinions := 0
+	var temple_count := 0
+	for temple_person_id in [&"ur_nanna", &"shuruppak_ilu"]:
+		var temple_person := world.get_person(temple_person_id)
+		if temple_person != null:
+			temple_opinions += actor.get_opinion(temple_person.id)
+			temple_count += 1
+	if temple_count > 0:
+		faction_scores[&"eanna_temple"] = maxi(int(faction_scores.get(&"eanna_temple", 0)), int(round(float(temple_opinions) / temple_count)))
+	var provincial_opinion := 0
+	for provincial_person_id in [&"ur_mes", &"character_0012"]:
+		var provincial_person := world.get_person(provincial_person_id)
+		if provincial_person != null:
+			provincial_opinion = maxi(provincial_opinion, actor.get_opinion(provincial_person.id))
+	faction_scores[&"provincial_frontier"] = maxi(int(faction_scores.get(&"provincial_frontier", 0)), provincial_opinion)
 	for faction_id in [&"eanna_temple", &"council_of_elders", &"boatmens_guild", &"provincial_frontier"]:
 		if not faction_scores.has(faction_id):
 			faction_scores[faction_id] = 0
