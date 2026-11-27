@@ -200,7 +200,7 @@ func _run() -> void:
 	_check(not AssignmentPipelineScript.begin(dispatch_world, dispatch_opportunity, dispatch_actor), "The provincial requisition cannot be opened before travel")
 	var departure_index := dispatch_world.current_period_index()
 	var departure_silver := int(dispatch_actor.resources.get(&"silver", 0))
-	var journey := dispatch_travel.execute_journey(dispatch_world, dispatch_actor, &"umma", &"land_uruk_umma")
+	var journey := dispatch_travel.execute_journey(dispatch_world, dispatch_actor, &"umma")
 	_check(bool(journey.get("success", false)) and int(journey.get("elapsed_periods", 0)) == 1, "Uruk-to-Umma journey completes in one simulation period")
 	_check(dispatch_world.current_period_index() == departure_index + 1 and dispatch_world.current_location_id == &"umma", "The journey advances the calendar before setting the player's arrival location")
 	_check(int(journey.get("fare_paid", 0)) == 1 and int(dispatch_actor.resources.get(&"silver", 0)) == departure_silver - 1, "The journey deducts the one-silver passage fare from the traveler")
