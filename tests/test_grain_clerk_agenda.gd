@@ -46,7 +46,7 @@ func _run() -> void:
 	simulator.advance_period(world)
 	institution = world.institutions.get(&"eanna_household", {})
 	var delivered_queue: Array = institution.get("npc_docket_queue", [])
-	_check(delivered_queue.is_empty(), "The queued evidence is delivered on the next period")
+	_check(delivered_queue.size() == 1 and int(delivered_queue[0].get("due_period", -1)) == world.current_period_index() + 1, "The previous docket is delivered while this period's new cover-up queues evidence for next period")
 	var evidence_form: Dictionary = {}
 	for form in world.pending_forms:
 		if form.has("npc_evidence"):
