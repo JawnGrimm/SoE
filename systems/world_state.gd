@@ -19,6 +19,8 @@ func ensure_epic_review_state(epic_id: StringName, epic_def: EpicDef = null) -> 
 		entry["reviewed_stage"] = -1
 	if not entry.has("last_reviewed_period"):
 		entry["last_reviewed_period"] = -1
+	if epic_def != null:
+		entry["review_stage_label"] = get_epic_stage_label(stage, epic_def)
 	epics[epic_id] = entry
 
 func get_epic_stage_index(progress: int, target: int, epic_def: EpicDef = null) -> int:
@@ -54,7 +56,7 @@ func resolve_epic_review(epic_id: StringName, epic_def: EpicDef = null) -> void:
 	ensure_epic_review_state(epic_id, epic_def)
 	var entry: Dictionary = epics[epic_id]
 	var target := maxi(1, int(entry.get("target", 100)))
-	var stage := get_epic_stage_index(int(entry.get("progress", 0)), target, epic_def)
+	var stage := int(entry.get("review_stage", get_epic_stage_index(int(entry.get("progress", 0)), target, epic_def)))
 	entry["reviewed_stage"] = maxi(int(entry.get("reviewed_stage", -1)), stage)
 	entry["review_stage"] = stage
 	entry["review_pending"] = false
