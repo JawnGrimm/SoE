@@ -533,9 +533,13 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 			summary = "The manifest is compared with the quantity physically received."
 			facts = "COMMODITY: %s\nDECLARED: %d\nRECEIVED: %d\n%s" % [String(data.get("commodity_id", "cargo")).replace("_", " "), declared, received, ("VARIANCE: %d" % (declared - received)) if skill_level >= 2 else ("QUANTITY VARIANCE: %s" % ("present" if declared != received else "not indicated"))]
 		&"question_carrier":
-			var carrier := world.get_person(StringName(data.get("sender_id", "")))
-			summary = "The carrier's account is recorded as testimony; it does not independently establish the cargo's fate."
-			facts = "CARRIER: %s\nACCOUNT: Cargo was dispatched under the recorded seal and quantity.\nTESTIMONY: NOT INDEPENDENT VERIFICATION" % (carrier.display_name if carrier != null else String(data.get("sender_id", "unidentified carrier")))
+			var carrier := world.get_person(StringName(data.get("carrier_id", data.get("sender_id", ""))))
+			var loss_route_id := StringName(data.get("loss_route_id", ""))
+			var carrier_account := "The carrier reports custody under the recorded seal."
+			if int(data.get("loss_quantity", 0)) > 0:
+				carrier_account = "The carrier reports a loss of %d on route %s; the cause remains unverified." % [int(data.get("loss_quantity", 0)), String(loss_route_id)]
+			summary = "The arriving carrier gives an account of custody. Testimony can explain a route event but cannot prove responsibility."
+			facts = "CARRIER: %s\nACCOUNT: %s\nTESTIMONY: NOT INDEPENDENT VERIFICATION" % [carrier.display_name if carrier != null else String(data.get("carrier_id", "unidentified carrier")), carrier_account]
 		&"inspect_cargo":
 			var received_quantity := int(data.get("received_quantity", 0))
 			var lost_quantity := int(data.get("loss_quantity", 0))
