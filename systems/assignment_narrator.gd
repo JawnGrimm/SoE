@@ -55,7 +55,12 @@ static func translate_payload(source: Dictionary) -> Dictionary:
 		var left: Dictionary = result.get("left_card", {})
 		if left.has("quote") and _contains_raw_metric(String(left.get("quote", ""))):
 			left["quote"] = String(template.get("summary", "A matter requires the scribe's attention."))
-		result["left_card"] = left
+		for card_key in ["left_card", "right_card"]:
+			var card: Dictionary = result.get(card_key, {})
+			for field in ["title", "quote", "facts"]:
+				if card.has(field):
+					card[field] = _clean_display(String(card[field]), "The record is incomplete; seek the source tablet.")
+			result[card_key] = card
 		if _contains_raw_metric(String(result.get("prompt", ""))):
 			result["prompt"] = "What shall be entered upon the tablet?"
 		return result
