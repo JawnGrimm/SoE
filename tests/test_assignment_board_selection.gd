@@ -21,6 +21,7 @@ func _run() -> void:
 	var board := Pipeline._select_board_candidates(candidates, 4)
 	_check(board.size() == 4, "Routine board should remain at four slots when reviews fit")
 	_check(_contains_id(board, &"review_canal"), "Canal review must not be displaced by board rotation")
+	_check(_contains_source(board, &"great_canal_cut"), "Great Canal Cut review must remain in the selected board")
 	_check(_contains_id(board, &"review_temple"), "Every pending review must be retained")
 	_check(_contains_id(board, &"story"), "Reserve a procedural story slot when capacity allows")
 	var live_stock := Pipeline._live_stock_facts({&"clay": 4, &"labor": 2}, {"pressure_thresholds": {&"labor_warn": 5}})
@@ -50,6 +51,12 @@ func _run() -> void:
 		for failure in _failures:
 			printerr(" - " + failure)
 		quit(1)
+
+func _contains_source(records: Array[Dictionary], expected: StringName) -> bool:
+	for record in records:
+		if StringName(record.get("source_id", "")) == expected:
+			return true
+	return false
 
 func _contains_id(records: Array[Dictionary], expected: StringName) -> bool:
 	for record in records:
