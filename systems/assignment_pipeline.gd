@@ -47,7 +47,7 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			"source_id": form_id,
 			"title": form_title,
 			"summary": form_summary,
-			"priority": urgency + (3 if overdue else 0) + _career_bonus(selected_path, form_type),
+			"priority": 6 if not npc_evidence.is_empty() else 2 + urgency,
 			"employer_id": _resolve_local_employer(world, institution_id, place_id, _preferred_office(form_type)),
 			"source_data": form_source,
 			"path_id": selected_path
@@ -137,7 +137,7 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			"source_id": StringName(institution_id),
 			"title": String(institution.get("ledger_work_title", "")) if not String(institution.get("ledger_work_title", "")).is_empty() else "%s / Periodic Account" % String(institution.get("name", institution_id)),
 			"summary": String(institution.get("ledger_work_summary", "")) if not String(institution.get("ledger_work_summary", "")).is_empty() else "Reconcile the institution's current membership, activity, and resource records.",
-			"priority": int(institution.get("ledger_work_priority", 1)) + _career_bonus(selected_path, &"ledger"),
+			"priority": mini(3, int(institution.get("ledger_work_priority", 1)) + _career_bonus(selected_path, &"ledger")),
 			"employer_id": _resolve_local_employer(world, StringName(institution_id), StringName(institution.get("place_id", "")), &""),
 			"source_data": {"institution_id": StringName(institution_id), "place_id": StringName(institution.get("place_id", "")), "member_count": institution.get("members", []).size(), "activity_count": int(institution.get("activity_count", 0))},
 			"path_id": selected_path

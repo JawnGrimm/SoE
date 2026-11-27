@@ -147,6 +147,28 @@ func _run() -> void:
 	for opportunity in opportunities:
 		opportunity_kinds.append(StringName(opportunity.get("kind", "")))
 	_check(opportunity_kinds.has(&"form") and opportunity_kinds.has(&"hazard") and opportunity_kinds.has(&"ledger") and opportunity_kinds.has(&"procedural_docket"), "Board should retain grounded form, hazard, ledger, and procedural career work")
+	var routine_form_priority := 0
+	var routine_form_urgency := 0
+	var routine_ledger_priority := 99
+	for opportunity in opportunities:
+		if StringName(opportunity.get("kind", "")) == &"form":
+			routine_form_priority = int(opportunity.get("priority", 0))
+			routine_form_urgency = int(opportunity.get("source_data", {}).get("urgency", 1))
+		if StringName(opportunity.get("kind", "")) == &"ledger":
+			routine_ledger_priority = int(opportunity.get("priority", 99))
+	_check(routine_form_priority == 2 + routine_form_urgency, "Routine forms should rank at two plus their urgency")
+	_check(routine_ledger_priority <= 3, "Routine institutional ledgers must not exceed priority three")
+	var coverup_form := {"id": &"ur_nanna_grain_docket_-38398", "form_type": &"grain_levy", "subject_id": &"south_court_storehouse", "urgency": 3, "status": "pending", "npc_evidence": {"dispatch_record": "Seed corn declared.", "threshold_tally": "Mold recorded.", "discrepancy": "Records contradict."}}
+	assignment_world.pending_forms.append(coverup_form)
+	var coverup_board := AssignmentPipeline.generate_opportunities(assignment_world, assignment_actor, &"")
+	var coverup_present := false
+	var coverup_priority := 0
+	for opportunity in coverup_board:
+		if StringName(opportunity.get("source_id", "")) == &"ur_nanna_grain_docket_-38398":
+			coverup_present = true
+			coverup_priority = int(opportunity.get("priority", 0))
+	_check(coverup_present and coverup_priority == 6, "NPC-evidence cover-up form should receive priority six and surface on Uruk's four-slot board")
+	assignment_world.pending_forms.erase(coverup_form)
 	var career_docket: Dictionary = {}
 	for opportunity in opportunities:
 		if StringName(opportunity.get("kind", "")) == &"procedural_docket": career_docket = opportunity
@@ -317,7 +339,7 @@ func _run() -> void:
 	save_roundtrip_world.local_path_dockets_settled = 2
 	save_roundtrip_world.recent_archetypes = [&"path_boundary_stones", &"path_ritual_beer"]
 	save_roundtrip_world.recent_npc_pairs = ["shuruppak_ilu|ama_edin", "enlil_kisu|ur_nanna"]
-	save_roundtrip_world.assignments[&"saved_world_assignment"] = {"status": "active", "kind": "form", "source_id": "form_saved", "actions": {"examine_records": true}, "evidence": {"examine_records": {"facts": "Saved evidence."}}}
+	save_roundtrip_world.assignments[&"saved_world_assignment"] = {"status": "active", "kind": &"form", "source_id": &"form_saved", "employer_id": &"ur_nanna", "actor_id": save_roundtrip_player.id, "path_id": &"path_civil", "actions": {&"examine_records": true}, "evidence": {&"examine_records": {"facts": "Saved evidence."}}}
 	save_roundtrip_world.faction_standings[&"eanna_household"] = 7
 	save_roundtrip_world.epic_summon_pending = true
 	save_roundtrip_world.epic_summon_issued = false
@@ -344,7 +366,11 @@ func _run() -> void:
 		_check(restored_world.recent_archetypes == save_roundtrip_world.recent_archetypes and restored_world.recent_npc_pairs == save_roundtrip_world.recent_npc_pairs, "SaveCodec should preserve procedural story diversity history")
 		_check(restored_world.has_flag(&"save_test_flag", restored_world.current_period_index()), "SaveCodec should preserve expiring flags")
 		_check(restored_world.pending_forms.size() == save_roundtrip_world.pending_forms.size() and restored_world.hazards.size() == save_roundtrip_world.hazards.size(), "SaveCodec should preserve forms and hazards")
-		_check(restored_world.assignments.has(&"saved_world_assignment") and restored_world.assignments[&"saved_world_assignment"].get("actions", {}).has("examine_records"), "SaveCodec should preserve an unfinished multi-action assignment and its evidence")
+		_check(restored_world.assignments.has(&"saved_world_assignment") and restored_world.assignments[&"saved_world_assignment"].get("actions", {}).has(&"examine_records") and restored_world.assignments[&"saved_world_assignment"].get("evidence", {}).has(&"examine_records"), "SaveCodec should restore assignment action and evidence keys as StringName")
+		var restored_assignment: Dictionary = restored_world.assignments[&"saved_world_assignment"]
+		_check(restored_assignment.get("kind", null) is StringName and restored_assignment.get("source_id", null) is StringName and restored_assignment.get("employer_id", null) is StringName and restored_assignment.get("actor_id", null) is StringName and restored_assignment.get("path_id", null) is StringName, "SaveCodec should normalize assignment identity fields to StringName")
+		var repeated_action := AssignmentPipeline.perform_action(restored_world, restored_player, &"saved_world_assignment", &"examine_records")
+		_check(not bool(repeated_action.get("success", false)) and String(repeated_action.get("message", "")).contains("already been recorded"), "Loaded world-engagement save must not allow a completed investigation action again")
 		_check(restored_world.rng_narrative.state == saved_narrative_state and restored_world.rng_sim.state == saved_simulation_state and restored_world.rng_people.state == saved_people_state, "SaveCodec should preserve all three RNG streams")
 		_check(String(decoded_save.session.get("active_event_id", "")) == "routine_tally_adjustment", "SaveCodec should preserve active docket session")
 		_check(String(decoded_save.session.get("phase", "")) == "world_engagement" and String(decoded_save.session.get("active_world_assignment_id", "")) == "saved_world_assignment" and decoded_save.session.get("assignment_opportunities", []).size() == 1, "SaveCodec should preserve the desk selection and active engagement session")

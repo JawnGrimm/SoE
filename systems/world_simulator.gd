@@ -302,18 +302,24 @@ func _simulate_institutions(world: WorldState) -> void:
 		var previous_pressure := int(institution.get("resource_pressure", 0))
 		var pressure := 0
 		var resources: Dictionary = institution.get("stockpiles", {})
+		var thresholds: Dictionary = institution.get("pressure_thresholds", {})
+		var barley_warn := int(thresholds.get(&"barley_warn", 220))
+		var barley_crit := int(thresholds.get(&"barley_crit", 100))
+		var labor_warn := int(thresholds.get(&"labor_warn", 16))
+		var labor_crit := int(thresholds.get(&"labor_crit", 8))
+		var textiles_warn := int(thresholds.get(&"textiles_warn", 4))
 		if resources.has(&"barley"):
-			if int(resources.get(&"barley", 0)) < 100:
+			if int(resources.get(&"barley", 0)) < barley_crit:
 				pressure += 2
-			elif int(resources.get(&"barley", 0)) < 220:
+			elif int(resources.get(&"barley", 0)) < barley_warn:
 				pressure += 1
 		if resources.has(&"labor"):
-			if int(resources.get(&"labor", 0)) < 8:
+			if int(resources.get(&"labor", 0)) < labor_crit:
 				pressure += 2
-			elif int(resources.get(&"labor", 0)) < 16:
+			elif int(resources.get(&"labor", 0)) < labor_warn:
 				pressure += 1
 		var interests: Array = institution.get("interests", [])
-		if resources.has(&"textiles") and &"textiles" in interests and int(resources.get(&"textiles", 0)) < 4:
+		if resources.has(&"textiles") and &"textiles" in interests and int(resources.get(&"textiles", 0)) < textiles_warn:
 			pressure += 1
 		if resources.has(&"offerings") and &"offerings" in interests and int(resources.get(&"offerings", 0)) < 15:
 			pressure += 1
@@ -398,7 +404,11 @@ func _generate_forms(world: WorldState) -> void:
 		if place_id == &"" or _place_is_uruk(world, place_id):
 			continue
 		var stock: Dictionary = institution.get("stockpiles", {})
-		var shortage := (stock.has(&"barley") and int(stock.get(&"barley", 0)) <= 105) or (stock.has(&"labor") and int(stock.get(&"labor", 0)) <= 8) or (stock.has(&"textiles") and int(stock.get(&"textiles", 0)) <= 3)
+		var thresholds: Dictionary = institution.get("pressure_thresholds", {})
+		var barley_warn := int(thresholds.get(&"barley_warn", 105))
+		var labor_warn := int(thresholds.get(&"labor_warn", 8))
+		var textiles_warn := int(thresholds.get(&"textiles_warn", 3))
+		var shortage := (stock.has(&"barley") and int(stock.get(&"barley", 0)) <= barley_warn) or (stock.has(&"labor") and int(stock.get(&"labor", 0)) <= labor_warn) or (stock.has(&"textiles") and int(stock.get(&"textiles", 0)) < textiles_warn)
 		if shortage:
 			_offer_if_ready(world, &"bailiff_requisition", place_id, 2, &"local_institution_shortage", StringName(institution_id))
 

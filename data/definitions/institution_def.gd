@@ -13,6 +13,7 @@ extends Resource
 @export var starting_stockpiles: Dictionary = {}
 @export var periodic_deltas: Dictionary = {}
 @export var harvest_deltas: Dictionary = {}
+@export var pressure_thresholds: Dictionary = {}
 @export var starting_activity_count: int = 0
 @export var ledger_work_title: String = ""
 @export_multiline var ledger_work_summary: String = ""
@@ -33,6 +34,7 @@ func create_runtime_state() -> Dictionary:
 		"stockpiles": starting_stockpiles.duplicate(true),
 		"periodic_deltas": periodic_deltas.duplicate(true),
 		"harvest_deltas": harvest_deltas.duplicate(true),
+		"pressure_thresholds": pressure_thresholds.duplicate(true),
 		"activity_count": starting_activity_count,
 		"ledger_work_title": ledger_work_title,
 		"ledger_work_summary": ledger_work_summary,
