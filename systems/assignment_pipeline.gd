@@ -542,6 +542,14 @@ static func _place_name(world: WorldState, place_id: StringName) -> String:
 
 static func _project_review_due(world: WorldState, epic_id: StringName, epic: Dictionary, progress: int) -> bool:
 	var current_stage := String(epic.get("stage", ""))
+	var current_cycle := int(epic.get("review_cycle", 0))
+	for assignment_value in world.assignments.values():
+		var active_assignment: Dictionary = assignment_value
+		if StringName(active_assignment.get("kind", "")) != &"project_review" or StringName(active_assignment.get("source_id", "")) != epic_id:
+			continue
+		var active_source: Dictionary = active_assignment.get("source_data", {})
+		if int(active_assignment.get("review_cycle", active_source.get("review_cycle", 0))) == current_cycle and String(active_assignment.get("status", "")) == "active":
+			return false
 	if epic.has("last_reviewed_progress"):
 		var reviewed_progress := int(epic.get("last_reviewed_progress", -1))
 		var reviewed_stage := String(epic.get("last_reviewed_stage", ""))
@@ -551,7 +559,6 @@ static func _project_review_due(world: WorldState, epic_id: StringName, epic: Di
 	# another; completed reviews return after a stage change or twenty progress.
 	var latest_review: Dictionary = {}
 	var latest_period := -1
-	var current_cycle := int(epic.get("review_cycle", 0))
 	for assignment_value in world.assignments.values():
 		var assignment: Dictionary = assignment_value
 		if StringName(assignment.get("kind", "")) != &"project_review" or StringName(assignment.get("source_id", "")) != epic_id:
