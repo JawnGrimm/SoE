@@ -263,7 +263,7 @@ func _get(property : StringName):
 	return null
 
 
-func _property_can_revert(property : StringName):
+func _property_can_revert(property: StringName) -> bool:
 	match property:
 		&"start":
 			return end != start
@@ -274,8 +274,10 @@ func _property_can_revert(property : StringName):
 		&"handle_2":
 			return handle_2 != end
 
+	return false
 
-func _property_get_revert(property : StringName):
+
+func _property_get_revert(property: StringName) -> Variant:
 	match property:
 		&"start":
 			return end
@@ -285,6 +287,8 @@ func _property_get_revert(property : StringName):
 			return start
 		&"handle_2":
 			return end
+
+	return null
 
 
 func _get_property_list() -> Array:
