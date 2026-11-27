@@ -346,13 +346,12 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 			for amount in stock.values():
 				total += int(amount)
 			if kind == &"form":
-				summary = "The source form is reconciled against the institution's current records."
-				facts = "FORM: %s\nURGENCY: %d\nINSTITUTIONAL STOCK TOTAL: %d" % [String(data.get("form_type", "")), int(data.get("urgency", 0)), total]
+				summary = "The form is checked against the institution's current recorded position."
+				facts = "FORM: %s\nURGENCY: %d\nRECORDED STOCK: %d across %d resource types" % [String(data.get("form_type", "")), int(data.get("urgency", 0)), total, stock.size()]
 			else:
-				summary = "The institution's recorded quantities are totalled from its current stockpile dictionary."
-				facts = "INSTITUTION: %s\nMEMBERS: %d\nACTIVITY RECORDS: %d\nRECORDED STOCK TOTAL: %d\nRESOURCE LINES: %d" % [String(institution.get("name", institution_id)), int(data.get("member_count", institution.get("members", []).size())), int(data.get("activity_count", institution.get("activity_count", 0))), total, stock.size()]
-			if skill_level >= 2:
-				facts += "\nARITHMETIC CHECK: SECOND-LEVEL RECONCILIATION AVAILABLE"
+				summary = "The institution's current stock records are reconciled. No discrepancy is presumed without a separate expected balance."
+				facts = "INSTITUTION: %s\nMEMBERS: %d / ACTIVITY RECORDS: %d\nRECORDED STOCK: %d across %d resource types" % [String(institution.get("name", institution_id)), int(data.get("member_count", institution.get("members", []).size())), int(data.get("activity_count", institution.get("activity_count", 0))), total, stock.size()]
+			facts += "\n" + _stock_detail(stock, skill_level, "ARITHMETIC")
 		&"examine_records":
 			if kind == &"form":
 				summary = "The form's origin and urgency are confirmed against the pending register."
@@ -374,11 +373,12 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 				var institution_id := StringName(data.get("institution_id", &"eanna_household"))
 				var institution: Dictionary = world.institutions.get(institution_id, {})
 				var stock: Dictionary = institution.get("stockpiles", {})
-				var stock_lines := PackedStringArray()
-				for resource_id in stock.keys():
-					stock_lines.append("%s: %d" % [String(resource_id).replace("_", " ").capitalize(), int(stock[resource_id])])
-				facts = "INSTITUTION: %s\nMEMBERS: %d\nACTIVITY RECORDS: %d\n%s" % [String(institution.get("name", institution_id)), int(data.get("member_count", institution.get("members", []).size())), int(data.get("activity_count", institution.get("activity_count", 0))), "\n".join(stock_lines)]
-				summary = "The institution's current membership, activity, and resource records are inspected."
+				var total := 0
+				for amount in stock.values():
+					total += int(amount)
+				facts = "INSTITUTION: %s\nMEMBERS: %d / ACTIVITY RECORDS: %d\nRECORDED STOCK: %d across %d resource types" % [String(institution.get("name", institution_id)), int(data.get("member_count", institution.get("members", []).size())), int(data.get("activity_count", institution.get("activity_count", 0))), total, stock.size()]
+				facts += "\n" + _stock_detail(stock, skill_level, "STEWARDSHIP")
+				summary = "The storehouse is inspected against its current recorded stock. Physical-versus-book discrepancies require an independent count."
 	if action_id == &"examine_records" and skill_level >= 2:
 		facts += "\nGENERATION REASON: %s" % String(data.get("generation_reason", "not recorded"))
 	elif action_id == &"consult_official" and skill_level >= 2:
@@ -388,6 +388,24 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 			facts += "\nRECORDED TRUST: %d / RELATIONSHIP: %s" % [int(tie.get("trust", 0)), String(tie.get("type", "unknown"))]
 	facts += "\nCAPABILITY APPLIED: %s / LEVEL %d" % [String(action_id).replace("_", " ").to_upper(), skill_level]
 	return {"summary": summary, "facts": facts, "skill_level": skill_level}
+
+static func _stock_detail(stock: Dictionary, skill_level: int, skill_label: String) -> String:
+	if stock.is_empty():
+		return "No resource quantities are recorded."
+	var ranked: Array[Dictionary] = []
+	for resource_id in stock.keys():
+		ranked.append({"id": String(resource_id), "amount": int(stock[resource_id])})
+	ranked.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if int(a.amount) == int(b.amount):
+			return String(a.id) < String(b.id)
+		return int(a.amount) > int(b.amount)
+	)
+	var first: Dictionary = ranked[0]
+	var detail := "LEADING RECORDED RESERVE: %s / %d" % [String(first.id).replace("_", " ").capitalize(), int(first.amount)]
+	if skill_level >= 3 and ranked.size() > 1:
+		var second: Dictionary = ranked[1]
+		detail += "\nNEXT RESERVE: %s / %d" % [String(second.id).replace("_", " ").capitalize(), int(second.amount)]
+	return "%s DETAIL / LEVEL %d\n%s" % [skill_label, skill_level, detail]
 
 static func _institution_for_location(world: WorldState, location_id: StringName) -> StringName:
 	if location_id == &"":
