@@ -934,9 +934,14 @@ func _show_world_engagement() -> void:
 	var actions: Dictionary = record.get("actions", {})
 	var evidence: Dictionary = record.get("evidence", {})
 	var evidence_lines := PackedStringArray()
-	for action_id in evidence.keys():
+	for action in AssignmentPipeline.INVESTIGATION_ACTIONS:
+		var action_id: StringName = action.id
+		if not evidence.has(action_id):
+			continue
 		var entry: Dictionary = evidence[action_id]
-		evidence_lines.append("%s\n%s" % [String(action_id).replace("_", " ").to_upper(), String(entry.get("facts", ""))])
+		var finding := String(entry.get("summary", "Finding recorded."))
+		var facts := String(entry.get("facts", ""))
+		evidence_lines.append("%s / LEVEL %d\n%s\n%s" % [String(action_id).replace("_", " ").to_upper(), int(entry.get("skill_level", 0)), finding, facts])
 	var left_quote := String(record.get("summary", "A matter requires professional attention."))
 	var employer := world.get_person(StringName(record.get("employer_id", "")))
 	var right_quote := "The record is incomplete. Read it, reconcile the figures, hear the responsible official, and inspect the source before making your assessment."
