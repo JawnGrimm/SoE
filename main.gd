@@ -1949,7 +1949,7 @@ func _on_survey_travel_requested(route_id: StringName, destination_id: StringNam
 	if phase in ["character_creation", "era_complete", "case", "world_engagement"] or travel_service == null or world == null:
 		return
 	var traveler := world.get_player()
-	var result := travel_service.execute_journey(world, traveler, destination_id, route_id)
+	var result := travel_service.execute_selected_journey(world, traveler, destination_id, route_id)
 	if not bool(result.get("success", false)):
 		status_label.text = "DEPARTURE REFUSED / " + String(result.get("error", "Route unavailable")).to_upper()
 		return
