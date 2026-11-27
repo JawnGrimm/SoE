@@ -6,6 +6,7 @@ extends Resource
 @export var origin_id: StringName = &""
 @export var destination_id: StringName = &""
 @export var route_type: StringName = &"land"
+@export var display_name: String = ""
 @export_range(1, 12, 1) var base_transit_periods: int = 1
 ## Destination reached when travelling downstream. Empty for non-river routes.
 @export var downstream_destination_id: StringName = &""
