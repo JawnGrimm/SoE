@@ -11,4 +11,4 @@ political_relation = &"provincial_institution"
 exports = Array[StringName]([&"barley"])
 imports = Array[StringName]([&"labor", &"canal_access"])
 era_id = &"uruk_storehouse"
-survey_position = Vector2.ZERO
+survey_position = Vector2(0, 0)
