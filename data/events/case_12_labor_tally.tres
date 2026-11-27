@@ -147,6 +147,7 @@ effects = Array[ExtResource("3")]([SubResource("FxOpinionLuNanshe3"), SubResourc
 [resource]
 script = ExtResource("1")
 id = &"case_12_labor_tally"
+once_per_character = true
 title = "The Labor Tally"
 description = "In Sowing, Lu-kala's tally records three ditch shifts and twenty-two workers. The North Weaving House roll also marks double barley for twenty-two. Shuruppak-ilu warns that a labor tablet and a household grain roll cannot be made into one account simply because the same number appears on both."
 era_tags = Array[StringName]([&"uruk"])
