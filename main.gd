@@ -219,7 +219,9 @@ func _build_interface() -> void:
 	tablet_content.add_child(tablet_scroll)
 	var mat_box := VBoxContainer.new()
 	mat_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	mat_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	# Let the docket content keep its natural height. Expanding this child to
+	# the ScrollContainer viewport prevents it from growing when choices overflow.
+	mat_box.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	mat_box.add_theme_constant_override("separation", 7)
 	tablet_scroll.add_child(mat_box)
 	case_heading = Label.new()
