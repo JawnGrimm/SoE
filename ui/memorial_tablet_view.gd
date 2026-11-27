@@ -63,7 +63,7 @@ func _build() -> void:
 	var standing_lines := PackedStringArray()
 	for person_name in standings:
 		standing_lines.append("%s: %+d" % [String(person_name), int(standings[person_name])])
-	body.add_child(_label("THE CITY & THE PROVINCE\\nPrimary legacy: %s\\nSettled cases: %d\\n%s" % [summary.get("primary_legacy_faction", "Unrecorded"), int(summary.get("total_cases_settled", 0)), "\\n".join(standing_lines)], 15, INK))
+	body.add_child(_label("THE CITY & THE PROVINCE\nPrimary legacy: %s\nSettled cases: %d\n%s" % [summary.get("primary_legacy_faction", "Unrecorded"), int(summary.get("total_cases_settled", 0)), "\n".join(standing_lines)], 15, INK))
 	body.add_child(_label("THE GREAT CANAL CUT\nProgress: %d / %d   Labor: %s\nConcluded: %s, period %d" % [int(summary.get("canal_progress", 0)), int(summary.get("canal_target", 100)), summary.get("canal_labor_outcome", "unrecorded"), CalendarFormatter.format_year(int(summary.get("end_year", -3200))), int(summary.get("period", 1))], 15, INK))
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 12)
