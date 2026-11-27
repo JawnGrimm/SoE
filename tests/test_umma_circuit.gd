@@ -109,9 +109,12 @@ func _run() -> void:
 	var uruk_work := false
 	for opportunity in returned:
 		var source: Dictionary = opportunity.get("source_data", {})
-		if StringName(opportunity.get("kind", "")) == &"ledger" and StringName(source.get("institution_id", "")) == &"eanna_household":
+		var kind := StringName(opportunity.get("kind", ""))
+		if kind == &"hazard" and StringName(opportunity.get("source_id", "")) == &"roof_leak":
 			uruk_work = true
-	_check(uruk_work, "Uruk's local institution work returns after the regional circuit")
+		if kind == &"form" and StringName(source.get("subject_id", "")) == &"north_bay":
+			uruk_work = true
+	_check(uruk_work, "Uruk's North-Bay work returns after the regional circuit")
 	_check(world.resolved_forms.size() == 1 and world.cedar_desk_log.size() == 1, "Umma form resolution and chronicle entry remain after returning to Uruk")
 	var umma_after_return: Dictionary = world.institutions.get(&"umma_canal_bailiff", {})
 	_check(not umma_after_return.is_empty() and umma_after_return.get("stockpiles", {}).has(&"barley"), "Umma institution and its stockpile continue to exist after return")
