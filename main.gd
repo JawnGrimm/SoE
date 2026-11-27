@@ -1707,12 +1707,7 @@ func _show_procedural_result(result_title: String, result_text: String, conseque
 	_refresh_compound()
 
 func _canal_dedication_due() -> bool:
-	if world == null or world.get_player() == null or world.world_flags.has(&"canal_dedication_concluded"):
-		return false
-	var epic: Dictionary = world.epics.get(&"great_canal_cut", {})
-	var progress := int(epic.get("progress", world.get_resource(&"canal_progress")))
-	var target := int(epic.get("target", 100))
-	return progress >= target or world.year <= -3160
+	return world != null and world.get_player() != null and CanalDedicationServiceScript.is_climax_due(world)
 
 
 func _show_canal_dedication() -> void:
