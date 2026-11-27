@@ -158,26 +158,48 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 		})
 
 
-	# Regional work is generated from actual trade-post stocks and active route
-	# connections at the character's current place.
+	# Regional work comes from actual place exports/imports, local stockpiles,
+	# and active route connections. The same generator works at every trade post.
 	var actor_place_id := actor.current_location_id if actor.current_location_id != &"" else &"uruk"
-	var local_institution_id := &"habuba_trade_post" if actor_place_id == &"habuba_kabira" else &"eanna_household"
+	var local_institution_id := _regional_institution_for_place(world, actor_place_id)
 	var local_institution: Dictionary = world.institutions.get(local_institution_id, {})
 	var local_stock: Dictionary = local_institution.get("stockpiles", {})
-	var local_factor_id := &"enki_ili" if actor_place_id == &"habuba_kabira" else &"geme_inana"
-	if actor_place_id in [&"uruk", &"habuba_kabira"] and not local_institution.is_empty():
-		var remote_place_id := &"habuba_kabira" if actor_place_id == &"uruk" else &"uruk"
-		var remote_institution_id := &"habuba_trade_post" if remote_place_id == &"habuba_kabira" else &"eanna_household"
-		var remote_institution: Dictionary = world.institutions.get(remote_institution_id, {})
-		var remote_stock: Dictionary = remote_institution.get("stockpiles", {})
-		var export_commodity := &"textiles" if actor_place_id == &"uruk" else &"timber"
-		var export_quantity := mini(8 if actor_place_id == &"uruk" else 12, int(local_stock.get(export_commodity, 0)))
-		if export_quantity >= 3 and not RegionalWorldSystem.find_route_path(world, actor_place_id, remote_place_id).is_empty():
-			candidates.append(_regional_work_candidate(world, selected_path, actor_place_id, local_institution_id, local_factor_id, &"dispatch_export", export_commodity, export_quantity, actor_place_id, remote_place_id, local_institution_id, remote_institution_id, &""))
-		var import_commodity := &"timber" if actor_place_id == &"uruk" else &"textiles"
-		var import_quantity := mini(8 if actor_place_id == &"uruk" else 6, int(remote_stock.get(import_commodity, 0)))
-		if import_quantity >= 3 and not RegionalWorldSystem.find_route_path(world, remote_place_id, actor_place_id).is_empty():
-			candidates.append(_regional_work_candidate(world, selected_path, actor_place_id, local_institution_id, local_factor_id, &"request_import", import_commodity, import_quantity, remote_place_id, actor_place_id, remote_institution_id, local_institution_id, &""))
+	var local_place: Dictionary = world.places.get(actor_place_id, {})
+	var local_factor_id := StringName(local_place.get("regional_agent_id", &"geme_inana"))
+	if actor_place_id == &"uruk":
+		local_factor_id = &"geme_inana"
+	if not local_institution.is_empty() and not local_place.is_empty():
+		var exports: Array = local_place.get("exports", [])
+		for commodity_variant in exports:
+			var export_commodity := StringName(commodity_variant)
+			var export_quantity := mini(12, int(local_stock.get(export_commodity, 0)))
+			if export_quantity < 3:
+				continue
+			var export_destination := _find_importing_destination(world, actor_place_id, export_commodity)
+			if export_destination == &"":
+				continue
+			var export_destination_institution := _regional_institution_for_place(world, export_destination)
+			if export_destination_institution == &"":
+				continue
+			candidates.append(_regional_work_candidate(world, selected_path, actor_place_id, local_institution_id, local_factor_id, &"dispatch_export", export_commodity, export_quantity, actor_place_id, export_destination, local_institution_id, export_destination_institution, &""))
+			break
+		var imports: Array = local_place.get("imports", [])
+		var import_candidates := 0
+		for commodity_variant in imports:
+			var import_commodity := StringName(commodity_variant)
+			var source_info := _find_exporting_source(world, actor_place_id, import_commodity)
+			if source_info.is_empty():
+				continue
+			var source_place_id := StringName(source_info.get("place_id", ""))
+			var source_institution_id := StringName(source_info.get("institution_id", ""))
+			var source_stock: Dictionary = world.institutions.get(source_institution_id, {}).get("stockpiles", {})
+			var import_quantity := mini(8, int(source_stock.get(import_commodity, 0)))
+			if import_quantity < 3:
+				continue
+			candidates.append(_regional_work_candidate(world, selected_path, actor_place_id, local_institution_id, local_factor_id, &"request_import", import_commodity, import_quantity, source_place_id, actor_place_id, source_institution_id, local_institution_id, &""))
+			import_candidates += 1
+			if import_candidates >= 3:
+				break
 		var provision_route_id := _highest_risk_route(world, actor_place_id)
 		var beer_quantity := mini(4, int(local_stock.get(&"beer", 0)))
 		if provision_route_id != &"" and beer_quantity >= 2:
@@ -628,19 +650,70 @@ static func _form_title(form_type: StringName) -> String:
 
 
 
+static func _regional_institution_for_place(world: WorldState, place_id: StringName) -> StringName:
+	if place_id == &"uruk":
+		return &"eanna_household"
+	return StringName(world.places.get(place_id, {}).get("regional_institution_id", ""))
+
+static func _find_importing_destination(world: WorldState, origin_id: StringName, commodity_id: StringName) -> StringName:
+	var selected_place := &""
+	var shortest := 2147483647
+	for place_id_variant in world.places.keys():
+		var place_id := StringName(place_id_variant)
+		if place_id == origin_id:
+			continue
+		var place: Dictionary = world.places[place_id]
+		var imports: Array = place.get("imports", [])
+		if not imports.has(commodity_id) or _regional_institution_for_place(world, place_id) == &"":
+			continue
+		var route_ids := RegionalWorldSystem.find_route_path(world, origin_id, place_id)
+		if route_ids.is_empty():
+			continue
+		var duration := RegionalWorldSystem.route_path_periods(world, route_ids)
+		if duration < shortest:
+			shortest = duration
+			selected_place = place_id
+	return selected_place
+
+static func _find_exporting_source(world: WorldState, destination_id: StringName, commodity_id: StringName) -> Dictionary:
+	var selected: Dictionary = {}
+	var shortest := 2147483647
+	for place_id_variant in world.places.keys():
+		var place_id := StringName(place_id_variant)
+		if place_id == destination_id:
+			continue
+		var place: Dictionary = world.places[place_id]
+		var exports: Array = place.get("exports", [])
+		if not exports.has(commodity_id):
+			continue
+		var institution_id := _regional_institution_for_place(world, place_id)
+		if institution_id == &"":
+			continue
+		var stock: Dictionary = world.institutions.get(institution_id, {}).get("stockpiles", {})
+		if int(stock.get(commodity_id, 0)) < 3:
+			continue
+		var route_ids := RegionalWorldSystem.find_route_path(world, place_id, destination_id)
+		if route_ids.is_empty():
+			continue
+		var duration := RegionalWorldSystem.route_path_periods(world, route_ids)
+		if duration < shortest:
+			shortest = duration
+			selected = {"place_id": place_id, "institution_id": institution_id}
+	return selected
+
 static func _regional_work_candidate(world: WorldState, path_id: StringName, place_id: StringName, institution_id: StringName, employer_id: StringName, work_type: StringName, commodity_id: StringName, quantity: int, origin_id: StringName, destination_id: StringName, source_institution_id: StringName, destination_institution_id: StringName, route_id: StringName) -> Dictionary:
-	var work_id := StringName("regional_%s_%s_%d" % [String(work_type), String(place_id), world.current_period_index()])
+	var work_id := StringName("regional_%s_%s_%s_%d" % [String(work_type), String(place_id), String(commodity_id), world.current_period_index()])
 	var title := ""
 	var summary := ""
 	var priority := 3
 	match work_type:
 		&"dispatch_export":
 			title = "%s / Outbound %s Dispatch" % [_place_name(world, place_id), String(commodity_id).replace("_", " ").capitalize()]
-			summary = "The local trade post has %d %s available for a sealed shipment to %s." % [quantity, String(commodity_id).replace("_", " "), _place_name(world, destination_id)]
+			summary = "The local institution has %d %s available for a sealed shipment to %s." % [quantity, String(commodity_id).replace("_", " "), _place_name(world, destination_id)]
 			priority = 7
 		&"request_import":
 			title = "%s / Import Request" % _place_name(world, place_id)
-			summary = "The connected trade post can send %d %s from %s to %s." % [quantity, String(commodity_id).replace("_", " "), _place_name(world, origin_id), _place_name(world, destination_id)]
+			summary = "A connected trade house can send %d %s from %s to %s." % [quantity, String(commodity_id).replace("_", " "), _place_name(world, origin_id), _place_name(world, destination_id)]
 			priority = 6
 		&"route_provisions":
 			title = "%s / Route Provisioning" % _place_name(world, place_id)
