@@ -135,8 +135,14 @@ func _run() -> void:
 	var assignment_world := WorldState.new()
 	var assignment_actor := UrukSeeder.seed_campaign(assignment_world, 44004400)
 	_check(assignment_actor.skills.levels.values().all(func(level: int) -> bool: return level >= 1), "All six core skills should begin at level one")
+	var rng_before_board := assignment_world.rng_narrative.state
 	var opportunities := AssignmentPipeline.generate_opportunities(assignment_world, assignment_actor, &"path_civil")
+	var first_preview := opportunities.duplicate(true)
+	var second_preview := AssignmentPipeline.generate_opportunities(assignment_world, assignment_actor, &"path_civil")
 	_check(opportunities.size() == 4, "AssignmentPipeline should present three world opportunities and one career-path docket")
+	_check(assignment_world.rng_narrative.state == rng_before_board, "Building the opportunity board must not advance narrative RNG")
+	_check(assignment_world.recent_archetypes.is_empty() and assignment_world.recent_npc_pairs.is_empty(), "Board previews must not commit docket rotation history")
+	_check(first_preview == second_preview, "Repeated board generation in the same period should produce the same procedural preview")
 	var opportunity_kinds: Array[StringName] = []
 	for opportunity in opportunities:
 		opportunity_kinds.append(StringName(opportunity.get("kind", "")))
@@ -146,7 +152,8 @@ func _run() -> void:
 		if StringName(opportunity.get("kind", "")) == &"procedural_docket": career_docket = opportunity
 	var career_payload: Dictionary = career_docket.get("source_data", {})
 	_check(StringName(career_payload.get("path_id", "")) == &"path_civil" and String(career_payload.get("docket_kind", "")) == "local_path", "The normal assignment board should carry a docket authored for the selected career path")
-	_check(assignment_world.recent_archetypes.size() == 1 and assignment_world.recent_npc_pairs.size() == 1, "Generating a career docket should record its archetype and NPC pair for saveable diversity history")
+	AssignmentGeneratorScript.record_selection(assignment_world, career_payload)
+	_check(assignment_world.recent_archetypes.size() == 1 and assignment_world.recent_npc_pairs.size() == 1, "Opening a career docket should record its archetype and NPC pair for saveable diversity history")
 	var review_baseline := {"stage": "survey", "last_reviewed_progress": 40, "last_reviewed_stage": "survey"}
 	_check(not AssignmentPipeline._project_review_due(assignment_world, &"great_canal_cut", review_baseline, 40), "A project review should not recur without material change")
 	_check(AssignmentPipeline._project_review_due(assignment_world, &"great_canal_cut", review_baseline, 60), "A project review may recur after twenty points of progress")
