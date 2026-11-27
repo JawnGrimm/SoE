@@ -39,6 +39,12 @@ func _run() -> void:
 
 	# Stage 1 is only offered after the 25% boundary is crossed.
 	var progress_id := epic_def.progress_resource
+	var sponsor: Dictionary = world.institutions.get(epic_def.sponsor_institution, {})
+	var sponsor_stockpiles: Dictionary = sponsor.get("stockpiles", {})
+	sponsor_stockpiles[&"barley"] = 1000
+	sponsor_stockpiles[&"labor"] = 20
+	sponsor["stockpiles"] = sponsor_stockpiles
+	world.institutions[epic_def.sponsor_institution] = sponsor
 	world.stockpiles[progress_id] = 24
 	state = world.epics[&"great_canal_cut"]
 	state["progress"] = 24
