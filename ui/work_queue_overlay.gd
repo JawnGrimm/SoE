@@ -116,8 +116,8 @@ func _rebuild() -> void:
 			var item := Narrator.translate_opportunity(_opportunities[index])
 			var button := Button.new()
 			var tags: Array = _opportunities[index].get("tags", [])
-			var tag_prefix := "[%s]\\n" % String(tags[0]) if not tags.is_empty() else ""
-			button.text = "%s%s\\n%s" % [tag_prefix, String(item.get("title", "Work")), String(item.get("summary", "A matter requires attention."))]
+			var tag_prefix := "[%s]\n" % String(tags[0]) if not tags.is_empty() else ""
+			button.text = "%s%s\n%s" % [tag_prefix, String(item.get("title", "Work")), String(item.get("summary", "A matter requires attention."))]
 			button.disabled = not _can_select
 			button.tooltip_text = "Open this matter at the cedar desk." if _can_select else "Return to the period board to open work."
 			button.custom_minimum_size = Vector2(0, 64)
