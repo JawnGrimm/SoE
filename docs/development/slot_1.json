@@ -1,0 +1,4017 @@
+{
+	"format": "scribe_of_eras",
+	"saved_at": "2026-11-27 16:49:55",
+	"session": {
+		"active_event_id": "",
+		"active_world_assignment_id": "",
+		"assignment_opportunities": [
+			{
+				"employer_id": "shuruppak_ilu",
+				"id": "epic:great_canal_cut:s1",
+				"kind": "project_review",
+				"path_id": "path_martial",
+				"place_id": "eanna_precinct",
+				"priority": 4,
+				"source_data": {
+					"active": true,
+					"active_problem": "disruption",
+					"completed": false,
+					"era_id": "uruk_storehouse",
+					"history_notes": [
+						{
+							"from": 29,
+							"note": "Crews advanced the Epic on full rations.",
+							"period": 0,
+							"to": 30,
+							"year": -3199
+						},
+						{
+							"from": 30,
+							"note": "Inundation silt reclaimed part of the cut during a crew disruption.",
+							"period": 1,
+							"to": 27,
+							"year": -3199
+						},
+						{
+							"from": 32,
+							"note": "Inundation silt reclaimed part of the cut during a crew disruption.",
+							"period": 2,
+							"to": 29,
+							"year": -3199
+						},
+						{
+							"from": 56,
+							"note": "Inundation silt reclaimed part of the cut during a crew disruption.",
+							"period": 0,
+							"to": 53,
+							"year": -3198
+						},
+						{
+							"from": 55,
+							"note": "Inundation silt reclaimed part of the cut during a crew disruption.",
+							"period": 1,
+							"to": 52,
+							"year": -3198
+						}
+					],
+					"initial_stage": "survey",
+					"last_notified_problem": "disruption",
+					"last_reviewed_progress": 41,
+					"last_reviewed_stage": "cutting",
+					"progress": 52,
+					"progress_resource": "canal_progress",
+					"review_cycle": 1,
+					"review_initialized": true,
+					"review_pending": true,
+					"review_reason": "site_hazard",
+					"review_stage": 1,
+					"review_stage_label": "Canal Cutting",
+					"review_summary": "The current work conditions have changed. Record the interruption and its effect on labor or provisions.",
+					"reviewed_problem": "",
+					"scandal_flags": [
+						"thirsty_diggers"
+					],
+					"sponsor_institution": "eanna_household",
+					"stage": "cutting",
+					"stalled": true,
+					"target": 100,
+					"title": "The Great Canal Cut"
+				},
+				"source_id": "great_canal_cut",
+				"sponsor_institution": "eanna_household",
+				"summary": "The current work conditions have changed. Record the interruption and its effect on labor or provisions (52 / 100).",
+				"title": "The Great Canal Cut — Site Disruption Review"
+			},
+			{
+				"employer_id": "shuruppak_ilu",
+				"id": "work_pressure_eanna_household_-38375",
+				"kind": "pressure",
+				"path_id": "path_martial",
+				"priority": 6,
+				"source_data": {
+					"institution_id": "eanna_household",
+					"place_id": "eanna_precinct",
+					"pressure": 2
+				},
+				"source_id": "eanna_household",
+				"summary": "The institution reports a pressure index of 2. Its current stockpiles need review.",
+				"title": "Eanna Institutional Household / Resource Pressure"
+			},
+			{
+				"employer_id": "ur_nanna",
+				"id": "work_form_form_000009_-38375",
+				"kind": "form",
+				"path_id": "path_martial",
+				"priority": 4,
+				"source_data": {
+					"form_type": "held_barley",
+					"generated_by": "world_simulator",
+					"generated_period": -38388,
+					"generation_reason": "roof_leak_inspection",
+					"id": "form_000009",
+					"institution_id": "eanna_household",
+					"place_id": "eanna_precinct",
+					"status": "pending",
+					"subject_id": "north_bay",
+					"urgency": 2,
+					"year": -3199
+				},
+				"source_id": "form_000009",
+				"summary": "Held Barley Inspection requires an assessment at North-Bay.",
+				"title": "Held Barley Inspection"
+			},
+			{
+				"employer_id": "geme_inana",
+				"id": "work_procedural_path_watchtower_supply_-38375",
+				"kind": "procedural_docket",
+				"path_id": "path_martial",
+				"priority": 5,
+				"source_data": {
+					"archetype": "path_watchtower_supply",
+					"choices": [
+						{
+							"effects": {
+								"epic_progress": 1,
+								"opinion_left": 3,
+								"opinion_right": -2,
+								"skill": "law",
+								"xp": 12
+							},
+							"label": "Certify the client's record",
+							"result_text": "The client's entry is certified; the opposing claim remains attached.",
+							"result_title": "CLIENT RECORD CERTIFIED"
+						},
+						{
+							"effects": {
+								"epic_progress": 0,
+								"opinion_left": -1,
+								"opinion_right": -1,
+								"skill": "arithmetic",
+								"xp": 10
+							},
+							"label": "Hold both claims for corroboration",
+							"result_text": "Neither claim is erased. A second witness is required before the record can be closed.",
+							"result_title": "CLAIMS HELD"
+						},
+						{
+							"effects": {
+								"epic_progress": 2,
+								"opinion_left": -2,
+								"opinion_right": 3,
+								"skill": "rhetoric",
+								"xp": 12
+							},
+							"label": "Accept the opposing party's account",
+							"result_text": "The opposing account is entered. The client may appeal the mark.",
+							"result_title": "OPPOSING ACCOUNT ACCEPTED"
+						}
+					],
+					"client_faction": "city_garrison",
+					"client_name": "CLIENT / City Garrison",
+					"commodity_id": "lamp_oil",
+					"destination_id": "uruk",
+					"docket_kind": "local_path",
+					"left_card": {
+						"facts": "ORIGIN: Uruk  →  DESTINATION: Uruk\nTRANSIT: Within Uruk\nOIL: MISSING\nROPE: MISSING",
+						"quote": "The tower has no lamp oil or rope. The captain says the supply boat never arrived.",
+						"speaker_id": "ur_amas",
+						"title": "CLIENT"
+					},
+					"npc_pair": "ur_amas|geme_inana",
+					"opposing_faction": "boatmens_guild",
+					"opposing_name": "OPPOSING PARTY / Landing Boatmen & Guilds",
+					"origin_id": "uruk",
+					"path_id": "path_martial",
+					"prompt": "Do you hold the carrier, reroute the supply, or certify the receipt?",
+					"right_card": {
+						"facts": "ORIGIN: Uruk  →  DESTINATION: Uruk\nTRANSIT: Within Uruk\nLOWER LANDING: RECEIPT\nTOWER: NO ACKNOWLEDGMENT",
+						"quote": "The boatman has a receipt for delivery at the lower landing, not the tower.",
+						"speaker_id": "geme_inana",
+						"title": "OPPOSING PARTY"
+					},
+					"route_id": "uruk_internal",
+					"route_mode": "within Uruk",
+					"title": "WATCHTOWER / SUPPLY GAP"
+				},
+				"source_id": "path_watchtower_supply",
+				"summary": "Do you hold the carrier, reroute the supply, or certify the receipt?",
+				"title": "WATCHTOWER / SUPPLY GAP"
+			}
+		],
+		"phase": "opportunity_board",
+		"procedural_assignment": {},
+		"selected_path": "path_martial",
+		"survey_open": false
+	},
+	"version": 1,
+	"world": {
+		"assignments": {
+			"epic:great_canal_cut:s1": {
+				"accurate": false,
+				"actions": {
+					"consult_official": true,
+					"inspect_source": true
+				},
+				"actor_id": "character_0001",
+				"assessment": "epic_emergency",
+				"completed_period": -38378,
+				"employer_id": "shuruppak_ilu",
+				"evidence": {
+					"consult_official": {
+						"facts": "OFFICIAL: Shuruppak-ilu\nOPINION OF SCRIBE: -7\nOFFICE: archive_keeper\nSTANCE: “Do not make a patron's seal into evidence. Enter the source, and let the record name the responsible office.”\nThe consult official finding reflects your skill level 1.",
+						"skill_level": 1,
+						"summary": "The responsible official gives a position and a demand. It is testimony, not proof."
+					},
+					"inspect_source": {
+						"facts": "PHYSICAL SITE: the institution\nBIN COUNT / BARLEY: 0 | LABOR ROSTER: 0 | TEXTILES: 0\nINSTITUTION: \nNo stockpile resources are recorded for this institution.\nThe inspect source finding reflects your skill level 1.",
+						"skill_level": 1,
+						"summary": "The physical storehouse is inspected. These are the current bin and roster counts, not a clerk's tablet claim."
+					}
+				},
+				"id": "epic:great_canal_cut:s1",
+				"kind": "project_review",
+				"path_id": "path_martial",
+				"place_id": "eanna_precinct",
+				"priority": 4,
+				"result": "Twenty barley and two labor are released from the sponsor. Emergency rations reach the crews; the canal cut advances by fifteen progress.",
+				"review_cycle": 0,
+				"reviewed_progress": 41,
+				"reviewed_stage": "cutting",
+				"source_data": {
+					"active": true,
+					"active_problem": "disruption",
+					"completed": false,
+					"era_id": "uruk_storehouse",
+					"history_notes": [
+						{
+							"from": 29,
+							"note": "Crews advanced the Epic on full rations.",
+							"period": 0,
+							"to": 30,
+							"year": -3199
+						},
+						{
+							"from": 30,
+							"note": "Inundation silt reclaimed part of the cut during a crew disruption.",
+							"period": 1,
+							"to": 27,
+							"year": -3199
+						},
+						{
+							"from": 32,
+							"note": "Inundation silt reclaimed part of the cut during a crew disruption.",
+							"period": 2,
+							"to": 29,
+							"year": -3199
+						}
+					],
+					"initial_stage": "survey",
+					"last_notified_problem": "",
+					"progress": 41,
+					"progress_resource": "canal_progress",
+					"review_initialized": true,
+					"review_pending": true,
+					"review_reason": "stage_reached",
+					"review_stage": 1,
+					"review_stage_label": "Canal Cutting",
+					"review_summary": "The works have reached Canal Cutting. Enter the new stage and its obligations.",
+					"scandal_flags": [
+						"thirsty_diggers"
+					],
+					"sponsor_institution": "eanna_household",
+					"stage": "cutting",
+					"stalled": true,
+					"target": 100,
+					"title": "The Great Canal Cut"
+				},
+				"source_id": "great_canal_cut",
+				"sponsor_institution": "eanna_household",
+				"started_period": -38378,
+				"status": "completed",
+				"summary": "The works have reached Canal Cutting. Enter the new stage and its obligations (41 / 100).",
+				"title": "The Great Canal Cut — Canal Cutting"
+			},
+			"work_form_form_000002_-38396": {
+				"accurate": false,
+				"actions": {
+					"consult_official": true,
+					"inspect_source": true
+				},
+				"actor_id": "character_0001",
+				"assessment": "refer",
+				"completed_period": -38396,
+				"employer_id": "utu_mansum",
+				"evidence": {
+					"consult_official": {
+						"facts": "OFFICIAL: Utu-mansum\nOPINION OF SCRIBE: 3\nOFFICE: tax_scribe\nSTANCE: “This contradiction will reach the archive unless you refer it. I ask you to preserve the office's standing—and name who bears the loss.”\nThe consult official finding reflects your skill level 1.",
+						"skill_level": 1,
+						"summary": "The responsible official gives a position and a demand. It is testimony, not proof."
+					},
+					"inspect_source": {
+						"facts": "PHYSICAL SITE: Ditch Labor Tally\nBIN COUNT / BARLEY: 420 | LABOR ROSTER: 17 | TEXTILES: 10\nINSTITUTION: Eanna Institutional Household\nPHYSICAL FINDING: damp or mold-marked barley contradicts the prime seed-corn declaration.\nReeds: 47\nCattle: 9\nGoats: 22\nSheep: 39\nWool: 27\nFish: 22\nDates: 98\nBitumen: 18\nCopper: 5\nBeer: 34\nTextiles: 10\nTimber: 10\nClay: 92\nBarley: 420\nLabor: 17\nClay Reeds: 138\nSilver: 9\nThe stock record notes concealed spoilage; declared quality: prime seed corn.\nThe inspect source finding reflects your skill level 1.",
+						"skill_level": 1,
+						"summary": "The physical storehouse is inspected. These are the current bin and roster counts, not a clerk's tablet claim."
+					}
+				},
+				"id": "work_form_form_000002_-38396",
+				"kind": "form",
+				"path_id": "path_martial",
+				"priority": 4,
+				"result": "The Workforce Roll is referred. Concealed spoilage is exposed, eight measures are struck from usable barley, and the archive records a formal correction.",
+				"source_data": {
+					"form_type": "pension_roll",
+					"generated_by": "world_simulator",
+					"generated_period": -38399,
+					"generation_reason": "canal_workforce_demand",
+					"id": "form_000002",
+					"institution_id": "eanna_household",
+					"place_id": "eanna_precinct",
+					"status": "pending",
+					"subject_id": "ditch_labor_tally",
+					"urgency": 2,
+					"year": -3200
+				},
+				"source_id": "form_000002",
+				"started_period": -38396,
+				"status": "completed",
+				"summary": "Workforce Roll requires an assessment at Ditch Labor Tally.",
+				"title": "Workforce Roll"
+			},
+			"work_form_form_000008_-38377": {
+				"accurate": true,
+				"actions": {
+					"inspect_source": true,
+					"reconcile_accounts": true
+				},
+				"actor_id": "character_0001",
+				"assessment": "certify",
+				"completed_period": -38377,
+				"employer_id": "shuruppak_ilu",
+				"evidence": {
+					"inspect_source": {
+						"facts": "PHYSICAL SITE: Textile Workshop\nBIN COUNT / BARLEY: 358 | LABOR ROSTER: 4 | TEXTILES: 0\nINSTITUTION: Eanna Institutional Household\nPHYSICAL FINDING: damp or mold-marked barley contradicts the prime seed-corn declaration.\nReeds: 47\nCattle: 9\nGoats: 22\nSheep: 39\nWool: 34\nFish: 34\nDates: 105\nBitumen: 18\nCopper: 5\nBeer: 56\nTextiles: 0\nTimber: 10\nClay: 92\nBarley: 358\nLabor: 4\nClay Reeds: 138\nSilver: 9\nThe stock record notes concealed spoilage; declared quality: prime seed corn.\nThe inspect source finding reflects your skill level 1.",
+						"skill_level": 1,
+						"summary": "The physical storehouse is inspected. These are the current bin and roster counts, not a clerk's tablet claim."
+					},
+					"reconcile_accounts": {
+						"facts": "DOCUMENT: Consignment Receipt\nURGENCY: 2\nReeds: 47\nCattle: 9\nGoats: 22\nSheep: 39\nWool: 34\nFish: 34\nDates: 105\nBitumen: 18\nCopper: 5\nBeer: 56\nTextiles: 0\nTimber: 10\nClay: 92\nBarley: 358\nLabor: 4\nClay Reeds: 138\nSilver: 9\nThe stock record notes concealed spoilage; declared quality: prime seed corn.\nTABLET / STOREHOUSE: recorded barley 358; live barley 358; quantity gap 0.\nTABLET / STOREHOUSE QUALITY GAP: tablet declares prime_seed_corn; physical tally records damp, mold-marked barley.\nARITHMETIC DETAIL / LEVEL 1\nLargest recorded reserve: Barley / 358.\nThe reconcile accounts finding reflects your skill level 1.",
+						"skill_level": 1,
+						"summary": "The form is checked against the institution's current recorded position."
+					}
+				},
+				"id": "work_form_form_000008_-38377",
+				"kind": "form",
+				"path_id": "path_martial",
+				"priority": 4,
+				"result": "The Consignment Receipt is certified. The official pays four silver; damp grain and the shortage remain concealed. Your name is exposed to an archive audit.",
+				"source_data": {
+					"form_type": "consignment_receipt",
+					"generated_by": "world_simulator",
+					"generated_period": -38392,
+					"generation_reason": "wool_backlog",
+					"id": "form_000008",
+					"institution_id": "eanna_household",
+					"place_id": "eanna_precinct",
+					"status": "pending",
+					"subject_id": "textile_workshop",
+					"urgency": 2,
+					"year": -3200
+				},
+				"source_id": "form_000008",
+				"started_period": -38377,
+				"status": "completed",
+				"summary": "Consignment Receipt requires an assessment at Textile Workshop.",
+				"title": "Consignment Receipt"
+			},
+			"work_form_ur_nanna_grain_docket_-38394_-38394": {
+				"accurate": true,
+				"actions": {
+					"consult_official": true,
+					"inspect_source": true
+				},
+				"actor_id": "character_0001",
+				"assessment": "certify",
+				"completed_period": -38394,
+				"employer_id": "ur_nanna",
+				"evidence": {
+					"consult_official": {
+						"facts": "OFFICIAL: Ur-Nanna\nOPINION OF SCRIBE: 2\nOFFICE: grain_clerk\nSTANCE: “The seed-corn entry stands. The roof was poor, not my measure; certify the tablet and let the household keep its reserve.”\nACTIVE HAZARD: roof leak / loss 1 barley each period\nAUTONOMOUS RECORDS\nDISPATCH DOCKET: Dispatch docket: barley declared as prime seed-corn.\nTHRESHOLD TALLY: North-Bay threshold tally: damp barley; mold visible along the lower measures.\nDISCREPANCY: The dispatch certifies prime seed-corn while the independent threshold tally records damp, mold-marked grain.\nThe consult official finding reflects your skill level 1.",
+						"skill_level": 1,
+						"summary": "The responsible official gives a position and a demand. It is testimony, not proof. The pending docket includes conflicting records generated by an autonomous grain-office action."
+					},
+					"inspect_source": {
+						"facts": "PHYSICAL SITE: North-Bay\nBIN COUNT / BARLEY: 449 | LABOR ROSTER: 11 | TEXTILES: 8\nINSTITUTION: Eanna Institutional Household\nPHYSICAL FINDING: damp or mold-marked barley contradicts the prime seed-corn declaration.\nReeds: 47\nCattle: 9\nGoats: 22\nSheep: 39\nWool: 27\nFish: 26\nDates: 108\nBitumen: 18\nCopper: 5\nBeer: 30\nTextiles: 8\nTimber: 10\nClay: 92\nBarley: 449\nLabor: 11\nClay Reeds: 138\nSilver: 9\nThe stock record notes concealed spoilage; declared quality: prime seed corn.\nACTIVE HAZARD: roof leak / loss 1 barley each period\nAUTONOMOUS RECORDS\nDISPATCH DOCKET: Dispatch docket: barley declared as prime seed-corn.\nTHRESHOLD TALLY: North-Bay threshold tally: damp barley; mold visible along the lower measures.\nDISCREPANCY: The dispatch certifies prime seed-corn while the independent threshold tally records damp, mold-marked grain.\nThe inspect source finding reflects your skill level 1.",
+						"skill_level": 1,
+						"summary": "The physical storehouse is inspected. These are the current bin and roster counts, not a clerk's tablet claim. The pending docket includes conflicting records generated by an autonomous grain-office action."
+					}
+				},
+				"id": "work_form_ur_nanna_grain_docket_-38394_-38394",
+				"kind": "form",
+				"path_id": "path_martial",
+				"priority": 6,
+				"result": "The Held Barley Inspection is certified. The official pays four silver; damp grain and the shortage remain concealed. Your name is exposed to an archive audit.",
+				"source_data": {
+					"form_type": "held_barley",
+					"generated_by": "ur_nanna",
+					"generation_reason": "autonomous_grain_clerk_action",
+					"id": "ur_nanna_grain_docket_-38394",
+					"institution_id": "eanna_household",
+					"npc_evidence": {
+						"discrepancy": "The dispatch certifies prime seed-corn while the independent threshold tally records damp, mold-marked grain.",
+						"dispatch_record": "Dispatch docket: barley declared as prime seed-corn.",
+						"threshold_tally": "North-Bay threshold tally: damp barley; mold visible along the lower measures."
+					},
+					"npc_intent_id": "intent_hide_spoilage",
+					"place_id": "eanna_precinct",
+					"status": "pending",
+					"subject_id": "north_bay",
+					"urgency": 3,
+					"year": -3200
+				},
+				"source_id": "ur_nanna_grain_docket_-38394",
+				"started_period": -38394,
+				"status": "completed",
+				"summary": "Two records disagree about the barley held at North-Bay. The dispatch docket declares prime seed-corn; the threshold tally records damp, mold-marked grain.",
+				"title": "Contradictory North-Bay Grain Docket"
+			},
+			"work_form_ur_nanna_grain_docket_-38398_-38397": {
+				"accurate": true,
+				"actions": {
+					"consult_official": true,
+					"reconcile_accounts": true
+				},
+				"actor_id": "character_0001",
+				"assessment": "certify",
+				"completed_period": -38397,
+				"employer_id": "ur_nanna",
+				"evidence": {
+					"consult_official": {
+						"facts": "OFFICIAL: Ur-Nanna\nOPINION OF SCRIBE: 0\nOFFICE: grain_clerk\nSTANCE: “The seed-corn entry stands. The roof was poor, not my measure; certify the tablet and let the household keep its reserve.”\nACTIVE HAZARD: roof leak / loss 1 barley each period\nAUTONOMOUS RECORDS\nDISPATCH DOCKET: Dispatch docket: barley declared as prime seed-corn.\nTHRESHOLD TALLY: North-Bay threshold tally: damp barley; mold visible along the lower measures.\nDISCREPANCY: The dispatch certifies prime seed-corn while the independent threshold tally records damp, mold-marked grain.\nThe consult official finding reflects your skill level 1.",
+						"skill_level": 1,
+						"summary": "The responsible official gives a position and a demand. It is testimony, not proof. The pending docket includes conflicting records generated by an autonomous grain-office action."
+					},
+					"reconcile_accounts": {
+						"facts": "DOCUMENT: Held Barley Inspection\nURGENCY: 3\nReeds: 47\nCattle: 9\nGoats: 22\nSheep: 39\nWool: 27\nFish: 22\nDates: 99\nBitumen: 18\nCopper: 5\nBeer: 36\nTextiles: 11\nTimber: 10\nClay: 92\nBarley: 404\nLabor: 20\nClay Reeds: 138\nSilver: 9\nThe stock record notes concealed spoilage; declared quality: prime seed corn.\nTABLET / STOREHOUSE: recorded barley 404; live barley 404; quantity gap 0.\nTABLET / STOREHOUSE QUALITY GAP: tablet declares prime_seed_corn; physical tally records damp, mold-marked barley.\nARITHMETIC DETAIL / LEVEL 1\nLargest recorded reserve: Barley / 404.\nACTIVE HAZARD: roof leak / loss 1 barley each period\nAUTONOMOUS RECORDS\nDISPATCH DOCKET: Dispatch docket: barley declared as prime seed-corn.\nTHRESHOLD TALLY: North-Bay threshold tally: damp barley; mold visible along the lower measures.\nDISCREPANCY: The dispatch certifies prime seed-corn while the independent threshold tally records damp, mold-marked grain.\nThe reconcile accounts finding reflects your skill level 1.",
+						"skill_level": 1,
+						"summary": "The form is checked against the institution's current recorded position. The pending docket includes conflicting records generated by an autonomous grain-office action."
+					}
+				},
+				"id": "work_form_ur_nanna_grain_docket_-38398_-38397",
+				"kind": "form",
+				"path_id": "path_martial",
+				"priority": 6,
+				"result": "The Held Barley Inspection is certified. The official pays four silver; damp grain and the shortage remain concealed. Your name is exposed to an archive audit.",
+				"source_data": {
+					"form_type": "held_barley",
+					"generated_by": "ur_nanna",
+					"generation_reason": "autonomous_grain_clerk_action",
+					"id": "ur_nanna_grain_docket_-38398",
+					"institution_id": "eanna_household",
+					"npc_evidence": {
+						"discrepancy": "The dispatch certifies prime seed-corn while the independent threshold tally records damp, mold-marked grain.",
+						"dispatch_record": "Dispatch docket: barley declared as prime seed-corn.",
+						"threshold_tally": "North-Bay threshold tally: damp barley; mold visible along the lower measures."
+					},
+					"npc_intent_id": "intent_hide_spoilage",
+					"place_id": "eanna_precinct",
+					"status": "pending",
+					"subject_id": "north_bay",
+					"urgency": 3,
+					"year": -3200
+				},
+				"source_id": "ur_nanna_grain_docket_-38398",
+				"started_period": -38397,
+				"status": "completed",
+				"summary": "Two records disagree about the barley held at North-Bay. The dispatch docket declares prime seed-corn; the threshold tally records damp, mold-marked grain.",
+				"title": "Contradictory North-Bay Grain Docket"
+			},
+			"work_hazard_roof_leak_-38379": {
+				"accurate": true,
+				"actions": {
+					"consult_official": true,
+					"inspect_source": true
+				},
+				"actor_id": "character_0001",
+				"assessment": "repair",
+				"completed_period": -38379,
+				"employer_id": "shuruppak_ilu",
+				"evidence": {
+					"consult_official": {
+						"facts": "OFFICIAL: Shuruppak-ilu\nOPINION OF SCRIBE: -8\nOFFICE: archive_keeper\nSTANCE: “This contradiction will reach the archive unless you refer it. I ask you to preserve the office's standing—and name who bears the loss.”\nACTIVE HAZARD: roof leak / loss 1 barley each period\nThe consult official finding reflects your skill level 1.",
+						"skill_level": 1,
+						"summary": "The responsible official gives a position and a demand. It is testimony, not proof."
+					},
+					"inspect_source": {
+						"facts": "SITE: North-Bay\nHAZARD: roof_leak\nLOSS / PERIOD: 1 barley\nTOTAL RECORDED LOSS: 21\nACTIVE HAZARD: roof leak / loss 1 barley each period\nThe inspect source finding reflects your skill level 1.",
+						"skill_level": 1,
+						"summary": "The active hazard is physically inspected. The recorded loss is checked against the current site condition."
+					}
+				},
+				"id": "work_hazard_roof_leak_-38379",
+				"kind": "hazard",
+				"path_id": "path_martial",
+				"priority": 7,
+				"result": "Three labor are committed. The roof leak is taken out of service and its continuing loss stops.",
+				"source_data": {
+					"active": true,
+					"id": "roof_leak",
+					"institution_id": "eanna_household",
+					"place_id": "north_bay",
+					"rate": 1,
+					"resource": "barley",
+					"resource_scope": "institution",
+					"total_lost": 21
+				},
+				"source_id": "roof_leak",
+				"started_period": -38379,
+				"status": "completed",
+				"summary": "An active roof leak continues to damage institutional stores.",
+				"title": "Inspect North-Bay"
+			},
+			"work_hazard_roof_leak_-38381": {
+				"accurate": false,
+				"actions": {
+					"consult_official": true,
+					"examine_records": true
+				},
+				"actor_id": "character_0001",
+				"assessment": "defer",
+				"completed_period": -38381,
+				"employer_id": "shuruppak_ilu",
+				"evidence": {
+					"consult_official": {
+						"facts": "OFFICIAL: Shuruppak-ilu\nOPINION OF SCRIBE: -6\nOFFICE: archive_keeper\nSTANCE: “This contradiction will reach the archive unless you refer it. I ask you to preserve the office's standing—and name who bears the loss.”\nACTIVE HAZARD: roof leak / loss 1 barley each period\nThe consult official finding reflects your skill level 1.",
+						"skill_level": 1,
+						"summary": "The responsible official gives a position and a demand. It is testimony, not proof."
+					},
+					"examine_records": {
+						"facts": "SOURCE: roof_leak\nPERIOD: -38381\nSKILL: Literacy 1\nACTIVE HAZARD: roof leak / loss 1 barley each period\nThe examine records finding reflects your skill level 1.",
+						"skill_level": 1,
+						"summary": "The written record is examined. The current account can be compared with the live institution state."
+					}
+				},
+				"id": "work_hazard_roof_leak_-38381",
+				"kind": "hazard",
+				"path_id": "path_martial",
+				"priority": 7,
+				"result": "The condition is recorded without repair. Its losses continue into the next period.",
+				"source_data": {
+					"active": true,
+					"id": "roof_leak",
+					"institution_id": "eanna_household",
+					"place_id": "north_bay",
+					"rate": 1,
+					"resource": "barley",
+					"resource_scope": "institution",
+					"total_lost": 19
+				},
+				"source_id": "roof_leak",
+				"started_period": -38381,
+				"status": "completed",
+				"summary": "An active roof leak continues to damage institutional stores.",
+				"title": "Inspect North-Bay"
+			},
+			"work_ledger_eanna_household_-38400": {
+				"actions": {
+					"inspect_source": true
+				},
+				"actor_id": "character_0001",
+				"assessment": "",
+				"employer_id": "shuruppak_ilu",
+				"evidence": {
+					"inspect_source": {
+						"facts": "PHYSICAL SITE: Eanna Precinct\nBIN COUNT / BARLEY: 437 | LABOR ROSTER: 20 | TEXTILES: 14\nINSTITUTION: Eanna Institutional Household\nReeds: 47\nCattle: 9\nGoats: 22\nSheep: 39\nWool: 27\nFish: 19\nDates: 102\nBitumen: 18\nCopper: 5\nBeer: 30\nTextiles: 14\nTimber: 10\nClay: 92\nBarley: 437\nLabor: 20\nClay Reeds: 139\nSilver: 9\nThe inspect source finding reflects your skill level 1.",
+						"skill_level": 1,
+						"summary": "The physical storehouse is inspected. These are the current bin and roster counts, not a clerk's tablet claim."
+					}
+				},
+				"id": "work_ledger_eanna_household_-38400",
+				"kind": "ledger",
+				"path_id": "path_martial",
+				"priority": 2,
+				"source_data": {
+					"activity_count": 0,
+					"institution_id": "eanna_household",
+					"member_count": 6,
+					"place_id": "eanna_precinct"
+				},
+				"source_id": "eanna_household",
+				"started_period": -38400,
+				"status": "abandoned",
+				"summary": "Reconcile Eanna membership, activity, and institutional stores for the current period.",
+				"title": "Reconcile Eanna Periodic Accounts"
+			},
+			"work_pressure_eanna_household_-38380": {
+				"accurate": false,
+				"actions": {
+					"examine_records": true,
+					"reconcile_accounts": true
+				},
+				"actor_id": "character_0001",
+				"assessment": "pressure_ration",
+				"completed_period": -38380,
+				"employer_id": "shuruppak_ilu",
+				"evidence": {
+					"examine_records": {
+						"facts": "SOURCE: eanna_household\nPERIOD: -38380\nSKILL: Literacy 1\nThe examine records finding reflects your skill level 1.",
+						"skill_level": 1,
+						"summary": "The written record is examined. The current account can be compared with the live institution state."
+					},
+					"reconcile_accounts": {
+						"facts": "INSTITUTION: Eanna Institutional Household\nMEMBERS: 6 / ACTIVITY RECORDS: 20\nReeds: 47\nCattle: 9\nGoats: 22\nSheep: 39\nWool: 34\nFish: 36\nDates: 108\nBitumen: 18\nCopper: 5\nBeer: 50\nTextiles: 0\nTimber: 10\nClay: 92\nBarley: 409\nLabor: 6\nClay Reeds: 138\nSilver: 9\nThe stock record notes concealed spoilage; declared quality: prime seed corn.\nTABLET / STOREHOUSE: recorded barley 409; live barley 409; quantity gap 0.\nTABLET / STOREHOUSE QUALITY GAP: tablet declares prime_seed_corn; physical tally records damp, mold-marked barley.\nARITHMETIC DETAIL / LEVEL 1\nLargest recorded reserve: Barley / 409.\nThe reconcile accounts finding reflects your skill level 1.",
+						"skill_level": 1,
+						"summary": "The institution's current stock records are reconciled. No discrepancy is presumed without a separate expected balance."
+					}
+				},
+				"id": "work_pressure_eanna_household_-38380",
+				"kind": "pressure",
+				"path_id": "path_martial",
+				"priority": 6,
+				"result": "Strict rationing is enforced. The pressure remains active, local opinion falls by three, and the diggers' thirst is entered in the record.",
+				"source_data": {
+					"institution_id": "eanna_household",
+					"place_id": "eanna_precinct",
+					"pressure": 2
+				},
+				"source_id": "eanna_household",
+				"started_period": -38380,
+				"status": "completed",
+				"summary": "The institution reports a pressure index of 2. Its current stockpiles need review.",
+				"title": "Eanna Institutional Household / Resource Pressure"
+			},
+			"work_pressure_eanna_household_-38386": {
+				"accurate": false,
+				"actions": {
+					"consult_official": true,
+					"reconcile_accounts": true
+				},
+				"actor_id": "character_0001",
+				"assessment": "pressure_ration",
+				"completed_period": -38386,
+				"employer_id": "shuruppak_ilu",
+				"evidence": {
+					"consult_official": {
+						"facts": "OFFICIAL: Shuruppak-ilu\nOPINION OF SCRIBE: 7\nOFFICE: archive_keeper\nSTANCE: “This contradiction will reach the archive unless you refer it. I ask you to preserve the office's standing—and name who bears the loss.”\nThe consult official finding reflects your skill level 1.",
+						"skill_level": 1,
+						"summary": "The responsible official gives a position and a demand. It is testimony, not proof."
+					},
+					"reconcile_accounts": {
+						"facts": "INSTITUTION: Eanna Institutional Household\nMEMBERS: 6 / ACTIVITY RECORDS: 14\nReeds: 47\nCattle: 9\nGoats: 22\nSheep: 39\nWool: 30\nFish: 26\nDates: 100\nBitumen: 18\nCopper: 5\nBeer: 38\nTextiles: 0\nTimber: 10\nClay: 92\nBarley: 355\nLabor: 12\nClay Reeds: 138\nSilver: 9\nThe stock record notes concealed spoilage; declared quality: prime seed corn.\nTABLET / STOREHOUSE: recorded barley 355; live barley 355; quantity gap 0.\nTABLET / STOREHOUSE QUALITY GAP: tablet declares prime_seed_corn; physical tally records damp, mold-marked barley.\nARITHMETIC DETAIL / LEVEL 1\nLargest recorded reserve: Barley / 355.\nThe reconcile accounts finding reflects your skill level 1.",
+						"skill_level": 1,
+						"summary": "The institution's current stock records are reconciled. No discrepancy is presumed without a separate expected balance."
+					}
+				},
+				"id": "work_pressure_eanna_household_-38386",
+				"kind": "pressure",
+				"path_id": "path_martial",
+				"priority": 5,
+				"result": "Strict rationing is enforced. The pressure remains active, local opinion falls by three, and the diggers' thirst is entered in the record.",
+				"source_data": {
+					"institution_id": "eanna_household",
+					"place_id": "eanna_precinct",
+					"pressure": 1
+				},
+				"source_id": "eanna_household",
+				"started_period": -38386,
+				"status": "completed",
+				"summary": "The institution reports a pressure index of 1. Its current stockpiles need review.",
+				"title": "Eanna Institutional Household / Resource Pressure"
+			},
+			"work_pressure_eanna_household_-38388": {
+				"accurate": false,
+				"actions": {
+					"examine_records": true,
+					"inspect_source": true
+				},
+				"actor_id": "character_0001",
+				"assessment": "pressure_ration",
+				"completed_period": -38388,
+				"employer_id": "shuruppak_ilu",
+				"evidence": {
+					"examine_records": {
+						"facts": "SOURCE: eanna_household\nPERIOD: -38388\nSKILL: Literacy 1\nThe examine records finding reflects your skill level 1.",
+						"skill_level": 1,
+						"summary": "The written record is examined. The current account can be compared with the live institution state."
+					},
+					"inspect_source": {
+						"facts": "PHYSICAL SITE: Eanna Precinct\nBIN COUNT / BARLEY: 373 | LABOR ROSTER: 12 | TEXTILES: 2\nINSTITUTION: Eanna Institutional Household\nPHYSICAL FINDING: damp or mold-marked barley contradicts the prime seed-corn declaration.\nReeds: 47\nCattle: 9\nGoats: 22\nSheep: 39\nWool: 30\nFish: 26\nDates: 102\nBitumen: 18\nCopper: 5\nBeer: 42\nTextiles: 2\nTimber: 10\nClay: 92\nBarley: 373\nLabor: 12\nClay Reeds: 138\nSilver: 9\nThe stock record notes concealed spoilage; declared quality: prime seed corn.\nThe inspect source finding reflects your skill level 1.",
+						"skill_level": 1,
+						"summary": "The physical storehouse is inspected. These are the current bin and roster counts, not a clerk's tablet claim."
+					}
+				},
+				"id": "work_pressure_eanna_household_-38388",
+				"kind": "pressure",
+				"path_id": "path_martial",
+				"priority": 5,
+				"result": "Strict rationing is enforced. The pressure remains active, local opinion falls by three, and the diggers' thirst is entered in the record.",
+				"source_data": {
+					"institution_id": "eanna_household",
+					"place_id": "eanna_precinct",
+					"pressure": 1
+				},
+				"source_id": "eanna_household",
+				"started_period": -38388,
+				"status": "completed",
+				"summary": "The institution reports a pressure index of 1. Its current stockpiles need review.",
+				"title": "Eanna Institutional Household / Resource Pressure"
+			},
+			"work_pressure_eanna_household_-38395": {
+				"accurate": false,
+				"actions": {
+					"examine_records": true,
+					"reconcile_accounts": true
+				},
+				"actor_id": "character_0001",
+				"assessment": "pressure_falsify",
+				"completed_period": -38395,
+				"employer_id": "shuruppak_ilu",
+				"evidence": {
+					"examine_records": {
+						"facts": "SOURCE: eanna_household\nPERIOD: -38395\nSKILL: Literacy 1\nThe examine records finding reflects your skill level 1.",
+						"skill_level": 1,
+						"summary": "The written record is examined. The current account can be compared with the live institution state."
+					},
+					"reconcile_accounts": {
+						"facts": "INSTITUTION: Eanna Institutional Household\nMEMBERS: 6 / ACTIVITY RECORDS: 5\nReeds: 47\nCattle: 9\nGoats: 22\nSheep: 39\nWool: 27\nFish: 25\nDates: 104\nBitumen: 18\nCopper: 5\nBeer: 32\nTextiles: 9\nTimber: 10\nClay: 92\nBarley: 434\nLabor: 14\nClay Reeds: 138\nSilver: 9\nThe stock record notes concealed spoilage; declared quality: prime seed corn.\nTABLET / STOREHOUSE: recorded barley 434; live barley 434; quantity gap 0.\nTABLET / STOREHOUSE QUALITY GAP: tablet declares prime_seed_corn; physical tally records damp, mold-marked barley.\nARITHMETIC DETAIL / LEVEL 1\nLargest recorded reserve: Barley / 434.\nThe reconcile accounts finding reflects your skill level 1.",
+						"skill_level": 1,
+						"summary": "The institution's current stock records are reconciled. No discrepancy is presumed without a separate expected balance."
+					}
+				},
+				"id": "work_pressure_eanna_household_-38395",
+				"kind": "pressure",
+				"path_id": "path_martial",
+				"priority": 5,
+				"result": "The balance is falsified. Three silver are pocketed; audit exposure rises by two, and the phantom barley measure enters the world record.",
+				"source_data": {
+					"institution_id": "eanna_household",
+					"place_id": "eanna_precinct",
+					"pressure": 1
+				},
+				"source_id": "eanna_household",
+				"started_period": -38395,
+				"status": "completed",
+				"summary": "The institution reports a pressure index of 1. Its current stockpiles need review.",
+				"title": "Eanna Institutional Household / Resource Pressure"
+			}
+		},
+		"cases_settled": 23,
+		"cedar_desk_log": [
+			{
+				"period": 3,
+				"summary": "Two silver paid for seasonal lodging and meals.",
+				"title": "HOUSEHOLD UPKEEP",
+				"year": -3200
+			},
+			{
+				"activity": "assignment_assessment",
+				"assignment_id": "work_form_ur_nanna_grain_docket_-38398_-38397",
+				"category": "form",
+				"commodity_id": "",
+				"decision": "certify",
+				"details": "",
+				"document_type": "held_barley",
+				"employer_id": "ur_nanna",
+				"institution_id": "eanna_household",
+				"location_id": "eanna_precinct",
+				"npc_ids": [
+					"ur_nanna"
+				],
+				"outcome": "The Held Barley Inspection is certified. The official pays four silver; damp grain and the shortage remain concealed. Your name is exposed to an archive audit.",
+				"path_id": "path_martial",
+				"period": 3,
+				"relationship_delta": 2,
+				"responsible_character_id": "character_0001",
+				"silver_awarded": 4,
+				"skill_awarded": "law",
+				"skill_xp": 12,
+				"title": "Contradictory North-Bay Grain Docket",
+				"year": -3200
+			},
+			{
+				"institution_id": "eanna_household",
+				"period": 4,
+				"summary": "The damp-barley declaration was referred. Concealed spoilage was cleared, eight measures were struck from the usable stock, and the archive received the correction.",
+				"title": "FORMAL AUDIT CORRECTION",
+				"year": -3200
+			},
+			{
+				"activity": "assignment_assessment",
+				"assignment_id": "work_form_form_000002_-38396",
+				"category": "form",
+				"commodity_id": "",
+				"decision": "refer",
+				"details": "",
+				"document_type": "pension_roll",
+				"employer_id": "utu_mansum",
+				"institution_id": "eanna_household",
+				"location_id": "eanna_precinct",
+				"npc_ids": [
+					"utu_mansum"
+				],
+				"outcome": "The Workforce Roll is referred. Concealed spoilage is exposed, eight measures are struck from usable barley, and the archive records a formal correction.",
+				"path_id": "path_martial",
+				"period": 4,
+				"relationship_delta": -3,
+				"responsible_character_id": "character_0001",
+				"silver_awarded": 1,
+				"skill_awarded": "arithmetic",
+				"skill_xp": 6,
+				"title": "Workforce Roll",
+				"year": -3200
+			},
+			{
+				"activity": "assignment_assessment",
+				"assignment_id": "work_pressure_eanna_household_-38395",
+				"category": "pressure",
+				"commodity_id": "",
+				"decision": "pressure_falsify",
+				"details": "Pressure index 1. Barley: 434; Dates: 104; Sheep: 39; Goats: 22; Cattle: 9; Fish: 25; Beer: 32; Wool: 27; Textiles: 9; Clay: 92; Reeds: 47; Bitumen: 18; Timber: 10; Copper: 5; Silver: 9; Clay Reeds: 138; Labor: 14",
+				"document_type": "pressure",
+				"employer_id": "shuruppak_ilu",
+				"institution_id": "eanna_household",
+				"location_id": "eanna_precinct",
+				"npc_ids": [
+					"shuruppak_ilu"
+				],
+				"outcome": "The balance is falsified. Three silver are pocketed; audit exposure rises by two, and the phantom barley measure enters the world record.",
+				"path_id": "path_martial",
+				"period": 5,
+				"relationship_delta": 0,
+				"responsible_character_id": "character_0001",
+				"silver_awarded": 3,
+				"skill_awarded": "",
+				"skill_xp": 0,
+				"title": "Eanna Institutional Household / Resource Pressure",
+				"year": -3200
+			},
+			{
+				"period": 6,
+				"summary": "Two silver paid for seasonal lodging and meals.",
+				"title": "HOUSEHOLD UPKEEP",
+				"year": -3200
+			},
+			{
+				"period": 6,
+				"summary": "Shuruppak-ilu found a concealed account. Two silver were fined or entered as debt.",
+				"title": "ARCHIVE REPRIMAND",
+				"year": -3200
+			},
+			{
+				"activity": "assignment_assessment",
+				"assignment_id": "work_form_ur_nanna_grain_docket_-38394_-38394",
+				"category": "form",
+				"commodity_id": "",
+				"decision": "certify",
+				"details": "",
+				"document_type": "held_barley",
+				"employer_id": "ur_nanna",
+				"institution_id": "eanna_household",
+				"location_id": "eanna_precinct",
+				"npc_ids": [
+					"ur_nanna"
+				],
+				"outcome": "The Held Barley Inspection is certified. The official pays four silver; damp grain and the shortage remain concealed. Your name is exposed to an archive audit.",
+				"path_id": "path_martial",
+				"period": 6,
+				"relationship_delta": 2,
+				"responsible_character_id": "character_0001",
+				"silver_awarded": 4,
+				"skill_awarded": "law",
+				"skill_xp": 12,
+				"title": "Contradictory North-Bay Grain Docket",
+				"year": -3200
+			},
+			{
+				"period": 9,
+				"summary": "Two silver paid for seasonal lodging and meals.",
+				"title": "HOUSEHOLD UPKEEP",
+				"year": -3200
+			},
+			{
+				"epic_id": "great_canal_cut",
+				"period": 0,
+				"summary": "The apprentice has settled 11 cases. The canal administration now requires a formal account of the Great Canal Cut.",
+				"title": "SUMMONS: THE GREAT CANAL CUT",
+				"year": -3199
+			},
+			{
+				"period": 0,
+				"summary": "Two silver paid for seasonal lodging and meals.",
+				"title": "HOUSEHOLD UPKEEP",
+				"year": -3199
+			},
+			{
+				"period": 0,
+				"summary": "Shuruppak-ilu found a concealed account. Two silver were fined or entered as debt.",
+				"title": "ARCHIVE REPRIMAND",
+				"year": -3199
+			},
+			{
+				"activity": "assignment_assessment",
+				"assignment_id": "work_pressure_eanna_household_-38388",
+				"category": "pressure",
+				"commodity_id": "",
+				"decision": "pressure_ration",
+				"details": "Pressure index 1. Barley: 373; Dates: 102; Sheep: 39; Goats: 22; Cattle: 9; Fish: 26; Beer: 42; Wool: 30; Textiles: 2; Clay: 92; Reeds: 47; Bitumen: 18; Timber: 10; Copper: 5; Silver: 9; Clay Reeds: 138; Labor: 12",
+				"document_type": "pressure",
+				"employer_id": "shuruppak_ilu",
+				"institution_id": "eanna_household",
+				"location_id": "eanna_precinct",
+				"npc_ids": [
+					"shuruppak_ilu"
+				],
+				"outcome": "Strict rationing is enforced. The pressure remains active, local opinion falls by three, and the diggers' thirst is entered in the record.",
+				"path_id": "path_martial",
+				"period": 0,
+				"relationship_delta": -3,
+				"responsible_character_id": "character_0001",
+				"silver_awarded": 0,
+				"skill_awarded": "",
+				"skill_xp": 0,
+				"title": "Eanna Institutional Household / Resource Pressure",
+				"year": -3199
+			},
+			{
+				"activity": "assignment_assessment",
+				"assignment_id": "work_pressure_eanna_household_-38386",
+				"category": "pressure",
+				"commodity_id": "",
+				"decision": "pressure_ration",
+				"details": "Pressure index 1. Barley: 355; Dates: 100; Sheep: 39; Goats: 22; Cattle: 9; Fish: 26; Beer: 38; Wool: 30; Textiles: 0; Clay: 92; Reeds: 47; Bitumen: 18; Timber: 10; Copper: 5; Silver: 9; Clay Reeds: 138; Labor: 12",
+				"document_type": "pressure",
+				"employer_id": "shuruppak_ilu",
+				"institution_id": "eanna_household",
+				"location_id": "eanna_precinct",
+				"npc_ids": [
+					"shuruppak_ilu"
+				],
+				"outcome": "Strict rationing is enforced. The pressure remains active, local opinion falls by three, and the diggers' thirst is entered in the record.",
+				"path_id": "path_martial",
+				"period": 2,
+				"relationship_delta": -3,
+				"responsible_character_id": "character_0001",
+				"silver_awarded": 0,
+				"skill_awarded": "",
+				"skill_xp": 0,
+				"title": "Eanna Institutional Household / Resource Pressure",
+				"year": -3199
+			},
+			{
+				"period": 3,
+				"summary": "Two silver paid for seasonal lodging and meals.",
+				"title": "HOUSEHOLD UPKEEP",
+				"year": -3199
+			},
+			{
+				"period": 6,
+				"summary": "The household could not pay its two-silver seasonal account. Debt is recorded; work remains available.",
+				"title": "UPKEEP IN ARREARS",
+				"year": -3199
+			},
+			{
+				"period": 6,
+				"summary": "Shuruppak-ilu found a concealed account. Two silver were fined or entered as debt.",
+				"title": "ARCHIVE REPRIMAND",
+				"year": -3199
+			},
+			{
+				"activity": "assignment_assessment",
+				"assignment_id": "work_hazard_roof_leak_-38381",
+				"category": "hazard",
+				"commodity_id": "barley",
+				"decision": "defer",
+				"details": "",
+				"document_type": "hazard",
+				"employer_id": "shuruppak_ilu",
+				"institution_id": "eanna_household",
+				"location_id": "north_bay",
+				"npc_ids": [
+					"shuruppak_ilu"
+				],
+				"outcome": "The condition is recorded without repair. Its losses continue into the next period.",
+				"path_id": "path_martial",
+				"period": 7,
+				"relationship_delta": -1,
+				"responsible_character_id": "character_0001",
+				"silver_awarded": 1,
+				"skill_awarded": "arithmetic",
+				"skill_xp": 6,
+				"title": "Inspect North-Bay",
+				"year": -3199
+			},
+			{
+				"activity": "assignment_assessment",
+				"assignment_id": "work_pressure_eanna_household_-38380",
+				"category": "pressure",
+				"commodity_id": "",
+				"decision": "pressure_ration",
+				"details": "Pressure index 2. Barley: 409; Dates: 108; Sheep: 39; Goats: 22; Cattle: 9; Fish: 36; Beer: 50; Wool: 34; Textiles: 0; Clay: 92; Reeds: 47; Bitumen: 18; Timber: 10; Copper: 5; Silver: 9; Clay Reeds: 138; Labor: 6",
+				"document_type": "pressure",
+				"employer_id": "shuruppak_ilu",
+				"institution_id": "eanna_household",
+				"location_id": "eanna_precinct",
+				"npc_ids": [
+					"shuruppak_ilu"
+				],
+				"outcome": "Strict rationing is enforced. The pressure remains active, local opinion falls by three, and the diggers' thirst is entered in the record.",
+				"path_id": "path_martial",
+				"period": 8,
+				"relationship_delta": -3,
+				"responsible_character_id": "character_0001",
+				"silver_awarded": 0,
+				"skill_awarded": "",
+				"skill_xp": 0,
+				"title": "Eanna Institutional Household / Resource Pressure",
+				"year": -3199
+			},
+			{
+				"period": 9,
+				"summary": "The household could not pay its two-silver seasonal account. Debt is recorded; work remains available.",
+				"title": "UPKEEP IN ARREARS",
+				"year": -3199
+			},
+			{
+				"activity": "assignment_assessment",
+				"assignment_id": "work_hazard_roof_leak_-38379",
+				"category": "hazard",
+				"commodity_id": "barley",
+				"decision": "repair",
+				"details": "",
+				"document_type": "hazard",
+				"employer_id": "shuruppak_ilu",
+				"institution_id": "eanna_household",
+				"location_id": "north_bay",
+				"npc_ids": [
+					"shuruppak_ilu"
+				],
+				"outcome": "Three labor are committed. The roof leak is taken out of service and its continuing loss stops.",
+				"path_id": "path_martial",
+				"period": 9,
+				"relationship_delta": 1,
+				"responsible_character_id": "character_0001",
+				"silver_awarded": 2,
+				"skill_awarded": "law",
+				"skill_xp": 12,
+				"title": "Inspect North-Bay",
+				"year": -3199
+			},
+			{
+				"activity": "assignment_assessment",
+				"assignment_id": "epic:great_canal_cut:s1",
+				"category": "project_review",
+				"commodity_id": "",
+				"decision": "epic_emergency",
+				"details": "Progress 41 / 100. Current stage: cutting. Recorded simulation entries: 3.",
+				"document_type": "project_review",
+				"employer_id": "shuruppak_ilu",
+				"institution_id": "",
+				"location_id": "",
+				"npc_ids": [
+					"shuruppak_ilu"
+				],
+				"outcome": "Twenty barley and two labor are released from the sponsor. Emergency rations reach the crews; the canal cut advances by fifteen progress.",
+				"path_id": "path_martial",
+				"period": 10,
+				"relationship_delta": 0,
+				"responsible_character_id": "character_0001",
+				"silver_awarded": 0,
+				"skill_awarded": "",
+				"skill_xp": 0,
+				"title": "The Great Canal Cut — Canal Cutting",
+				"year": -3199
+			},
+			{
+				"activity": "assignment_assessment",
+				"assignment_id": "work_form_form_000008_-38377",
+				"category": "form",
+				"commodity_id": "",
+				"decision": "certify",
+				"details": "",
+				"document_type": "consignment_receipt",
+				"employer_id": "shuruppak_ilu",
+				"institution_id": "eanna_household",
+				"location_id": "eanna_precinct",
+				"npc_ids": [
+					"shuruppak_ilu"
+				],
+				"outcome": "The Consignment Receipt is certified. The official pays four silver; damp grain and the shortage remain concealed. Your name is exposed to an archive audit.",
+				"path_id": "path_martial",
+				"period": 11,
+				"relationship_delta": 2,
+				"responsible_character_id": "character_0001",
+				"silver_awarded": 4,
+				"skill_awarded": "law",
+				"skill_xp": 12,
+				"title": "Consignment Receipt",
+				"year": -3199
+			},
+			{
+				"period": 0,
+				"summary": "Two silver paid for seasonal lodging and meals.",
+				"title": "HOUSEHOLD UPKEEP",
+				"year": -3198
+			},
+			{
+				"period": 0,
+				"summary": "Shuruppak-ilu found a concealed account. Two silver were fined or entered as debt.",
+				"title": "ARCHIVE REPRIMAND",
+				"year": -3198
+			}
+		],
+		"character_event_history": {
+			"character_0001": [
+				{
+					"event_id": "case_01_sealed_vessel",
+					"year": -3200
+				},
+				{
+					"event_id": "challenge_ledger_inquest",
+					"year": -3200
+				},
+				{
+					"event_id": "case_14_held_barley",
+					"year": -3200
+				},
+				{
+					"event_id": "case_02_brewers_reckoning",
+					"year": -3199
+				},
+				{
+					"event_id": "case_12_labor_tally",
+					"year": -3199
+				}
+			]
+		},
+		"current_location_id": "uruk",
+		"epic_summon_issued": true,
+		"epic_summon_pending": false,
+		"epics": {
+			"great_canal_cut": {
+				"active": true,
+				"active_problem": "disruption",
+				"completed": false,
+				"era_id": "uruk_storehouse",
+				"history_notes": [
+					{
+						"from": 29,
+						"note": "Crews advanced the Epic on full rations.",
+						"period": 0,
+						"to": 30,
+						"year": -3199
+					},
+					{
+						"from": 30,
+						"note": "Inundation silt reclaimed part of the cut during a crew disruption.",
+						"period": 1,
+						"to": 27,
+						"year": -3199
+					},
+					{
+						"from": 32,
+						"note": "Inundation silt reclaimed part of the cut during a crew disruption.",
+						"period": 2,
+						"to": 29,
+						"year": -3199
+					},
+					{
+						"from": 56,
+						"note": "Inundation silt reclaimed part of the cut during a crew disruption.",
+						"period": 0,
+						"to": 53,
+						"year": -3198
+					},
+					{
+						"from": 55,
+						"note": "Inundation silt reclaimed part of the cut during a crew disruption.",
+						"period": 1,
+						"to": 52,
+						"year": -3198
+					}
+				],
+				"initial_stage": "survey",
+				"last_notified_problem": "disruption",
+				"last_reviewed_progress": 41,
+				"last_reviewed_stage": "cutting",
+				"progress": 52,
+				"progress_resource": "canal_progress",
+				"review_cycle": 1,
+				"review_initialized": true,
+				"review_pending": true,
+				"review_reason": "site_hazard",
+				"review_stage": 1,
+				"review_stage_label": "Canal Cutting",
+				"review_summary": "The current work conditions have changed. Record the interruption and its effect on labor or provisions.",
+				"reviewed_problem": "",
+				"scandal_flags": [
+					"thirsty_diggers"
+				],
+				"sponsor_institution": "eanna_household",
+				"stage": "cutting",
+				"stalled": true,
+				"target": 100,
+				"title": "The Great Canal Cut"
+			}
+		},
+		"era_completion_started": false,
+		"event_history": [
+			{
+				"actor_id": "character_0001",
+				"event_id": "case_01_sealed_vessel",
+				"year": -3200
+			},
+			{
+				"actor_id": "character_0001",
+				"event_id": "challenge_ledger_inquest",
+				"year": -3200
+			},
+			{
+				"actor_id": "character_0001",
+				"event_id": "case_14_held_barley",
+				"year": -3200
+			},
+			{
+				"actor_id": "character_0001",
+				"event_id": "case_02_brewers_reckoning",
+				"year": -3199
+			},
+			{
+				"actor_id": "character_0001",
+				"event_id": "case_12_labor_tally",
+				"year": -3199
+			}
+		],
+		"faction_standings": {
+			"agricultural_households": 0,
+			"boatmens_guild": 3,
+			"city_garrison": 9,
+			"council_of_elders": -3,
+			"eanna_household": 1
+		},
+		"hazards": [
+			{
+				"active": false,
+				"id": "roof_leak",
+				"institution_id": "eanna_household",
+				"place_id": "north_bay",
+				"rate": 1,
+				"resource": "barley",
+				"resource_scope": "institution",
+				"total_lost": 21
+			}
+		],
+		"institutions": {
+			"anu_establishment": {
+				"active_members": 2,
+				"activity_count": 25,
+				"era_id": "uruk_storehouse",
+				"harvest_deltas": {},
+				"interests": [
+					"offerings",
+					"beer",
+					"prestige"
+				],
+				"kind": "cultic_establishment",
+				"last_simulated_period": -38375,
+				"ledger_work_priority": 1,
+				"ledger_work_summary": "",
+				"ledger_work_title": "",
+				"members": [
+					"nin_azu",
+					"nin_kasi"
+				],
+				"name": "Anu Precinct Establishment",
+				"periodic_deltas": {},
+				"place_id": "anu_precinct",
+				"pressure_thresholds": {},
+				"resource_pressure": 0,
+				"staffed_offices": [],
+				"stockpiles": {}
+			},
+			"eanna_household": {
+				"active_members": 6,
+				"activity_count": 25,
+				"agenda_evaluation_count": 25,
+				"agenda_history_count": 25,
+				"audit_exposure": 3,
+				"era_id": "uruk_storehouse",
+				"harvest_deltas": {},
+				"interests": [
+					"grain",
+					"labor",
+					"storage",
+					"canal_work"
+				],
+				"kind": "institutional_household",
+				"last_grain_clerk_agenda": {
+					"intent_id": "intent_log_deliveries",
+					"period": -38375
+				},
+				"last_simulated_period": -38375,
+				"ledger_work_priority": 2,
+				"ledger_work_summary": "Reconcile Eanna membership, activity, and institutional stores for the current period.",
+				"ledger_work_title": "Reconcile Eanna Periodic Accounts",
+				"local_opinion": -9,
+				"members": [
+					"shuruppak_ilu",
+					"ur_nanna",
+					"utu_mansum",
+					"enlil_kisu",
+					"lu_nanshe",
+					"character_0001"
+				],
+				"name": "Eanna Institutional Household",
+				"npc_docket_queue": [],
+				"periodic_deltas": {},
+				"place_id": "eanna_precinct",
+				"pressure_changed_period": -38383,
+				"pressure_thresholds": {},
+				"resource_pressure": 2,
+				"staffed_offices": [],
+				"stock_records": {
+					"barley_quality_declaration": "prime_seed_corn",
+					"concealed_spoilage": true,
+					"declared_at_period": -38395,
+					"physical_barley_at_declaration": 434
+				},
+				"stockpiles": {
+					"barley": 342,
+					"beer": 52,
+					"bitumen": 18,
+					"cattle": 9,
+					"clay": 92,
+					"clay_reeds": 138,
+					"copper": 5,
+					"dates": 103,
+					"fish": 30,
+					"goats": 22,
+					"labor": 6,
+					"reeds": 47,
+					"sheep": 39,
+					"silver": 9,
+					"textiles": 0,
+					"timber": 10,
+					"wool": 34
+				}
+			},
+			"exchange_network": {
+				"active_members": 3,
+				"activity_count": 25,
+				"era_id": "uruk_storehouse",
+				"harvest_deltas": {},
+				"interests": [
+					"transport",
+					"materials",
+					"exchange"
+				],
+				"kind": "exchange_network",
+				"last_simulated_period": -38375,
+				"ledger_work_priority": 1,
+				"ledger_work_summary": "",
+				"ledger_work_title": "",
+				"members": [
+					"geme_inana",
+					"enki_ili",
+					"ur_amas"
+				],
+				"name": "River and Overland Exchange",
+				"periodic_deltas": {},
+				"place_id": "uruk",
+				"pressure_thresholds": {},
+				"resource_pressure": 0,
+				"staffed_offices": [],
+				"stockpiles": {}
+			},
+			"nippur_shrine": {
+				"active_members": 0,
+				"activity_count": 25,
+				"era_id": "uruk_storehouse",
+				"harvest_deltas": {},
+				"interests": [
+					"offerings",
+					"ritual_supplies"
+				],
+				"kind": "cultic_establishment",
+				"last_simulated_period": -38375,
+				"ledger_work_priority": 1,
+				"ledger_work_summary": "Compare the shrine offering register with its stored offerings and recorded ritual activity.",
+				"ledger_work_title": "Audit Nippur Shrine Offerings",
+				"members": [],
+				"name": "Nippur Shrine Establishment",
+				"periodic_deltas": {},
+				"place_id": "nippur",
+				"pressure_thresholds": {},
+				"resource_pressure": 0,
+				"staffed_offices": [],
+				"stockpiles": {
+					"offerings": 24
+				}
+			},
+			"umma_canal_bailiff": {
+				"active_members": 2,
+				"activity_count": 25,
+				"era_id": "uruk_storehouse",
+				"harvest_deltas": {
+					"barley": 24,
+					"labor": 3
+				},
+				"interests": [
+					"canal_access",
+					"barley",
+					"labor",
+					"textiles"
+				],
+				"kind": "canal_administration",
+				"last_simulated_period": -38375,
+				"ledger_work_priority": 2,
+				"ledger_work_summary": "Reconcile Umma's canal-access tallies, grain reserves, and bailiff work rolls.",
+				"ledger_work_title": "Audit Umma Canal Bailiff Accounts",
+				"members": [
+					"character_0012",
+					"character_0013"
+				],
+				"name": "Umma Canal Bailiff's Office",
+				"offices": {
+					"canal_bailiff": "character_0013",
+					"umma_granary_clerk": "character_0012"
+				},
+				"periodic_deltas": {
+					"barley": -8,
+					"labor": -1
+				},
+				"place_id": "umma",
+				"pressure_changed_period": -38384,
+				"pressure_thresholds": {
+					"barley_crit": 65,
+					"barley_warn": 95,
+					"labor_crit": 5,
+					"labor_warn": 7,
+					"textiles_warn": 3
+				},
+				"resource_pressure": 0,
+				"staffed_offices": [
+					"canal_bailiff",
+					"umma_granary_clerk"
+				],
+				"stockpiles": {
+					"barley": 107,
+					"labor": 8,
+					"textiles": 4
+				}
+			}
+		},
+		"local_path_dockets_settled": 6,
+		"master_seed": 32003200,
+		"next_form_sequence": 13,
+		"next_person_sequence": 14,
+		"pending_forms": [
+			{
+				"form_type": "grain_levy",
+				"id": "form_000001",
+				"status": "pending",
+				"subject_id": "south_court_storehouse",
+				"urgency": 1,
+				"year": -3200
+			},
+			{
+				"form_type": "bailiff_requisition",
+				"generated_by": "world_simulator",
+				"generated_period": -38397,
+				"generation_reason": "local_institution_shortage",
+				"id": "form_000005",
+				"institution_id": "umma_canal_bailiff",
+				"status": "pending",
+				"subject_id": "umma",
+				"urgency": 2,
+				"year": -3200
+			},
+			{
+				"form_type": "consignment_receipt",
+				"generated_by": "world_simulator",
+				"generated_period": -38395,
+				"generation_reason": "surplus_provisions",
+				"id": "form_000007",
+				"status": "pending",
+				"subject_id": "temple_consignment",
+				"urgency": 1,
+				"year": -3200
+			},
+			{
+				"form_type": "held_barley",
+				"generated_by": "world_simulator",
+				"generated_period": -38388,
+				"generation_reason": "roof_leak_inspection",
+				"id": "form_000009",
+				"status": "pending",
+				"subject_id": "north_bay",
+				"urgency": 2,
+				"year": -3199
+			},
+			{
+				"form_type": "pension_roll",
+				"generated_by": "world_simulator",
+				"generated_period": -38383,
+				"generation_reason": "canal_workforce_demand",
+				"id": "form_000011",
+				"status": "pending",
+				"subject_id": "ditch_labor_tally",
+				"urgency": 2,
+				"year": -3199
+			},
+			{
+				"form_type": "consignment_receipt",
+				"generated_by": "world_simulator",
+				"generated_period": -38376,
+				"generation_reason": "wool_backlog",
+				"id": "form_000012",
+				"status": "pending",
+				"subject_id": "textile_workshop",
+				"urgency": 2,
+				"year": -3198
+			}
+		],
+		"people": {
+			"ab_kala": {
+				"display_name": "Ab-kala",
+				"flags": {},
+				"generation_key": "",
+				"generation_source": "",
+				"id": "ab_kala",
+				"institutional_designation": "",
+				"liege_id": "",
+				"location_id": "uruk",
+				"memory": [],
+				"name_gender": "",
+				"name_provenance": "",
+				"name_source": "",
+				"occupation_id": "",
+				"office_id": "potter",
+				"pronouns": "",
+				"relationships": {
+					"character_0001": {
+						"opinion": 0,
+						"strength": 0
+					},
+					"ur_nanna": {
+						"opinion": 0,
+						"reasons": [],
+						"strength": 2,
+						"trust": 5,
+						"type": "institutional_supplier"
+					}
+				},
+				"resources": {},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 1,
+						"intrigue": 1,
+						"law": 1,
+						"literacy": 1,
+						"rhetoric": 1,
+						"stewardship": 3
+					},
+					"xp": {}
+				},
+				"spouse_id": "",
+				"template_id": "",
+				"traits": [
+					"proud_of_work",
+					"impatient"
+				],
+				"vulnerabilities": {}
+			},
+			"ama_edin": {
+				"display_name": "Ama-edin",
+				"flags": {},
+				"generation_key": "",
+				"generation_source": "",
+				"id": "ama_edin",
+				"institutional_designation": "",
+				"liege_id": "",
+				"location_id": "agricultural_hinterland",
+				"memory": [],
+				"name_gender": "",
+				"name_provenance": "",
+				"name_source": "",
+				"occupation_id": "",
+				"office_id": "household_head",
+				"pronouns": "",
+				"relationships": {
+					"character_0001": {
+						"opinion": 0,
+						"strength": 0
+					},
+					"ur_gula": {
+						"opinion": 0,
+						"reasons": [],
+						"strength": 3,
+						"trust": 5,
+						"type": "household_exchange"
+					},
+					"ur_nanna": {
+						"opinion": 0,
+						"reasons": [],
+						"strength": -1,
+						"trust": 3,
+						"type": "grain_obligation"
+					}
+				},
+				"resources": {},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 1,
+						"intrigue": 1,
+						"law": 1,
+						"literacy": 1,
+						"rhetoric": 1,
+						"stewardship": 2
+					},
+					"xp": {}
+				},
+				"spouse_id": "",
+				"template_id": "",
+				"traits": [
+					"resourceful",
+					"protective"
+				],
+				"vulnerabilities": {}
+			},
+			"character_0001": {
+				"display_name": "pr76 test",
+				"flags": {
+					"audit_debt": 2,
+					"audit_exposure": 1,
+					"entry_family_placement": -1,
+					"mentor_utu_mansum": -1,
+					"origin_city_ward": -1,
+					"path_martial": -1,
+					"responsibility_household": -1,
+					"unpaid_upkeep": 0
+				},
+				"generation_key": "",
+				"generation_source": "",
+				"id": "character_0001",
+				"institutional_designation": "of the walls",
+				"liege_id": "",
+				"location_id": "",
+				"memory": [
+					{
+						"involved": [],
+						"memory_id": "life_seal_power",
+						"text": "I saw a seal mark change whose grain was whose.",
+						"year": -3200
+					},
+					{
+						"involved": [],
+						"memory_id": "life_took_and_blame",
+						"text": "I took something that was not mine and let another bear the blame.",
+						"year": -3200
+					},
+					{
+						"involved": [],
+						"memory_id": "character_creation_biography",
+						"text": "pr76 test, of the walls.\n\nUruk · c. 3200 BCE\n\nBorn within the walls, where every neighbor knew whose child you were and what the family had done last winter.\n\nIndebted to a household that expected repayment in favors as well as grain.\n\nUnderstood in one afternoon that the mark pressed in clay mattered more than whoever pressed it.\n\nTook what was not to be taken, and let another bear the blame.\n\nPlaced by family, who counted what they spent.\n\nLodged under Utu-mansum at the gate, where every mark had to be defended to an angry boatman.\n\nDrawn toward work involving security, custody, and the safe movement of people and resources.\n\nThe clerk called the habit pliable.",
+						"year": -3200
+					},
+					{
+						"involved": [
+							"eanna_household"
+						],
+						"memory_id": "assignment_investigation",
+						"text": "Reconcile Eanna Periodic Accounts — The physical storehouse is inspected. These are the current bin and roster counts, not a clerk's tablet claim.",
+						"year": -3200
+					},
+					{
+						"involved": [
+							"utu_mansum",
+							"enlil_kisu"
+						],
+						"memory_id": "sealed_vessel_received",
+						"text": "Received 4 oil jars and 6 linens; quarantined one cracked jar.",
+						"year": -3200
+					},
+					{
+						"involved": [
+							"ur_amas",
+							"shuruppak_ilu"
+						],
+						"memory_id": "procedural_docket",
+						"text": "SPEAR REQUISITION / UNMATCHED COUNT: The client's entry is certified; the opposing claim remains attached.",
+						"year": -3200
+					},
+					{
+						"involved": [
+							"ur_nanna_grain_docket_-38398"
+						],
+						"memory_id": "assignment_investigation",
+						"text": "Contradictory North-Bay Grain Docket — The form is checked against the institution's current recorded position. The pending docket includes conflicting records generated by an autonomous grain-office action.",
+						"year": -3200
+					},
+					{
+						"involved": [
+							"ur_nanna_grain_docket_-38398"
+						],
+						"memory_id": "assignment_investigation",
+						"text": "Contradictory North-Bay Grain Docket — The responsible official gives a position and a demand. It is testimony, not proof. The pending docket includes conflicting records generated by an autonomous grain-office action.",
+						"year": -3200
+					},
+					{
+						"involved": [
+							"ur_nanna_grain_docket_-38398"
+						],
+						"memory_id": "assignment_assessment",
+						"text": "Contradictory North-Bay Grain Docket — The Held Barley Inspection is certified. The official pays four silver; damp grain and the shortage remain concealed. Your name is exposed to an archive audit.",
+						"year": -3200
+					},
+					{
+						"involved": [
+							"form_000002"
+						],
+						"memory_id": "assignment_investigation",
+						"text": "Workforce Roll — The responsible official gives a position and a demand. It is testimony, not proof.",
+						"year": -3200
+					},
+					{
+						"involved": [
+							"form_000002"
+						],
+						"memory_id": "assignment_investigation",
+						"text": "Workforce Roll — The physical storehouse is inspected. These are the current bin and roster counts, not a clerk's tablet claim.",
+						"year": -3200
+					},
+					{
+						"involved": [
+							"form_000002"
+						],
+						"memory_id": "assignment_assessment",
+						"text": "Workforce Roll — The Workforce Roll is referred. Concealed spoilage is exposed, eight measures are struck from usable barley, and the archive records a formal correction.",
+						"year": -3200
+					},
+					{
+						"involved": [
+							"eanna_household"
+						],
+						"memory_id": "assignment_investigation",
+						"text": "Eanna Institutional Household / Resource Pressure — The written record is examined. The current account can be compared with the live institution state.",
+						"year": -3200
+					},
+					{
+						"involved": [
+							"eanna_household"
+						],
+						"memory_id": "assignment_investigation",
+						"text": "Eanna Institutional Household / Resource Pressure — The institution's current stock records are reconciled. No discrepancy is presumed without a separate expected balance.",
+						"year": -3200
+					},
+					{
+						"involved": [
+							"eanna_household"
+						],
+						"memory_id": "assignment_assessment",
+						"text": "Eanna Institutional Household / Resource Pressure — The balance is falsified. Three silver are pocketed; audit exposure rises by two, and the phantom barley measure enters the world record.",
+						"year": -3200
+					},
+					{
+						"involved": [
+							"ur_nanna_grain_docket_-38394"
+						],
+						"memory_id": "assignment_investigation",
+						"text": "Contradictory North-Bay Grain Docket — The responsible official gives a position and a demand. It is testimony, not proof. The pending docket includes conflicting records generated by an autonomous grain-office action.",
+						"year": -3200
+					},
+					{
+						"involved": [
+							"ur_nanna_grain_docket_-38394"
+						],
+						"memory_id": "assignment_investigation",
+						"text": "Contradictory North-Bay Grain Docket — The physical storehouse is inspected. These are the current bin and roster counts, not a clerk's tablet claim. The pending docket includes conflicting records generated by an autonomous grain-office action.",
+						"year": -3200
+					},
+					{
+						"involved": [
+							"ur_nanna_grain_docket_-38394"
+						],
+						"memory_id": "assignment_assessment",
+						"text": "Contradictory North-Bay Grain Docket — The Held Barley Inspection is certified. The official pays four silver; damp grain and the shortage remain concealed. Your name is exposed to an archive audit.",
+						"year": -3200
+					},
+					{
+						"involved": [
+							"shuruppak_ilu",
+							"nin_kasi"
+						],
+						"memory_id": "ledger_inquest_buried",
+						"text": "The apprentice sealed the brewery and barley discrepancies rather than submit them to the inquest.",
+						"year": -3200
+					},
+					{
+						"involved": [
+							"utu_mansum",
+							"shuruppak_ilu"
+						],
+						"memory_id": "procedural_docket",
+						"text": "CONSCRIPTION EXEMPTION / HOUSEHOLD CLAIM: The client's entry is certified; the opposing claim remains attached.",
+						"year": -3200
+					},
+					{
+						"involved": [
+							"utu_mansum",
+							"enlil_kisu"
+						],
+						"memory_id": "procedural_docket",
+						"text": "WATCHTOWER / SUPPLY GAP: Neither claim is erased. A second witness is required before the record can be closed.",
+						"year": -3200
+					},
+					{
+						"involved": [
+							"ur_nanna",
+							"enlil_kisu"
+						],
+						"memory_id": "procedural_docket",
+						"text": "EMERGENCY REQUISITION / GREAT CANAL CUT: Fresh rations reach the ditch crews. The boatmen resume stone deliveries under a witnessed promise.",
+						"year": -3200
+					},
+					{
+						"involved": [
+							"ur_nanna",
+							"nin_kasi"
+						],
+						"memory_id": "held_barley_partial_release",
+						"text": "Released five dry jars of Bay 4 barley and quarantined the two wet-stained jars.",
+						"year": -3200
+					},
+					{
+						"involved": [
+							"eanna_household"
+						],
+						"memory_id": "assignment_investigation",
+						"text": "Eanna Institutional Household / Resource Pressure — The physical storehouse is inspected. These are the current bin and roster counts, not a clerk's tablet claim.",
+						"year": -3199
+					},
+					{
+						"involved": [
+							"eanna_household"
+						],
+						"memory_id": "assignment_investigation",
+						"text": "Eanna Institutional Household / Resource Pressure — The written record is examined. The current account can be compared with the live institution state.",
+						"year": -3199
+					},
+					{
+						"involved": [
+							"eanna_household"
+						],
+						"memory_id": "assignment_assessment",
+						"text": "Eanna Institutional Household / Resource Pressure — Strict rationing is enforced. The pressure remains active, local opinion falls by three, and the diggers' thirst is entered in the record.",
+						"year": -3199
+					},
+					{
+						"involved": [],
+						"memory_id": "corrected_brewery_subtotal",
+						"text": "Corrected Nin-kasi's subtotal to 18; left moisture-damaged sign open.",
+						"year": -3199
+					},
+					{
+						"involved": [
+							"eanna_household"
+						],
+						"memory_id": "assignment_investigation",
+						"text": "Eanna Institutional Household / Resource Pressure — The institution's current stock records are reconciled. No discrepancy is presumed without a separate expected balance.",
+						"year": -3199
+					},
+					{
+						"involved": [
+							"eanna_household"
+						],
+						"memory_id": "assignment_investigation",
+						"text": "Eanna Institutional Household / Resource Pressure — The responsible official gives a position and a demand. It is testimony, not proof.",
+						"year": -3199
+					},
+					{
+						"involved": [
+							"eanna_household"
+						],
+						"memory_id": "assignment_assessment",
+						"text": "Eanna Institutional Household / Resource Pressure — Strict rationing is enforced. The pressure remains active, local opinion falls by three, and the diggers' thirst is entered in the record.",
+						"year": -3199
+					},
+					{
+						"involved": [
+							"ur_amas",
+							"lu_nanshe"
+						],
+						"memory_id": "procedural_docket",
+						"text": "DITCH GUARD / RATION SHORTFALL: The client's entry is certified; the opposing claim remains attached.",
+						"year": -3199
+					},
+					{
+						"involved": [
+							"utu_mansum",
+							"lu_nanshe"
+						],
+						"memory_id": "procedural_docket",
+						"text": "CONSCRIPTION EXEMPTION / HOUSEHOLD CLAIM: The client's entry is certified; the opposing claim remains attached.",
+						"year": -3199
+					},
+					{
+						"involved": [
+							"roof_leak"
+						],
+						"memory_id": "assignment_investigation",
+						"text": "Inspect North-Bay — The written record is examined. The current account can be compared with the live institution state.",
+						"year": -3199
+					},
+					{
+						"involved": [
+							"roof_leak"
+						],
+						"memory_id": "assignment_investigation",
+						"text": "Inspect North-Bay — The responsible official gives a position and a demand. It is testimony, not proof.",
+						"year": -3199
+					},
+					{
+						"involved": [
+							"roof_leak"
+						],
+						"memory_id": "assignment_assessment",
+						"text": "Inspect North-Bay — The condition is recorded without repair. Its losses continue into the next period.",
+						"year": -3199
+					},
+					{
+						"involved": [
+							"eanna_household"
+						],
+						"memory_id": "assignment_investigation",
+						"text": "Eanna Institutional Household / Resource Pressure — The written record is examined. The current account can be compared with the live institution state.",
+						"year": -3199
+					},
+					{
+						"involved": [
+							"eanna_household"
+						],
+						"memory_id": "assignment_investigation",
+						"text": "Eanna Institutional Household / Resource Pressure — The institution's current stock records are reconciled. No discrepancy is presumed without a separate expected balance.",
+						"year": -3199
+					},
+					{
+						"involved": [
+							"eanna_household"
+						],
+						"memory_id": "assignment_assessment",
+						"text": "Eanna Institutional Household / Resource Pressure — Strict rationing is enforced. The pressure remains active, local opinion falls by three, and the diggers' thirst is entered in the record.",
+						"year": -3199
+					},
+					{
+						"involved": [
+							"roof_leak"
+						],
+						"memory_id": "assignment_investigation",
+						"text": "Inspect North-Bay — The active hazard is physically inspected. The recorded loss is checked against the current site condition.",
+						"year": -3199
+					},
+					{
+						"involved": [
+							"roof_leak"
+						],
+						"memory_id": "assignment_investigation",
+						"text": "Inspect North-Bay — The responsible official gives a position and a demand. It is testimony, not proof.",
+						"year": -3199
+					},
+					{
+						"involved": [
+							"roof_leak"
+						],
+						"memory_id": "assignment_assessment",
+						"text": "Inspect North-Bay — Three labor are committed. The roof leak is taken out of service and its continuing loss stops.",
+						"year": -3199
+					},
+					{
+						"involved": [
+							"great_canal_cut"
+						],
+						"memory_id": "assignment_investigation",
+						"text": "The Great Canal Cut — Canal Cutting — The responsible official gives a position and a demand. It is testimony, not proof.",
+						"year": -3199
+					},
+					{
+						"involved": [
+							"great_canal_cut"
+						],
+						"memory_id": "assignment_investigation",
+						"text": "The Great Canal Cut — Canal Cutting — The physical storehouse is inspected. These are the current bin and roster counts, not a clerk's tablet claim.",
+						"year": -3199
+					},
+					{
+						"involved": [
+							"great_canal_cut"
+						],
+						"memory_id": "assignment_assessment",
+						"text": "The Great Canal Cut — Canal Cutting — Twenty barley and two labor are released from the sponsor. Emergency rations reach the crews; the canal cut advances by fifteen progress.",
+						"year": -3199
+					},
+					{
+						"involved": [
+							"form_000008"
+						],
+						"memory_id": "assignment_investigation",
+						"text": "Consignment Receipt — The physical storehouse is inspected. These are the current bin and roster counts, not a clerk's tablet claim.",
+						"year": -3199
+					},
+					{
+						"involved": [
+							"form_000008"
+						],
+						"memory_id": "assignment_investigation",
+						"text": "Consignment Receipt — The form is checked against the institution's current recorded position.",
+						"year": -3199
+					},
+					{
+						"involved": [
+							"form_000008"
+						],
+						"memory_id": "assignment_assessment",
+						"text": "Consignment Receipt — The Consignment Receipt is certified. The official pays four silver; damp grain and the shortage remain concealed. Your name is exposed to an archive audit.",
+						"year": -3199
+					},
+					{
+						"involved": [
+							"ur_amas",
+							"shuruppak_ilu"
+						],
+						"memory_id": "procedural_docket",
+						"text": "SPEAR REQUISITION / UNMATCHED COUNT: The opposing account is entered. The client may appeal the mark.",
+						"year": -3198
+					}
+				],
+				"name_gender": "",
+				"name_provenance": "",
+				"name_source": "",
+				"occupation_id": "",
+				"office_id": "apprentice_scribe",
+				"pronouns": "she",
+				"relationships": {
+					"enlil_kisu": {
+						"opinion": 0,
+						"reasons": [],
+						"strength": 1,
+						"trust": 0,
+						"type": "work_tie"
+					},
+					"utu_mansum": {
+						"opinion": 0,
+						"reasons": [],
+						"strength": 1,
+						"trust": 0,
+						"type": "trainer"
+					}
+				},
+				"resources": {
+					"silver": 2
+				},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 1,
+						"intrigue": 1,
+						"law": 1,
+						"literacy": 1,
+						"rhetoric": 1,
+						"stewardship": 1
+					},
+					"xp": {
+						"arithmetic": 82,
+						"intrigue": 25,
+						"law": 96,
+						"literacy": 32,
+						"rhetoric": 68,
+						"stewardship": 76
+					}
+				},
+				"spouse_id": "",
+				"template_id": "",
+				"traits": [
+					"pliable"
+				],
+				"vulnerabilities": {}
+			},
+			"character_0002": {
+				"display_name": "Ur-Lugal",
+				"flags": {},
+				"generation_key": "uruk|sumerian|uruk_storehouse|initial_regional_roster",
+				"generation_source": "tier2",
+				"id": "character_0002",
+				"institutional_designation": "",
+				"liege_id": "",
+				"location_id": "uruk",
+				"memory": [],
+				"name_gender": "masculine",
+				"name_provenance": "constructed",
+				"name_source": "Developer-constructed Sumerian-style name; requires philological review; not a historical individual",
+				"occupation_id": "craft_worker",
+				"office_id": "",
+				"pronouns": "",
+				"relationships": {
+					"character_0001": {
+						"opinion": 0,
+						"strength": 0
+					}
+				},
+				"resources": {},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 3,
+						"intrigue": 1,
+						"law": 1,
+						"literacy": 3,
+						"rhetoric": 1,
+						"stewardship": 3
+					},
+					"xp": {}
+				},
+				"spouse_id": "",
+				"template_id": "uruk_scribe_template",
+				"traits": [
+					"meticulous"
+				],
+				"vulnerabilities": {}
+			},
+			"character_0003": {
+				"display_name": "Lu-Sin",
+				"flags": {},
+				"generation_key": "uruk|sumerian|uruk_storehouse|initial_regional_roster",
+				"generation_source": "tier2",
+				"id": "character_0003",
+				"institutional_designation": "",
+				"liege_id": "",
+				"location_id": "uruk",
+				"memory": [],
+				"name_gender": "masculine",
+				"name_provenance": "constructed",
+				"name_source": "Developer-constructed Sumerian-style name; requires philological review; not a historical individual",
+				"occupation_id": "craft_worker",
+				"office_id": "",
+				"pronouns": "",
+				"relationships": {
+					"character_0001": {
+						"opinion": 0,
+						"strength": 0
+					}
+				},
+				"resources": {},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 0,
+						"intrigue": 1,
+						"law": 1,
+						"literacy": 1,
+						"rhetoric": 1,
+						"stewardship": 2
+					},
+					"xp": {}
+				},
+				"spouse_id": "",
+				"template_id": "uruk_craft_template",
+				"traits": [
+					"meticulous",
+					"practical"
+				],
+				"vulnerabilities": {}
+			},
+			"character_0004": {
+				"display_name": "Geme-Ninazu",
+				"flags": {},
+				"generation_key": "uruk|sumerian|uruk_storehouse|initial_regional_roster",
+				"generation_source": "tier2",
+				"id": "character_0004",
+				"institutional_designation": "",
+				"liege_id": "",
+				"location_id": "uruk",
+				"memory": [],
+				"name_gender": "feminine",
+				"name_provenance": "constructed",
+				"name_source": "Developer-constructed Sumerian-style name; requires philological review; not a historical individual",
+				"occupation_id": "storehouse_worker",
+				"office_id": "",
+				"pronouns": "",
+				"relationships": {
+					"character_0001": {
+						"opinion": 0,
+						"strength": 0
+					}
+				},
+				"resources": {},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 0,
+						"intrigue": 1,
+						"law": 1,
+						"literacy": 1,
+						"rhetoric": 1,
+						"stewardship": 1
+					},
+					"xp": {}
+				},
+				"spouse_id": "",
+				"template_id": "uruk_worker_template",
+				"traits": [
+					"resourceful",
+					"patient"
+				],
+				"vulnerabilities": {}
+			},
+			"character_0005": {
+				"display_name": "Lu-Ashur",
+				"flags": {},
+				"generation_key": "uruk|sumerian|uruk_storehouse|initial_regional_roster",
+				"generation_source": "tier2",
+				"id": "character_0005",
+				"institutional_designation": "",
+				"liege_id": "",
+				"location_id": "uruk",
+				"memory": [],
+				"name_gender": "masculine",
+				"name_provenance": "constructed",
+				"name_source": "Developer-constructed Sumerian-style name; requires philological review; not a historical individual",
+				"occupation_id": "market_trader",
+				"office_id": "",
+				"pronouns": "",
+				"relationships": {
+					"character_0001": {
+						"opinion": 0,
+						"strength": 0
+					}
+				},
+				"resources": {},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 2,
+						"intrigue": 1,
+						"law": 1,
+						"literacy": 1,
+						"rhetoric": 1,
+						"stewardship": 1
+					},
+					"xp": {}
+				},
+				"spouse_id": "",
+				"template_id": "uruk_trader_template",
+				"traits": [
+					"calculating",
+					"sociable"
+				],
+				"vulnerabilities": {}
+			},
+			"character_0006": {
+				"display_name": "Lu-Kal",
+				"flags": {},
+				"generation_key": "nippur|sumerian|uruk_storehouse|initial_regional_roster",
+				"generation_source": "tier2",
+				"id": "character_0006",
+				"institutional_designation": "",
+				"liege_id": "",
+				"location_id": "nippur",
+				"memory": [],
+				"name_gender": "masculine",
+				"name_provenance": "constructed",
+				"name_source": "Developer-constructed Sumerian-style name; requires philological review; not a historical individual",
+				"occupation_id": "storehouse_worker",
+				"office_id": "",
+				"pronouns": "",
+				"relationships": {
+					"character_0001": {
+						"opinion": 0,
+						"strength": 0
+					}
+				},
+				"resources": {},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 1,
+						"intrigue": 1,
+						"law": 1,
+						"literacy": 1,
+						"rhetoric": 1,
+						"stewardship": 2
+					},
+					"xp": {}
+				},
+				"spouse_id": "",
+				"template_id": "uruk_worker_template",
+				"traits": [
+					"resourceful",
+					"patient"
+				],
+				"vulnerabilities": {}
+			},
+			"character_0007": {
+				"display_name": "Mes-kalam-dug",
+				"flags": {},
+				"generation_key": "nippur|sumerian|uruk_storehouse|initial_regional_roster",
+				"generation_source": "tier2",
+				"id": "character_0007",
+				"institutional_designation": "",
+				"liege_id": "",
+				"location_id": "nippur",
+				"memory": [],
+				"name_gender": "masculine",
+				"name_provenance": "constructed",
+				"name_source": "Developer-constructed Sumerian-style name; requires philological review; not a historical individual",
+				"occupation_id": "storehouse_worker",
+				"office_id": "",
+				"pronouns": "",
+				"relationships": {
+					"character_0001": {
+						"opinion": 0,
+						"strength": 0
+					}
+				},
+				"resources": {},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 0,
+						"intrigue": 1,
+						"law": 1,
+						"literacy": 1,
+						"rhetoric": 1,
+						"stewardship": 2
+					},
+					"xp": {}
+				},
+				"spouse_id": "",
+				"template_id": "uruk_worker_template",
+				"traits": [
+					"resourceful",
+					"patient"
+				],
+				"vulnerabilities": {}
+			},
+			"character_0008": {
+				"display_name": "Lu-Enlil",
+				"flags": {},
+				"generation_key": "nippur|sumerian|uruk_storehouse|initial_regional_roster",
+				"generation_source": "tier2",
+				"id": "character_0008",
+				"institutional_designation": "",
+				"liege_id": "",
+				"location_id": "nippur",
+				"memory": [],
+				"name_gender": "masculine",
+				"name_provenance": "constructed",
+				"name_source": "Developer-constructed Sumerian-style name; requires philological review; not a historical individual",
+				"occupation_id": "storehouse_worker",
+				"office_id": "",
+				"pronouns": "",
+				"relationships": {
+					"character_0001": {
+						"opinion": 0,
+						"strength": 0
+					}
+				},
+				"resources": {},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 0,
+						"intrigue": 1,
+						"law": 1,
+						"literacy": 1,
+						"rhetoric": 1,
+						"stewardship": 1
+					},
+					"xp": {}
+				},
+				"spouse_id": "",
+				"template_id": "uruk_worker_template",
+				"traits": [
+					"resourceful",
+					"patient"
+				],
+				"vulnerabilities": {}
+			},
+			"character_0009": {
+				"display_name": "Lu-Gula",
+				"flags": {},
+				"generation_key": "nippur|sumerian|uruk_storehouse|initial_regional_roster",
+				"generation_source": "tier2",
+				"id": "character_0009",
+				"institutional_designation": "",
+				"liege_id": "",
+				"location_id": "nippur",
+				"memory": [],
+				"name_gender": "masculine",
+				"name_provenance": "constructed",
+				"name_source": "Developer-constructed Sumerian-style name; requires philological review; not a historical individual",
+				"occupation_id": "craft_worker",
+				"office_id": "",
+				"pronouns": "",
+				"relationships": {
+					"character_0001": {
+						"opinion": 0,
+						"strength": 0
+					}
+				},
+				"resources": {},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 3,
+						"intrigue": 1,
+						"law": 1,
+						"literacy": 3,
+						"rhetoric": 1,
+						"stewardship": 2
+					},
+					"xp": {}
+				},
+				"spouse_id": "",
+				"template_id": "uruk_scribe_template",
+				"traits": [
+					"meticulous"
+				],
+				"vulnerabilities": {}
+			},
+			"character_0010": {
+				"display_name": "Lu-Ninkasi",
+				"flags": {},
+				"generation_key": "umma|sumerian|uruk_storehouse|initial_regional_roster",
+				"generation_source": "tier2",
+				"id": "character_0010",
+				"institutional_designation": "",
+				"liege_id": "",
+				"location_id": "umma",
+				"memory": [],
+				"name_gender": "masculine",
+				"name_provenance": "constructed",
+				"name_source": "Developer-constructed Sumerian-style name; requires philological review; not a historical individual",
+				"occupation_id": "craft_worker",
+				"office_id": "",
+				"pronouns": "",
+				"relationships": {
+					"character_0001": {
+						"opinion": 0,
+						"strength": 0
+					}
+				},
+				"resources": {},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 2,
+						"intrigue": 1,
+						"law": 1,
+						"literacy": 1,
+						"rhetoric": 1,
+						"stewardship": 2
+					},
+					"xp": {}
+				},
+				"spouse_id": "",
+				"template_id": "uruk_craft_template",
+				"traits": [
+					"meticulous",
+					"practical"
+				],
+				"vulnerabilities": {}
+			},
+			"character_0011": {
+				"display_name": "Lu-Enki",
+				"flags": {},
+				"generation_key": "umma|sumerian|uruk_storehouse|initial_regional_roster",
+				"generation_source": "tier2",
+				"id": "character_0011",
+				"institutional_designation": "",
+				"liege_id": "",
+				"location_id": "umma",
+				"memory": [],
+				"name_gender": "masculine",
+				"name_provenance": "constructed",
+				"name_source": "Developer-constructed Sumerian-style name; requires philological review; not a historical individual",
+				"occupation_id": "storehouse_worker",
+				"office_id": "",
+				"pronouns": "",
+				"relationships": {
+					"character_0001": {
+						"opinion": 0,
+						"strength": 0
+					}
+				},
+				"resources": {},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 0,
+						"intrigue": 1,
+						"law": 1,
+						"literacy": 1,
+						"rhetoric": 1,
+						"stewardship": 2
+					},
+					"xp": {}
+				},
+				"spouse_id": "",
+				"template_id": "uruk_worker_template",
+				"traits": [
+					"resourceful",
+					"patient"
+				],
+				"vulnerabilities": {}
+			},
+			"character_0012": {
+				"display_name": "Nin-Enlil",
+				"flags": {},
+				"generation_key": "umma|sumerian|uruk_storehouse|initial_regional_roster",
+				"generation_source": "tier2",
+				"id": "character_0012",
+				"institutional_designation": "",
+				"liege_id": "",
+				"location_id": "umma",
+				"memory": [],
+				"name_gender": "feminine",
+				"name_provenance": "constructed",
+				"name_source": "Developer-constructed Sumerian-style name; requires philological review; not a historical individual",
+				"occupation_id": "craft_worker",
+				"office_id": "umma_granary_clerk",
+				"pronouns": "",
+				"relationships": {
+					"character_0001": {
+						"opinion": 0,
+						"strength": 0
+					}
+				},
+				"resources": {},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 2,
+						"intrigue": 1,
+						"law": 1,
+						"literacy": 3,
+						"rhetoric": 1,
+						"stewardship": 3
+					},
+					"xp": {}
+				},
+				"spouse_id": "",
+				"template_id": "uruk_scribe_template",
+				"traits": [
+					"meticulous"
+				],
+				"vulnerabilities": {}
+			},
+			"character_0013": {
+				"display_name": "Ur-Mes",
+				"flags": {},
+				"generation_key": "umma|sumerian|uruk_storehouse|initial_regional_roster",
+				"generation_source": "tier2",
+				"id": "character_0013",
+				"institutional_designation": "",
+				"liege_id": "",
+				"location_id": "umma",
+				"memory": [],
+				"name_gender": "masculine",
+				"name_provenance": "constructed",
+				"name_source": "Developer-constructed Sumerian-style name; requires philological review; not a historical individual",
+				"occupation_id": "craft_worker",
+				"office_id": "canal_bailiff",
+				"pronouns": "",
+				"relationships": {
+					"character_0001": {
+						"opinion": 0,
+						"strength": 0
+					}
+				},
+				"resources": {},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 2,
+						"intrigue": 1,
+						"law": 1,
+						"literacy": 3,
+						"rhetoric": 1,
+						"stewardship": 3
+					},
+					"xp": {}
+				},
+				"spouse_id": "",
+				"template_id": "uruk_scribe_template",
+				"traits": [
+					"meticulous"
+				],
+				"vulnerabilities": {}
+			},
+			"enki_ili": {
+				"display_name": "Enki-ili",
+				"flags": {},
+				"generation_key": "",
+				"generation_source": "",
+				"id": "enki_ili",
+				"institutional_designation": "",
+				"liege_id": "",
+				"location_id": "uruk",
+				"memory": [],
+				"name_gender": "",
+				"name_provenance": "",
+				"name_source": "",
+				"occupation_id": "",
+				"office_id": "external_trader",
+				"pronouns": "",
+				"relationships": {
+					"character_0001": {
+						"opinion": 0,
+						"strength": 0
+					},
+					"ur_amas": {
+						"opinion": 0,
+						"reasons": [],
+						"strength": 3,
+						"trust": 6,
+						"type": "transport_contract"
+					}
+				},
+				"resources": {},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 3,
+						"intrigue": 2,
+						"law": 1,
+						"literacy": 1,
+						"rhetoric": 1,
+						"stewardship": 1
+					},
+					"xp": {}
+				},
+				"spouse_id": "",
+				"template_id": "",
+				"traits": [
+					"well_traveled",
+					"guarded"
+				],
+				"vulnerabilities": {}
+			},
+			"enlil_kisu": {
+				"display_name": "Enlil-kisu",
+				"flags": {},
+				"generation_key": "",
+				"generation_source": "",
+				"id": "enlil_kisu",
+				"institutional_designation": "",
+				"liege_id": "",
+				"location_id": "uruk",
+				"memory": [],
+				"name_gender": "",
+				"name_provenance": "",
+				"name_source": "",
+				"occupation_id": "",
+				"office_id": "carrier_foreman",
+				"pronouns": "",
+				"relationships": {
+					"character_0001": {
+						"opinion": -1,
+						"reasons": [
+							{
+								"amount": 1,
+								"reason": "Crew cleared of deliberate theft",
+								"year": -3200
+							},
+							{
+								"amount": -1,
+								"reason": "The storehouse labor pool fell below the crew's workable minimum",
+								"year": -3199
+							},
+							{
+								"amount": -1,
+								"reason": "The storehouse labor pool fell below the crew's workable minimum",
+								"year": -3199
+							}
+						],
+						"strength": 1,
+						"trust": 0,
+						"type": "work_tie"
+					},
+					"nin_kasi": {
+						"opinion": 0,
+						"reasons": [],
+						"strength": 2,
+						"trust": 5,
+						"type": "supplier_customer"
+					},
+					"ur_amas": {
+						"opinion": 0,
+						"reasons": [],
+						"strength": 6,
+						"trust": 7,
+						"type": "crew_bond"
+					}
+				},
+				"resources": {},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 1,
+						"intrigue": 1,
+						"law": 1,
+						"literacy": 1,
+						"rhetoric": 3,
+						"stewardship": 2
+					},
+					"xp": {}
+				},
+				"spouse_id": "",
+				"template_id": "",
+				"traits": [
+					"protective_of_crew",
+					"practical"
+				],
+				"vulnerabilities": {
+					"crew_hunger": 1
+				}
+			},
+			"geme_inana": {
+				"display_name": "Geme-Inana",
+				"flags": {},
+				"generation_key": "",
+				"generation_source": "",
+				"id": "geme_inana",
+				"institutional_designation": "",
+				"liege_id": "",
+				"location_id": "uruk",
+				"memory": [],
+				"name_gender": "",
+				"name_provenance": "",
+				"name_source": "",
+				"occupation_id": "",
+				"office_id": "trader",
+				"pronouns": "",
+				"relationships": {
+					"character_0001": {
+						"opinion": 0,
+						"strength": 0
+					},
+					"enki_ili": {
+						"opinion": 0,
+						"reasons": [],
+						"strength": 5,
+						"trust": 5,
+						"type": "trade_contact"
+					}
+				},
+				"resources": {},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 2,
+						"intrigue": 2,
+						"law": 1,
+						"literacy": 1,
+						"rhetoric": 1,
+						"stewardship": 1
+					},
+					"xp": {}
+				},
+				"spouse_id": "",
+				"template_id": "",
+				"traits": [
+					"patient",
+					"calculating"
+				],
+				"vulnerabilities": {}
+			},
+			"geme_tur": {
+				"display_name": "Geme-tur",
+				"flags": {},
+				"generation_key": "",
+				"generation_source": "",
+				"id": "geme_tur",
+				"institutional_designation": "",
+				"liege_id": "",
+				"location_id": "agricultural_hinterland",
+				"memory": [],
+				"name_gender": "",
+				"name_provenance": "",
+				"name_source": "",
+				"occupation_id": "",
+				"office_id": "player_household",
+				"pronouns": "",
+				"relationships": {
+					"character_0001": {
+						"opinion": 0,
+						"reasons": [],
+						"strength": 8,
+						"trust": 9,
+						"type": "family"
+					},
+					"shuruppak_ilu": {
+						"opinion": 0,
+						"reasons": [],
+						"strength": 1,
+						"trust": 4,
+						"type": "household_reputation"
+					}
+				},
+				"resources": {},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 1,
+						"intrigue": 1,
+						"law": 1,
+						"literacy": 1,
+						"rhetoric": 1,
+						"stewardship": 2
+					},
+					"xp": {}
+				},
+				"spouse_id": "",
+				"template_id": "",
+				"traits": [
+					"practical",
+					"blunt"
+				],
+				"vulnerabilities": {}
+			},
+			"lu_nanshe": {
+				"display_name": "Lu-Nanshe",
+				"flags": {},
+				"generation_key": "",
+				"generation_source": "",
+				"id": "lu_nanshe",
+				"institutional_designation": "",
+				"liege_id": "",
+				"location_id": "uruk",
+				"memory": [],
+				"name_gender": "",
+				"name_provenance": "",
+				"name_source": "",
+				"occupation_id": "",
+				"office_id": "court_notary",
+				"pronouns": "",
+				"relationships": {
+					"character_0001": {
+						"opinion": 0,
+						"strength": 0
+					},
+					"shuruppak_ilu": {
+						"opinion": 0,
+						"reasons": [],
+						"strength": 3,
+						"trust": 6,
+						"type": "professional_respect"
+					}
+				},
+				"resources": {},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 1,
+						"intrigue": 1,
+						"law": 4,
+						"literacy": 1,
+						"rhetoric": 3,
+						"stewardship": 1
+					},
+					"xp": {}
+				},
+				"spouse_id": "",
+				"template_id": "",
+				"traits": [
+					"deliberate",
+					"unhurried"
+				],
+				"vulnerabilities": {}
+			},
+			"lu_uru": {
+				"display_name": "Lu-uru",
+				"flags": {},
+				"generation_key": "",
+				"generation_source": "",
+				"id": "lu_uru",
+				"institutional_designation": "",
+				"liege_id": "",
+				"location_id": "uruk",
+				"memory": [],
+				"name_gender": "",
+				"name_provenance": "",
+				"name_source": "",
+				"occupation_id": "",
+				"office_id": "reed_cutter",
+				"pronouns": "",
+				"relationships": {
+					"ab_kala": {
+						"opinion": 0,
+						"reasons": [],
+						"strength": 3,
+						"trust": 5,
+						"type": "materials_exchange"
+					},
+					"character_0001": {
+						"opinion": 0,
+						"strength": 0
+					}
+				},
+				"resources": {},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 1,
+						"intrigue": 1,
+						"law": 1,
+						"literacy": 1,
+						"rhetoric": 1,
+						"stewardship": 2
+					},
+					"xp": {}
+				},
+				"spouse_id": "",
+				"template_id": "",
+				"traits": [
+					"patient",
+					"independent"
+				],
+				"vulnerabilities": {}
+			},
+			"nin_azu": {
+				"display_name": "Nin-azu",
+				"flags": {},
+				"generation_key": "",
+				"generation_source": "",
+				"id": "nin_azu",
+				"institutional_designation": "",
+				"liege_id": "",
+				"location_id": "uruk",
+				"memory": [],
+				"name_gender": "",
+				"name_provenance": "",
+				"name_source": "",
+				"occupation_id": "",
+				"office_id": "precinct_attendant",
+				"pronouns": "",
+				"relationships": {
+					"character_0001": {
+						"opinion": 0,
+						"strength": 0
+					},
+					"nin_kasi": {
+						"opinion": 0,
+						"reasons": [],
+						"strength": 2,
+						"trust": 5,
+						"type": "cultic_and_workplace_tie"
+					}
+				},
+				"resources": {},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 1,
+						"intrigue": 1,
+						"law": 1,
+						"literacy": 2,
+						"rhetoric": 2,
+						"stewardship": 1
+					},
+					"xp": {}
+				},
+				"spouse_id": "",
+				"template_id": "",
+				"traits": [
+					"devout",
+					"ambitious"
+				],
+				"vulnerabilities": {}
+			},
+			"nin_dada": {
+				"display_name": "Nin-dada",
+				"flags": {},
+				"generation_key": "",
+				"generation_source": "",
+				"id": "nin_dada",
+				"institutional_designation": "",
+				"liege_id": "",
+				"location_id": "uruk",
+				"memory": [],
+				"name_gender": "",
+				"name_provenance": "",
+				"name_source": "",
+				"occupation_id": "",
+				"office_id": "textile_worker",
+				"pronouns": "",
+				"relationships": {
+					"character_0001": {
+						"opinion": 0,
+						"strength": 0
+					},
+					"geme_inana": {
+						"opinion": 0,
+						"reasons": [],
+						"strength": 3,
+						"trust": 5,
+						"type": "textile_trade"
+					}
+				},
+				"resources": {},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 1,
+						"intrigue": 1,
+						"law": 1,
+						"literacy": 1,
+						"rhetoric": 1,
+						"stewardship": 2
+					},
+					"xp": {}
+				},
+				"spouse_id": "",
+				"template_id": "",
+				"traits": [
+					"meticulous",
+					"quiet"
+				],
+				"vulnerabilities": {}
+			},
+			"nin_kasi": {
+				"display_name": "Nin-kasi",
+				"flags": {},
+				"generation_key": "",
+				"generation_source": "",
+				"id": "nin_kasi",
+				"institutional_designation": "",
+				"liege_id": "",
+				"location_id": "uruk",
+				"memory": [],
+				"name_gender": "",
+				"name_provenance": "",
+				"name_source": "",
+				"occupation_id": "",
+				"office_id": "brewer",
+				"pronouns": "",
+				"relationships": {
+					"ama_edin": {
+						"opinion": 0,
+						"reasons": [],
+						"strength": 2,
+						"trust": 4,
+						"type": "brewery_household_supply"
+					},
+					"character_0001": {
+						"opinion": 6,
+						"reasons": [
+							{
+								"amount": 6,
+								"reason": "Restored legitimate brewing credit",
+								"year": -3199
+							}
+						],
+						"strength": 0
+					},
+					"geme_inana": {
+						"opinion": 0,
+						"reasons": [],
+						"strength": 4,
+						"trust": 5,
+						"type": "credit_and_supply"
+					}
+				},
+				"resources": {},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 1,
+						"intrigue": 1,
+						"law": 1,
+						"literacy": 1,
+						"rhetoric": 1,
+						"stewardship": 2
+					},
+					"xp": {}
+				},
+				"spouse_id": "",
+				"template_id": "",
+				"traits": [
+					"harried",
+					"devout"
+				],
+				"vulnerabilities": {}
+			},
+			"shuruppak_ilu": {
+				"display_name": "Shuruppak-ilu",
+				"flags": {},
+				"generation_key": "",
+				"generation_source": "",
+				"id": "shuruppak_ilu",
+				"institutional_designation": "",
+				"liege_id": "",
+				"location_id": "uruk",
+				"memory": [],
+				"name_gender": "",
+				"name_provenance": "",
+				"name_source": "",
+				"occupation_id": "",
+				"office_id": "archive_keeper",
+				"pronouns": "",
+				"relationships": {
+					"character_0001": {
+						"opinion": -7,
+						"reasons": [
+							{
+								"amount": 2,
+								"reason": "The apprentice referred a concealed grain account for correction.",
+								"year": -3200
+							},
+							{
+								"amount": -2,
+								"reason": "A concealed account was found in the archive audit.",
+								"year": -3200
+							},
+							{
+								"amount": -2,
+								"reason": "A concealed account was found in the archive audit.",
+								"year": -3199
+							},
+							{
+								"amount": 4,
+								"reason": "Checked arithmetic; respected copy limits",
+								"year": -3199
+							},
+							{
+								"amount": -10,
+								"reason": "Conflated the labor tally with the weaver grain roll",
+								"year": -3199
+							},
+							{
+								"amount": -1,
+								"reason": "The apprentice's household account fell into arrears.",
+								"year": -3199
+							},
+							{
+								"amount": -2,
+								"reason": "A concealed account was found in the archive audit.",
+								"year": -3199
+							},
+							{
+								"amount": -1,
+								"reason": "Assignment assessment: Inspect North-Bay",
+								"year": -3199
+							},
+							{
+								"amount": -1,
+								"reason": "The apprentice's household account fell into arrears.",
+								"year": -3199
+							},
+							{
+								"amount": 1,
+								"reason": "Assignment assessment: Inspect North-Bay",
+								"year": -3199
+							},
+							{
+								"amount": 2,
+								"reason": "Assignment assessment: Consignment Receipt",
+								"year": -3199
+							},
+							{
+								"amount": -2,
+								"reason": "A concealed account was found in the archive audit.",
+								"year": -3198
+							}
+						],
+						"strength": 7,
+						"trust": 8,
+						"type": "mentor"
+					}
+				},
+				"resources": {},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 4,
+						"intrigue": 2,
+						"law": 3,
+						"literacy": 4,
+						"rhetoric": 2,
+						"stewardship": 3
+					},
+					"xp": {}
+				},
+				"spouse_id": "",
+				"template_id": "",
+				"traits": [
+					"patient",
+					"exacting"
+				],
+				"vulnerabilities": {
+					"patience_remaining": 5
+				}
+			},
+			"ur_amas": {
+				"display_name": "Ur-amas",
+				"flags": {},
+				"generation_key": "",
+				"generation_source": "",
+				"id": "ur_amas",
+				"institutional_designation": "",
+				"liege_id": "",
+				"location_id": "uruk",
+				"memory": [],
+				"name_gender": "",
+				"name_provenance": "",
+				"name_source": "",
+				"occupation_id": "",
+				"office_id": "boat_operator",
+				"pronouns": "",
+				"relationships": {
+					"character_0001": {
+						"opinion": 0,
+						"strength": 0
+					}
+				},
+				"resources": {},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 1,
+						"intrigue": 1,
+						"law": 1,
+						"literacy": 1,
+						"rhetoric": 2,
+						"stewardship": 2
+					},
+					"xp": {}
+				},
+				"spouse_id": "",
+				"template_id": "",
+				"traits": [
+					"sociable",
+					"risk_tolerant"
+				],
+				"vulnerabilities": {}
+			},
+			"ur_gula": {
+				"display_name": "Ur-gula",
+				"flags": {},
+				"generation_key": "",
+				"generation_source": "",
+				"id": "ur_gula",
+				"institutional_designation": "",
+				"liege_id": "",
+				"location_id": "agricultural_hinterland",
+				"memory": [],
+				"name_gender": "",
+				"name_provenance": "",
+				"name_source": "",
+				"occupation_id": "",
+				"office_id": "flock_manager",
+				"pronouns": "",
+				"relationships": {
+					"character_0001": {
+						"opinion": 0,
+						"strength": 0
+					},
+					"nin_dada": {
+						"opinion": 0,
+						"reasons": [],
+						"strength": 4,
+						"trust": 6,
+						"type": "wool_supply"
+					}
+				},
+				"resources": {},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 1,
+						"intrigue": 1,
+						"law": 1,
+						"literacy": 1,
+						"rhetoric": 1,
+						"stewardship": 3
+					},
+					"xp": {}
+				},
+				"spouse_id": "",
+				"template_id": "",
+				"traits": [
+					"observant",
+					"stubborn"
+				],
+				"vulnerabilities": {}
+			},
+			"ur_nanna": {
+				"display_name": "Ur-Nanna",
+				"flags": {},
+				"generation_key": "",
+				"generation_source": "",
+				"id": "ur_nanna",
+				"institutional_designation": "",
+				"liege_id": "",
+				"location_id": "uruk",
+				"memory": [
+					{
+						"involved": [
+							"north_bay",
+							"roof_leak"
+						],
+						"memory_id": "grain_clerk_cover_up",
+						"text": "I entered the North-Bay barley as prime seed-corn. The roof leak remains active.",
+						"year": -3200
+					},
+					{
+						"involved": [
+							"north_bay",
+							"roof_leak"
+						],
+						"memory_id": "grain_clerk_cover_up",
+						"text": "I entered the North-Bay barley as prime seed-corn. The roof leak remains active.",
+						"year": -3200
+					}
+				],
+				"name_gender": "",
+				"name_provenance": "",
+				"name_source": "",
+				"occupation_id": "",
+				"office_id": "grain_clerk",
+				"pronouns": "",
+				"relationships": {
+					"character_0001": {
+						"opinion": -4,
+						"reasons": [
+							{
+								"amount": 2,
+								"reason": "Assignment assessment: Contradictory North-Bay Grain Docket",
+								"year": -3200
+							},
+							{
+								"amount": 2,
+								"reason": "Assignment assessment: Contradictory North-Bay Grain Docket",
+								"year": -3200
+							},
+							{
+								"amount": -6,
+								"reason": "Granted an unsupported barley transfer",
+								"year": -3199
+							},
+							{
+								"amount": -1,
+								"reason": "Labor shortage increased pressure on the grain office",
+								"year": -3199
+							},
+							{
+								"amount": -1,
+								"reason": "Labor shortage increased pressure on the grain office",
+								"year": -3199
+							}
+						],
+						"strength": 0
+					},
+					"enlil_kisu": {
+						"opinion": 0,
+						"reasons": [],
+						"strength": 3,
+						"trust": 5,
+						"type": "resource_dependency"
+					},
+					"shuruppak_ilu": {
+						"opinion": 0,
+						"reasons": [],
+						"strength": 4,
+						"trust": 6,
+						"type": "professional_respect"
+					}
+				},
+				"resources": {},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 3,
+						"intrigue": 1,
+						"law": 2,
+						"literacy": 1,
+						"rhetoric": 1,
+						"stewardship": 4
+					},
+					"xp": {}
+				},
+				"spouse_id": "",
+				"template_id": "",
+				"traits": [
+					"cautious",
+					"weather_watcher"
+				],
+				"vulnerabilities": {
+					"granary_roof_integrity": 60,
+					"personal_fear": 6
+				}
+			},
+			"utu_mansum": {
+				"display_name": "Utu-mansum",
+				"flags": {},
+				"generation_key": "",
+				"generation_source": "",
+				"id": "utu_mansum",
+				"institutional_designation": "",
+				"liege_id": "",
+				"location_id": "uruk",
+				"memory": [],
+				"name_gender": "",
+				"name_provenance": "",
+				"name_source": "",
+				"occupation_id": "",
+				"office_id": "tax_scribe",
+				"pronouns": "",
+				"relationships": {
+					"character_0001": {
+						"opinion": 0,
+						"reasons": [
+							{
+								"amount": 3,
+								"reason": "Damage noted before custody",
+								"year": -3200
+							},
+							{
+								"amount": -3,
+								"reason": "Assignment assessment: Workforce Roll",
+								"year": -3200
+							}
+						],
+						"strength": 1,
+						"trust": 0,
+						"type": "trainer"
+					},
+					"lu_nanshe": {
+						"opinion": 0,
+						"reasons": [],
+						"strength": -2,
+						"trust": 4,
+						"type": "professional_rivalry"
+					}
+				},
+				"resources": {},
+				"rival_id": "",
+				"skills": {
+					"levels": {
+						"arithmetic": 3,
+						"intrigue": 1,
+						"law": 2,
+						"literacy": 1,
+						"rhetoric": 1,
+						"stewardship": 1
+					},
+					"xp": {}
+				},
+				"spouse_id": "",
+				"template_id": "",
+				"traits": [
+					"tired",
+					"unbending"
+				],
+				"vulnerabilities": {}
+			}
+		},
+		"period": 1,
+		"periods_elapsed": 25,
+		"places": {
+			"agricultural_hinterland": {
+				"era_id": "uruk_storehouse",
+				"exports": [],
+				"imports": [],
+				"kind": "productive_land",
+				"name": "Uruk Agricultural Hinterland",
+				"parent": "uruk",
+				"political_relation": "institutional",
+				"region": "lower_mesopotamia",
+				"survey_position": "(0.0, 0.0)"
+			},
+			"anu_precinct": {
+				"era_id": "uruk_storehouse",
+				"exports": [],
+				"imports": [],
+				"kind": "cultic_precinct",
+				"name": "Anu Precinct",
+				"parent": "uruk",
+				"political_relation": "institutional",
+				"region": "lower_mesopotamia",
+				"survey_position": "(0.0, 0.0)"
+			},
+			"brewery_delivery": {
+				"era_id": "uruk_storehouse",
+				"exports": [],
+				"imports": [],
+				"kind": "craft_work_area",
+				"name": "Brewery Delivery Yard",
+				"parent": "uruk",
+				"political_relation": "institutional",
+				"region": "lower_mesopotamia",
+				"survey_position": "(0.0, 0.0)"
+			},
+			"brewing_house_account": {
+				"era_id": "uruk_storehouse",
+				"exports": [],
+				"imports": [],
+				"kind": "administrative_record",
+				"name": "Brewing House Account",
+				"parent": "uruk",
+				"political_relation": "institutional",
+				"region": "lower_mesopotamia",
+				"survey_position": "(0.0, 0.0)"
+			},
+			"ditch_labor_tally": {
+				"era_id": "uruk_storehouse",
+				"exports": [],
+				"imports": [],
+				"kind": "work_record",
+				"name": "Ditch Labor Tally",
+				"parent": "great_canal_cut_worksite",
+				"political_relation": "institutional",
+				"region": "lower_mesopotamia",
+				"survey_position": "(0.0, 0.0)"
+			},
+			"djebel_aruda": {
+				"era_id": "uruk_storehouse",
+				"exports": [],
+				"imports": [],
+				"kind": "uruk_related_settlement",
+				"name": "Djebel Aruda",
+				"parent": "",
+				"political_relation": "autonomous_peer",
+				"region": "upper_euphrates",
+				"survey_position": "(0.0, 0.0)"
+			},
+			"eanna_precinct": {
+				"era_id": "uruk_storehouse",
+				"exports": [],
+				"imports": [],
+				"kind": "institutional_precinct",
+				"name": "Eanna Precinct",
+				"parent": "uruk",
+				"political_relation": "institutional",
+				"region": "lower_mesopotamia",
+				"survey_position": "(0.0, 0.0)"
+			},
+			"great_canal_cut_worksite": {
+				"era_id": "uruk_storehouse",
+				"exports": [],
+				"imports": [],
+				"kind": "canal_worksite",
+				"name": "Great Canal Cut",
+				"parent": "agricultural_hinterland",
+				"political_relation": "institutional",
+				"region": "lower_mesopotamia",
+				"survey_position": "(0.0, 0.0)"
+			},
+			"habuba_kabira": {
+				"era_id": "uruk_storehouse",
+				"exports": [
+					"timber",
+					"limestone"
+				],
+				"imports": [
+					"textiles",
+					"grain",
+					"beer"
+				],
+				"kind": "river_colony",
+				"name": "Habuba Kabira",
+				"parent": "",
+				"political_relation": "direct_colony",
+				"region": "upper_euphrates",
+				"survey_position": "(0.0, 0.0)"
+			},
+			"hacinebi": {
+				"era_id": "uruk_storehouse",
+				"exports": [
+					"copper",
+					"silver"
+				],
+				"imports": [
+					"textiles",
+					"grain",
+					"beer"
+				],
+				"kind": "trade_enclave",
+				"name": "Hacinebi",
+				"parent": "",
+				"political_relation": "foreign_enclave",
+				"region": "upper_euphrates",
+				"survey_position": "(0.0, 0.0)"
+			},
+			"nippur": {
+				"era_id": "uruk_storehouse",
+				"exports": [
+					"religious_verdicts",
+					"offerings"
+				],
+				"imports": [
+					"textiles",
+					"beer"
+				],
+				"kind": "sacred_center",
+				"name": "Nippur",
+				"parent": "",
+				"political_relation": "treaty_partner",
+				"region": "lower_mesopotamia",
+				"survey_position": "(485.0, 42.0)"
+			},
+			"north_bay": {
+				"era_id": "uruk_storehouse",
+				"exports": [],
+				"imports": [],
+				"kind": "work_area",
+				"name": "North-Bay",
+				"parent": "eanna_precinct",
+				"political_relation": "institutional",
+				"region": "lower_mesopotamia",
+				"survey_position": "(0.0, 0.0)"
+			},
+			"river_fish_supply": {
+				"era_id": "uruk_storehouse",
+				"exports": [],
+				"imports": [],
+				"kind": "landing_work_area",
+				"name": "River Fish Landing",
+				"parent": "uruk",
+				"political_relation": "institutional",
+				"region": "lower_mesopotamia",
+				"survey_position": "(0.0, 0.0)"
+			},
+			"south_court_storehouse": {
+				"era_id": "uruk_storehouse",
+				"exports": [],
+				"imports": [],
+				"kind": "storehouse",
+				"name": "South Court Storehouse",
+				"parent": "eanna_precinct",
+				"political_relation": "institutional",
+				"region": "lower_mesopotamia",
+				"survey_position": "(0.0, 0.0)"
+			},
+			"susa": {
+				"era_id": "uruk_storehouse",
+				"exports": [
+					"highland_wool",
+					"stone",
+					"luxury_exchange"
+				],
+				"imports": [
+					"textiles",
+					"grain",
+					"beer"
+				],
+				"kind": "highland_partner",
+				"name": "Susa",
+				"parent": "",
+				"political_relation": "autonomous_peer",
+				"region": "susiana",
+				"survey_position": "(0.0, 0.0)"
+			},
+			"temple_consignment": {
+				"era_id": "uruk_storehouse",
+				"exports": [],
+				"imports": [],
+				"kind": "administrative_office",
+				"name": "Temple Consignment Office",
+				"parent": "eanna_precinct",
+				"political_relation": "institutional",
+				"region": "lower_mesopotamia",
+				"survey_position": "(0.0, 0.0)"
+			},
+			"textile_workshop": {
+				"era_id": "uruk_storehouse",
+				"exports": [],
+				"imports": [],
+				"kind": "craft_workshop",
+				"name": "Textile Workshop",
+				"parent": "uruk",
+				"political_relation": "institutional",
+				"region": "lower_mesopotamia",
+				"survey_position": "(0.0, 0.0)"
+			},
+			"umma": {
+				"era_id": "uruk_storehouse",
+				"exports": [
+					"grain",
+					"labor"
+				],
+				"imports": [
+					"canal_access",
+					"textiles"
+				],
+				"kind": "rival_city",
+				"name": "Umma",
+				"parent": "",
+				"political_relation": "autonomous_peer",
+				"region": "lower_mesopotamia",
+				"survey_position": "(485.0, 168.0)"
+			},
+			"ur": {
+				"era_id": "uruk_storehouse",
+				"exports": [
+					"bitumen",
+					"marine_exchange"
+				],
+				"imports": [
+					"grain",
+					"textiles"
+				],
+				"kind": "trade_enclave",
+				"name": "Ur",
+				"parent": "",
+				"political_relation": "autonomous_peer",
+				"region": "lower_mesopotamia",
+				"survey_position": "(0.0, 0.0)"
+			},
+			"uruk": {
+				"era_id": "uruk_storehouse",
+				"exports": [
+					"textiles",
+					"beer",
+					"grain",
+					"administrative_tablets"
+				],
+				"imports": [
+					"timber",
+					"copper",
+					"bitumen"
+				],
+				"kind": "metropolis",
+				"name": "Uruk",
+				"parent": "",
+				"political_relation": "sovereign_core",
+				"region": "lower_mesopotamia",
+				"survey_position": "(145.0, 105.0)"
+			}
+		},
+		"player_id": "character_0001",
+		"population_batches": {
+			"nippur|sumerian|uruk_storehouse|initial_regional_roster": [
+				"character_0006",
+				"character_0007",
+				"character_0008",
+				"character_0009"
+			],
+			"umma|sumerian|uruk_storehouse|initial_regional_roster": [
+				"character_0010",
+				"character_0011",
+				"character_0012",
+				"character_0013"
+			],
+			"uruk|sumerian|uruk_storehouse|initial_regional_roster": [
+				"character_0002",
+				"character_0003",
+				"character_0004",
+				"character_0005"
+			]
+		},
+		"recent_archetypes": [
+			"path_spear_requisition",
+			"path_conscription_exemption",
+			"path_watchtower_supply",
+			"path_ditch_guard_rations",
+			"path_conscription_exemption",
+			"path_spear_requisition"
+		],
+		"recent_npc_pairs": [
+			"ur_amas|shuruppak_ilu",
+			"utu_mansum|shuruppak_ilu",
+			"utu_mansum|enlil_kisu",
+			"ur_amas|lu_nanshe",
+			"utu_mansum|lu_nanshe",
+			"ur_amas|shuruppak_ilu"
+		],
+		"resolved_forms": [
+			{
+				"closing_year": -3200,
+				"disposition": "quarantine_cracked_vessel",
+				"form_type": "consignment_receipt",
+				"generated_by": "world_simulator",
+				"generated_period": -38399,
+				"generation_reason": "surplus_provisions",
+				"id": "form_000003",
+				"status": "resolved",
+				"subject_id": "temple_consignment",
+				"urgency": 1,
+				"was_overdue": false,
+				"year": -3200
+			},
+			{
+				"assessed_year": -3200,
+				"assessment": "certified",
+				"closing_notes": "Assessment by pr76 test after 2 investigative actions.",
+				"closing_year": -3200,
+				"disposition": "certified",
+				"form_type": "held_barley",
+				"generated_by": "ur_nanna",
+				"generation_reason": "autonomous_grain_clerk_action",
+				"id": "ur_nanna_grain_docket_-38398",
+				"npc_evidence": {
+					"discrepancy": "The dispatch certifies prime seed-corn while the independent threshold tally records damp, mold-marked grain.",
+					"dispatch_record": "Dispatch docket: barley declared as prime seed-corn.",
+					"threshold_tally": "North-Bay threshold tally: damp barley; mold visible along the lower measures."
+				},
+				"npc_intent_id": "intent_hide_spoilage",
+				"status": "resolved",
+				"subject_id": "north_bay",
+				"urgency": 3,
+				"was_overdue": false,
+				"year": -3200
+			},
+			{
+				"assessed_year": -3200,
+				"assessment": "referred",
+				"closing_notes": "Assessment by pr76 test after 2 investigative actions.",
+				"closing_year": -3200,
+				"disposition": "referred",
+				"form_type": "pension_roll",
+				"generated_by": "world_simulator",
+				"generated_period": -38399,
+				"generation_reason": "canal_workforce_demand",
+				"id": "form_000002",
+				"status": "resolved",
+				"subject_id": "ditch_labor_tally",
+				"urgency": 2,
+				"was_overdue": false,
+				"year": -3200
+			},
+			{
+				"assessed_year": -3200,
+				"assessment": "certified",
+				"closing_notes": "Assessment by pr76 test after 2 investigative actions.",
+				"closing_year": -3200,
+				"disposition": "certified",
+				"form_type": "held_barley",
+				"generated_by": "ur_nanna",
+				"generation_reason": "autonomous_grain_clerk_action",
+				"id": "ur_nanna_grain_docket_-38394",
+				"npc_evidence": {
+					"discrepancy": "The dispatch certifies prime seed-corn while the independent threshold tally records damp, mold-marked grain.",
+					"dispatch_record": "Dispatch docket: barley declared as prime seed-corn.",
+					"threshold_tally": "North-Bay threshold tally: damp barley; mold visible along the lower measures."
+				},
+				"npc_intent_id": "intent_hide_spoilage",
+				"status": "resolved",
+				"subject_id": "north_bay",
+				"urgency": 3,
+				"was_overdue": false,
+				"year": -3200
+			},
+			{
+				"closing_year": -3200,
+				"disposition": "five_released_two_quarantined",
+				"form_type": "held_barley",
+				"generated_by": "world_simulator",
+				"generated_period": -38399,
+				"generation_reason": "roof_leak_inspection",
+				"id": "form_000004",
+				"status": "resolved",
+				"subject_id": "north_bay",
+				"urgency": 2,
+				"was_overdue": false,
+				"year": -3200
+			},
+			{
+				"closing_year": -3199,
+				"disposition": "rectified_subtotal_allocation_pending",
+				"form_type": "pension_roll",
+				"generated_by": "world_simulator",
+				"generated_period": -38395,
+				"generation_reason": "canal_workforce_demand",
+				"id": "form_000006",
+				"status": "resolved",
+				"subject_id": "ditch_labor_tally",
+				"urgency": 2,
+				"was_overdue": false,
+				"year": -3200
+			},
+			{
+				"closing_year": -3199,
+				"disposition": "illicit_composite_transfer",
+				"form_type": "pension_roll",
+				"generated_by": "world_simulator",
+				"generated_period": -38386,
+				"generation_reason": "canal_workforce_demand",
+				"id": "form_000010",
+				"status": "resolved",
+				"subject_id": "ditch_labor_tally",
+				"urgency": 2,
+				"was_overdue": false,
+				"year": -3199
+			},
+			{
+				"assessed_year": -3199,
+				"assessment": "certified",
+				"closing_notes": "Assessment by pr76 test after 2 investigative actions.",
+				"closing_year": -3199,
+				"disposition": "certified",
+				"form_type": "consignment_receipt",
+				"generated_by": "world_simulator",
+				"generated_period": -38392,
+				"generation_reason": "wool_backlog",
+				"id": "form_000008",
+				"status": "resolved",
+				"subject_id": "textile_workshop",
+				"urgency": 2,
+				"was_overdue": false,
+				"year": -3200
+			}
+		],
+		"rng": {
+			"narrative_seed": "25216463597",
+			"narrative_state": "-8623847011041876617",
+			"people_seed": "3407277630",
+			"people_state": "-3397200911047969589",
+			"simulation_seed": "3745901167",
+			"simulation_state": "-4071567314581243973"
+		},
+		"routes": {},
+		"silver_earned": 13,
+		"social_groups": {
+			"agricultural_households": {
+				"kind": "household_group",
+				"members": [
+					"ama_edin",
+					"geme_tur"
+				],
+				"name": "Agricultural Households",
+				"place_id": "agricultural_hinterland",
+				"resources": [
+					"barley",
+					"dates"
+				]
+			},
+			"brewers": {
+				"kind": "craft_group",
+				"members": [
+					"nin_kasi"
+				],
+				"name": "Brewers",
+				"place_id": "uruk",
+				"resources": [
+					"barley",
+					"beer"
+				]
+			},
+			"craft_workshops": {
+				"kind": "workshop_group",
+				"members": [
+					"lu_uru",
+					"ab_kala",
+					"nin_dada"
+				],
+				"name": "Craft Workshops",
+				"place_id": "uruk",
+				"resources": [
+					"clay",
+					"reeds",
+					"bitumen",
+					"textiles"
+				]
+			},
+			"pastoral_households": {
+				"kind": "household_group",
+				"members": [
+					"ur_gula"
+				],
+				"name": "Pastoral Households",
+				"place_id": "agricultural_hinterland",
+				"resources": [
+					"sheep",
+					"goats",
+					"wool"
+				]
+			},
+			"transport_crews": {
+				"kind": "work_group",
+				"members": [
+					"enlil_kisu",
+					"ur_amas"
+				],
+				"name": "Transport Crews",
+				"place_id": "uruk",
+				"resources": [
+					"labor",
+					"barley",
+					"beer"
+				]
+			}
+		},
+		"stockpiles": {
+			"canal_progress": 52
+		},
+		"traits_gained": [],
+		"world_flags": {
+			"first_workday_mentor_seen": -1,
+			"ledger_inquest_suppressed": -38369,
+			"phantom_barley_measure": -1,
+			"sim_form_cooldown_consignment_receipt_textile_workshop": -38373,
+			"sim_labor_shortage_reaction": -38371,
+			"thirsty_diggers": -1
+		},
+		"year": -3198
+	}
+}
