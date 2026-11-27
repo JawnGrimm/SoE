@@ -42,6 +42,7 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 	world.epics.clear()
 	world._next_form_sequence = 1
 	world._next_person_sequence = 1
+	world.population_batches.clear()
 	world.player_id = &""
 
 	# The original eight remain the center of the first playable slice.
@@ -77,6 +78,7 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 
 	_seed_places(world, definitions)
 	_seed_institutions_and_groups(world, definitions, starting_era.id if starting_era != null else &"")
+	_seed_tier_two_population(world, definitions, starting_era.id if starting_era != null else &"")
 	_seed_relationships(world)
 	if add_player_to_world:
 		attach_player(world, player)
@@ -225,3 +227,20 @@ static func _person(id: StringName, display_name: String, office: StringName, va
 	for skill in person.skills.levels.keys():
 		person.skills.levels[skill] = int(values.get(String(skill), 1))
 	return person
+
+
+static func _seed_tier_two_population(world: WorldState, definitions: DefinitionRegistry, era_id: StringName) -> void:
+	# Existing authored characters remain Tier 1 anchors. Give them an initial
+	# residence before adding the persistent generated regional population.
+	for person in world.people.values():
+		person.location_id = &"uruk"
+	for rural_id in [&"ama_edin", &"ur_gula", &"geme_tur"]:
+		var rural_person := world.get_person(rural_id)
+		if rural_person != null:
+			rural_person.location_id = &"agricultural_hinterland"
+	var population := PopulationService.new()
+	if not population.load_name_table():
+		push_warning("UrukSeeder: Tier 2 population skipped because the name table could not load")
+		return
+	for place_id in [&"uruk", &"nippur", &"umma"]:
+		population.generate_people(world, definitions, place_id, &"sumerian", era_id, 4, &"initial_regional_roster")
