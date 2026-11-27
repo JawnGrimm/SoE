@@ -516,13 +516,13 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 				var total := 0
 				for amount in stock.values():
 					total += int(amount)
-				facts = "PHYSICAL SITE: %s\nBIN COUNT / BARLEY: %d | LABOR ROSTER: %d | TEXTILES: %d\nINSTITUTION: %s" % [_place_name(world, StringName(data.get("place_id", data.get("subject_id", "")))), int(stock.get(&"barley", 0)), int(stock.get(&"labor", 0)), int(stock.get(&"textiles", 0)), String(institution.get("name", institution_id))]
+				facts = "PHYSICAL SITE: %s\nBIN COUNT / BARLEY: %d | LABOR ROSTER: %d | TEXTILES: %d\nINSTITUTION: %s" % [_place_name(world, StringName(data.get("subject_id", data.get("place_id", "")))), int(stock.get(&"barley", 0)), int(stock.get(&"labor", 0)), int(stock.get(&"textiles", 0)), String(institution.get("name", institution_id))]
 				var physical_records: Dictionary = institution.get("stock_records", {})
 				if bool(physical_records.get("concealed_spoilage", false)):
 					facts += "\nPHYSICAL FINDING: damp or mold-marked barley contradicts the prime seed-corn declaration."
 				facts += "\n" + _live_stock_facts(stock, institution)
 				summary = "The physical storehouse is inspected. These are the current bin and roster counts, not a clerk's tablet claim."
-	var evidence_place := StringName(data.get("place_id", data.get("subject_id", "")))
+	var evidence_place := StringName(data.get("subject_id", data.get("place_id", "")))
 	for hazard in world.hazards:
 		if bool(hazard.get("active", false)) and StringName(hazard.get("place_id", "")) == evidence_place:
 			facts += "\nACTIVE HAZARD: %s / loss %d %s each period" % [String(hazard.get("id", "hazard")).replace("_", " "), int(hazard.get("rate", 0)), String(hazard.get("resource", "")).replace("_", " ")]
