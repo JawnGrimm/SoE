@@ -167,7 +167,7 @@ func _build_interface() -> void:
 	root.add_child(header_resource_label)
 	work_queue_button = Button.new()
 	work_queue_button.text = "ARCHIVE / QUEUE"
-	work_queue_button.tooltip_text = "Open Works, Challenges, and Assignments. Keyboard: focus and press Enter."
+	work_queue_button.tooltip_text = "Open Epics, Challenges, and Assignments. Keyboard: focus and press Enter."
 	work_queue_button.custom_minimum_size = Vector2(142, 44)
 	work_queue_button.add_theme_font_size_override("font_size", 12)
 	work_queue_button.add_theme_stylebox_override("focus", _panel_style("#3a2b1d", "#f5e6d0"))
@@ -793,20 +793,21 @@ func _schedule_next_case() -> void:
 	_refresh_compound()
 	assignment_opportunities = AssignmentPipeline.generate_opportunities(world, actor, selected_path)
 	if active_event != null:
+		var is_challenge := String(active_event.id).begins_with("challenge_")
 		assignment_opportunities.push_front({
 			"id": StringName("work_event_%s_%d" % [active_event.id, world.current_period_index()]),
-			"kind": &"event",
+			"kind": &"challenge" if is_challenge else &"event",
 			"source_id": active_event.id,
 			"title": active_event.title,
 			"summary": active_event.description,
-			"priority": 100
+			"priority": 90 if is_challenge else 100
 		})
 		while assignment_opportunities.size() > AssignmentPipeline.BOARD_SIZE:
 			var remove_index := -1
 			var lowest_priority := 2147483647
 			for candidate_index in range(1, assignment_opportunities.size()):
 				var candidate: Dictionary = assignment_opportunities[candidate_index]
-				if StringName(candidate.get("kind", "")) in [&"event", &"project_review"]:
+				if StringName(candidate.get("kind", "")) in [&"event", &"challenge", &"project_review"]:
 					continue
 				var candidate_priority := int(candidate.get("priority", 0))
 				if candidate_priority <= lowest_priority:
@@ -1066,7 +1067,7 @@ func _select_assignment_opportunity(index: int) -> void:
 		AudioManager.play_docket_slide()
 		_show_case()
 		return
-	if StringName(opportunity.get("kind", "")) == &"event":
+	if StringName(opportunity.get("kind", "")) in [&"event", &"challenge"]:
 		active_event = Registry.get_event(StringName(opportunity.get("source_id", "")))
 		if active_event == null:
 			status_label.text = "EVENT COULD NOT BE OPENED / SOURCE MAY HAVE CHANGED"
