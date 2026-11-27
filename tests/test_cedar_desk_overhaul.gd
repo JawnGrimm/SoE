@@ -47,6 +47,12 @@ func _test_archive_badge() -> void:
 	assert(Archive.format_inbox(4, "dispatch") == "INBOX: 4 [DISPATCH]")
 	assert(Archive.format_inbox(3) == "INBOX: 3")
 	assert(Archive.format_inbox(0, "summons") == "INBOX: 0 [SUMMONS]")
+	var stack := Archive.new()
+	root.add_child(stack)
+	stack.set_queue_status(4, "dispatch")
+	assert(stack.count_label.text == "INBOX: 4" and stack.badge_label.text == "[DISPATCH]")
+	assert(stack.focus_mode == Control.FOCUS_ALL)
+	stack.queue_free()
 
 func _test_workspace_rules_and_keyboard_equivalent() -> void:
 	assert(DeskLayout.UPPER_WORKSPACE_RATIO == 58.0)
