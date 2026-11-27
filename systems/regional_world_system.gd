@@ -106,6 +106,7 @@ static func launch_shipment(world: WorldState, details: Dictionary) -> Dictionar
 		"departure_period": world.current_period_index(),
 		"status": "in_transit" if not route_ids.is_empty() else "arrived",
 		"seal_id": String(details.get("seal_id", "")),
+		"seal_valid": bool(details.get("seal_valid", true)),
 		"sender_id": StringName(details.get("sender_id", "")),
 		"destination_institution_id": StringName(details.get("destination_institution_id", "")),
 		"origin_account_quantity": int(details.get("origin_account_quantity", quantity)),
@@ -138,8 +139,8 @@ static func _finish_shipment_leg(world: WorldState, shipment: Dictionary) -> voi
 		return
 	var route: Dictionary = world.routes.get(StringName(route_ids[route_index]), {})
 	var risk := int(route.get("loss_risk_percent", 0))
-	if risk > 0 and world.rng_sim.randi_range(1, 100) <= risk:
-		var received := int(shipment.get("received_quantity", 0))
+	var received := int(shipment.get("received_quantity", 0))
+	if risk > 0 and received > 0 and world.rng_sim.randi_range(1, 100) <= risk:
 		var lost := mini(received, world.rng_sim.randi_range(1, mini(4, received)))
 		shipment["received_quantity"] = received - lost
 		shipment["loss_quantity"] = int(shipment.get("loss_quantity", 0)) + lost
@@ -171,6 +172,7 @@ static func _arrive_shipment(world: WorldState, shipment: Dictionary) -> void:
 		"received_quantity": int(shipment.get("received_quantity", 0)),
 		"loss_quantity": int(shipment.get("loss_quantity", 0)),
 		"seal_id": String(shipment.get("seal_id", "")),
+		"seal_valid": bool(shipment.get("seal_valid", true)),
 		"sender_id": StringName(shipment.get("sender_id", "")),
 		"route_ids": shipment.get("route_ids", []).duplicate(),
 		"departure_period": int(shipment.get("departure_period", 0)),
