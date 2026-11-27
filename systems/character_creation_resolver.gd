@@ -62,6 +62,22 @@ static func build_biography(catalog: Dictionary, selections: CharacterCreationSe
 			lines.append(fragment)
 	return "\n\n".join(lines)
 
+static func build_collision_comments(catalog: Dictionary, selections: CharacterCreationSelections) -> Array[String]:
+	var selected: Array[String] = []
+	for answer_id in selections.answers.values():
+		selected.append(String(answer_id))
+	var comments: Array[String] = []
+	for collision in catalog.get("collision_comments", []):
+		var required: Array = collision.get("answer_ids", [])
+		var matches := not required.is_empty()
+		for required_id in required:
+			if not selected.has(String(required_id)):
+				matches = false
+				break
+		if matches:
+			comments.append(String(collision.get("text", "")))
+	return comments
+
 static func build_effects(catalog: Dictionary, selections: CharacterCreationSelections) -> Array[EventEffect]:
 	var validation := validate(catalog, selections)
 	if not bool(validation.get("valid", false)):
