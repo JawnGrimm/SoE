@@ -70,7 +70,7 @@ func open_epic_review(epic_id: StringName, reason: String, summary: String, stag
 	var target := maxi(1, int(entry.get("target", 100)))
 	var resolved_stage := stage_index if stage_index >= 0 else get_epic_stage_index(int(entry.get("progress", 0)), target, epic_def)
 	if bool(entry.get("review_pending", false)):
-		if reason != "stage_reached" and str(entry.get("review_reason", "")) == "stage_reached":
+		if reason != "stage_reached" and str(entry.get("review_reason", "")) in ["stage_reached", "project_opened"]:
 			entry["review_reason"] = reason
 			entry["review_summary"] = summary
 			entry["review_stage"] = resolved_stage
