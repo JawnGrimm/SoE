@@ -24,7 +24,7 @@ func register(console: Object, callbacks: Dictionary) -> bool:
 	_console = console
 	_callbacks = callbacks.duplicate()
 
-	_register_command(ADVANCE_COMMAND, "_cmd_advance_periods", "Advance the world through normal simulation steps. Usage: soe advance_periods <count>")
+	_register_command(ADVANCE_COMMAND, "_cmd_advance_periods", "Debug fast-forward through normal simulation steps; intervening desk offers are not resolved. Usage: soe advance_periods <count>")
 	_register_command(INSPECT_WORLD_COMMAND, "_cmd_inspect_world", "Print a concise summary of the current runtime world.")
 	_register_command(INSPECT_PERSON_COMMAND, "_cmd_inspect_person", "Inspect a runtime person by ID.")
 	_register_command(ADJUST_RESOURCE_COMMAND, "_cmd_adjust_resource", "Adjust a resource through WorldState.modify_resource(). Usage: soe adjust_resource <resource_id> <amount> [scope] [owner_id] [institution_id]")
