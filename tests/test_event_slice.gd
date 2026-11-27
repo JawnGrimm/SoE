@@ -199,6 +199,8 @@ func _run() -> void:
 	save_roundtrip_player.skills.add_xp(&"law", 37)
 	save_roundtrip_player.memory.append({"memory_id": &"save_test_memory", "text": "The ink remembers.", "year": save_roundtrip_world.year, "involved": [&"ur_nanna"]})
 	save_roundtrip_player.resources[&"silver"] = 17
+	save_roundtrip_player.current_location_id = &"habuba_kabira"
+	save_roundtrip_world.player_travel = {"actor_id": String(save_roundtrip_player.id), "destination_id": "susa", "status": "in_transit", "route_ids": ["uruk_susa_overland"], "remaining_periods": 2}
 	save_roundtrip_world.pending_forms.append({"id": &"save_pending_1", "form_type": &"travel_pass", "status": "overdue", "due_period": save_roundtrip_world.current_period_index() - 1})
 	save_roundtrip_world.epics[&"great_canal_cut"] = {"active": true, "progress": 41, "progress_resource": &"canal_progress", "target": 100, "stage": "cutting", "completed": false}
 	save_roundtrip_world.stockpiles[&"canal_progress"] = 41
@@ -224,6 +226,9 @@ func _run() -> void:
 		_check(restored_world.year == -3198 and restored_world.period == 7, "SaveCodec should restore exact calendar position")
 		_check(restored_world.player_id == save_roundtrip_world.player_id and restored_player.display_name == save_roundtrip_player.display_name, "SaveCodec should preserve player pointer and identity")
 		_check(restored_player.resources.get(&"silver", 0) == 17 and restored_player.skills.xp.get(&"law", 0) == save_roundtrip_player.skills.xp.get(&"law", 0), "SaveCodec should preserve purse and skill XP")
+		_check(restored_player.current_location_id == &"habuba_kabira", "SaveCodec should preserve character location")
+		_check(restored_world.routes.size() == save_roundtrip_world.routes.size() and restored_world.shipments.size() == save_roundtrip_world.shipments.size(), "SaveCodec should preserve regional route and shipment state")
+		_check(restored_world.player_travel.get("status", "") == "in_transit" and restored_world.player_travel.get("remaining_periods", 0) == 2, "SaveCodec should preserve an in-progress regional journey")
 		_check(restored_player.memory.size() == save_roundtrip_player.memory.size() and restored_player.memory.back().get("memory_id", &"") == &"save_test_memory", "SaveCodec should preserve personal memory")
 		_check(restored_world.get_resource(&"canal_progress") == 41 and restored_world.epics[&"great_canal_cut"].get("stage", "") == "cutting", "SaveCodec should preserve Epic progress and stage")
 		_check(restored_world.local_path_dockets_settled == 2 and restored_world.epic_summon_pending and not restored_world.epic_summon_issued and restored_world.get_faction_standing(&"eanna_household") == 7, "SaveCodec should preserve the career-to-Epic funnel state")
