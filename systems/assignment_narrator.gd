@@ -33,7 +33,10 @@ const MATTER_TEMPLATES := {
 
 const RAW_METRIC_LABELS := [
 	"pressure_index", "progress_review", "resource_pressure", "completion_ratio",
-	"work_progress", "progress", "pressure", "metric", "score"
+	"work_progress", "progress", "pressure", "metric", "score",
+	"capability applied", "form:", "pension_roll", "grain_levy",
+	"travel_pass", "succession_claim", "form: pension_roll", "form: grain_levy",
+	"form: travel_pass", "form: succession_claim"
 ]
 
 static func translate_opportunity(source: Dictionary) -> Dictionary:
