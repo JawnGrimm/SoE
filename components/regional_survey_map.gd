@@ -223,7 +223,7 @@ func _make_style(icon_tint: Color, line_tint: Color, priority: int) -> Resource:
 	var line_image := Image.create(4, 4, false, Image.FORMAT_RGBA8)
 	line_image.fill(Color.WHITE)
 	style.set("straight_tex", ImageTexture.create_from_image(line_image))
-	style.set("straight_tex_region", Rect2(0, 0, 4, 4))
+	style.set("straight_tex_region", Rect2(0, 0, 1, 4))
 	return style
 
 func _make_place_marker(_index: int, is_current: bool) -> Texture2D:
