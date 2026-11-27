@@ -187,6 +187,24 @@ func _run() -> void:
 			remote_review_found = true
 	_check(not remote_review_found, "Uruk Epic review must be hidden while the player is in Nippur")
 
+	# A non-Uruk career docket uses residents at the current settlement as its speakers.
+	var local_docket_world := WorldState.new()
+	local_docket_world.current_location_id = &"umma"
+	for resident_id in [&"umma_resident_a", &"umma_resident_b"]:
+		var resident := PersonEntity.new()
+		resident.id = resident_id
+		resident.display_name = String(resident_id).replace("_", " ").capitalize()
+		resident.location_id = &"umma"
+		local_docket_world.people[resident_id] = resident
+	var local_docket := AssignmentGeneratorScript.generate(local_docket_world, assignment_actor, &"path_civil", false)
+	var local_left: Dictionary = local_docket.get("left_card", {})
+	var local_right: Dictionary = local_docket.get("right_card", {})
+	var local_speakers := [StringName(local_left.get("speaker_id", "")), StringName(local_right.get("speaker_id", ""))]
+	_check(StringName(local_docket.get("place_id", "")) == &"umma" and String(local_docket.get("docket_kind", "")) == "regional_local", "Regional procedural docket should be located at the current settlement")
+	_check(local_speakers.has(&"umma_resident_a") and local_speakers.has(&"umma_resident_b"), "Regional procedural docket should use local residents as its speakers")
+	var local_choices: Array = local_docket.get("choices", [])
+	var local_epic_progress := int(local_choices[0].get("effects", {}).get("epic_progress", -1)) if not local_choices.is_empty() else -1
+	_check(local_epic_progress == 0, "Regional local docket must not advance Uruk's Epic")
 	var healthy_canal := {"kind": &"project_review", "source_id": &"great_canal_cut", "source_data": {"stage": "cutting", "progress": 40, "target": 100, "stalled": false, "active_problem": "", "history_notes": []}}
 	var narrated_healthy_canal := AssignmentNarratorScript.translate_opportunity(healthy_canal)
 	_check(String(narrated_healthy_canal.get("title", "")) == "THE CANAL CUT", "Healthy canal milestone should use stage-appropriate narration")
