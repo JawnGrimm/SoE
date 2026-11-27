@@ -37,6 +37,11 @@ copy_path="res://"
 
 [display]
 
+window/size/viewport_width=1600
+window/size/viewport_height=900
+window/size/window_width_override=1600
+window/size/window_height_override=900
+window/size/mode=2
 window/stretch/mode="canvas_items"
 
 [editor_plugins]
