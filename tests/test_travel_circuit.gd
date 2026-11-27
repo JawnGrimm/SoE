@@ -12,11 +12,6 @@ const AssignmentPipelineScript = preload("res://systems/assignment_pipeline.gd")
 const SaveCodecScript = preload("res://systems/save_codec.gd")
 const CalendarFormatterScript = preload("res://systems/calendar_formatter.gd")
 const RegionalSurveyMapScript = preload("res://components/regional_survey_map.gd")
-const URUK: PlaceDef = preload("res://data/places/uruk.tres")
-const NIPPUR: PlaceDef = preload("res://data/places/nippur.tres")
-const UMMA: PlaceDef = preload("res://data/places/umma.tres")
-const RIVER: RouteDef = preload("res://data/routes/river_uruk_nippur.tres")
-const LAND: RouteDef = preload("res://data/routes/land_uruk_umma.tres")
 
 func _initialize() -> void:
 	call_deferred("_run")
