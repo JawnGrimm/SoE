@@ -34,8 +34,8 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 		var age_periods := maxi(0, world.current_period_index() - created_period)
 		var form_name := String(form.get("form_type", "")).to_lower()
 		var is_requisition := bool(form.get("is_requisition", false)) or form_name.contains("requisition")
-		var is_external := institution_id != &"" and not is_local
-		var is_dispatch := is_external and is_requisition and age_periods > 4
+		# Aged requisitions keep dispatch priority after arrival; travel is required only while remote.
+		var is_dispatch := is_requisition and age_periods > 4
 		if not is_local and not is_dispatch:
 			continue
 		var subject_name := _place_name(world, subject_id if subject_id != &"" else place_id)
@@ -61,7 +61,7 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			"priority": 8 if is_dispatch else (6 if not npc_evidence.is_empty() else 2 + urgency),
 			"tags": [dispatch_tag] if is_dispatch else [],
 			"dispatch": is_dispatch,
-			"requires_travel": is_dispatch,
+			"requires_travel": is_dispatch and not is_local,
 			"dispatch_destination_id": place_id if is_dispatch else &"",
 			"age_periods": age_periods,
 			"employer_id": _resolve_local_employer(world, institution_id, place_id, _preferred_office(form_type)),
