@@ -39,7 +39,7 @@ func _test_cuneiform_punches() -> void:
 	assert(prop.stamp_inquiry(&"inspect_source"))
 	assert(prop.impressions.size() == 2 and prop.impressions[1].glyph == "𒆠")
 	prop.seal_verdict()
-	assert(prop.verdict_is_sealed and prop.impressions.back().glyph == "𒁹")
+	assert(prop.verdict_is_sealed and prop.verdict_label.text.contains("𒁹"))
 	assert(not prop.stamp_inquiry(&"consult_official"), "A sealed docket must reject further inquiry stamps.")
 	prop.queue_free()
 
