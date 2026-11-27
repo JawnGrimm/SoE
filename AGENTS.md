@@ -39,3 +39,14 @@ General project rules:
 - Provide keyboard equivalents for clickable desk props, visible focus, meaningful labels/tooltips, and Escape handling for overlays. Cuneiform glyphs are decorative/atmospheric and must always be paired with plain-language labels.
 - Hide evidence/character panels when a screen needs the full workspace (character creation, regional survey); restore them when returning to normal desk phases.
 - Verify contrast, focus order/restoration, resize behavior, and reduced motion manually in a running build. Headless tests do not establish visual accessibility.
+
+
+## Locked career-work taxonomy and circuit
+
+- Layer 1 is **Assignments**: day-to-day forms, inspections, ledger work, and local disputes.
+- Layer 2 is **Challenges**: consequential crossroads triggered by persistent career/world conditions.
+- Layer 3 is **Epics**: macro-historical undertakings and milestone reviews. `Works` is deprecated terminology; legacy `kind: &"work"` records must be categorized as Epics during compatibility handling.
+- Event opportunities whose event ID begins `challenge_` or whose authored tags include `challenge` must be classified as Challenges before entering the desk queue. Do not classify all events as routine assignments.
+- Every Epic review and institutional-pressure assignment must expose a meaningful asymmetric disposition after the two-action investigation limit. Verdict costs must be validated and committed in `AssignmentPipeline.resolve()`; UI must not mutate simulation state.
+- Challenge conditions must be linked to world flags/resources produced by actual assignment verdicts. Resource-gated Challenge outcomes must validate affordability before effects/rewards.
+- Keep these regressions covered by headless tests: queue routing, verdict stock/flags/progress/opinion/traits, Challenge eligibility, silver affordability, and save/load of active docket state.
