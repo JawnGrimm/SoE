@@ -430,7 +430,7 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 	var facts := ""
 	match action_id:
 		&"reconcile_accounts":
-			var institution_id := StringName(data.get("institution_id", &"eanna_household"))
+			var institution_id := StringName(data.get("institution_id", _institution_for_location(world, StringName(data.get("place_id", data.get("subject_id", ""))))))
 			var institution: Dictionary = world.institutions.get(institution_id, {})
 			var stock: Dictionary = institution.get("stockpiles", {})
 			var total := 0
