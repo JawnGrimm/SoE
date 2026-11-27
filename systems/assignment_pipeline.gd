@@ -363,6 +363,36 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 	var summary := ""
 	var facts := ""
 	match action_id:
+
+		&"inspect_seal":
+			var seal_id := String(data.get("seal_id", "unmarked"))
+			var seal_valid := bool(data.get("seal_valid", true))
+			var sender := world.get_person(StringName(data.get("sender_id", "")))
+			summary = "The seal is examined as an identity mark, not proof that the cargo remained untouched."
+			facts = "SEAL MARK: %s\nSENDER: %s\nSEAL REGISTER: %s" % [seal_id, sender.display_name if sender != null else String(data.get("sender_id", "unknown")), ("MATCH" if seal_valid else "MISMATCH") if skill_level >= 2 else "MARK VISIBLE; REGISTER NOT VERIFIED"]
+		&"compare_manifest":
+			var declared := int(data.get("declared_quantity", 0))
+			var received := int(data.get("received_quantity", 0))
+			summary = "The manifest is compared with the quantity physically received."
+			facts = "COMMODITY: %s\nDECLARED: %d\nRECEIVED: %d\n%s" % [String(data.get("commodity_id", "cargo")).replace("_", " "), declared, received, ("VARIANCE: %d" % (declared - received)) if skill_level >= 2 else ("QUANTITY VARIANCE: %s" % ("present" if declared != received else "not indicated"))]
+		&"question_carrier":
+			var carrier := world.get_person(StringName(data.get("sender_id", "")))
+			summary = "The carrier's account is recorded as testimony; it does not independently establish the cargo's fate."
+			facts = "CARRIER: %s\nACCOUNT: Cargo was dispatched under the recorded seal and quantity.\nTESTIMONY: NOT INDEPENDENT VERIFICATION" % (carrier.display_name if carrier != null else String(data.get("sender_id", "unidentified carrier")))
+		&"inspect_cargo":
+			var received_quantity := int(data.get("received_quantity", 0))
+			var lost_quantity := int(data.get("loss_quantity", 0))
+			summary = "The landed cargo is inspected. Route loss is recorded separately from responsibility."
+			facts = "RECEIVED: %d %s\nRECORDED ROUTE LOSS: %d\nCARGO CONDITION: %s" % [received_quantity, String(data.get("commodity_id", "cargo")).replace("_", " "), lost_quantity, "bundles missing in transit" if lost_quantity > 0 else "no quantity loss recorded"]
+		&"examine_origin_copy":
+			var origin_quantity := int(data.get("origin_account_quantity", data.get("declared_quantity", 0)))
+			summary = "The origin-side sealed copy confirms what was entered before the shipment left."
+			facts = "ORIGIN ACCOUNT: %d %s\nSEAL: %s\nSENDER: %s" % [origin_quantity, String(data.get("commodity_id", "cargo")).replace("_", " "), String(data.get("seal_id", "unmarked")), String(data.get("sender_id", "unknown"))]
+		&"compare_origin_copy":
+			var origin_recorded := int(data.get("origin_account_quantity", data.get("declared_quantity", 0)))
+			var arrival_recorded := int(data.get("received_quantity", 0))
+			summary = "The origin copy and destination receipt are compared. The difference occurred somewhere along the chain, not necessarily at the landing."
+			facts = "ORIGIN: %d\nARRIVAL: %d\n%s" % [origin_recorded, arrival_recorded, ("UNACCOUNTED VARIANCE: %d" % (origin_recorded - arrival_recorded)) if skill_level >= 2 else ("VARIANCE: %s" % ("present" if origin_recorded != arrival_recorded else "not indicated"))]
 		&"reconcile_accounts":
 			var institution_id := StringName(data.get("institution_id", &"eanna_household"))
 			var institution: Dictionary = world.institutions.get(institution_id, {})
