@@ -9,6 +9,7 @@ const Narrator = preload("res://systems/assignment_narrator.gd")
 var _opportunities: Array[Dictionary] = []
 var _return_focus: Control
 var _can_select := true
+var _close_button: Button
 var _buttons: Array[Button] = []
 
 func _ready() -> void:
@@ -22,8 +23,10 @@ func open_queue(opportunities: Array[Dictionary], return_focus: Control = null, 
 	_can_select = can_select
 	_rebuild()
 	visible = true
-	if not _buttons.is_empty():
+	if _can_select and not _buttons.is_empty():
 		_buttons[0].grab_focus()
+	elif _close_button != null:
+		_close_button.grab_focus()
 
 func close_queue() -> void:
 	visible = false
@@ -70,9 +73,11 @@ func _rebuild() -> void:
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	heading.add_child(title)
 	var close := Button.new()
+	_close_button = close
 	close.text = "CLOSE  [Esc]"
 	close.tooltip_text = "Close the work queue and return to the desk."
 	close.custom_minimum_size = Vector2(104, 44)
+	close.add_theme_stylebox_override("focus", _panel_style(Color("#211a12"), Color("#f5e6d0")))
 	close.pressed.connect(close_queue)
 	heading.add_child(close)
 	var rule := ColorRect.new()
@@ -117,6 +122,7 @@ func _rebuild() -> void:
 			button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+			button.add_theme_stylebox_override("focus", _panel_style(Color("#211a12"), Color("#f5e6d0")))
 			button.pressed.connect(_select.bind(index))
 			section.add_child(button)
 			_buttons.append(button)
