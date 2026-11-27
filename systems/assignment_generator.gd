@@ -86,8 +86,10 @@ static func generate(world: WorldState, actor: PersonEntity, selected_path: Stri
 		return _generate_path_docket(world, actor, path_id)
 	var archetypes: Array[StringName] = []
 	for item in ARCHETYPES:
-		if world.recent_archetypes.is_empty() or StringName(world.recent_archetypes.back()) != item:
+		if not world.recent_archetypes.has(item):
 			archetypes.append(item)
+	if archetypes.is_empty():
+		archetypes = ARCHETYPES.duplicate()
 	var archetype: StringName = archetypes[world.rng_narrative.randi_range(0, archetypes.size() - 1)]
 	if archetype == &"hazard_check":
 		var active_hazard := false
@@ -240,7 +242,7 @@ static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_
 	var eligible: Array = []
 	for template in templates:
 		var candidate_archetype_id := StringName("path_%s" % template.get("id", "docket"))
-		if world.recent_archetypes.is_empty() or StringName(world.recent_archetypes.back()) != candidate_archetype_id:
+		if not world.recent_archetypes.has(candidate_archetype_id):
 			eligible.append(template)
 	if eligible.is_empty():
 		eligible = templates
@@ -252,13 +254,33 @@ static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_
 	if client_members.is_empty() or opposing_members.is_empty():
 		push_warning("AssignmentGenerator: path docket has unresolved faction members: %s / %s" % [client_faction, opposing_faction])
 		return {}
-	var client_id := StringName(client_members[world.rng_narrative.randi_range(0, client_members.size() - 1)])
-	var opposing_id := StringName(opposing_members[world.rng_narrative.randi_range(0, opposing_members.size() - 1)])
-	if client_id == opposing_id and opposing_members.size() > 1:
-		for member_id in opposing_members:
-			if StringName(member_id) != client_id:
-				opposing_id = StringName(member_id)
-				break
+	var available_pairs: Array[Dictionary] = []
+	for client_member in client_members:
+		var candidate_client := StringName(client_member)
+		if world.get_person(candidate_client) == null:
+			continue
+		for opposing_member in opposing_members:
+			var candidate_opposing := StringName(opposing_member)
+			if candidate_opposing == candidate_client or world.get_person(candidate_opposing) == null:
+				continue
+			var candidate_pair := "%s|%s" % [candidate_client, candidate_opposing]
+			var reverse_pair := "%s|%s" % [candidate_opposing, candidate_client]
+			if not world.recent_npc_pairs.has(candidate_pair) and not world.recent_npc_pairs.has(reverse_pair):
+				available_pairs.append({"client": candidate_client, "opposing": candidate_opposing})
+	if available_pairs.is_empty():
+		for client_member in client_members:
+			var candidate_client := StringName(client_member)
+			if world.get_person(candidate_client) == null:
+				continue
+			for opposing_member in opposing_members:
+				var candidate_opposing := StringName(opposing_member)
+				if candidate_opposing != candidate_client and world.get_person(candidate_opposing) != null:
+					available_pairs.append({"client": candidate_client, "opposing": candidate_opposing})
+	if available_pairs.is_empty():
+		return {}
+	var selected_pair: Dictionary = available_pairs[world.rng_narrative.randi_range(0, available_pairs.size() - 1)]
+	var client_id := StringName(selected_pair.client)
+	var opposing_id := StringName(selected_pair.opposing)
 	var pair := "%s|%s" % [client_id, opposing_id]
 	world.recent_npc_pairs.append(pair)
 	while world.recent_npc_pairs.size() > 6:
