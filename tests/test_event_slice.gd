@@ -152,6 +152,12 @@ func _run() -> void:
 	_check(AssignmentPipeline._project_review_due(assignment_world, &"great_canal_cut", review_baseline, 60), "A project review may recur after twenty points of progress")
 	_check(AssignmentPipeline._project_review_due(assignment_world, &"great_canal_cut", review_baseline, 40) == false and AssignmentPipeline._project_review_due(assignment_world, &"great_canal_cut", {"stage": "cutting", "last_reviewed_progress": 40, "last_reviewed_stage": "survey"}, 40), "A stage transition should reopen a project review")
 	var martial_opportunities := AssignmentPipeline.generate_opportunities(assignment_world, assignment_actor, &"path_martial")
+	var martial_docket: Dictionary = {}
+	for opportunity in martial_opportunities:
+		if StringName(opportunity.get("kind", "")) == &"procedural_docket": martial_docket = opportunity
+	var martial_payload: Dictionary = martial_docket.get("source_data", {})
+	_check(StringName(martial_payload.get("path_id", "")) == &"path_martial", "A changed career orientation should generate a matching martial docket on the ordinary board")
+	_check(assignment_world.recent_npc_pairs.size() == 2 and assignment_world.recent_npc_pairs[0] != assignment_world.recent_npc_pairs[1] and assignment_world.recent_archetypes[0] != assignment_world.recent_archetypes[1], "Recent docket history should rotate NPC pairs and archetypes")
 	var civil_hazard_priority := 0
 	var martial_hazard_priority := 0
 	for opportunity in opportunities:
@@ -237,6 +243,8 @@ func _run() -> void:
 	save_roundtrip_world.epics[&"great_canal_cut"] = {"active": true, "progress": 41, "progress_resource": &"canal_progress", "target": 100, "stage": "cutting", "completed": false}
 	save_roundtrip_world.stockpiles[&"canal_progress"] = 41
 	save_roundtrip_world.local_path_dockets_settled = 2
+	save_roundtrip_world.recent_archetypes = [&"path_boundary_stones", &"path_ritual_beer"]
+	save_roundtrip_world.recent_npc_pairs = ["shuruppak_ilu|ama_edin", "enlil_kisu|ur_nanna"]
 	save_roundtrip_world.assignments[&"saved_world_assignment"] = {"status": "active", "kind": "form", "source_id": "form_saved", "actions": {"examine_records": true}, "evidence": {"examine_records": {"facts": "Saved evidence."}}}
 	save_roundtrip_world.faction_standings[&"eanna_household"] = 7
 	save_roundtrip_world.epic_summon_pending = true
@@ -261,6 +269,7 @@ func _run() -> void:
 		_check(restored_player.memory.size() == save_roundtrip_player.memory.size() and restored_player.memory.back().get("memory_id", &"") == &"save_test_memory", "SaveCodec should preserve personal memory")
 		_check(restored_world.get_resource(&"canal_progress") == 41 and restored_world.epics[&"great_canal_cut"].get("stage", "") == "cutting", "SaveCodec should preserve Epic progress and stage")
 		_check(restored_world.local_path_dockets_settled == 2 and restored_world.epic_summon_pending and not restored_world.epic_summon_issued and restored_world.get_faction_standing(&"eanna_household") == 7, "SaveCodec should preserve the career-to-Epic funnel state")
+		_check(restored_world.recent_archetypes == save_roundtrip_world.recent_archetypes and restored_world.recent_npc_pairs == save_roundtrip_world.recent_npc_pairs, "SaveCodec should preserve procedural story diversity history")
 		_check(restored_world.has_flag(&"save_test_flag", restored_world.current_period_index()), "SaveCodec should preserve expiring flags")
 		_check(restored_world.pending_forms.size() == save_roundtrip_world.pending_forms.size() and restored_world.hazards.size() == save_roundtrip_world.hazards.size(), "SaveCodec should preserve forms and hazards")
 		_check(restored_world.assignments.has(&"saved_world_assignment") and restored_world.assignments[&"saved_world_assignment"].get("actions", {}).has("examine_records"), "SaveCodec should preserve an unfinished multi-action assignment and its evidence")
