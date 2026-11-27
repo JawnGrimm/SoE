@@ -2,6 +2,9 @@ class_name ArchiveStackProp
 extends Button
 ## Clickable archive prop with a live, accessible queue seal.
 
+static func format_inbox(count: int, urgent_kind: String = "") -> String:
+	return "INBOX: %d%s" % [maxi(0, count), (" [" + urgent_kind.to_upper() + "]") if not urgent_kind.is_empty() else ""]
+
 var count_label: Label
 var badge_label: Label
 
