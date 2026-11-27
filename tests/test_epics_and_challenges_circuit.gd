@@ -210,8 +210,8 @@ func _run() -> void:
 	_check(silver_outcome != null, "Quayside authored silver verdict is present")
 	if silver_outcome != null:
 		_check(OutcomeAffordability.is_outcome_disabled_for_actor(Quayside.id, silver_outcome, 3), "Three personal silver disables the four-shekel verdict")
-		_check(not MainScript._is_outcome_disabled_for_actor(Quayside.id, silver_outcome, 4), "Four personal silver enables the four-shekel verdict")
-		_check(not MainScript._is_outcome_disabled_for_actor(&"challenge_other", silver_outcome, 0), "The Quayside-specific cost guard does not affect other challenges")
+		_check(not OutcomeAffordability.is_outcome_disabled_for_actor(Quayside.id, silver_outcome, 4), "Four personal silver enables the four-shekel verdict")
+		_check(not OutcomeAffordability.is_outcome_disabled_for_actor(&"challenge_other", silver_outcome, 0), "The Quayside-specific cost guard does not affect other challenges")
 
 	_finished = true
 	if _failures.is_empty():
