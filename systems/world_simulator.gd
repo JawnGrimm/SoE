@@ -184,7 +184,7 @@ func _simulate_epic(world: WorldState, definition: EpicDef, state: Dictionary) -
 		return
 
 	var now := world.current_period_index()
-	if int(state.get("audit_hold_until_period", -1)) >= now:
+	if state.has("audit_hold_until_period") and int(state.get("audit_hold_until_period", -1)) >= now:
 		state["progress"] = progress
 		state["stalled"] = true
 		state["active_problem"] = "audit_hold"
