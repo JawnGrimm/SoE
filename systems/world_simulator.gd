@@ -117,6 +117,10 @@ func _simulate_epics(world: WorldState) -> void:
 				"initial_stage": definition.initial_stage,
 				"stage": definition.initial_stage,
 				"completed": false,
+				"review_pending": true,
+				"review_stage": 0,
+				"reviewed_stage": -1,
+				"last_reviewed_period": -1,
 				"scandal_flags": [],
 				"history_notes": []
 			}
@@ -138,6 +142,19 @@ func _simulate_epics(world: WorldState) -> void:
 			world.epics[epic_id] = state
 			continue
 		_simulate_epic(world, definition, state)
+		var latest: Dictionary = world.epics.get(epic_id, state)
+		world.ensure_epic_review_state(StringName(epic_id), definition)
+		latest = world.epics.get(epic_id, latest)
+		if bool(latest.get("completed", false)):
+			latest["review_pending"] = false
+		else:
+			var progress := int(latest.get("progress", world.get_resource(definition.progress_resource)))
+			var stage := world.get_epic_stage_index(progress, int(latest.get("target", definition.target)), definition)
+			var reviewed_stage := int(latest.get("reviewed_stage", -1))
+			if stage > reviewed_stage and not bool(latest.get("review_pending", false)):
+				latest["review_pending"] = true
+				latest["review_stage"] = stage
+		world.epics[epic_id] = latest
 
 func _simulate_epic(world: WorldState, definition: EpicDef, state: Dictionary) -> void:
 	var resource_id := definition.progress_resource
