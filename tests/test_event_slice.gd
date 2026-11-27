@@ -949,6 +949,37 @@ func _run() -> void:
 		WorldSimulator.new(registry).advance_period(south_court_world)
 		_check(south_court_world.has_pending_form(&"grain_levy"), "WorldSimulator should be able to generate a fresh grain levy after Outcome 2 closes the previous one")
 
+	# Legacy saves migrate into the regional graph without losing their career state.
+	var legacy_world := WorldState.new()
+	UrukSeeder.seed_campaign(legacy_world, 918274)
+	legacy_world.routes.clear()
+	legacy_world.shipments.clear()
+	legacy_world.player_travel.clear()
+	legacy_world.places.erase(&"mari")
+	for place_id in legacy_world.places.keys():
+		var legacy_place: Dictionary = legacy_world.places[place_id]
+		legacy_place.erase("regional_institution_id")
+		legacy_place.erase("regional_agent_id")
+		legacy_world.places[place_id] = legacy_place
+	for institution_id in legacy_world.institutions.keys().duplicate():
+		if String(institution_id).begins_with("trade_post_") or institution_id == &"habuba_trade_post":
+			legacy_world.institutions.erase(institution_id)
+	for person_id in legacy_world.people.keys().duplicate():
+		if String(person_id).begins_with("regional_factor_"):
+			legacy_world.people.erase(person_id)
+	var legacy_payload := SaveCodecScript.encode_world(legacy_world)
+	legacy_payload.world.erase("routes")
+	legacy_payload.world.erase("shipments")
+	legacy_payload.world.erase("player_travel")
+	legacy_payload.world.erase("travel_history")
+	legacy_payload.world.erase("next_shipment_sequence")
+	var migrated_save := SaveCodecScript.decode_save(JSON.parse_string(JSON.stringify(legacy_payload)))
+	_check(bool(migrated_save.get("success", false)), "Older campaign saves should migrate into the regional world model")
+	if bool(migrated_save.get("success", false)):
+		var migrated_world: WorldState = migrated_save.world
+		_check(migrated_world.routes.size() >= 24 and migrated_world.places.has(&"mari"), "Save migration should restore route definitions and missing regional places")
+		_check(migrated_world.institutions.has(&"habuba_trade_post") and migrated_world.places[&"susa"].has("regional_institution_id"), "Save migration should restore regional trade institutions")
+
 	# Year 1 must produce real, cause-matched work rather than a quiet desk.
 	var year_one_world := WorldState.new()
 	UrukSeeder.seed_campaign(year_one_world, 32003200)
