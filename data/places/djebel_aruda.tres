@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="PlaceDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/place_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"djebel_aruda"
+display_name = "Djebel Aruda"
+place_type = &"uruk_related_settlement"
+region = &"upper_euphrates"
+political_relation = &"regional_partner"
+exports = Array[StringName]([&"timber", &"copper"])
+imports = Array[StringName]([&"grain", &"textiles", &"beer"])
+connected_to = Array[StringName]([&"habuba_kabira"])
+era_id = &"uruk_storehouse"
