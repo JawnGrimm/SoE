@@ -92,3 +92,6 @@ jobs:
 
       - name: Run work queue grouping tests
         run: godot --headless --path . --script res://tests/test_work_queue_overlay.gd
+
+      - name: Run Epic and Challenge circuit regression tests
+        run: godot --headless --path . --script res://tests/test_epics_and_challenges_circuit.gd
