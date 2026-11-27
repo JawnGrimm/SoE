@@ -50,16 +50,23 @@ func _run() -> void:
 	var umma_ledger: Dictionary = {}
 	var local_form: Dictionary = {}
 	var procedural: Dictionary = {}
+	var local_pressure: Dictionary = {}
 	for opportunity in opportunities:
 		var source: Dictionary = opportunity.get("source_data", {})
 		if StringName(opportunity.get("kind", "")) == &"ledger" and StringName(opportunity.get("source_id", "")) == &"umma_canal_bailiff":
 			umma_ledger = opportunity
 		if StringName(opportunity.get("kind", "")) == &"form" and StringName(source.get("form_type", "")) == &"bailiff_requisition":
 			local_form = opportunity
+		if StringName(opportunity.get("kind", "")) == &"pressure" and StringName(source.get("institution_id", "")) == &"umma_canal_bailiff":
+			local_pressure = opportunity
 		if StringName(opportunity.get("kind", "")) == &"procedural_docket":
 			procedural = opportunity
 	_check(not umma_ledger.is_empty(), "Umma's institution-specific ledger is on the local board")
 	_check(not local_form.is_empty(), "Umma's own low labor stock generates a local bailiff requisition")
+	_check(not local_pressure.is_empty(), "Umma pressure work is derived from Umma stockpiles")
+	for candidate in opportunities:
+		var candidate_source: Dictionary = candidate.get("source_data", {})
+		_check(StringName(candidate_source.get("institution_id", "")) != &"eanna_household" and StringName(candidate.get("source_id", "")) != &"roof_leak", "Uruk institution work and hazards do not leak onto Umma's board")
 	var local_employer_id := StringName(local_form.get("employer_id", ""))
 	var local_employer := world.get_person(local_employer_id)
 	_check(local_employer != null and local_employer.location_id == &"umma" and local_employer.office_id == &"canal_bailiff", "Local requisition employer resolves to Umma's seated bailiff")
@@ -68,6 +75,8 @@ func _run() -> void:
 	var left_id := StringName(procedural_source.get("left_card", {}).get("speaker_id", ""))
 	var right_id := StringName(procedural_source.get("right_card", {}).get("speaker_id", ""))
 	_check(world.get_person(left_id) != null and world.get_person(left_id).location_id == &"umma" and world.get_person(right_id) != null and world.get_person(right_id).location_id == &"umma", "Umma procedural docket speakers are local residents")
+	var procedural_employer := world.get_person(StringName(procedural.get("employer_id", "")))
+	_check(procedural_employer != null and procedural_employer.location_id == &"umma" and procedural_employer.office_id != &"", "Procedural docket employer resolves to a seated Umma official")
 
 	var assignment_id := StringName(local_form.get("id", ""))
 	_check(PipelineScript.begin(world, local_form, player), "Umma requisition begins through the shared assignment lifecycle")
@@ -103,6 +112,12 @@ func _run() -> void:
 		if StringName(opportunity.get("kind", "")) == &"ledger" and StringName(source.get("institution_id", "")) == &"eanna_household":
 			uruk_work = true
 	_check(uruk_work, "Uruk's local institution work returns after the regional circuit")
+	_check(world.resolved_forms.size() == 1 and world.cedar_desk_log.size() == 1, "Umma form resolution and chronicle entry remain after returning to Uruk")
+	var umma_after_return: Dictionary = world.institutions.get(&"umma_canal_bailiff", {})
+	_check(not umma_after_return.is_empty() and umma_after_return.get("stockpiles", {}).has(&"barley"), "Umma institution and its stockpile continue to exist after return")
+	var final_save := SaveCodecScript.decode_save(SaveCodecScript.encode_world(world))
+	var final_world: WorldState = final_save.get("world") as WorldState
+	_check(bool(final_save.get("success", false)) and final_world != null and final_world.institutions.get(&"umma_canal_bailiff", {}).get("stockpiles", {}).has(&"barley"), "The returned regional state survives a second full save/load round-trip")
 
 	print("Umma institutional circuit: %d checks, %d failures" % [checks, failures.size()])
 	for failure in failures:
