@@ -1,6 +1,7 @@
 extends Control
 
 const AssignmentGeneratorScript = preload("res://systems/assignment_generator.gd")
+const DevCommandRouterScript = preload("res://systems/dev_command_router.gd")
 const CAMPAIGN_SEED: int = 32003200
 const ROSTER_CAST: Array[StringName] = [&"shuruppak_ilu", &"utu_mansum", &"enlil_kisu", &"ur_nanna", &"nin_kasi", &"geme_inana", &"lu_nanshe"]
 const FACTION_LABELS := {
@@ -42,6 +43,7 @@ var phase := "case"
 var last_opinion_deltas: Dictionary[StringName, int] = {}
 var active_left_speaker_id: StringName = &""
 var active_right_speaker_id: StringName = &""
+var dev_command_router
 
 var year_label: Label
 var case_heading: Label
@@ -82,11 +84,17 @@ var choice_locked := false
 func _ready() -> void:
 	_build_interface()
 	_start_world()
+	_register_dev_commands()
 	if SaveManager.consume_load_on_start():
 		var load_result := load_game()
 		if not bool(load_result.get("success", false)):
 			status_label.text = "LOAD FAILED / " + String(load_result.get("error", "Unknown error"))
 	MusicDirector.play_for_phase(phase)
+
+
+func _exit_tree() -> void:
+	if dev_command_router != null:
+		dev_command_router.unregister()
 
 func _open_pause_menu() -> void:
 	var pause_controller := get_node_or_null("PauseMenuController")
@@ -1174,6 +1182,12 @@ func _show_result(outcome: EventOutcome) -> void:
 func _advance_period() -> void:
 	if phase != "result" and phase != "end_of_queue":
 		return
+	_advance_period_once()
+
+
+func _advance_period_once() -> bool:
+	if world == null or world_simulator == null:
+		return false
 	assignment_opportunities.clear()
 	active_world_assignment_id = &""
 	_clear_stamp_history()
@@ -1181,8 +1195,157 @@ func _advance_period() -> void:
 	last_opinion_deltas.clear()
 	if world.is_active_epic_complete() and not world.era_completion_started:
 		_show_era_completion()
-		return
+		return false
 	_schedule_next_case()
+	return true
+
+
+func _register_dev_commands() -> void:
+	if not OS.is_debug_build():
+		return
+	dev_command_router = DevCommandRouterScript.new()
+	var callbacks := {
+		"advance_periods": Callable(self, "_debug_advance_periods"),
+		"inspect_world": Callable(self, "_debug_inspect_world"),
+		"inspect_person": Callable(self, "_debug_inspect_person"),
+		"adjust_resource": Callable(self, "_debug_adjust_resource"),
+		"person_ids": Callable(self, "_debug_person_ids"),
+		"resource_ids": Callable(self, "_debug_resource_ids"),
+	}
+	if not dev_command_router.register(LimboConsole, callbacks):
+		push_warning("Main: SoE developer commands could not be registered.")
+
+
+func _debug_advance_periods(count: int) -> Dictionary:
+	if not OS.is_debug_build():
+		return {"success": false, "error": "Developer commands are unavailable in release builds."}
+	if world == null or world.get_player() == null:
+		return {"success": false, "error": "Finish character creation before advancing the world from the console."}
+	if phase == "era_complete":
+		return {"success": false, "error": "Begin the next era before advancing the world again."}
+	if phase not in ["result", "end_of_queue"]:
+		return {"success": false, "error": "Advance from a result or an empty desk queue; finish the current case or engagement first."}
+	if count < 1 or count > 120:
+		return {"success": false, "error": "Period count must be between 1 and 120."}
+
+	var advanced := 0
+	for _index in range(count):
+		var can_continue := _advance_period_once()
+		advanced += 1
+		if not can_continue:
+			break
+	var fast_forward_note := " Intervening desk offers were superseded without player resolution." if advanced > 1 else ""
+	return {
+		"success": true,
+		"message": "Advanced %d period(s). Now %s, period %d / 12.%s%s" % [
+			advanced,
+			CalendarFormatter.format_year(world.year),
+			world.period + 1,
+			" Era Epic completed; advancement stopped." if world.era_completion_started else "",
+			fast_forward_note
+		]
+	}
+
+
+func _debug_inspect_world() -> Dictionary:
+	if world == null:
+		return {"success": false, "error": "WorldState is not initialized."}
+	var active_hazards := 0
+	for hazard in world.hazards:
+		if bool(hazard.get("active", false)):
+			active_hazards += 1
+	var player := world.get_player()
+	var active_epic := String(world.get_active_epic_id())
+	return {
+		"success": true,
+		"message": "WORLD / %s period %d of 12 | player=%s | people=%d | institutions=%d | forms=%d pending / %d resolved | active_hazards=%d | active_epic=%s | world_stockpiles=%s" % [
+			CalendarFormatter.format_year(world.year),
+			world.period + 1,
+			String(player.id) if player != null else "none",
+			world.people.size(),
+			world.institutions.size(),
+			world.pending_forms.size(),
+			world.resolved_forms.size(),
+			active_hazards,
+			active_epic if active_epic != "" else "none",
+			str(world.stockpiles)
+		]
+	}
+
+
+func _debug_inspect_person(person_id: String) -> Dictionary:
+	if world == null:
+		return {"success": false, "error": "WorldState is not initialized."}
+	var person := world.get_person(StringName(person_id))
+	if person == null:
+		return {"success": false, "error": "No person has ID '%s'." % person_id}
+	var skill_parts: Array[String] = []
+	for skill_id in [&"literacy", &"arithmetic", &"law", &"rhetoric", &"intrigue", &"stewardship"]:
+		skill_parts.append("%s:%d" % [String(skill_id), person.skills.get_level(skill_id)])
+	return {
+		"success": true,
+		"message": "PERSON / %s (%s) | office=%s | traits=%s | skills=[%s] | resources=%s | relationships=%d | memories=%d" % [
+			person.display_name,
+			String(person.id),
+			String(person.office_id) if person.office_id != &"" else "none",
+			str(person.traits),
+			", ".join(skill_parts),
+			str(person.resources),
+			person.relationships.size(),
+			person.memory.size()
+		]
+	}
+
+
+func _debug_adjust_resource(resource_id: String, amount: int, scope: String = "world", owner_id: String = "", institution_id: String = "") -> Dictionary:
+	if world == null:
+		return {"success": false, "error": "WorldState is not initialized."}
+	if resource_id.strip_edges().is_empty():
+		return {"success": false, "error": "Resource ID cannot be empty."}
+	var resource_key := StringName(resource_id)
+	var institution_key := StringName(institution_id)
+	var before := world.get_resource(resource_key, scope, owner_id, institution_key)
+	if not world.modify_resource(resource_key, amount, scope, owner_id, institution_key):
+		return {"success": false, "error": "Resource adjustment was rejected. Check the scope, owner, institution, and available balance."}
+	var after := world.get_resource(resource_key, scope, owner_id, institution_key)
+	return {
+		"success": true,
+		"message": "RESOURCE / %s | scope=%s | %d -> %d (%+d)" % [resource_id, scope, before, after, amount]
+	}
+
+
+func _debug_person_ids() -> Array[String]:
+	var ids: Array[String] = []
+	if world == null:
+		return ids
+	for person_id in world.people.keys():
+		ids.append(String(person_id))
+	ids.sort()
+	return ids
+
+
+func _debug_resource_ids() -> Array[String]:
+	var ids: Array[String] = []
+	if world == null:
+		return ids
+	for resource_id in world.stockpiles.keys():
+		var world_resource_value := String(resource_id)
+		if not ids.has(world_resource_value):
+			ids.append(world_resource_value)
+	for person in world.people.values():
+		if person == null:
+			continue
+		for resource_id in person.resources.keys():
+			var person_resource_value := String(resource_id)
+			if not ids.has(person_resource_value):
+				ids.append(person_resource_value)
+	for institution in world.institutions.values():
+		for resource_id in institution.get("stockpiles", {}).keys():
+			var institution_resource_value := String(resource_id)
+			if not ids.has(institution_resource_value):
+				ids.append(institution_resource_value)
+	ids.sort()
+	return ids
 
 func _show_procedural_result(result_title: String, result_text: String) -> void:
 	_clear_choices()
