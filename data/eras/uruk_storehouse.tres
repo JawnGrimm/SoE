@@ -12,4 +12,5 @@ end_year = -3160
 era_tags = Array[StringName]([&"ancient", &"bronze_age", &"uruk", &"clay"])
 calendar_name = "Flood & Stores"
 currency_name = "shekels"
-period_label = "Month"
+period_label = "Season"
+period_names = Array[String](["Inundation", "Sowing", "Harvest", "Stores"])
