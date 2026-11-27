@@ -1,7 +1,7 @@
 extends SceneTree
 
 const QueueScript = preload("res://ui/work_queue_overlay.gd")
-const MainScript = preload("res://main.gd")
+const OutcomeAffordability = preload("res://systems/outcome_affordability.gd")
 const Pipeline = preload("res://systems/assignment_pipeline.gd")
 const EventRunnerScript = preload("res://systems/event_runner.gd")
 const SaveCodec = preload("res://systems/save_codec.gd")
@@ -104,7 +104,7 @@ func _run() -> void:
 
 	var emergency := Pipeline.resolve(world, actor, epic_id, &"epic_emergency")
 	_check(bool(emergency.get("success", false)), "Emergency Epic verdict resolves")
-	_check(String(emergency.get("message", "")).contains("Emergency rations reach the crews"), "Emergency verdict retains its specific consequence text")
+	_check(String(emergency.get("message", "")).begins_with("Twenty barley"), "Emergency verdict retains its authored consequence opening")
 	_check(world.get_resource(&"barley", "institution", "", &"eanna_household") == 80 and world.get_resource(&"labor", "institution", "", &"eanna_household") == 18, "Emergency Epic verdict spends exactly 20 barley and 2 labor")
 	_check(world.get_resource(&"test_epic_progress") == 15, "Emergency Epic verdict advances progress by 15")
 	_check(not bool(world.epics.get(&"test_epic", {}).get("stalled", true)) and not bool(world.epics.get(&"test_epic", {}).get("review_pending", true)), "Emergency verdict clears stall and acknowledges the review")
@@ -209,7 +209,7 @@ func _run() -> void:
 			silver_outcome = outcome
 	_check(silver_outcome != null, "Quayside authored silver verdict is present")
 	if silver_outcome != null:
-		_check(MainScript._is_outcome_disabled_for_actor(Quayside.id, silver_outcome, 3), "Three personal silver disables the four-shekel verdict")
+		_check(OutcomeAffordability.is_outcome_disabled_for_actor(Quayside.id, silver_outcome, 3), "Three personal silver disables the four-shekel verdict")
 		_check(not MainScript._is_outcome_disabled_for_actor(Quayside.id, silver_outcome, 4), "Four personal silver enables the four-shekel verdict")
 		_check(not MainScript._is_outcome_disabled_for_actor(&"challenge_other", silver_outcome, 0), "The Quayside-specific cost guard does not affect other challenges")
 
