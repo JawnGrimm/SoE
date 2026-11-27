@@ -52,15 +52,24 @@ func _build() -> void:
 	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	body.add_child(header)
 	body.add_child(HSeparator.new())
-	body.add_child(_label("%s\n%s / %s\nOrientation: %s" % [summary.get("character_name", "Unknown Scribe"), summary.get("final_office", "No office"), CalendarFormatter.format_year(int(summary.get("start_year", -3200))), summary.get("starting_orientation", "Unrecorded")], 16, INK))
+	body.add_child(_label("%s\nFinal office: %s\nOrientation: %s\nYears in service: %d" % [summary.get("character_name", "Unknown Scribe"), summary.get("final_office", "No office"), summary.get("starting_orientation", "Unrecorded"), int(summary.get("years_in_service", 0))], 16, INK))
 	var epitaph := _label(String(summary.get("epitaph", "The Diligent Keeper of the Daybook")), 29, GOLD)
 	epitaph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	epitaph.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.add_child(epitaph)
 	body.add_child(_label("THE PURSE\nSilver earned: %d   Held: %d\nDebt cleared: %d   Defaulted: %d   Unpaid upkeep: %d\nNet worth: %d" % [int(summary.get("silver_earned", 0)), int(summary.get("silver_held", 0)), int(summary.get("debt_cleared", 0)), int(summary.get("debt_defaulted", 0)), int(summary.get("unpaid_upkeep", 0)), int(summary.get("net_worth", 0))], 15, INK))
-	body.add_child(_label("THE LAW & THE ARCHIVE\nLaw: %d   Literacy: %d   Arithmetic: %d\nIntegrity: %d / 100   Corruption: %d / 100\nAudit exposure: %d   Reprimands survived: %d\nScandals buried: %d" % [int(summary.get("law", 0)), int(summary.get("literacy", 0)), int(summary.get("arithmetic", 0)), int(summary.get("integrity_score", 0)), int(summary.get("corruption_score", 0)), int(summary.get("audit_exposure", 0)), int(summary.get("audit_reprimands_survived", 0)), int(summary.get("scandals_buried", 0))], 15, INK))
+	body.add_child(_label("THE LAW & THE ARCHIVE\nLaw: %d   Literacy: %d   Arithmetic: %d\nRhetoric: %d   Intrigue: %d   Stewardship: %d\nIntegrity: %d / 100   Corruption: %d / 100\nAudit exposure: %d   Reprimands survived: %d\nScandals buried: %d" % [int(summary.get("law", 0)), int(summary.get("literacy", 0)), int(summary.get("arithmetic", 0)), int(summary.get("rhetoric", 0)), int(summary.get("intrigue", 0)), int(summary.get("stewardship", 0)), int(summary.get("integrity_score", 0)), int(summary.get("corruption_score", 0)), int(summary.get("audit_exposure", 0)), int(summary.get("audit_reprimands_survived", 0)), int(summary.get("scandals_buried", 0))], 15, INK))
 	var standings: Dictionary = summary.get("character_standings", {})
+	var faction_scores: Dictionary = summary.get("faction_standings", {})
+	var faction_labels := {
+		&"eanna_temple": "Eanna Temple",
+		&"council_of_elders": "City Elders",
+		&"boatmens_guild": "Boatmen",
+		&"provincial_frontier": "Provincial Frontier"
+	}
 	var standing_lines := PackedStringArray()
+	for faction_id in faction_labels:
+		standing_lines.append("%s: %+d" % [String(faction_labels[faction_id]), int(faction_scores.get(faction_id, 0))])
 	for person_name in standings:
 		standing_lines.append("%s: %+d" % [String(person_name), int(standings[person_name])])
 	body.add_child(_label("THE CITY & THE PROVINCE\nPrimary legacy: %s\nSettled cases: %d\n%s" % [summary.get("primary_legacy_faction", "Unrecorded"), int(summary.get("total_cases_settled", 0)), "\n".join(standing_lines)], 15, INK))
