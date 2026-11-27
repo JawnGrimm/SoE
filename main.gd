@@ -210,13 +210,13 @@ func _build_interface() -> void:
 	var desk_caption := Label.new()
 	desk_caption.text = "THE DESK  /  CEDAR AND REED"
 	desk_caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	desk_caption.add_theme_font_size_override("font_size", 10)
+	desk_caption.add_theme_font_size_override("font_size", 12)
 	desk_caption.add_theme_color_override("font_color", Color("#a99570"))
 	desk_toolbar.add_child(desk_caption)
 	survey_button = Button.new()
 	survey_button.text = "UNROLL REGIONAL SURVEY"
 	survey_button.tooltip_text = "Unroll the regional river-and-road survey on the cedar desk."
-	survey_button.add_theme_font_size_override("font_size", 10)
+	survey_button.add_theme_font_size_override("font_size", 12)
 	survey_button.add_theme_stylebox_override("normal", _panel_style("#3a2b1d", "#80653b"))
 	survey_button.add_theme_stylebox_override("hover", _panel_style("#604326", "#d0ad70"))
 	survey_button.pressed.connect(_toggle_regional_survey)
@@ -230,7 +230,7 @@ func _build_interface() -> void:
 	desk_box.add_child(upper_workspace)
 	var evidence_row := HBoxContainer.new()
 	evidence_workspace = evidence_row
-	evidence_row.custom_minimum_size.y = 116
+	evidence_row.custom_minimum_size.y = 172
 	evidence_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	evidence_row.add_theme_constant_override("separation", 12)
 	upper_workspace.add_child(evidence_row)
@@ -407,7 +407,7 @@ func _build_interface() -> void:
 	compound_box.add_child(roster_box)
 	status_label = Label.new()
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	status_label.add_theme_font_size_override("font_size", 11)
+	status_label.add_theme_font_size_override("font_size", 12)
 	status_label.add_theme_color_override("font_color", Color("#a99570"))
 	compound_box.add_child(status_label)
 
@@ -469,19 +469,19 @@ func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: Strin
 	title.text = heading
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.add_theme_font_size_override("font_size", 12)
+	title.add_theme_font_size_override("font_size", 13)
 	title.add_theme_color_override("font_color", Color("#d6bd8b"))
 	header.add_child(title)
 	var speaker_label := Label.new()
 	speaker_label.text = speaker.to_upper()
-	speaker_label.add_theme_font_size_override("font_size", 10)
+	speaker_label.add_theme_font_size_override("font_size", 12)
 	speaker_label.add_theme_color_override("font_color", Color("#a99570"))
 	box.add_child(speaker_label)
 	var quote_label := Label.new()
 	quote_label.text = "“%s”" % quote
 	quote_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	quote_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	quote_label.add_theme_font_size_override("font_size", 13)
+	quote_label.add_theme_font_size_override("font_size", 14)
 	quote_label.add_theme_color_override("font_color", Color("#e0d4bd"))
 	box.add_child(quote_label)
 	# Evidence can contain a complete resource ledger. Keep it inside the card's
@@ -494,7 +494,7 @@ func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: Strin
 	facts_label.custom_minimum_size.y = 0
 	facts_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	facts_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	facts_label.add_theme_font_size_override("normal_font_size", 11)
+	facts_label.add_theme_font_size_override("normal_font_size", 12)
 	facts_label.add_theme_color_override("default_color", Color("#c7ad7e"))
 	box.add_child(facts_label)
 	if heading.begins_with("GRANARY"):
