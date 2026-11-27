@@ -62,6 +62,8 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			"priority": 8 if is_dispatch else (6 if not npc_evidence.is_empty() else 2 + urgency),
 			"tags": [dispatch_tag] if is_dispatch else [],
 			"dispatch": is_dispatch,
+			"requires_travel": is_dispatch,
+			"dispatch_destination_id": place_id if is_dispatch else &"",
 			"age_periods": age_periods,
 			"employer_id": _resolve_local_employer(world, institution_id, place_id, _preferred_office(form_type)),
 			"source_data": form_source,
@@ -251,6 +253,10 @@ static func begin(world: WorldState, opportunity: Dictionary, actor: PersonEntit
 	var assignment_id := StringName(opportunity.get("id", ""))
 	if assignment_id == &"" or world.assignments.has(assignment_id):
 		return false
+	if bool(opportunity.get("requires_travel", false)):
+		var destination_id := StringName(opportunity.get("dispatch_destination_id", opportunity.get("place_id", "")))
+		if destination_id == &"" or world.current_location_id != destination_id:
+			return false
 	var record := opportunity.duplicate(true)
 	record["status"] = "active"
 	record["actor_id"] = actor.id
