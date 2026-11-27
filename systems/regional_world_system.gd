@@ -251,8 +251,8 @@ static func get_destination_options(world: WorldState, origin_id: StringName) ->
 			"name": String(world.places[place_id].get("name", place_id)),
 			"route_ids": route_ids,
 			"travel_periods": route_path_periods(world, route_ids),
-			"bread_required": route_path_periods(world, route_ids),
-			"beer_required": int(ceil(float(route_path_periods(world, route_ids)) / 3.0)),
+			"bread_required": route_path_periods(world, route_ids) + route_ids.size(),
+			"beer_required": int(ceil(float(route_path_periods(world, route_ids) + route_ids.size()) / 3.0)),
 			"route_risk_percent": total_risk
 		})
 	options.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
@@ -380,8 +380,8 @@ static func start_player_travel(world: WorldState, actor: PersonEntity, destinat
 		actor.current_location_id = destination_id
 		world.player_travel = {"actor_id": actor.id, "origin_id": origin_id, "destination_id": destination_id, "route_ids": [], "route_index": 0, "remaining_periods": 0, "departure_period": world.current_period_index(), "arrival_period": world.current_period_index(), "status": "arrived", "incidents": [], "rations_consumed": {"bread": 0, "beer": 0}, "silver_spent": 0}
 		return {"success": true, "route_ids": [], "travel_periods": 0, "bread_required": 0, "beer_required": 0, "silver_spent": 0}
-	var bread_required := travel_periods
-	var beer_required := int(ceil(float(travel_periods) / 3.0))
+	var bread_required := travel_periods + route_ids.size()
+	var beer_required := int(ceil(float(bread_required) / 3.0))
 	var bread_shortage := maxi(0, bread_required - int(actor.resources.get(&"bread", 0)))
 	var beer_shortage := maxi(0, beer_required - int(actor.resources.get(&"beer", 0)))
 	var local_institution_id := &"eanna_household" if origin_id == &"uruk" else StringName(world.places.get(origin_id, {}).get("regional_institution_id", ""))
@@ -452,6 +452,22 @@ static func _advance_player_travel(world: WorldState) -> void:
 		world.player_travel = travel
 		return
 	var route_ids: Array = travel.get("route_ids", [])
+	if bool(travel.get("delay_pending", false)):
+		var delayed_route_id := StringName(route_ids[int(travel.get("route_index", 0))])
+		var delayed_route: Dictionary = world.routes.get(delayed_route_id, {})
+		var delayed_destination := StringName(delayed_route.get("to_place_id", ""))
+		if actor != null and delayed_destination != &"":
+			actor.current_location_id = delayed_destination
+		var delayed_index := int(travel.get("route_index", 0)) + 1
+		travel["route_index"] = delayed_index
+		travel.erase("delay_pending")
+		if delayed_index >= route_ids.size():
+			travel["status"] = "arrived"
+			travel["arrival_period"] = world.current_period_index()
+		else:
+			travel["remaining_periods"] = maxi(1, int(world.routes.get(StringName(route_ids[delayed_index]), {}).get("travel_periods", 1)))
+		world.player_travel = travel
+		return
 	var route_index := int(travel.get("route_index", 0))
 	if route_index >= route_ids.size():
 		travel["status"] = "arrived"
@@ -460,8 +476,6 @@ static func _advance_player_travel(world: WorldState) -> void:
 	var route_id := StringName(route_ids[route_index])
 	var route: Dictionary = world.routes.get(route_id, {})
 	var next_place := StringName(route.get("to_place_id", ""))
-	if actor != null and next_place != &"":
-		actor.current_location_id = next_place
 	var risk := effective_route_risk(world, route_id)
 	if risk > 0 and world.rng_sim.randi_range(1, 100) <= risk:
 		var incident := {"route_id": route_id, "period": world.current_period_index(), "kind": "travel_disruption"}
@@ -471,6 +485,12 @@ static func _advance_player_travel(world: WorldState) -> void:
 		world.travel_history.append(incident)
 		if actor != null:
 			actor.memory.append({"memory_id": &"regional_travel_incident", "text": "A travel disruption on %s delayed the journey." % String(route.get("route_type", "route")), "year": world.year, "involved": []})
+		travel["delay_pending"] = true
+		travel["remaining_periods"] = 1
+		world.player_travel = travel
+		return
+	if actor != null and next_place != &"":
+		actor.current_location_id = next_place
 	route_index += 1
 	travel["route_index"] = route_index
 	if route_index >= route_ids.size():
