@@ -6,6 +6,7 @@ var registry: DefinitionRegistry
 var _finished := false
 
 const AssignmentGeneratorScript = preload("res://systems/assignment_generator.gd")
+const AssignmentPipelineScript = preload("res://systems/assignment_pipeline.gd")
 const AssignmentNarratorScript = preload("res://systems/assignment_narrator.gd")
 const SaveCodecScript = preload("res://systems/save_codec.gd")
 const SaveManagerScript = preload("res://autoloads/save_manager.gd")
@@ -1156,6 +1157,8 @@ func _run() -> void:
 	if ledger_challenge != null:
 		runner.resolve_outcome(ledger_challenge, ledger_challenge.outcomes[0], ledger_ctx)
 		_check(not runner.is_eligible(ledger_challenge, ledger_ctx), "Ledger Inquest should respect once_per_world after resolution")
+	ledger_world.year = -3199
+	ledger_world.cases_settled = 8
 	var canal_before_inquest_period := ledger_world.get_resource(&"canal_progress")
 	WorldSimulator.new(registry).advance_period(ledger_world)
 	_check(ledger_world.get_resource(&"canal_progress") > canal_before_inquest_period, "Resolving a Challenge should not block the autonomous Canal Epic tick")
@@ -1189,8 +1192,34 @@ func _run() -> void:
 	_check(ownership_world.modify_resource(&"silver", -5, "institution", "", &"eanna_household"), "Institutional resource scope should spend Eanna silver")
 	_check(purse_actor.resources[&"silver"] == 1 and ownership_world.get_resource(&"silver", "institution", "", &"eanna_household") == 7, "Institutional spending must not alter the personal purse")
 
+	# The Great Canal Cut is dormant until the career milestone or an explicit summons.
+	var gated_epic_world := WorldState.new()
+	gated_epic_world.year = -3200
+	gated_epic_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 128, &"labor": 10}}
+	var gated_simulator := WorldSimulator.new(registry)
+	gated_simulator._simulate_epics(gated_epic_world)
+	var dormant_canal: Dictionary = gated_epic_world.epics.get(&"great_canal_cut", {})
+	_check(not bool(dormant_canal.get("active", true)) and gated_epic_world.get_resource(&"canal_progress") == 0 and not bool(dormant_canal.get("review_pending", false)), "Turn-1 Great Canal remains dormant with no progress, erosion, or review")
+	gated_epic_world.year = -3199
+	gated_epic_world.cases_settled = 8
+	gated_simulator._simulate_epics(gated_epic_world)
+	var launched_canal: Dictionary = gated_epic_world.epics.get(&"great_canal_cut", {})
+	_check(bool(launched_canal.get("active", false)) and gated_epic_world.get_resource(&"canal_progress") > 0 and bool(launched_canal.get("review_pending", false)), "Great Canal launches and opens its first review at the configured milestone")
+
+	# A single assignment offers two inquiries, then forces a judgment.
+	var action_cap_world := WorldState.new()
+	var action_cap_actor := UrukSeeder.seed_campaign(action_cap_world, 782001)
+	var action_cap_opportunity := {"id": &"action_cap_test", "kind": &"ledger", "source_id": &"eanna_household", "employer_id": &"shuruppak_ilu", "title": "Test ledger", "summary": "Test ledger", "source_data": {"institution_id": &"eanna_household", "place_id": &"uruk"}}
+	_check(AssignmentPipelineScript.begin(action_cap_world, action_cap_opportunity, action_cap_actor), "Investigation-cap fixture begins through the assignment lifecycle")
+	var cap_first := AssignmentPipelineScript.perform_action(action_cap_world, action_cap_actor, &"action_cap_test", &"examine_records")
+	var cap_second := AssignmentPipelineScript.perform_action(action_cap_world, action_cap_actor, &"action_cap_test", &"reconcile_accounts")
+	var cap_third := AssignmentPipelineScript.perform_action(action_cap_world, action_cap_actor, &"action_cap_test", &"inspect_source")
+	_check(bool(cap_first.get("success", false)) and bool(cap_second.get("success", false)), "The first two investigation actions are accepted")
+	_check(not bool(cap_third.get("success", false)) and String(cap_third.get("message", "")).contains("2 / 2"), "The third investigation action is rejected after the two-action cap")
+
 	var epic_high_world := WorldState.new()
-	epic_high_world.year = -3200
+	epic_high_world.year = -3199
+	epic_high_world.cases_settled = 8
 	epic_high_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 128, &"labor": 10}}
 	epic_high_world.stockpiles[&"canal_progress"] = 0
 	WorldSimulator.new(registry).advance_period(epic_high_world)
@@ -1200,7 +1229,8 @@ func _run() -> void:
 	_check(int(epic_high_state.get("progress", 0)) == 1 and String(epic_high_state.get("stage", "")) == "survey" and not bool(epic_high_state.get("completed", true)), "Epic runtime state should retain progress, stage, and completion status")
 
 	var epic_partial_world := WorldState.new()
-	epic_partial_world.year = -3200
+	epic_partial_world.year = -3199
+	epic_partial_world.cases_settled = 8
 	epic_partial_world.stockpiles[&"canal_progress"] = 12
 	epic_partial_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 70, &"labor": 7}}
 	WorldSimulator.new(registry).advance_period(epic_partial_world)
@@ -1208,7 +1238,8 @@ func _run() -> void:
 	_check(epic_partial_world.get_resource(&"barley", "institution", "", &"eanna_household") == 60, "Partial rations should consume two institutional barley after household demand")
 
 	var epic_stall_world := WorldState.new()
-	epic_stall_world.year = -3200
+	epic_stall_world.year = -3199
+	epic_stall_world.cases_settled = 8
 	epic_stall_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 128, &"labor": 10}}
 	epic_stall_world.set_flag(&"canal_crew_slowdown", epic_stall_world.current_period_index() + 10)
 	WorldSimulator.new(registry).advance_period(epic_stall_world)
@@ -1216,7 +1247,8 @@ func _run() -> void:
 	_check(epic_stall_world.get_resource(&"barley", "institution", "", &"eanna_household") == 120, "Stalled canal crews should not consume Epic rations")
 
 	var epic_silt_world := WorldState.new()
-	epic_silt_world.year = -3200
+	epic_silt_world.year = -3199
+	epic_silt_world.cases_settled = 8
 	epic_silt_world.period = 11
 	epic_silt_world.stockpiles[&"canal_progress"] = 8
 	epic_silt_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 20, &"labor": 0}}
@@ -1230,7 +1262,8 @@ func _run() -> void:
 	_check(epic_silt_world.period == 0 and epic_silt_world.get_resource(&"canal_progress") == 5, "Inundation with labor below eight should regress the canal by three")
 
 	var disrupted_silt_world := WorldState.new()
-	disrupted_silt_world.year = -3200
+	disrupted_silt_world.year = -3199
+	disrupted_silt_world.cases_settled = 8
 	disrupted_silt_world.period = 11
 	disrupted_silt_world.stockpiles[&"canal_progress"] = 8
 	disrupted_silt_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 1000, &"labor": 10}}
@@ -1240,7 +1273,8 @@ func _run() -> void:
 	_check(disrupted_silt_world.get_resource(&"canal_progress") == 5, "Inundation silt regression should apply to a strike even with labor at or above eight")
 
 	var barley_silt_world := WorldState.new()
-	barley_silt_world.year = -3200
+	barley_silt_world.year = -3199
+	barley_silt_world.cases_settled = 8
 	barley_silt_world.period = 11
 	barley_silt_world.stockpiles[&"canal_progress"] = 8
 	barley_silt_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 20, &"labor": 10}}
@@ -1255,7 +1289,8 @@ func _run() -> void:
 
 	# Epic pacing and fish sustainability are simulation guardrails.
 	var low_labor_epic_world := WorldState.new()
-	low_labor_epic_world.year = -3200
+	low_labor_epic_world.year = -3199
+	low_labor_epic_world.cases_settled = 8
 	low_labor_epic_world.period = 5
 	low_labor_epic_world.stockpiles[&"canal_progress"] = 20
 	low_labor_epic_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 200, &"labor": 7}}
