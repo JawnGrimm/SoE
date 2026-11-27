@@ -36,6 +36,7 @@ func _deliver_grain_clerk_dockets(world: WorldState) -> void:
 	var remaining: Array = []
 	var now := world.current_period_index()
 	for docket in queue:
+		var npc_evidence: Dictionary = docket.get("npc_evidence", {})
 		if int(docket.get("due_period", now + 1)) > now:
 			remaining.append(docket)
 			continue
@@ -48,7 +49,7 @@ func _deliver_grain_clerk_dockets(world: WorldState) -> void:
 				continue
 			if StringName(pending.get("subject_id", "")) != subject_id:
 				continue
-			pending["npc_evidence"] = (docket.get("npc_evidence", {}) as Dictionary).duplicate(true)
+			pending["npc_evidence"] = npc_evidence.duplicate(true)
 			pending["npc_intent_id"] = StringName(docket.get("intent_id", ""))
 			pending["generated_by"] = &"ur_nanna"
 			world.pending_forms[index] = pending
@@ -63,7 +64,7 @@ func _deliver_grain_clerk_dockets(world: WorldState) -> void:
 				"generated_by": &"ur_nanna",
 				"generation_reason": &"autonomous_grain_clerk_action",
 				"npc_intent_id": StringName(docket.get("intent_id", "")),
-				"npc_evidence": (docket.get("npc_evidence", {}) as Dictionary).duplicate(true),
+				"npc_evidence": npc_evidence.duplicate(true),
 			})
 	institution["npc_docket_queue"] = remaining
 	world.institutions[&"eanna_household"] = institution

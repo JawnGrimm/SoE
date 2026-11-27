@@ -16,6 +16,11 @@ func _run() -> void:
 	registry.load_defaults()
 	var world := WorldState.new()
 	UrukSeederScript.seed_campaign(world, 32003200)
+	var initial_institution: Dictionary = world.institutions[&"eanna_household"]
+	var initial_stock: Dictionary = initial_institution.get("stockpiles", {})
+	initial_stock[&"silver"] = 2 # Make both emergency and skimming branches eligible; selector priority must win.
+	initial_institution["stockpiles"] = initial_stock
+	world.institutions[&"eanna_household"] = initial_institution
 	var clerk := world.get_person(&"ur_nanna")
 	_check(clerk != null and clerk.office_id == &"grain_clerk", "Ur-Nanna is the one seeded grain clerk")
 	_check(int(clerk.vulnerabilities.get(&"personal_fear", 0)) > 5, "Ur-Nanna's seeded fear is above the emergency threshold")
@@ -39,7 +44,8 @@ func _run() -> void:
 
 	simulator.advance_period(world)
 	institution = world.institutions.get(&"eanna_household", {})
-	_check((institution.get("npc_docket_queue", []) as Array).is_empty(), "The queued evidence is delivered on the next period")
+	var delivered_queue: Array = institution.get("npc_docket_queue", [])
+	_check(delivered_queue.is_empty(), "The queued evidence is delivered on the next period")
 	var evidence_form: Dictionary = {}
 	for form in world.pending_forms:
 		if form.has("npc_evidence"):
@@ -49,7 +55,8 @@ func _run() -> void:
 	var opportunities := AssignmentPipelineScript.generate_opportunities(world, world.get_player(), &"path_civil")
 	var evidence_opportunity: Dictionary = {}
 	for opportunity in opportunities:
-		if (opportunity.get("source_data", {}) as Dictionary).has("npc_evidence"):
+		var opportunity_source: Dictionary = opportunity.get("source_data", {})
+		if opportunity_source.has("npc_evidence"):
 			evidence_opportunity = opportunity
 			break
 	_check(not evidence_opportunity.is_empty(), "The contradictory docket enters the existing assignment board")

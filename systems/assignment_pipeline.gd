@@ -27,7 +27,8 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 		var overdue := String(form.get("status", "pending")) == "overdue"
 		var form_title := _form_title(form_type)
 		var form_summary := "%s requires an assessment at %s." % [form_title, subject_name]
-		if not (form.get("npc_evidence", {}) as Dictionary).is_empty():
+		var npc_evidence: Dictionary = form.get("npc_evidence", {})
+		if not npc_evidence.is_empty():
 			form_title = "Contradictory North-Bay Grain Docket"
 			form_summary = "Two records disagree about the barley held at %s. The dispatch docket declares prime seed-corn; the threshold tally records damp, mold-marked grain." % subject_name
 		candidates.append({
