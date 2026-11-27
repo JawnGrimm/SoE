@@ -67,6 +67,12 @@ jobs:
       - name: Launch cedar desk scene headlessly
         run: godot --headless --path . --quit-after 3
 
+      - name: Run Cedar Desk Overhaul regression tests
+        run: godot --headless --path . --script res://tests/test_cedar_desk_overhaul.gd
+
+      - name: Run player consequence visibility regression tests
+        run: godot --headless --path . --script res://tests/test_consequence_visibility.gd
+
       - name: Run event and period integration tests
         run: godot --headless --path . --script res://tests/test_event_slice.gd
 
