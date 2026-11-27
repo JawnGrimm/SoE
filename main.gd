@@ -716,6 +716,9 @@ func _schedule_next_case() -> void:
 	var active_era_id := current_era.id if current_era != null else &""
 	if route_network == null or route_network.era_id != active_era_id:
 		_configure_route_network()
+	if not world.world_flags.has(&"first_workday_mentor_seen"):
+		_show_first_workday_mentor()
+		return
 	if world.epic_summon_pending and not world.epic_summon_issued:
 		active_event = null
 		procedural_assignment = AssignmentGeneratorScript.create_epic_summons()
@@ -750,6 +753,23 @@ func _schedule_next_case() -> void:
 	else:
 		_show_end_of_queue()
 
+func _show_first_workday_mentor() -> void:
+	_clear_stamp_history()
+	_clear_choices()
+	_set_phase("first_workday_mentor")
+	case_heading.text = "THE FIRST WORKDAY"
+	prompt_label.text = "The mentor sets a tablet before you. No time passes. No assignment is issued."
+	var mentor_id := creation_selections.get_answer(&"instruction_mentor")
+	var lines: Dictionary = creation_catalog.get("first_workday_mentor_lines", {})
+	dossier.text = String(lines.get(String(mentor_id), "The mentor places a blank tablet before you. “Make your mark.”"))
+	_add_choice("Take the reed / begin work", _finish_first_workday_mentor)
+
+func _finish_first_workday_mentor() -> void:
+	if phase != "first_workday_mentor":
+		return
+	world.world_flags[&"first_workday_mentor_seen"] = -1
+	_schedule_next_case()
+
 func _show_character_creation_screen(screen: int) -> void:
 	creation_screen = clampi(screen, 0, 8)
 	_clear_stamp_history()
@@ -768,81 +788,101 @@ func _show_character_creation_screen(screen: int) -> void:
 	nav.add_theme_constant_override("v_separation", 3)
 	choices.add_child(nav)
 	var nav_labels := ["Origins", "Responsibilities", "Formative", "Entry", "Instruction", "Path", "Identity", "Biography"]
-	for index in range(8):
+	for stage in range(8):
+		var stage_screen := stage + 1
 		var button := Button.new()
-		button.text = "%d %s%s" % [index + 1, nav_labels[index], " ✓" if _creation_step_complete(index + 1) else ""]
-		button.disabled = creation_screen == index + 1
-		button.pressed.connect(_show_character_creation_screen.bind(index + 1))
+		button.text = "%d %s%s" % [stage_screen, nav_labels[stage], " ✓" if _creation_step_complete(stage_screen) else ""]
+		button.disabled = creation_screen == stage_screen
+		button.pressed.connect(_show_character_creation_screen.bind(stage_screen))
 		button.add_theme_font_size_override("font_size", 10)
 		nav.add_child(button)
 
 	if creation_screen == 0:
-		prompt_label.text = "A LIFE ALREADY UNDERWAY"
-		dossier.text = "You are not beginning with an empty slate. You have grown up among other people, learned to be useful, made mistakes, and found your way toward the work of a scribe.\n\nThe choices ahead describe the life that brought you here. They shape the people you know, the work you recognize, and the circumstances in which your career begins.\n\n" + String(creation_catalog.get("display_context", "Current era")) + ""
-		_add_choice("Begin this life", _show_character_creation_screen.bind(1))
+		prompt_label.text = "BEFORE THE REGISTER"
+		dossier.text = "Before dawn in the cool storehouse yard. Wet clay, spilled barley, sour beer. The clerk presses a reed into damp clay beside a tablet that concerns you.\n\nChoose how you are referred to before the intake begins."
+		var pronoun_row := HBoxContainer.new()
+		choices.add_child(pronoun_row)
+		for pronoun in CharacterCreationSelections.PRONOUNS:
+			var pronoun_button := Button.new()
+			pronoun_button.text = String(pronoun).capitalize() + (" ✓" if creation_selections.pronouns == pronoun else "")
+			pronoun_button.pressed.connect(_set_creation_pronouns.bind(pronoun))
+			pronoun_row.add_child(pronoun_button)
+		_add_choice("Begin the intake", _show_character_creation_screen.bind(1), creation_selections.pronouns == &"")
 		return
 
-	if creation_screen >= 1 and creation_screen <= 6:
-		var question: Dictionary = creation_catalog.get("questions", [])[creation_screen - 1]
-		prompt_label.text = String(question.get("prompt", ""))
-		dossier.text = String(question.get("title", ""))
-		for answer in question.get("answers", []):
-			var question_id := StringName(question.get("id", ""))
-			var answer_id := StringName(answer.get("id", ""))
-			var label := String(answer.get("title", ""))
-			if creation_selections.get_answer(question_id) == answer_id:
-				label = "✓  " + label
-			label += "\n" + String(answer.get("description", ""))
-			var availability := CharacterCreationResolver.is_answer_available(creation_catalog, creation_selections, question_id, answer)
-			var unavailable := not bool(availability.get("available", false))
-			if unavailable:
-				label += "\nUnavailable — " + String(availability.get("reason", "Incompatible with an earlier choice."))
-			_add_choice(label, _select_creation_answer.bind(question_id, answer_id), unavailable)
-		_add_creation_back_next()
-		return
-
-	if creation_screen == 7:
-		prompt_label.text = "What should people call you?"
-		dossier.text = "Your starting traits will be chosen here in a later character-design pass.\n\nYour character's ambition will be defined here. It is not an objective or progression track yet."
-		var name_input := LineEdit.new()
-		name_input.placeholder_text = "Character name"
-		name_input.text = creation_selections.character_name if not creation_selections.character_name.is_empty() else actor.display_name
-		name_input.text_changed.connect(_set_creation_name)
-		name_input.custom_minimum_size.y = 38
-		choices.add_child(name_input)
-		creation_selections.set_character_name(name_input.text)
-		_add_choice("Review biography", _show_character_creation_screen.bind(8))
+	var stage_questions: Dictionary = {
+		1: [&"origin"],
+		2: [&"responsibility"],
+		3: [&"formative_experience", &"formative_vulnerability"],
+		4: [&"entry_into_scribal_work"],
+		5: [&"instruction_mentor"],
+		6: [&"professional_orientation"],
+		7: [&"identity_response"]
+	}
+	if creation_screen >= 1 and creation_screen <= 7:
+		for question_id in stage_questions[creation_screen]:
+			var question := _creation_question(question_id)
+			if question.is_empty():
+				continue
+			prompt_label.text = String(question.get("prompt", ""))
+			dossier.text += (String(question.get("title", "")) + "\n\n")
+			for answer in question.get("answers", []):
+				var answer_id := StringName(answer.get("id", ""))
+				var label := String(answer.get("title", ""))
+				if creation_selections.get_answer(question_id) == answer_id:
+					label = "✓  " + label
+				label += "\n" + String(answer.get("description", ""))
+				_add_choice(label, _select_creation_answer.bind(question_id, answer_id))
+		if creation_screen == 7:
+			prompt_label.text = "The carrier drops wet, rotten, short-count grain. “Write it sound,” the carrier says. The clerk turns to you. “Well?”"
+			var name_input := LineEdit.new()
+			name_input.placeholder_text = "Your name"
+			name_input.text = creation_selections.character_name
+			name_input.text_changed.connect(_set_creation_name)
+			name_input.custom_minimum_size.y = 38
+			choices.add_child(name_input)
+			var designation := String(creation_catalog.get("designation_by_origin", {}).get(String(creation_selections.get_answer(&"origin")), "compound entrant"))
+			dossier.text += "\nREGISTER ENTRY\n" + creation_selections.character_name + " · " + designation
 		_add_creation_back_next()
 		return
 
 	if creation_screen == 8:
-		prompt_label.text = "This is where your story begins."
+		prompt_label.text = "The clerk reads the biography from memory, not from the tablet."
 		var validation := CharacterCreationResolver.validate(creation_catalog, creation_selections)
 		dossier.text = CharacterCreationResolver.build_biography(creation_catalog, creation_selections)
-		var contact_lines: Dictionary = {}
-		for effect in CharacterCreationResolver.build_effects(creation_catalog, creation_selections):
-			if effect.effect_type != &"set_relationship":
-				continue
-			var contact_id := StringName(effect.parameters.get("other_id", ""))
-			var contact := world.get_person(contact_id)
-			if contact != null:
-				contact_lines[contact_id] = "%s — %s" % [contact.display_name, String(effect.parameters.get("relation_type", "known contact")).replace("_", " ")]
-		dossier.text += "\n\nPEOPLE YOU KNOW\n" + ("\n".join(contact_lines.values()) if not contact_lines.is_empty() else "No personal connections selected.")
-		dossier.text += "\n\nPERSONAL QUALITIES\nReserved for a later character-design pass."
-		dossier.text += "\n\nAMBITION\nReserved for a later character-design pass."
+		var identity_answer := CharacterCreationResolver._find_answer(_creation_question(&"identity_response"), creation_selections.get_answer(&"identity_response"))
+		var trait_fragment := String(identity_answer.get("biography", ""))
+		if not trait_fragment.is_empty():
+			dossier.text += "\n\nIDENTITY\n" + trait_fragment
+		dossier.text += "\n\n" + String(creation_catalog.get("creation_narration", ""))
 		if not bool(validation.get("valid", false)):
 			dossier.text += "\n\nBEFORE CONFIRMING\n" + "\n".join(validation.get("errors", []))
 		else:
 			_add_choice("CONFIRM  /  BEGIN CAREER", _confirm_character_creation)
 		_add_creation_back_next()
-		return
+
+func _creation_question(question_id: StringName) -> Dictionary:
+	for question in creation_catalog.get("questions", []):
+		if StringName(question.get("id", "")) == question_id:
+			return question
+	return {}
 
 func _creation_step_complete(screen: int) -> bool:
-	if screen >= 1 and screen <= 6:
-		var question: Dictionary = creation_catalog.get("questions", [])[screen - 1]
-		return creation_selections.get_answer(StringName(question.get("id", ""))) != &""
-	if screen == 7:
-		return not creation_selections.character_name.strip_edges().is_empty()
+	match screen:
+		1:
+			return creation_selections.get_answer(&"origin") != &""
+		2:
+			return creation_selections.get_answer(&"responsibility") != &""
+		3:
+			return creation_selections.get_answer(&"formative_experience") != &"" and creation_selections.get_answer(&"formative_vulnerability") != &""
+		4:
+			return creation_selections.get_answer(&"entry_into_scribal_work") != &""
+		5:
+			return creation_selections.get_answer(&"instruction_mentor") != &""
+		6:
+			return creation_selections.get_answer(&"professional_orientation") != &""
+		7:
+			return not creation_selections.character_name.strip_edges().is_empty() and creation_selections.pronouns != &"" and creation_selections.get_answer(&"identity_response") != &""
 	return false
 
 func _add_creation_back_next() -> void:
@@ -857,11 +897,7 @@ func _add_creation_back_next() -> void:
 	if creation_screen < 8:
 		var next := Button.new()
 		next.text = "CONTINUE →"
-		var can_continue := true
-		if creation_screen >= 1 and creation_screen <= 6:
-			var question: Dictionary = creation_catalog.get("questions", [])[creation_screen - 1]
-			can_continue = creation_selections.get_answer(StringName(question.get("id", ""))) != &""
-		next.disabled = not can_continue
+		next.disabled = not _creation_step_complete(creation_screen)
 		next.pressed.connect(_show_character_creation_screen.bind(creation_screen + 1))
 		row.add_child(next)
 
@@ -870,11 +906,14 @@ func _select_creation_answer(question_id: StringName, answer_id: StringName) -> 
 		return
 	if not creation_selections.select_answer(question_id, answer_id):
 		return
-	CharacterCreationResolver.prune_invalid_answers(creation_catalog, creation_selections)
 	_show_character_creation_screen(creation_screen)
 
 func _set_creation_name(value: String) -> void:
 	creation_selections.set_character_name(value)
+
+func _set_creation_pronouns(value: StringName) -> void:
+	if creation_selections.set_pronouns(value):
+		_show_character_creation_screen(creation_screen)
 
 func _confirm_character_creation() -> void:
 	if phase != "character_creation":
