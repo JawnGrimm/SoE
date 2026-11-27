@@ -3,6 +3,8 @@ extends RefCounted
 
 var id: StringName = &""
 var display_name: String = ""
+var pronouns: StringName = &""
+var institutional_designation: String = ""
 var location_id: StringName = &""
 var template_id: StringName = &""
 var occupation_id: StringName = &""
