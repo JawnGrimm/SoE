@@ -504,7 +504,7 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 			var opinion := employer.get_opinion(actor.id) if employer != null else 0
 			summary = "The responsible official gives a position and a demand. It is testimony, not proof."
 			var stance := _official_stance(world, actor, employer, data, opinion)
-			facts = "OFFICIAL: %s\nOPINION OF SCRIBE: %d\nOFFICE: %s\nSTANCE: “%s”" % [employer.display_name if employer != null else "No named official", opinion, String(employer.office_id) if employer != null else "Unassigned"]
+			facts = "OFFICIAL: %s\nOPINION OF SCRIBE: %d\nOFFICE: %s\nSTANCE: “%s”" % [employer.display_name if employer != null else "No named official", opinion, String(employer.office_id) if employer != null else "Unassigned", stance]
 		&"inspect_source":
 			if kind == &"hazard":
 				var hazard: Dictionary = record.get("source_data", {})
