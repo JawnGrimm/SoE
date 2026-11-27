@@ -1036,7 +1036,7 @@ func _show_world_engagement() -> void:
 	var employer := world.get_person(StringName(record.get("employer_id", "")))
 	var right_quote := "The record is incomplete. Read it, reconcile the figures, hear the responsible official, and inspect the source before making your assessment."
 	if not latest_investigation_scene.is_empty():
-		right_quote = _format_investigation_scene(latest_investigation_scene)
+		right_quote = "The seal preserves the entry. It does not preserve the truth."
 	var payload := {
 		"title": String(record.get("title", "ASSIGNMENT")),
 		"left_card": {"title": "WORLD SITUATION / %s" % String(record.get("kind", "work")).to_upper(), "speaker_id": &"", "quote": left_quote, "facts": "OPENED: %s / PERIOD %d" % [CalendarFormatter.format_year(world.year), world.period + 1]},
@@ -1052,6 +1052,11 @@ func _show_world_engagement() -> void:
 		callbacks.append(_world_assignment_action.bind(action_id))
 		payload.choices.back()["disabled"] = done
 	_render_docket_payload(payload, callbacks)
+	if not latest_investigation_scene.is_empty():
+		dossier.visible = true
+		dossier.scroll_active = true
+		dossier.text = _format_investigation_scene(latest_investigation_scene)
+		dossier.custom_minimum_size.y = 132
 	if actions.size() >= 2:
 		match StringName(record.get("kind", "")):
 			&"form":
