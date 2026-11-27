@@ -241,6 +241,8 @@ static func get_destination_options(world: WorldState, origin_id: StringName) ->
 			"name": String(world.places[place_id].get("name", place_id)),
 			"route_ids": route_ids,
 			"travel_periods": route_path_periods(world, route_ids),
+			"bread_required": route_path_periods(world, route_ids),
+			"beer_required": int(ceil(float(route_path_periods(world, route_ids)) / 3.0)),
 			"route_risk_percent": total_risk
 		})
 	options.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
@@ -359,24 +361,80 @@ static func start_player_travel(world: WorldState, actor: PersonEntity, destinat
 	var route_ids := find_route_path(world, origin_id, destination_id)
 	if origin_id != destination_id and route_ids.is_empty():
 		return {"success": false, "error": "No active route connects the current location and destination."}
+	var travel_periods := route_path_periods(world, route_ids)
+	if route_ids.is_empty():
+		actor.current_location_id = destination_id
+		world.player_travel = {"actor_id": actor.id, "origin_id": origin_id, "destination_id": destination_id, "route_ids": [], "route_index": 0, "remaining_periods": 0, "departure_period": world.current_period_index(), "arrival_period": world.current_period_index(), "status": "arrived", "incidents": [], "rations_consumed": {"bread": 0, "beer": 0}, "silver_spent": 0}
+		return {"success": true, "route_ids": [], "travel_periods": 0, "bread_required": 0, "beer_required": 0, "silver_spent": 0}
+	var bread_required := travel_periods
+	var beer_required := int(ceil(float(travel_periods) / 3.0))
+	var bread_shortage := maxi(0, bread_required - int(actor.resources.get(&"bread", 0)))
+	var beer_shortage := maxi(0, beer_required - int(actor.resources.get(&"beer", 0)))
+	var local_institution_id := &"eanna_household" if origin_id == &"uruk" else StringName(world.places.get(origin_id, {}).get("regional_institution_id", ""))
+	if (bread_shortage > 0 or beer_shortage > 0) and (local_institution_id == &"" or not world.institutions.has(local_institution_id)):
+		return {"success": false, "error": "There is no local institution able to provision this journey."}
+	var local_institution: Dictionary = world.institutions.get(local_institution_id, {})
+	var local_stock: Dictionary = local_institution.get("stockpiles", {})
+	if int(local_stock.get(&"bread", 0)) < bread_shortage or int(local_stock.get(&"beer", 0)) < beer_shortage:
+		return {"success": false, "error": "The local stores cannot supply enough bread and beer for this route."}
+	var silver_cost := bread_shortage + beer_shortage * 2
+	if int(actor.resources.get(&"silver", 0)) < silver_cost:
+		return {"success": false, "error": "The journey requires %d silver to purchase its missing rations." % silver_cost}
+	if bread_shortage > 0 and not world.modify_resource(&"bread", -bread_shortage, "institution", "", local_institution_id):
+		return {"success": false, "error": "Bread could not be issued from local stores."}
+	if beer_shortage > 0 and not world.modify_resource(&"beer", -beer_shortage, "institution", "", local_institution_id):
+		if bread_shortage > 0:
+			world.modify_resource(&"bread", bread_shortage, "institution", "", local_institution_id)
+		return {"success": false, "error": "Beer could not be issued from local stores."}
+	actor.resources[&"silver"] = int(actor.resources.get(&"silver", 0)) - silver_cost
+	actor.resources[&"bread"] = int(actor.resources.get(&"bread", 0)) + bread_shortage
+	actor.resources[&"beer"] = int(actor.resources.get(&"beer", 0)) + beer_shortage
 	world.player_travel = {
 		"actor_id": actor.id, "origin_id": origin_id, "destination_id": destination_id,
 		"route_ids": route_ids, "route_index": 0,
-		"remaining_periods": int(world.routes.get(route_ids[0], {}).get("travel_periods", 1)) if not route_ids.is_empty() else 0,
+		"remaining_periods": int(world.routes.get(route_ids[0], {}).get("travel_periods", 1)),
 		"departure_period": world.current_period_index(),
-		"status": "in_transit" if not route_ids.is_empty() else "arrived",
-		"incidents": []
+		"status": "in_transit", "incidents": [],
+		"bread_budget": bread_required, "beer_budget": beer_required,
+		"rations_consumed": {"bread": 0, "beer": 0}, "silver_spent": silver_cost
 	}
-	if route_ids.is_empty():
-		actor.current_location_id = destination_id
-	return {"success": true, "route_ids": route_ids, "travel_periods": route_path_periods(world, route_ids)}
+	return {"success": true, "route_ids": route_ids, "travel_periods": travel_periods, "bread_required": bread_required, "beer_required": beer_required, "silver_spent": silver_cost}
 
 static func _advance_player_travel(world: WorldState) -> void:
 	if String(world.player_travel.get("status", "")) != "in_transit":
 		return
 	var travel: Dictionary = world.player_travel
-	travel["remaining_periods"] = int(travel.get("remaining_periods", 1)) - 1
-	if int(travel["remaining_periods"]) > 0:
+	var actor := world.get_person(StringName(travel.get("actor_id", "")))
+	var remaining := int(travel.get("remaining_periods", 1)) - 1
+	travel["remaining_periods"] = remaining
+	if actor != null:
+		var bread := int(actor.resources.get(&"bread", 0))
+		if bread <= 0:
+			var shortage := {"kind": "ration_shortage", "period": world.current_period_index(), "route_id": StringName(travel.get("route_ids", [])[int(travel.get("route_index", 0))]) if not travel.get("route_ids", []).is_empty() else &""}
+			var incidents: Array = travel.get("incidents", [])
+			incidents.append(shortage)
+			travel["incidents"] = incidents
+			world.travel_history.append(shortage)
+			travel["remaining_periods"] = int(travel.get("remaining_periods", 0)) + 1
+			world.player_travel = travel
+			return
+		actor.resources[&"bread"] = bread - 1
+		var consumed: Dictionary = travel.get("rations_consumed", {"bread": 0, "beer": 0})
+		consumed["bread"] = int(consumed.get("bread", 0)) + 1
+		var elapsed := world.current_period_index() - int(travel.get("departure_period", world.current_period_index()))
+		if elapsed == 1 or (elapsed > 1 and (elapsed - 1) % 3 == 0):
+			var beer := int(actor.resources.get(&"beer", 0))
+			if beer > 0:
+				actor.resources[&"beer"] = beer - 1
+				consumed["beer"] = int(consumed.get("beer", 0)) + 1
+			else:
+				var beer_incident := {"kind": "beer_shortage", "period": world.current_period_index(), "route_id": &""}
+				var beer_incidents: Array = travel.get("incidents", [])
+				beer_incidents.append(beer_incident)
+				travel["incidents"] = beer_incidents
+				world.travel_history.append(beer_incident)
+		travel["rations_consumed"] = consumed
+	if remaining > 0:
 		world.player_travel = travel
 		return
 	var route_ids: Array = travel.get("route_ids", [])
@@ -388,7 +446,6 @@ static func _advance_player_travel(world: WorldState) -> void:
 	var route_id := StringName(route_ids[route_index])
 	var route: Dictionary = world.routes.get(route_id, {})
 	var next_place := StringName(route.get("to_place_id", ""))
-	var actor := world.get_person(StringName(travel.get("actor_id", "")))
 	if actor != null and next_place != &"":
 		actor.current_location_id = next_place
 	var risk := effective_route_risk(world, route_id)
@@ -408,68 +465,6 @@ static func _advance_player_travel(world: WorldState) -> void:
 	else:
 		travel["remaining_periods"] = maxi(1, int(world.routes.get(StringName(route_ids[route_index]), {}).get("travel_periods", 1)))
 	world.player_travel = travel
-
-
-
-static func effective_route_risk(world: WorldState, route_id: StringName) -> int:
-	if world == null or not world.routes.has(route_id):
-		return 100
-	var route: Dictionary = world.routes[route_id]
-	var risk := int(route.get("loss_risk_percent", 0))
-	if world.current_period_index() < int(route.get("risk_modifier_until", -1)):
-		risk += int(route.get("risk_modifier", 0))
-	return clampi(risk, 0, 100)
-
-static func provision_route(world: WorldState, route_id: StringName, risk_reduction: int = 8, duration_periods: int = 3) -> bool:
-	if world == null or not world.routes.has(route_id) or risk_reduction <= 0 or duration_periods <= 0:
-		return false
-	var route: Dictionary = world.routes[route_id]
-	if not bool(route.get("active", true)):
-		return false
-	route["risk_modifier"] = -risk_reduction
-	route["risk_modifier_until"] = world.current_period_index() + duration_periods
-	world.routes[route_id] = route
-	return true
-
-static func simulate_regional_flows(world: WorldState) -> void:
-	if world == null or not world.institutions.has(&"habuba_trade_post"):
-		return
-	var habuba: Dictionary = world.institutions[&"habuba_trade_post"]
-	var habuba_stock: Dictionary = habuba.get("stockpiles", {})
-	var timber := int(habuba_stock.get(&"timber", 0))
-	if timber >= 4 and not _has_open_shipment(world, &"habuba_kabira", &"uruk", &"timber") and world.rng_sim.randf() < 0.30:
-		var quantity := world.rng_sim.randi_range(4, mini(12, timber))
-		if world.modify_resource(&"timber", -quantity, "institution", "", &"habuba_trade_post"):
-			var launched := launch_shipment(world, {
-				"origin_id": &"habuba_kabira", "destination_id": &"uruk",
-				"commodity_id": &"timber", "quantity": quantity,
-				"seal_id": "habuba_trade_seal_%d" % world.current_period_index(),
-				"sender_id": &"enki_ili", "destination_institution_id": &"eanna_household"
-			})
-			if not bool(launched.get("success", false)):
-				world.modify_resource(&"timber", quantity, "institution", "", &"habuba_trade_post")
-	var eanna: Dictionary = world.institutions.get(&"eanna_household", {})
-	var eanna_stock: Dictionary = eanna.get("stockpiles", {})
-	var textiles := int(eanna_stock.get(&"textiles", 0))
-	if textiles >= 3 and not _has_open_shipment(world, &"uruk", &"habuba_kabira", &"textiles") and world.rng_sim.randf() < 0.22:
-		var quantity := world.rng_sim.randi_range(3, mini(6, textiles))
-		if world.modify_resource(&"textiles", -quantity, "institution", "", &"eanna_household"):
-			var launched := launch_shipment(world, {
-				"origin_id": &"uruk", "destination_id": &"habuba_kabira",
-				"commodity_id": &"textiles", "quantity": quantity,
-				"seal_id": "eanna_export_seal_%d" % world.current_period_index(),
-				"sender_id": &"geme_inana", "destination_institution_id": &"habuba_trade_post"
-			})
-			if not bool(launched.get("success", false)):
-				world.modify_resource(&"textiles", quantity, "institution", "", &"eanna_household")
-
-static func _has_open_shipment(world: WorldState, origin_id: StringName, destination_id: StringName, commodity_id: StringName) -> bool:
-	for shipment in world.shipments.values():
-		if StringName(shipment.get("origin_id", "")) != origin_id or StringName(shipment.get("destination_id", "")) != destination_id or StringName(shipment.get("commodity_id", "")) != commodity_id:
-			continue
-		if String(shipment.get("status", "")) in ["in_transit", "arrived", "held", "awaiting_origin"]:
-			return true
-	return false
 
 static func resolve_remote_dispatch(world: WorldState, form_data: Dictionary, verdict: StringName) -> Dictionary:
 	var shipment_id := StringName(form_data.get("shipment_id", ""))
