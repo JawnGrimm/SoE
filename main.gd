@@ -70,8 +70,8 @@ var evidence_left_quote: Label
 var evidence_right_quote: Label
 var evidence_left_speaker: Label
 var evidence_right_speaker: Label
-var evidence_left_facts: Label
-var evidence_right_facts: Label
+var evidence_left_facts: RichTextLabel
+var evidence_right_facts: RichTextLabel
 var evidence_left_portrait: TextureRect
 var evidence_right_portrait: TextureRect
 var portrait_cache: Dictionary = {}
@@ -399,11 +399,18 @@ func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: Strin
 	quote_label.add_theme_font_size_override("font_size", 13)
 	quote_label.add_theme_color_override("font_color", Color("#e0d4bd"))
 	box.add_child(quote_label)
-	var facts_label := Label.new()
+	# Evidence can contain a complete resource ledger. Keep it inside the card's
+	# allocated space and let the facts control scroll instead of growing the desk.
+	var facts_label := RichTextLabel.new()
+	facts_label.bbcode_enabled = false
+	facts_label.fit_content = false
+	facts_label.scroll_active = true
 	facts_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	facts_label.add_theme_font_size_override("font_size", 11)
-	facts_label.add_theme_color_override("font_color", Color("#c7ad7e"))
+	facts_label.custom_minimum_size.y = 0
+	facts_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	facts_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	facts_label.add_theme_font_size_override("normal_font_size", 11)
+	facts_label.add_theme_color_override("default_color", Color("#c7ad7e"))
 	box.add_child(facts_label)
 	if heading.begins_with("GRANARY"):
 		evidence_left_title = title
@@ -927,9 +934,14 @@ func _show_world_engagement() -> void:
 	var actions: Dictionary = record.get("actions", {})
 	var evidence: Dictionary = record.get("evidence", {})
 	var evidence_lines := PackedStringArray()
-	for action_id in evidence.keys():
+	for action in AssignmentPipeline.INVESTIGATION_ACTIONS:
+		var action_id: StringName = action.id
+		if not evidence.has(action_id):
+			continue
 		var entry: Dictionary = evidence[action_id]
-		evidence_lines.append("%s\n%s" % [String(action_id).replace("_", " ").to_upper(), String(entry.get("facts", ""))])
+		var finding := String(entry.get("summary", "Finding recorded."))
+		var facts := String(entry.get("facts", ""))
+		evidence_lines.append("%s / LEVEL %d\n%s\n%s" % [String(action_id).replace("_", " ").to_upper(), int(entry.get("skill_level", 0)), finding, facts])
 	var left_quote := String(record.get("summary", "A matter requires professional attention."))
 	var employer := world.get_person(StringName(record.get("employer_id", "")))
 	var right_quote := "The record is incomplete. Read it, reconcile the figures, hear the responsible official, and inspect the source before making your assessment."
