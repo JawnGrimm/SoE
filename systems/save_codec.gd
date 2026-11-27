@@ -27,6 +27,7 @@ static func encode_world(world: WorldState, session: Dictionary = {}) -> Diction
 			"world_flags": _json_safe(world.world_flags), "routes": _json_safe(world.routes), "pending_forms": _json_safe(world.pending_forms),
 			"resolved_forms": _json_safe(world.resolved_forms), "event_history": _json_safe(world.event_history),
 			"character_event_history": _json_safe(world.character_event_history), "people": people_data,
+			"population_batches": _json_safe(world.population_batches),
 			"player_id": String(world.player_id), "next_person_sequence": world._next_person_sequence,
 			"places": _json_safe(world.places), "institutions": _json_safe(world.institutions),
 			"social_groups": _json_safe(world.social_groups), "assignments": _json_safe(world.assignments),
@@ -84,6 +85,7 @@ static func _world_from_data(data: Dictionary) -> WorldState:
 	world.event_history = _dictionary_array(data.get("event_history", []))
 	world.character_event_history = _name_array_map(data.get("character_event_history", {}))
 	world.people.clear()
+	world.population_batches = _name_array_map(data.get("population_batches", {}))
 	var people_data: Dictionary = data.get("people", {})
 	for key in people_data:
 		var person := _person_from_data(people_data[key])
@@ -113,6 +115,9 @@ static func _world_from_data(data: Dictionary) -> WorldState:
 static func _person_to_data(person: PersonEntity) -> Dictionary:
 	return {
 		"id": String(person.id), "display_name": person.display_name,
+		"location_id": String(person.location_id), "template_id": String(person.template_id),
+		"occupation_id": String(person.occupation_id), "generation_source": String(person.generation_source),
+		"generation_key": String(person.generation_key), "name_provenance": String(person.name_provenance),
 		"skills": {"levels": _json_safe(person.skills.levels), "xp": _json_safe(person.skills.xp)},
 		"office_id": String(person.office_id), "traits": _json_safe(person.traits),
 		"vulnerabilities": _json_safe(person.vulnerabilities), "flags": _json_safe(person.flags),
@@ -127,6 +132,12 @@ static func _person_from_data(data: Variant) -> PersonEntity:
 	var person := PersonEntity.new()
 	person.id = StringName(data.get("id", ""))
 	person.display_name = String(data.get("display_name", ""))
+	person.location_id = StringName(data.get("location_id", ""))
+	person.template_id = StringName(data.get("template_id", ""))
+	person.occupation_id = StringName(data.get("occupation_id", ""))
+	person.generation_source = StringName(data.get("generation_source", ""))
+	person.generation_key = StringName(data.get("generation_key", ""))
+	person.name_provenance = StringName(data.get("name_provenance", ""))
 	person.office_id = StringName(data.get("office_id", ""))
 	person.traits = _name_array(data.get("traits", []))
 	person.vulnerabilities = _name_int_map(data.get("vulnerabilities", {}))
