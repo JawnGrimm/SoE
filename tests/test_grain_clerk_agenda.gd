@@ -71,7 +71,53 @@ func _run() -> void:
 		var evidence: Dictionary = evidence_result.get("evidence", {})
 		var facts := String(evidence.get("facts", ""))
 		_check(bool(evidence_result.get("success", false)) and facts.contains("DISPATCH DOCKET") and facts.contains("THRESHOLD TALLY") and facts.contains("DISCREPANCY"), "Investigating the docket reveals both conflicting records and their discrepancy")
+		var opinion_before_referral := ur_nanna.get_opinion(player.id)
+		var second_evidence := AssignmentPipelineScript.perform_action(world, player, assignment_id, &"reconcile_accounts")
+		var referral := AssignmentPipelineScript.resolve(world, player, assignment_id, &"refer")
+		var corrected_records: Dictionary = world.institutions.get(&"eanna_household", {}).get("stock_records", {})
+		_check(bool(second_evidence.get("success", false)) and bool(referral.get("success", false)), "Two inquiries permit a formal cover-up referral")
+		_check(not bool(corrected_records.get("concealed_spoilage", true)) and not corrected_records.has("barley_quality_declaration"), "Referring Ur-Nanna clears the concealed spoilage declaration")
+		_check(ur_nanna.get_opinion(player.id) == opinion_before_referral - 3 and world.get_person(&"shuruppak_ilu").get_opinion(player.id) >= 2, "Referral costs Ur-Nanna three opinion and earns archive standing")
 	_check(int(institution.get("agenda_evaluation_count", 0)) == 2, "Ur-Nanna's tree is evaluated exactly once on each of two period advances")
+
+	# Rubber-stamping the same kind of concealed docket pays more and creates audit exposure.
+	var certify_world := WorldState.new()
+	UrukSeederScript.seed_campaign(certify_world, 32003299, true, registry)
+	var certify_actor := certify_world.get_player()
+	var certify_institution: Dictionary = certify_world.institutions[&"eanna_household"]
+	var certify_records: Dictionary = certify_institution.get("stock_records", {})
+	certify_records[&"concealed_spoilage"] = true
+	certify_records[&"barley_quality_declaration"] = "prime_seed_corn"
+	certify_institution["stock_records"] = certify_records
+	certify_world.institutions[&"eanna_household"] = certify_institution
+	certify_world.enqueue_form({"id": &"test_coverup_certification", "form_type": &"held_barley", "subject_id": &"north_bay", "institution_id": &"eanna_household", "urgency": 4, "npc_evidence": {"dispatch_record": "Prime seed-corn.", "threshold_tally": "Damp and mold-marked.", "discrepancy": "Quality conflict."}})
+	var certify_opportunity: Dictionary = {}
+	for candidate in AssignmentPipelineScript.generate_opportunities(certify_world, certify_actor):
+		if StringName(candidate.get("kind", "")) == &"form" and candidate.get("source_data", {}).has("npc_evidence"):
+			certify_opportunity = candidate
+			break
+	_check(not certify_opportunity.is_empty(), "Concealed spoilage creates a certifiable contradictory docket")
+	var certify_id := StringName(certify_opportunity.get("id", ""))
+	var certify_silver_before := int(certify_actor.resources.get(&"silver", 0))
+	var certify_opinion_before := certify_world.get_person(&"ur_nanna").get_opinion(certify_actor.id)
+	_check(AssignmentPipelineScript.begin(certify_world, certify_opportunity, certify_actor), "Certification fixture begins")
+	AssignmentPipelineScript.perform_action(certify_world, certify_actor, certify_id, &"examine_records")
+	AssignmentPipelineScript.perform_action(certify_world, certify_actor, certify_id, &"reconcile_accounts")
+	var certification := AssignmentPipelineScript.resolve(certify_world, certify_actor, certify_id, &"certify")
+	_check(bool(certification.get("success", false)) and int(certify_actor.resources.get(&"silver", 0)) - certify_silver_before == 4, "Certifying the cover-up pays the four-silver gratuity")
+	_check(int(certify_actor.flags.get(&"audit_exposure", 0)) == 1 and certify_world.get_person(&"ur_nanna").get_opinion(certify_actor.id) == certify_opinion_before + 2, "Certification pleases Ur-Nanna and records audit exposure")
+	_check(bool(certify_world.institutions.get(&"eanna_household", {}).get("stock_records", {}).get("concealed_spoilage", false)), "Certification leaves the concealed spoilage unresolved")
+
+	# Sub-places under Uruk inherit the Eanna household ownership and employer.
+	var worksite_world := WorldState.new()
+	UrukSeederScript.seed_campaign(worksite_world, 32003300, true, registry)
+	worksite_world.enqueue_form({"id": &"ditch_tally_owner_test", "form_type": &"pension_roll", "subject_id": &"ditch_labor_tally", "urgency": 2})
+	var worksite_opportunity: Dictionary = {}
+	for candidate in AssignmentPipelineScript.generate_opportunities(worksite_world, worksite_world.get_player()):
+		if StringName(candidate.get("source_id", "")) == &"ditch_tally_owner_test":
+			worksite_opportunity = candidate
+			break
+	_check(StringName(worksite_opportunity.get("source_data", {}).get("institution_id", "")) == &"eanna_household" and StringName(worksite_opportunity.get("employer_id", "")) != &"", "Ditch labor tally resolves a valid Eanna institution and named employer")
 
 	var skim_world := WorldState.new()
 	UrukSeederScript.seed_campaign(skim_world, 32003201, true, registry)
