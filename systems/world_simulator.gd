@@ -108,7 +108,7 @@ func _simulate_epics(world: WorldState) -> void:
 			continue
 		if not world.epics.has(definition.id):
 			world.epics[definition.id] = {
-				"active": true,
+				"active": definition.id != &"great_canal_cut",
 				"progress": world.get_resource(definition.progress_resource),
 				"progress_resource": definition.progress_resource,
 				"target": definition.target,
@@ -129,14 +129,27 @@ func _simulate_epics(world: WorldState) -> void:
 			continue
 		var state: Dictionary = world.epics[epic_id]
 		var era_matches := definition.era_id == &"" or (current_era != null and current_era.id == definition.era_id)
-		state["active"] = era_matches
 		state["progress_resource"] = definition.progress_resource
 		state["target"] = definition.target
 		state["title"] = definition.title
 		state["sponsor_institution"] = definition.sponsor_institution
 		state["era_id"] = definition.era_id
 		state["initial_stage"] = definition.initial_stage
+		if not bool(state.get("active", false)):
+			var earned_canal := StringName(epic_id) == &"great_canal_cut" and world.year >= -3199 and world.cases_settled >= 8
+			var summoned_canal := StringName(epic_id) == &"great_canal_cut" and world.epic_summon_issued
+			if earned_canal or summoned_canal:
+				state["active"] = true
+				state["review_initialized"] = false
+				state["review_pending"] = true
+				state["review_reason"] = "summons" if summoned_canal else "earned_life"
+				state["review_summary"] = "A summons from the canal administration requires the apprentice's first formal project account."
+				world.cedar_desk_log.append({"year": world.year, "period": world.period, "title": "SUMMONS: THE GREAT CANAL CUT", "summary": "The apprentice has settled %d cases. The canal administration now requires a formal account of the Great Canal Cut." % world.cases_settled, "epic_id": String(epic_id)})
+			else:
+				world.epics[epic_id] = state
+				continue
 		if not era_matches:
+			state["active"] = false
 			world.epics[epic_id] = state
 			continue
 		_simulate_epic(world, definition, state)
