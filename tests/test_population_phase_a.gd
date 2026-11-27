@@ -35,7 +35,7 @@ func _run() -> void:
 	var original_generated: PersonEntity = first["people"][0]
 	var restored_person := restored.get_person(original_generated.id) if restored != null else null
 	_check(bool(decoded.get("success", false)) and restored_person != null, "Generated roster survives save/load")
-	_check(restored_person != null and restored_person.location_id == original_generated.location_id and restored_person.template_id == original_generated.template_id and restored_person.occupation_id == original_generated.occupation_id and restored_person.name_provenance == &"constructed" and not restored_person.name_source.is_empty(), "Save/load preserves generated identity and name provenance")
+	_check(restored_person != null and restored_person.location_id == original_generated.location_id and restored_person.template_id == original_generated.template_id and restored_person.occupation_id == original_generated.occupation_id and restored_person.name_provenance == &"constructed" and not restored_person.name_source.is_empty() and restored_person.name_gender != &"", "Save/load preserves generated identity and name provenance")
 	_check(restored != null and restored.population_batches.size() == world.population_batches.size() and restored.rng_people.state == world.rng_people.state, "Save/load preserves idempotency batches and people RNG state")
 
 	print("Population Phase A: %d checks, %d failures" % [checks, failures.size()])
