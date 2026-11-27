@@ -1361,6 +1361,19 @@ func _run() -> void:
 	WorldSimulator.new(registry).advance_period(epic_reset_world)
 	_check(epic_reset_world.get_resource(&"canal_progress") > 0, "Canal Epic should resume autonomous progress after its new-shift reset")
 
+	# Once-per-character history survives JSON String/StringName conversion.
+	var labor_tally_event: EventTemplate = registry.get_event(&"case_12_labor_tally")
+	var labor_history_world := WorldState.new()
+	var labor_history_actor := UrukSeeder.seed_campaign(labor_history_world, 782002)
+	labor_history_world.record_event(&"case_12_labor_tally", labor_history_actor.id, labor_history_world.year)
+	var labor_history_save := SaveCodecScript.decode_save(SaveCodecScript.encode_world(labor_history_world))
+	var labor_history_restored: WorldState = labor_history_save.get("world") as WorldState
+	var labor_history_context := _make_context(labor_history_restored)
+	labor_history_context.actor = labor_history_restored.get_player()
+	labor_history_context.year = labor_history_restored.year
+	labor_history_context.era = registry.get_era_for_year(labor_history_restored.year)
+	_check(labor_tally_event != null and bool(labor_history_save.get("success", false)) and not runner.is_eligible(labor_tally_event, labor_history_context), "Case 12 remains once-per-character after save/load history normalization")
+
 	_finish()
 
 func _check(cond: bool, msg: String) -> bool:
