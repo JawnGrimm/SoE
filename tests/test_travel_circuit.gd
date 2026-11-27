@@ -81,7 +81,8 @@ func _run() -> void:
 	_check(world.get_hazard_total_lost(&"north_bay", &"roof_leak") == 3, "North-Bay has lost exactly three barley after the complete circuit")
 	var eanna: Dictionary = world.institutions.get(&"eanna_household", {})
 	_check(int(eanna.get("agenda_evaluation_count", 0)) == 3, "Ur-Nanna's autonomous agenda evaluates once per transit period")
-	_check(not Dictionary(eanna.get("last_grain_clerk_agenda", {})).is_empty(), "Ur-Nanna records an autonomous agenda decision while the player is away")
+	var last_agenda: Dictionary = eanna.get("last_grain_clerk_agenda", {})
+	_check(not last_agenda.is_empty(), "Ur-Nanna records an autonomous agenda decision while the player is away")
 
 	var encoded := SaveCodecScript.encode_world(world)
 	var decoded := SaveCodecScript.decode_save(encoded)
