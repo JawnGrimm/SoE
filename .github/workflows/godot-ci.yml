@@ -35,6 +35,31 @@ jobs:
           use-dotnet: false
           include-templates: false
 
+      - name: Install pinned LimboAI 1.8.1 GDExtension
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/limboai-1.8.1-linux-x86_64.zip"
+          url="https://github.com/limbonaut/limboai/releases/download/v1.8.1/limboai%2Bv1.8.1.gdextension-4.6.zip"
+          curl --fail --location --retry 3 "$url" --output "$archive"
+          echo "0910411f8dbc0da8920f6c8bbbb6397c347cd9f2f193942468a702dfb11d5f0e  $archive" | sha256sum --check
+          extract="$RUNNER_TEMP/limboai-extract"
+          mkdir -p "$extract"
+          unzip -q "$archive" -d "$extract"
+          descriptor="$(find "$extract" -type f -name limboai.gdextension -print -quit)"
+          test -n "$descriptor"
+          manifest_dir="$(dirname "$descriptor")"
+          if [ "$(basename "$manifest_dir")" = "bin" ]; then
+            addon_dir="$(dirname "$manifest_dir")"
+          else
+            addon_dir="$manifest_dir"
+          fi
+          mkdir -p addons
+          rm -rf addons/limboai
+          cp -a "$addon_dir" addons/limboai
+          test -f addons/limboai/bin/limboai.gdextension
+          find addons/limboai/bin -type f -name '*.so' | grep -q .
+
       - name: Import project and validate resources
         run: godot --headless --editor --path . --quit
 
@@ -43,6 +68,9 @@ jobs:
 
       - name: Run three-location route network tests
         run: godot --headless --path . --script res://tests/test_route_network.gd
+
+      - name: Run periodic grain clerk agenda tests
+        run: godot --headless --path . --script res://tests/test_grain_clerk_agenda.gd
 
       - name: Run developer command router tests
         run: godot --headless --path . --script res://tests/test_dev_command_router.gd

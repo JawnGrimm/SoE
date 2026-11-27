@@ -43,6 +43,7 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 	world.people[senior.id] = senior
 	var steward := _person(&"ur_nanna", "Ur-Nanna", &"grain_clerk", {"stewardship": 4, "law": 2, "arithmetic": 3}, [&"cautious", &"weather_watcher"])
 	steward.vulnerabilities[&"granary_roof_integrity"] = world.rng_people.randi_range(40, 80)
+	steward.vulnerabilities[&"personal_fear"] = world.rng_people.randi_range(6, 8)
 	world.people[steward.id] = steward
 	world.people[&"utu_mansum"] = _person(&"utu_mansum", "Utu-mansum", &"tax_scribe", {"arithmetic": 3, "law": 2, "rhetoric": 1}, [&"tired", &"unbending"])
 	var foreman := _person(&"enlil_kisu", "Enlil-kisu", &"carrier_foreman", {"rhetoric": 3, "stewardship": 2}, [&"protective_of_crew", &"practical"])

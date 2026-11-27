@@ -6,6 +6,8 @@ extends RefCounted
 
 const MIN_STOCK := 0
 const FORM_COOLDOWN_PERIODS := 3
+const GrainClerkAgendaTree = preload("res://data/behavior_trees/bt_grain_clerk_agenda.tres")
+const GrainClerkAgentScript = preload("res://systems/ai/grain_clerk_agent.gd")
 
 var definition_registry: DefinitionRegistry
 
@@ -16,11 +18,71 @@ func advance_period(world: WorldState) -> void:
 	if world == null:
 		return
 	world.advance_period()
+	_deliver_grain_clerk_dockets(world)
 	_simulate_economy(world)
 	_simulate_institutions(world)
 	_simulate_epics(world)
 	_simulate_people(world)
+	_tick_grain_clerk_agenda(world)
 	_generate_forms(world)
+
+func _deliver_grain_clerk_dockets(world: WorldState) -> void:
+	var institution: Dictionary = world.institutions.get(&"eanna_household", {})
+	if institution.is_empty():
+		return
+	var queue: Array = institution.get("npc_docket_queue", []).duplicate(true)
+	if queue.is_empty():
+		return
+	var remaining: Array = []
+	var now := world.current_period_index()
+	for docket in queue:
+		var npc_evidence: Dictionary = docket.get("npc_evidence", {})
+		if int(docket.get("due_period", now + 1)) > now:
+			remaining.append(docket)
+			continue
+		var form_type := StringName(docket.get("form_type", &"held_barley"))
+		var subject_id := StringName(docket.get("subject_id", &"north_bay"))
+		world.enqueue_form({
+			"id": StringName("ur_nanna_grain_docket_%d" % now),
+			"form_type": form_type,
+			"subject_id": subject_id,
+			"urgency": int(docket.get("urgency", 4)),
+			"year": world.year,
+			"generated_by": &"ur_nanna",
+			"generation_reason": &"autonomous_grain_clerk_action",
+			"npc_intent_id": StringName(docket.get("intent_id", "")),
+			"npc_evidence": npc_evidence.duplicate(true),
+		})
+	institution["npc_docket_queue"] = remaining
+	world.institutions[&"eanna_household"] = institution
+
+func _tick_grain_clerk_agenda(world: WorldState) -> void:
+	var clerk := world.get_person(&"ur_nanna")
+	if clerk == null or clerk.office_id != &"grain_clerk":
+		return
+	var institution: Dictionary = world.institutions.get(&"eanna_household", {})
+	institution["agenda_evaluation_count"] = int(institution.get("agenda_evaluation_count", 0)) + 1
+	world.institutions[&"eanna_household"] = institution
+	var main_loop := Engine.get_main_loop()
+	if not (main_loop is SceneTree):
+		push_warning("WorldSimulator: cannot tick Ur-Nanna's LimboAI agenda without a SceneTree")
+		return
+	var scene_tree := main_loop as SceneTree
+	var agent: Node = GrainClerkAgentScript.new()
+	agent.set("world", world)
+	agent.set("clerk", clerk)
+	scene_tree.root.add_child(agent)
+	var bt_player := BTPlayer.new()
+	bt_player.set_active(false)
+	bt_player.set_update_mode(2) # MANUAL: exactly one update per world period.
+	bt_player.set_agent_node(NodePath(".."))
+	bt_player.set_scene_root_hint(agent)
+	bt_player.set_behavior_tree(GrainClerkAgendaTree)
+	agent.add_child(bt_player)
+	bt_player.set_active(true)
+	bt_player.update(0.0)
+	bt_player.set_active(false)
+	agent.free()
 
 func _get_definition_registry() -> DefinitionRegistry:
 	if definition_registry != null:

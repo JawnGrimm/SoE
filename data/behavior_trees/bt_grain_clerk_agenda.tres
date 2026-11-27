@@ -1,0 +1,48 @@
+[gd_resource type="BehaviorTree" format=3]
+
+[ext_resource type="Script" path="res://systems/ai/tasks/bt_grain_clerk_condition.gd" id="1_condition"]
+[ext_resource type="Script" path="res://systems/ai/tasks/bt_grain_clerk_intent.gd" id="2_intent"]
+
+[sub_resource type="BTCondition" id="BTCondition_roof_leak"]
+script = ExtResource("1_condition")
+condition_id = &"north_bay_roof_leak_active"
+
+[sub_resource type="BTCondition" id="BTCondition_fear"]
+script = ExtResource("1_condition")
+condition_id = &"personal_fear_above_five"
+
+[sub_resource type="BTAction" id="BTAction_hide_spoilage"]
+script = ExtResource("2_intent")
+intent_id = &"intent_hide_spoilage"
+
+[sub_resource type="BTSequence" id="BTSequence_cover_up"]
+custom_name = "Emergency Cover-Up / Self-Preservation"
+children = [SubResource("BTCondition_roof_leak"), SubResource("BTCondition_fear"), SubResource("BTAction_hide_spoilage")]
+
+[sub_resource type="BTCondition" id="BTCondition_surplus"]
+script = ExtResource("1_condition")
+condition_id = &"granary_barley_above_400"
+
+[sub_resource type="BTCondition" id="BTCondition_debt"]
+script = ExtResource("1_condition")
+condition_id = &"household_silver_below_five"
+
+[sub_resource type="BTAction" id="BTAction_pocket_measures"]
+script = ExtResource("2_intent")
+intent_id = &"intent_pocket_measures"
+
+[sub_resource type="BTSequence" id="BTSequence_skimming"]
+custom_name = "Skim the Surplus / Greed and Debt"
+children = [SubResource("BTCondition_surplus"), SubResource("BTCondition_debt"), SubResource("BTAction_pocket_measures")]
+
+[sub_resource type="BTAction" id="BTAction_log_deliveries"]
+script = ExtResource("2_intent")
+intent_id = &"intent_log_deliveries"
+
+[sub_resource type="BTSelector" id="BTSelector_grain_clerk_agenda"]
+custom_name = "Ur-Nanna / Periodic Institutional Agenda"
+children = [SubResource("BTSequence_cover_up"), SubResource("BTSequence_skimming"), SubResource("BTAction_log_deliveries")]
+
+[resource]
+description = "One decision per WorldState period. The tree chooses intent; SoE validates and resolves it. Secret actions enqueue contradictory source records for the player's desk on the following period."
+root_task = SubResource("BTSelector_grain_clerk_agenda")
