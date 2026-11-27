@@ -101,8 +101,10 @@ func generate_people(
 	var batch_ids: Array[StringName] = []
 	for index in range(count):
 		var template := _weighted_pick(templates, world.rng_people) as CharacterTemplate
+		if template == null:
+			continue
 		var occupation := definitions.get_definition(template.occupation_id) as OccupationDef
-		if template == null or occupation == null:
+		if occupation == null:
 			continue
 		var entry: Dictionary = _pick_unique_name(name_entries, used_names, world.rng_people)
 		if entry.is_empty():
