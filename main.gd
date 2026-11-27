@@ -1871,6 +1871,15 @@ func _refresh_faction_standings() -> void:
 	for child in roster_box.get_children():
 		roster_box.remove_child(child)
 		child.queue_free()
+	if world.current_location_id != &"uruk":
+		for official in CompoundContextScript.officials(world, _local_institution_ids()):
+			var official_line := Label.new()
+			official_line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			official_line.add_theme_font_size_override("font_size", 13)
+			var title := "Canal Bailiff" if official.id == &"character_0013" else ("Granary Clerk" if official.id == &"character_0012" else String(official.office_id).replace("_", " ").capitalize())
+			official_line.text = "%s\n%s / %s / Opinion %+d" % [official.display_name, title, String(official.office_id).replace("_", " ").capitalize(), official.get_opinion(actor.id)]
+			roster_box.add_child(official_line)
+		return
 	for faction_id in [&"eanna_household", &"boatmens_guild", &"city_garrison", &"council_of_elders", &"agricultural_households"]:
 		var standing := world.get_faction_standing(faction_id)
 		var line := RichTextLabel.new()
@@ -2121,29 +2130,15 @@ func _refresh_header_status() -> void:
 
 
 func _local_institution_ids() -> Array[StringName]:
-	var result: Array[StringName] = []
-	if world == null:
-		return result
-	for institution_value in world.institutions.keys():
-		var institution_id := StringName(institution_value)
-		var institution: Dictionary = world.institutions[institution_id]
-		var cursor := StringName(institution.get("place_id", ""))
-		var visited: Dictionary = {}
-		while cursor != &"" and not visited.has(cursor):
-			if cursor == world.current_location_id:
-				result.append(institution_id)
-				break
-			visited[cursor] = true
-			cursor = StringName(world.places.get(cursor, {}).get("parent", ""))
-	result.sort()
-	return result
+	return CompoundContextScript.institution_ids(world, world.current_location_id)
 
 
 func _refresh_local_stock_facts() -> void:
 	if local_stock_label == null or world == null:
 		return
 	var place_name := String(world.places.get(world.current_location_id, {}).get("name", world.current_location_id))
-	var lines := PackedStringArray(["LOCAL STORES / %s" % place_name.to_upper()])
+	var location_titles := {&"uruk": "EANNA TEMPLE COMPOUND", &"umma": "UMMA PROVINCIAL SEAT", &"nippur": "NIPPUR SHRINES"}
+	var lines := PackedStringArray([String(location_titles.get(world.current_location_id, "%s COMPOUND" % place_name.to_upper()))])
 	var institution_ids := _local_institution_ids()
 	if institution_ids.is_empty():
 		lines.append("No institution is registered at this location.")
@@ -2165,47 +2160,20 @@ func _refresh_local_stock_facts() -> void:
 		for member_value in institution.get("members", []):
 			var person := world.get_person(StringName(member_value))
 			if person != null and person.office_id != &"":
-				officials.append("%s (%s)" % [person.display_name, String(person.office_id).replace("_", " ")])
+				var opinion := person.get_opinion(actor.id) if actor != null else 0
+				var title := "Canal Bailiff" if person.id == &"character_0013" else ("Granary Clerk" if person.id == &"character_0012" else String(person.office_id).replace("_", " ").capitalize())
+				officials.append("%s — %s / %s / Opinion %+d" % [person.display_name, title, String(person.office_id).replace("_", " ").capitalize(), opinion])
 		lines.append("  Officials: " + (", ".join(officials) if not officials.is_empty() else "none recorded"))
 	local_stock_label.text = "\n".join(lines)
 
 
 func _update_period_delta_feed() -> void:
-	if world == null or actor == null or period_delta_label == null:
+	if world == null or period_delta_label == null:
 		return
-	var period_index := world.current_period_index()
-	if period_index != last_delta_period:
-		last_delta_period = period_index
-		period_delta_feed.clear()
-	var snapshot: Dictionary = {}
-	for institution_id in _local_institution_ids():
-		var institution: Dictionary = world.institutions.get(institution_id, {})
-		var stocks: Dictionary = institution.get("stockpiles", {})
-		for resource_value in stocks.keys():
-			var resource_id := StringName(resource_value)
-			snapshot["%s:%s" % [institution_id, resource_id]] = int(stocks[resource_id])
-	for resource_id in [&"silver", &"bread", &"beer"]:
-		snapshot["actor:%s" % resource_id] = int(actor.resources.get(resource_id, 0))
-	for faction_id in FACTION_LABELS.keys():
-		snapshot["faction:%s" % faction_id] = world.get_faction_standing(StringName(faction_id))
-	var active_epic_id := world.get_active_epic_id()
-	if active_epic_id != &"":
-		var epic_state: Dictionary = world.epics.get(active_epic_id, {})
-		snapshot["epic:%s" % active_epic_id] = int(epic_state.get("progress", world.get_resource(StringName(epic_state.get("progress_resource", "")))))
-	for key in snapshot.keys():
-		if last_stock_snapshot.has(key):
-			var delta := int(snapshot[key]) - int(last_stock_snapshot[key])
-			if delta != 0:
-				var direction := "+" if delta > 0 else ""
-				period_delta_feed.append("%s %s%d" % [String(key).replace(":", " / ").replace("_", " "), direction, delta])
-	last_stock_snapshot = snapshot
-	while period_delta_feed.size() > 6:
-		period_delta_feed.pop_front()
-	var body := "No resource changes recorded this period."
-	if not period_delta_feed.is_empty():
-		body = "\n".join(period_delta_feed)
-	period_delta_label.text = "PERIOD DELTAS\n" + body
-
+	var entries: Array[String] = []
+	for index in range(maxi(0, world.last_period_deltas.size() - 4), world.last_period_deltas.size()):
+		entries.append(String(world.last_period_deltas[index].get("text", "")))
+	period_delta_label.text = "SINCE LAST PERIOD\n" + ("\n".join(entries) if not entries.is_empty() else "No major changes recorded since last period.")
 
 
 func _refresh_compound() -> void:
