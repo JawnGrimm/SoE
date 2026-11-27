@@ -118,6 +118,7 @@ static func _person_to_data(person: PersonEntity) -> Dictionary:
 		"location_id": String(person.location_id), "template_id": String(person.template_id),
 		"occupation_id": String(person.occupation_id), "generation_source": String(person.generation_source),
 		"generation_key": String(person.generation_key), "name_provenance": String(person.name_provenance),
+		"name_source": person.name_source,
 		"skills": {"levels": _json_safe(person.skills.levels), "xp": _json_safe(person.skills.xp)},
 		"office_id": String(person.office_id), "traits": _json_safe(person.traits),
 		"vulnerabilities": _json_safe(person.vulnerabilities), "flags": _json_safe(person.flags),
@@ -138,6 +139,7 @@ static func _person_from_data(data: Variant) -> PersonEntity:
 	person.generation_source = StringName(data.get("generation_source", ""))
 	person.generation_key = StringName(data.get("generation_key", ""))
 	person.name_provenance = StringName(data.get("name_provenance", ""))
+	person.name_source = String(data.get("name_source", ""))
 	person.office_id = StringName(data.get("office_id", ""))
 	person.traits = _name_array(data.get("traits", []))
 	person.vulnerabilities = _name_int_map(data.get("vulnerabilities", {}))
