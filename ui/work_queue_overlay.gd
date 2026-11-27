@@ -142,6 +142,8 @@ static func category_for(item: Dictionary) -> String:
 
 func _select(index: int) -> void:
 	visible = false
+	if is_instance_valid(_return_focus):
+		_return_focus.grab_focus()
 	opportunity_selected.emit(index)
 
 func _panel_style(fill: Color, border: Color) -> StyleBoxFlat:
