@@ -26,7 +26,8 @@ There is deliberately no `trigger_event` command in this first router. Events ar
 
 - `advance_periods` is a debug-only operation, limited to 1–120 periods per invocation.
 - It refuses to run before a player character has been committed to WorldState.
-- Each period goes through the normal world simulator, then updates the desk's current case/opportunity presentation.
+- Each period goes through the normal world simulator and then runs the normal case/opportunity scheduler.
+- When advancing more than one period, this is an explicit debug fast-forward: newly generated desk offers between periods are superseded without being resolved or recorded as player choices. Use it to test autonomous simulation, not to progress a live career.
 - It stops when the normal Epic-completion condition is reached.
 - The player-facing `_advance_period()` phase gate remains intact. The console calls a shared internal one-period method rather than bypassing the phase gate with a second implementation.
 - Resource changes use the existing scoped API and report the before/after values.
