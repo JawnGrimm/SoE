@@ -3,7 +3,7 @@ extends RefCounted
 ## Applies the three authored terminal acts for the Great Canal Cut.
 
 static func is_climax_due(world: WorldState) -> bool:
-	if world == null or world.world_flags.has(&"canal_dedication_concluded"):
+	if world == null or not world.epics.has(&"great_canal_cut") or world.world_flags.has(&"canal_dedication_concluded"):
 		return false
 	var epic: Dictionary = world.epics.get(&"great_canal_cut", {})
 	var progress := int(epic.get("progress", world.get_resource(&"canal_progress")))
