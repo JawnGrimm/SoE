@@ -401,7 +401,14 @@ static func _stock_detail(stock: Dictionary, skill_level: int, skill_label: Stri
 		return int(a.amount) > int(b.amount)
 	)
 	var first: Dictionary = ranked[0]
-	var detail := "LEADING RECORDED RESERVE: %s / %d" % [String(first.id).replace("_", " ").capitalize(), int(first.amount)]
+	var resource_name := String(first.id).replace("_", " ").capitalize()
+	var detail := ""
+	if skill_level < 1:
+		detail = "The records identify stored resources, but no reliable ranking is established."
+	elif skill_level == 1:
+		detail = "The largest reserve appears to be %s; its quantity is not yet verified." % resource_name
+	else:
+		detail = "LARGEST RECORDED RESERVE: %s / %d" % [resource_name, int(first.amount)]
 	if skill_level >= 3 and ranked.size() > 1:
 		var second: Dictionary = ranked[1]
 		detail += "\nNEXT RESERVE: %s / %d" % [String(second.id).replace("_", " ").capitalize(), int(second.amount)]
