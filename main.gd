@@ -1749,7 +1749,7 @@ func _show_itinerary_docket() -> void:
 	_set_phase("itinerary_docket")
 	var direction := "UPSTREAM" if destination == &"nippur" else "DOWNSTREAM"
 	var destination_name := "NIPPUR / PROVINCIAL COMPOUND" if destination == &"nippur" else "URUK / EANNA STOREHOUSE"
-	var travel_label := "Depart %s / %d period%s" % [direction, transit_periods, "" if transit_periods == 1 else "s"]
+	var travel_label := "Depart %s / %d period%s" % [direction, transit_periods, "" if transit_periods == 1 else "s"] if transit_periods > 0 else "Departure unavailable / route closed"
 	var prompt := "The river passage is open. Transit advances the world period by period; hazards, stores, and NPC agendas continue to operate." if transit_periods > 0 else "The river route is closed or unavailable. No departure can be made."
 	var payload := {
 		"title": "ITINERARY DOCKET / %s" % direction,
@@ -1785,6 +1785,8 @@ func _depart_via_river(destination: StringName) -> void:
 	for _period_index in range(transit_periods):
 		world_simulator.advance_period(world)
 	world.current_location_id = destination
+	active_event = null
+	procedural_assignment.clear()
 	assignment_opportunities.clear()
 	active_world_assignment_id = &""
 	context.year = world.year
