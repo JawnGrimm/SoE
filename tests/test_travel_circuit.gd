@@ -40,6 +40,16 @@ func _run() -> void:
 	var survey_map: Variant = RegionalSurveyMapScript.new()
 	root.add_child(survey_map)
 	_check(survey_map.configure(network, world, false), "The Worldmap Builder survey opens against the authoritative route graph")
+	var invalid_places: Array[PlaceDef] = []
+	for place_value in network.places.values():
+		var place_copy: PlaceDef = (place_value as PlaceDef).duplicate(true)
+		if place_copy.id == &"uruk":
+			place_copy.survey_position = Vector2.ZERO
+		invalid_places.append(place_copy)
+	var invalid_network := RouteNetworkScript.new()
+	_check(invalid_network.configure(world, invalid_places, network.routes.values(), &"uruk_storehouse"), "A route network can be constructed with a town missing its survey position")
+	_check(not survey_map.configure(invalid_network, world, false) and survey_map.get_map_node_count() == 0, "The survey fails closed with a warning instead of building a graph from a zero-position town")
+	_check(survey_map.configure(network, world, false), "The survey recovers cleanly when configured with valid authored positions")
 	await process_frame
 	_check(survey_map.get_map_node_count() == 3 and survey_map.get_map_connection_count() == 2, "The survey renders exactly three authored settlements and two route connections")
 	var journey_results: Array[Dictionary] = []
@@ -54,8 +64,10 @@ func _run() -> void:
 	_check(not survey_map.select_destination(&"nippur") and not survey_map.board_selected_route() and journey_results.is_empty(), "The survey displays routes but prevents departure while the current docket is active")
 	_check(survey_map.configure(network, world, true), "The survey enables departure from a clear desk")
 	await process_frame
+	var river_route := network.get_route(&"river_uruk_nippur")
+	_check(river_route != null and river_route.downstream_destination_id == &"uruk", "The river definition identifies Uruk as the downstream destination")
 	var upstream_periods := network.get_transit_periods(&"river_uruk_nippur", &"uruk", &"nippur")
-	_check(upstream_periods == 2, "Uruk-to-Nippur river passage is two periods")
+	_check(upstream_periods == 2, "Uruk-to-Nippur river passage applies the one-period upstream penalty")
 	var nippur_index: int = survey_map.map_nodes.get(&"nippur", -1)
 	var nippur_data: Variant = survey_map.graph.get_node_data(nippur_index)
 	var map_click := InputEventMouseButton.new()
