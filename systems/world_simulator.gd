@@ -156,6 +156,7 @@ func _simulate_epics(world: WorldState) -> void:
 			if stage > reviewed_stage and not bool(latest.get("review_pending", false)):
 				latest["review_pending"] = true
 				latest["review_stage"] = stage
+				latest["review_stage_label"] = world.get_epic_stage_label(stage, definition)
 		world.epics[epic_id] = latest
 
 func _simulate_epic(world: WorldState, definition: EpicDef, state: Dictionary) -> void:
