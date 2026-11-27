@@ -10,13 +10,9 @@ func calculate_transit_periods(route: RouteDef, from_id: StringName, to_id: Stri
 	var periods := route.base_transit_periods
 	if route.route_type == &"river":
 		if from_id == route.downstream_destination_id:
-			pass # Travelling away from the downstream destination is upstream.
-		elif to_id == route.downstream_destination_id:
-			pass # Arriving at the downstream destination follows the current.
-		else:
+			periods += 1 # Travelling away from downstream means travelling upstream.
+		elif to_id != route.downstream_destination_id:
 			return -1
-		if to_id != route.downstream_destination_id:
-			periods += 1
 	var disruption: Dictionary = world.routes.get(route.id, {})
 	if StringName(disruption.get("status", &"")) == &"closed":
 		return -1
