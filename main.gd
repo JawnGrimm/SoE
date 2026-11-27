@@ -70,7 +70,7 @@ var status_label: Label
 var header_resource_label: Label
 var local_stock_label: Label
 var period_delta_label: Label
-var work_queue_overlay: WorkQueueOverlay
+var work_queue_overlay: Control
 var work_queue_button: Button
 var evidence_workspace: Control
 var period_delta_feed: Array[String] = []
@@ -160,10 +160,11 @@ func _build_interface() -> void:
 	year_label.add_theme_color_override("font_color", Color("#c4ad7c"))
 	header.add_child(year_label)
 	header_resource_label = Label.new()
-	header_resource_label.add_theme_font_size_override("font_size", 13)
+	header_resource_label.add_theme_font_size_override("font_size", 12)
+	header_resource_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	header_resource_label.add_theme_color_override("font_color", Color("#e5d2a8"))
 	header_resource_label.tooltip_text = "Purse, debt, and current audit exposure. Values are live character/world state."
-	header.add_child(header_resource_label)
+	root.add_child(header_resource_label)
 	work_queue_button = Button.new()
 	work_queue_button.text = "ARCHIVE / QUEUE"
 	work_queue_button.tooltip_text = "Open Works, Challenges, and Assignments. Keyboard: focus and press Enter."
@@ -433,7 +434,7 @@ func _build_interface() -> void:
 	cavity_label.add_theme_color_override("font_color", Color("#c6b99f"))
 	secret_cavity.add_child(cavity_label)
 	work_queue_overlay = WorkQueueOverlayScript.new()
-	work_queue_overlay.opportunity_selected.connect(_on_queue_opportunity_selected)
+	work_queue_overlay.connect("opportunity_selected", _on_queue_opportunity_selected)
 	add_child(work_queue_overlay)
 
 func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: String, quote: String, character_id: StringName = &"") -> PanelContainer:
@@ -1893,9 +1894,9 @@ func _toggle_work_queue() -> void:
 	if work_queue_overlay == null:
 		return
 	if work_queue_overlay.visible:
-		work_queue_overlay.close_queue()
+		work_queue_overlay.call("close_queue")
 	else:
-		work_queue_overlay.open_queue(assignment_opportunities, work_queue_button)
+		work_queue_overlay.call("open_queue", assignment_opportunities, work_queue_button)
 
 
 func _on_queue_opportunity_selected(index: int) -> void:
@@ -1905,6 +1906,8 @@ func _on_queue_opportunity_selected(index: int) -> void:
 
 
 func _set_evidence_visible(is_visible: bool) -> void:
+	if evidence_workspace != null:
+		evidence_workspace.visible = is_visible
 	if evidence_left != null:
 		evidence_left.visible = is_visible
 	if evidence_right != null:
@@ -1975,7 +1978,7 @@ func _refresh_local_stock_facts() -> void:
 
 
 func _update_period_delta_feed() -> void:
-	if world == null or period_delta_label == null:
+	if world == null or actor == null or period_delta_label == null:
 		return
 	var period_index := world.current_period_index()
 	if period_index != last_delta_period:
