@@ -57,3 +57,11 @@ General project rules:
 - Regional journeys are executed exactly once by `TravelService` against the authoritative `WorldSimulator`, charging the passage fare or recording the existing unpaid-route-fee debt before arrival. The journey vignette blocks desk interaction until explicit disembark; only disembark refreshes the local assignment board. Never advance periods or mutate travel resources in UI code.
 - Keep these regressions covered by headless tests: queue routing, verdict stock/flags/progress/opinion/traits, Challenge eligibility, silver affordability, and save/load of active docket state.
 - Headless SceneTree tests must not preload `main.gd` merely to reach UI helpers: it depends on project autoload singletons that are absent in `--script` test runs. Extract reusable pure decision logic into a small `RefCounted` system/helper and test that directly.
+
+## Evidence, regional compound, and period-delta rules
+
+- Evidence is player-facing prose, never a debug console. Strip capability diagnostics, raw action tokens, internal form IDs, and raw hazard keys. Translate known document types and site issues into authored labels.
+- Evidence inventories include only resources actually tracked by the institution. Empty inventories read `COMMODITY BALANCES: None on record`; do not fabricate zero barley, labor, or textiles.
+- Compound information is scoped to `WorldState.current_location_id`. Uruk factions and Eanna content must not leak into Umma or Nippur; show local institutions and seated officials.
+- `WorldSimulator` and `TravelService` record categorized changes in `WorldState.last_period_deltas`. Clear at the start of each simulation period, persist via `SaveCodec`, and render only the latest four in `SINCE LAST PERIOD`. UI must not infer causal events from resource snapshots.
+- Cuneiform fonts belong under `res://assets/fonts/`; preserve license/provenance text when moving existing assets.
