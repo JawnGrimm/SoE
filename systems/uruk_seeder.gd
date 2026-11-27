@@ -179,7 +179,7 @@ static func _seed_places(world: WorldState) -> void:
 		&"great_canal_cut": {"name": "Great Canal Cut", "kind": &"canal_worksite", "parent": &"agricultural_hinterland"},
 		&"djebel_aruda": {"name": "Djebel Aruda", "kind": &"uruk_related_settlement", "region": &"upper_euphrates", "political_relation": &"regional_partner", "exports": [&"timber", &"copper"], "imports": [&"grain", &"textiles", &"beer"], "connected_to": [&"habuba_kabira"]}
 	}
-	var place_ids: Array[String] = ["uruk", "umma", "nippur", "ur", "habuba_kabira", "hacinebi", "susa", "eridu", "mari", "tell_brak", "hamoukar", "godin_tepe"]
+	var place_ids: Array[String] = ["uruk", "umma", "nippur", "ur", "habuba_kabira", "hacinebi", "susa", "eridu", "mari", "tell_brak", "hamoukar", "godin_tepe", "djebel_aruda"]
 	for place_id in place_ids:
 		var resource_path := "res://data/places/%s.tres" % place_id
 		var definition := ResourceLoader.load(resource_path) as PlaceDef
