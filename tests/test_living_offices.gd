@@ -44,7 +44,7 @@ func _run() -> void:
 	umma_canal["pressure_thresholds"] = {&"labor_warn": 7}
 	world.institutions[&"umma_canal_bailiff"] = umma_canal
 
-	simulator._simulate_people(world)
+	simulator.advance_period(world)
 	_check(_has_form_from(world, &"contradictory_grain_docket", &"character_0012"), "Umma grain shortage produces Nin-Enlil's local contradictory docket")
 	_check(int(world.institutions[&"umma_granary"].get("agenda_evaluation_count", 0)) > 0, "Umma granary agenda ticks independently of Uruk")
 	_check(_has_form_from(world, &"bailiff_requisition", &"character_0013"), "Umma canal pressure generates Ur-Mes's requisition")
