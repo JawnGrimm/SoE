@@ -183,7 +183,7 @@ func _run() -> void:
 	_check(bool(regional_work_result.get("success", false)) and assignment_world.cedar_desk_log.size() == 3 and String(assignment_world.cedar_desk_log.back().get("category", "")) == "regional_work", "A regional trade decision should launch real cargo and enter the persistent work log")
 	_check(String(assignment_world.cedar_desk_log.front().get("responsible_character_id", "")) == String(assignment_actor.id) and String(assignment_world.cedar_desk_log.front().get("employer_id", "")) == "enki_ili" and String(assignment_world.cedar_desk_log.front().get("institution_id", "")) == "eanna_household", "Work log should retain the responsible scribe, remote sender, and destination institution")
 	_check(assignment_world.cases_settled == 3, "Completed world-driven engagements should enter the existing career settlement counters")
-	_check(registry.all_places().size() == 12, "DefinitionRegistry should load the twelve canonical Era 1 places")
+	_check(registry.all_places().size() == 13, "DefinitionRegistry should load the thirteen regional Era 1 place definitions")
 	_check(registry.get_definitions("routes").size() >= 24 and registry.get_definition(&"uruk_habuba_river") is RouteDef, "DefinitionRegistry should index regional RouteDef resources by id")
 	var route_risk_world := WorldState.new()
 	UrukSeeder.seed_campaign(route_risk_world, 32003211)
