@@ -54,7 +54,7 @@ func _deliver_grain_clerk_dockets(world: WorldState) -> void:
 				"generated_by": clerk_id,
 				"generation_reason": &"autonomous_office_action",
 				"npc_intent_id": StringName(docket.get("intent_id", "")),
-				"npc_evidence": Dictionary(docket.get("npc_evidence", {})).duplicate(true),
+				"npc_evidence": docket.get("npc_evidence", {}).duplicate(true),
 				"institution_id": StringName(institution_id)
 			})
 		institution["npc_docket_queue"] = remaining
