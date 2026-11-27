@@ -75,6 +75,8 @@ func _run() -> void:
 		var facts := String(evidence.get("facts", ""))
 		_check(bool(evidence_result.get("success", false)) and facts.contains("DISPATCH DOCKET") and facts.contains("THRESHOLD TALLY") and facts.contains("DISCREPANCY"), "Investigating the docket reveals both conflicting records and their discrepancy")
 		var opinion_before_referral := clerk.get_opinion(player.id)
+		var capped_action := AssignmentPipelineScript.perform_action(world, player, assignment_id, &"reconcile_accounts")
+		_check(not bool(capped_action.get("success", false)) and String(capped_action.get("message", "")).contains("2 / 2"), "Consult and records exhaust the inquiry allowance; a third action is rejected")
 		var referral := AssignmentPipelineScript.resolve(world, player, assignment_id, &"refer")
 		var corrected_records: Dictionary = world.institutions.get(&"eanna_household", {}).get("stock_records", {})
 		_check(bool(evidence_result.get("success", false)) and bool(referral.get("success", false)), "Two inquiries permit a formal cover-up referral")
