@@ -19,6 +19,9 @@ func _test_header_formatting() -> void:
 	assert(Header.format_purse(17, "silver") == "PURSE: 17 SILVER")
 	assert(Header.format_arrears(3, 0) == "ARREARS: 3 DEBT")
 	assert(Header.format_arrears(0, 2) == "ARREARS: 0 DEBT · UPKEEP 2")
+	assert(not Header.arrears_visible(0, 0), "Arrears badge disappears when debt and unpaid upkeep are zero.")
+	assert(Header.arrears_visible(0, 1))
+	assert(not Header.exposure_visible(0) and Header.exposure_visible(1))
 	assert(Header.format_exposure(4) == "EXPOSURE: 4")
 	assert(Header.format_exposure(0) == "EXPOSURE: 0")
 
