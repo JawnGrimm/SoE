@@ -12,3 +12,6 @@ members = Array[StringName]([])
 interests = Array[StringName]([&"offerings", &"ritual_supplies"])
 starting_stockpiles = {&"offerings": 24}
 starting_activity_count = 0
+ledger_work_title = "Audit Nippur Shrine Offerings"
+ledger_work_summary = "Compare the shrine offering register with its stored offerings and recorded ritual activity."
+ledger_work_priority = 1
