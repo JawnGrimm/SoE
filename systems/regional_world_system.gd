@@ -118,6 +118,7 @@ static func seed_regional_institutions(world: WorldState) -> int:
 			for commodity in exports:
 				stockpiles[StringName(commodity)] = world.rng_sim.randi_range(12, 48)
 			stockpiles[&"beer"] = maxi(8, int(stockpiles.get(&"beer", 0)))
+			stockpiles[&"bread"] = maxi(12, int(stockpiles.get(&"bread", 0)))
 			stockpiles[&"silver"] = maxi(8, int(stockpiles.get(&"silver", 0)))
 			institution = {
 				"name": "%s Trade House" % String(place.get("name", place_id)),
