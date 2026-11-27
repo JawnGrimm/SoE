@@ -149,10 +149,14 @@ func _simulate_epics(world: WorldState) -> void:
 			continue
 		if not bool(state.get("active", false)):
 			var earned_canal := world.year >= CANAL_LAUNCH_YEAR and world.cases_settled >= CANAL_CASES_REQUIRED
-			var summoned_canal := world.epic_summon_issued
+			var summoned_canal := world.epic_summon_issued and world.year >= CANAL_LAUNCH_YEAR
 			if earned_canal or summoned_canal:
 				state["active"] = true
-				state["review_initialized"] = false
+				state["review_initialized"] = true
+				var launch_progress := int(state.get("progress", world.get_resource(definition.progress_resource)))
+				var launch_stage := world.get_epic_stage_index(launch_progress, definition.target)
+				state["review_stage"] = launch_stage
+				state["review_stage_label"] = world.get_epic_stage_label(launch_stage)
 				state["review_pending"] = true
 				state["review_reason"] = "summons" if summoned_canal else "earned_life"
 				state["review_summary"] = "A summons from the canal administration requires the apprentice's first formal project account."
