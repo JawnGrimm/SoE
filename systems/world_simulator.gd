@@ -230,6 +230,8 @@ func _simulate_economy(world: WorldState) -> void:
 	# the available pool rather than letting it accumulate to the cap.
 	var active_institutions := 0
 	for institution in world.institutions.values():
+		if not _place_is_uruk(world, StringName(institution.get("place_id", ""))):
+			continue
 		var members: Array = institution.get("members", [])
 		for member_id in members:
 			var member := world.get_person(StringName(member_id))
@@ -262,6 +264,31 @@ func _simulate_economy(world: WorldState) -> void:
 		if brew_input > 0:
 			_change(world, &"barley", -brew_input)
 			_change(world, &"beer", brew_input * 2)
+	_apply_institution_periodic_deltas(world)
+
+func _apply_institution_periodic_deltas(world: WorldState) -> void:
+	for institution_id in world.institutions.keys():
+		var institution: Dictionary = world.institutions[institution_id]
+		var deltas: Dictionary = institution.get("periodic_deltas", {}).duplicate(true)
+		if world.period >= 4 and world.period <= 7:
+			for resource_id in institution.get("harvest_deltas", {}).keys():
+				deltas[resource_id] = int(deltas.get(resource_id, 0)) + int(institution.harvest_deltas[resource_id])
+		var resources: Dictionary = institution.get("stockpiles", {}).duplicate(true)
+		for resource_key in deltas.keys():
+			var resource_id := StringName(resource_key)
+			resources[resource_id] = maxi(0, int(resources.get(resource_id, 0)) + int(deltas[resource_key]))
+		institution["stockpiles"] = resources
+		world.institutions[institution_id] = institution
+
+func _place_is_uruk(world: WorldState, place_id: StringName) -> bool:
+	var cursor := place_id
+	var visited: Dictionary = {}
+	while cursor != &"" and not visited.has(cursor):
+		if cursor == &"uruk":
+			return true
+		visited[cursor] = true
+		cursor = StringName(world.places.get(cursor, {}).get("parent", ""))
+	return false
 
 func _simulate_institutions(world: WorldState) -> void:
 	for institution_id in world.institutions.keys():
@@ -274,13 +301,21 @@ func _simulate_institutions(world: WorldState) -> void:
 				active_members += 1
 		var previous_pressure := int(institution.get("resource_pressure", 0))
 		var pressure := 0
-		if world.get_resource(&"barley") < 100:
-			pressure += 2
-		elif world.get_resource(&"barley") < 220:
+		var resources: Dictionary = institution.get("stockpiles", {})
+		if resources.has(&"barley"):
+			if int(resources.get(&"barley", 0)) < 100:
+				pressure += 2
+			elif int(resources.get(&"barley", 0)) < 220:
+				pressure += 1
+		if resources.has(&"labor"):
+			if int(resources.get(&"labor", 0)) < 8:
+				pressure += 2
+			elif int(resources.get(&"labor", 0)) < 16:
+				pressure += 1
+		var interests: Array = institution.get("interests", [])
+		if resources.has(&"textiles") and &"textiles" in interests and int(resources.get(&"textiles", 0)) < 4:
 			pressure += 1
-		if world.get_resource(&"labor") < 8:
-			pressure += 2
-		elif world.get_resource(&"labor") < 16:
+		if resources.has(&"offerings") and &"offerings" in interests and int(resources.get(&"offerings", 0)) < 15:
 			pressure += 1
 		institution["resource_pressure"] = pressure
 		institution["active_members"] = active_members
@@ -357,22 +392,27 @@ func _generate_forms(world: WorldState) -> void:
 	if barley >= 40 and barley < 180 and labor <= 16:
 		_offer_if_ready(world, &"load_claim", &"south_court_storehouse", 2, &"reserve_transport_allocation_conflict")
 
-func _offer_if_ready(world: WorldState, form_type: StringName, subject_id: StringName, urgency: int, reason: StringName) -> void:
-	if world.has_pending_form(form_type):
+	for institution_id in world.institutions.keys():
+		var institution: Dictionary = world.institutions[institution_id]
+		var place_id := StringName(institution.get("place_id", ""))
+		if place_id == &"" or _place_is_uruk(world, place_id):
+			continue
+		var stock: Dictionary = institution.get("stockpiles", {})
+		var shortage := (stock.has(&"barley") and int(stock.get(&"barley", 0)) <= 105) or (stock.has(&"labor") and int(stock.get(&"labor", 0)) <= 8) or (stock.has(&"textiles") and int(stock.get(&"textiles", 0)) <= 3)
+		if shortage:
+			_offer_if_ready(world, &"bailiff_requisition", place_id, 2, &"local_institution_shortage", StringName(institution_id))
+
+func _offer_if_ready(world: WorldState, form_type: StringName, subject_id: StringName, urgency: int, reason: StringName, institution_id: StringName = &"") -> void:
+	if world.has_pending_form(form_type, subject_id):
 		return
-	var flag := StringName("sim_form_cooldown_" + String(form_type))
+	var flag := StringName("sim_form_cooldown_%s_%s" % [form_type, subject_id])
 	var now := world.current_period_index()
 	if world.has_flag(flag, now):
 		return
-	world.enqueue_form({
-		"form_type": form_type,
-		"subject_id": subject_id,
-		"urgency": urgency,
-		"year": world.year,
-		"generated_by": &"world_simulator",
-		"generation_reason": reason,
-		"generated_period": now,
-	})
+	var form := {"form_type": form_type, "subject_id": subject_id, "urgency": urgency, "year": world.year, "generated_by": &"world_simulator", "generation_reason": reason, "generated_period": now}
+	if institution_id != &"":
+		form["institution_id"] = institution_id
+	world.enqueue_form(form)
 	world.set_flag(flag, now + FORM_COOLDOWN_PERIODS)
 
 func _change(world: WorldState, resource_id: StringName, amount: int) -> void:

@@ -412,10 +412,13 @@ func allocate_person_id() -> StringName:
 			return candidate
 	return &""
 
-func has_pending_form(form_type: StringName = &"") -> bool:
+func has_pending_form(form_type: StringName = &"", subject_id: StringName = &"") -> bool:
 	for form in pending_forms:
-		if form_type == &"" or StringName(form.get("form_type", "")) == form_type:
-			return true
+		if form_type != &"" and StringName(form.get("form_type", "")) != form_type:
+			continue
+		if subject_id != &"" and StringName(form.get("subject_id", "")) != subject_id:
+			continue
+		return true
 	return false
 
 func get_latest_resolved_form(form_type: StringName) -> Dictionary:

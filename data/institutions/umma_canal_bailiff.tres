@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="InstitutionDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/institution_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"umma_canal_bailiff"
+display_name = "Umma Canal Bailiff's Office"
+institution_type = &"canal_administration"
+place_id = &"umma"
+era_id = &"uruk_storehouse"
+members = Array[StringName]([])
+interests = Array[StringName]([&"canal_access", &"barley", &"labor", &"textiles"])
+staffed_offices = Array[StringName]([&"canal_bailiff", &"umma_granary_clerk"])
+starting_stockpiles = {&"barley": 115, &"labor": 9, &"textiles": 3}
+periodic_deltas = {&"barley": -8, &"labor": -1}
+harvest_deltas = {&"barley": 24, &"labor": 3}
+starting_activity_count = 0
+ledger_work_title = "Audit Umma Canal Bailiff Accounts"
+ledger_work_summary = "Reconcile Umma's canal-access tallies, grain reserves, and bailiff work rolls."
+ledger_work_priority = 2

@@ -22,7 +22,7 @@ func _run() -> void:
 	var world := WorldState.new()
 	UrukSeederScript.seed_campaign(world, 32003200, true, registry)
 	_check(registry.validate_world_references(), "All authored settlement, parent-place, and institution references resolve")
-	_check(registry.all_places().size() == 20 and registry.all_institutions().size() == 4, "The registry loads authored regional geography and institution definitions")
+	_check(registry.all_places().size() == 20 and registry.all_institutions().size() == 5, "The registry loads authored regional geography and institution definitions")
 	_check(world.places.get(&"north_bay", {}).get("parent", &"") == &"eanna_precinct" and world.places.get(&"eanna_precinct", {}).get("parent", &"") == &"uruk", "Work-area geography preserves its authored settlement hierarchy")
 	var simulator := WorldSimulatorScript.new(registry)
 	var network := RouteNetworkScript.new()
