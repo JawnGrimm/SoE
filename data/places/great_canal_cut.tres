@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1")
-id = &"great_canal_cut"
+id = &"great_canal_cut_worksite"
 display_name = "Great Canal Cut"
 place_type = &"canal_worksite"
 region = &"lower_mesopotamia"
