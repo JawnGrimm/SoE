@@ -185,6 +185,24 @@ func _run() -> void:
 	_check(assignment_world.cases_settled == 3, "Completed world-driven engagements should enter the existing career settlement counters")
 	_check(registry.all_places().size() == 12, "DefinitionRegistry should load the twelve canonical Era 1 places")
 	_check(registry.get_definitions("routes").size() >= 24 and registry.get_definition(&"uruk_habuba_river") is RouteDef, "DefinitionRegistry should index regional RouteDef resources by id")
+	var route_risk_world := WorldState.new()
+	UrukSeeder.seed_campaign(route_risk_world, 32003211)
+	var risk_before := RegionalWorldSystem.effective_route_risk(route_risk_world, &"uruk_habuba_river")
+	_check(RegionalWorldSystem.provision_route(route_risk_world, &"uruk_habuba_river", 8, 3), "Regional route should accept a real provisioning allocation")
+	_check(RegionalWorldSystem.effective_route_risk(route_risk_world, &"uruk_habuba_river") == risk_before - 8, "Provisioning should reduce route risk for its active period")
+	for provision_tick in range(3):
+		route_risk_world.advance_period()
+	_check(RegionalWorldSystem.effective_route_risk(route_risk_world, &"uruk_habuba_river") == risk_before, "Temporary route provisioning should expire on the calendar")
+	var autonomous_trade_world := WorldState.new()
+	UrukSeeder.seed_campaign(autonomous_trade_world, 32003212)
+	autonomous_trade_world.shipments[&"shipment_000001"]["status"] = "accepted"
+	var autonomous_simulator := WorldSimulator.new(registry)
+	for autonomous_tick in range(40):
+		autonomous_simulator.advance_period(autonomous_trade_world)
+		if autonomous_trade_world.shipments.size() > 1:
+			break
+	_check(autonomous_trade_world.shipments.size() > 1, "Regional trade should launch shipments autonomously as the world advances")
+
 	_check(registry.get_place(&"hacinebi") != null and registry.get_place(&"hacinebi").political_relation == &"foreign_enclave", "Typed place lookup should retain Hacinebi's autonomous local context")
 	var copper_vector := AssignmentGeneratorScript.get_geographic_vector(&"counterfeit_copper")
 	_check(copper_vector.origin_id == &"hacinebi" and copper_vector.destination_id == &"uruk" and copper_vector.commodity_id == &"copper", "Copper docket vector should use authored Hacinebi-to-Uruk geography")
@@ -412,6 +430,17 @@ func _run() -> void:
 	for travel_tick in range(3):
 		regional_arrival_world.advance_period()
 	_check(regional_arrival_player.current_location_id == &"habuba_kabira" and String(regional_arrival_world.player_travel.get("status", "")) == "arrived", "Player travel should advance through the route and update character location")
+	var habuba_opportunities := AssignmentPipeline.generate_opportunities(regional_arrival_world, regional_arrival_player)
+	var habuba_has_regional_work := habuba_opportunities.any(func(opportunity: Dictionary) -> bool: return StringName(opportunity.get("kind", "")) == &"regional_work")
+	_check(habuba_opportunities.size() == 3 and habuba_has_regional_work, "Arrival at Habuba should change the available work to local trade and regional cargo")
+	_check(regional_arrival_world.places[&"susa"].has("regional_institution_id") and regional_arrival_world.institutions.has(&"trade_post_susa"), "Susa should have its own seeded trade institution and local agent")
+	var uruk_destinations := RegionalWorldSystem.get_destination_options(regional_arrival_world, &"uruk")
+	var susa_route_found := false
+	for destination in uruk_destinations:
+		if StringName(destination.get("place_id", "")) == &"susa" and int(destination.get("travel_periods", 0)) == 2:
+			susa_route_found = true
+	_check(susa_route_found, "Regional map should expose the authored Uruk-to-Susa journey")
+
 	_check(String(regional_arrival_world.shipments.get(second_shipment_id, {}).get("status", "")) == "arrived", "A moving shipment should arrive after its route's elapsed periods")
 
 	var world_graph_is_closed := true
