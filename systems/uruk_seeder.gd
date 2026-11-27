@@ -1,10 +1,21 @@
 class_name UrukSeeder
 extends RefCounted
 
-static func seed_campaign(world: WorldState, world_seed: int, add_player_to_world: bool = true) -> PersonEntity:
+static func seed_campaign(world: WorldState, world_seed: int, add_player_to_world: bool = true, definitions: DefinitionRegistry = null) -> PersonEntity:
+	if definitions == null:
+		definitions = DefinitionRegistry.new()
+		definitions.load_defaults()
 	world.set_world_seed(world_seed)
 	world.year = -3200
 	world.period = 0
+	var starting_era := definitions.get_era_for_year(world.year)
+	if starting_era == null:
+		var available_eras := definitions.all_eras()
+		if not available_eras.is_empty():
+			starting_era = available_eras[0]
+	world.current_location_id = starting_era.starting_place_id if starting_era != null else &""
+	if world.current_location_id == &"":
+		push_error("UrukSeeder: no EraDef provides a starting place.")
 	world.people.clear()
 	world.places.clear()
 	world.institutions.clear()
@@ -64,8 +75,8 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 	world.people[&"nin_azu"] = _person(&"nin_azu", "Nin-azu", &"precinct_attendant", {"literacy": 2, "rhetoric": 2}, [&"devout", &"ambitious"])
 	world.people[&"geme_tur"] = _person(&"geme_tur", "Geme-tur", &"player_household", {"stewardship": 2}, [&"practical", &"blunt"])
 
-	_seed_places(world)
-	_seed_institutions_and_groups(world)
+	_seed_places(world, definitions)
+	_seed_institutions_and_groups(world, definitions, starting_era.id if starting_era != null else &"")
 	_seed_relationships(world)
 	if add_player_to_world:
 		attach_player(world, player)
@@ -101,7 +112,7 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 	world.stockpiles[&"canal_progress"] = 0
 
 	# The North-Bay roof is already leaking; each elapsed period spoils one measure of barley.
-	world.hazards.append({"id": &"roof_leak", "place_id": &"north_bay", "resource": &"barley", "rate": 1, "total_lost": 0, "active": true})
+	world.hazards.append({"id": &"roof_leak", "place_id": &"north_bay", "institution_id": &"eanna_household", "resource_scope": "institution", "resource": &"barley", "rate": 1, "total_lost": 0, "active": true})
 	world.enqueue_form({"form_type": &"grain_levy", "subject_id": &"south_court_storehouse", "urgency": 1, "year": world.year})
 	return player
 
@@ -135,42 +146,28 @@ static func attach_player(world: WorldState, player: PersonEntity) -> void:
 	_link(world, &"shuruppak_ilu", world.player_id, &"mentor", 7, 8)
 	_link(world, &"geme_tur", world.player_id, &"family", 8, 9)
 
-static func _seed_places(world: WorldState) -> void:
-	# Keep local Eanna work areas, while canonical settlements come from
-	# immutable PlaceDef resources so dockets can share the same geography.
-	world.places = {
-		&"eanna_precinct": {"name": "Eanna Precinct", "kind": &"institutional_precinct", "parent": &"uruk"},
-		&"anu_precinct": {"name": "Anu Precinct", "kind": &"cultic_precinct", "parent": &"uruk"},
-		&"agricultural_hinterland": {"name": "Uruk Agricultural Hinterland", "kind": &"productive_land", "parent": &"uruk"},
-		&"south_court_storehouse": {"name": "South Court Storehouse", "kind": &"storehouse", "parent": &"eanna_precinct"},
-		&"north_bay": {"name": "North-Bay", "kind": &"work_area", "parent": &"eanna_precinct"},
-		&"great_canal_cut": {"name": "Great Canal Cut", "kind": &"canal_worksite", "parent": &"agricultural_hinterland"},
-		&"djebel_aruda": {"name": "Djebel Aruda", "kind": &"uruk_related_settlement", "region": &"upper_euphrates", "connected_to": [&"habuba_kabira"]}
-	}
-	var place_ids: Array[String] = ["uruk", "umma", "nippur", "ur", "habuba_kabira", "hacinebi", "susa"]
-	for place_id in place_ids:
-		var resource_path := "res://data/places/%s.tres" % place_id
-		var definition := ResourceLoader.load(resource_path) as PlaceDef
-		if definition == null or not definition.is_valid():
-			push_warning("UrukSeeder: failed to load canonical place '%s'" % resource_path)
-			continue
+static func _seed_places(world: WorldState, definitions: DefinitionRegistry) -> void:
+	# Every settlement, precinct, work area, and route landmark is authored as PlaceDef data.
+	world.places.clear()
+	for definition in definitions.all_places():
 		world.places[definition.id] = {
 			"name": definition.display_name,
 			"kind": definition.place_type,
 			"region": definition.region,
+			"parent": definition.parent_place_id,
 			"political_relation": definition.political_relation,
 			"exports": definition.exports.duplicate(),
 			"imports": definition.imports.duplicate(),
-			"connected_to": definition.connected_to.duplicate(),
-			"era_id": definition.era_id
+			"era_id": definition.era_id,
+			"survey_position": definition.survey_position
 		}
-static func _seed_institutions_and_groups(world: WorldState) -> void:
-	var eanna_members: Array[StringName] = [&"shuruppak_ilu", &"ur_nanna", &"utu_mansum", &"enlil_kisu", &"lu_nanshe"]
-	world.institutions = {
-		&"eanna_household": {"name": "Eanna Institutional Household", "kind": &"institutional_household", "place_id": &"eanna_precinct", "members": eanna_members, "interests": [&"grain", &"labor", &"storage", &"canal_work"]},
-		&"anu_establishment": {"name": "Anu Precinct Establishment", "kind": &"cultic_establishment", "place_id": &"anu_precinct", "members": [&"nin_azu", &"nin_kasi"], "interests": [&"offerings", &"beer", &"prestige"]},
-		&"exchange_network": {"name": "River and Overland Exchange", "kind": &"exchange_network", "place_id": &"uruk", "members": [&"geme_inana", &"enki_ili", &"ur_amas"], "interests": [&"transport", &"materials", &"exchange"]}
-	}
+
+static func _seed_institutions_and_groups(world: WorldState, definitions: DefinitionRegistry, active_era_id: StringName) -> void:
+	world.institutions.clear()
+	for definition in definitions.all_institutions():
+		if active_era_id != &"" and definition.era_id != active_era_id:
+			continue
+		world.institutions[definition.id] = definition.create_runtime_state()
 	world.social_groups = {
 		&"agricultural_households": {"name": "Agricultural Households", "kind": &"household_group", "place_id": &"agricultural_hinterland", "members": [&"ama_edin", &"geme_tur"], "resources": [&"barley", &"dates"]},
 		&"pastoral_households": {"name": "Pastoral Households", "kind": &"household_group", "place_id": &"agricultural_hinterland", "members": [&"ur_gula"], "resources": [&"sheep", &"goats", &"wool"]},

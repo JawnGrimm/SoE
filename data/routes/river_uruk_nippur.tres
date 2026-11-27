@@ -8,5 +8,7 @@ id = &"river_uruk_nippur"
 origin_id = &"uruk"
 destination_id = &"nippur"
 route_type = &"river"
+display_name = "Euphrates River Barge"
+era_id = &"uruk_storehouse"
 base_transit_periods = 1
 downstream_destination_id = &"uruk"

@@ -2,6 +2,9 @@ extends Control
 
 const AssignmentGeneratorScript = preload("res://systems/assignment_generator.gd")
 const DevCommandRouterScript = preload("res://systems/dev_command_router.gd")
+const RouteNetworkScript = preload("res://systems/route_network.gd")
+const TravelServiceScript = preload("res://systems/travel_service.gd")
+const RegionalSurveyMapScript = preload("res://components/regional_survey_map.gd")
 const CAMPAIGN_SEED: int = 32003200
 const ROSTER_CAST: Array[StringName] = [&"shuruppak_ilu", &"utu_mansum", &"enlil_kisu", &"ur_nanna", &"nin_kasi", &"geme_inana", &"lu_nanshe"]
 const FACTION_LABELS := {
@@ -26,6 +29,10 @@ class CylinderSealProp extends Control:
 var runner: EventRunner
 var scheduler: EventScheduler
 var world_simulator: WorldSimulator
+var route_network: RouteNetwork
+var travel_service: TravelService
+var survey_map: Variant
+var survey_button: Button
 var world: WorldState
 var actor: PersonEntity
 var active_event: EventTemplate
@@ -46,6 +53,7 @@ var active_right_speaker_id: StringName = &""
 var dev_command_router
 
 var year_label: Label
+var location_label: Label
 var case_heading: Label
 var dossier: RichTextLabel
 var prompt_label: Label
@@ -128,7 +136,8 @@ func _build_interface() -> void:
 	var header := HBoxContainer.new()
 	root.add_child(header)
 	var title := Label.new()
-	title.text = "SCRIBE OF ERAS  /  THE SCRIBE’S DESK"
+	title.text = "SCRIBE OF ERAS  /  REGIONAL COMPOUND"
+	location_label = title
 	title.add_theme_font_size_override("font_size", 23)
 	title.add_theme_color_override("font_color", Color("#e5d2a8"))
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -169,11 +178,23 @@ func _build_interface() -> void:
 	desk_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	desk_box.add_theme_constant_override("separation", 3)
 	mat.add_child(desk_box)
+	var desk_toolbar := HBoxContainer.new()
+	desk_toolbar.add_theme_constant_override("separation", 8)
+	desk_box.add_child(desk_toolbar)
 	var desk_caption := Label.new()
 	desk_caption.text = "THE DESK  /  CEDAR AND REED"
+	desk_caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	desk_caption.add_theme_font_size_override("font_size", 10)
 	desk_caption.add_theme_color_override("font_color", Color("#a99570"))
-	desk_box.add_child(desk_caption)
+	desk_toolbar.add_child(desk_caption)
+	survey_button = Button.new()
+	survey_button.text = "UNROLL REGIONAL SURVEY"
+	survey_button.tooltip_text = "Unroll the regional river-and-road survey on the cedar desk."
+	survey_button.add_theme_font_size_override("font_size", 10)
+	survey_button.add_theme_stylebox_override("normal", _panel_style("#3a2b1d", "#80653b"))
+	survey_button.add_theme_stylebox_override("hover", _panel_style("#604326", "#d0ad70"))
+	survey_button.pressed.connect(_toggle_regional_survey)
+	desk_toolbar.add_child(survey_button)
 	var upper_workspace := VBoxContainer.new()
 	upper_workspace.custom_minimum_size.y = 0
 	upper_workspace.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -214,6 +235,12 @@ func _build_interface() -> void:
 	tablet_style.content_margin_bottom = 0.0
 	docket_overlay.add_theme_stylebox_override("panel", tablet_style)
 	docket_motion_layer.add_child(docket_overlay)
+	survey_map = RegionalSurveyMapScript.new()
+	survey_map.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	survey_map.visible = false
+	survey_map.travel_requested.connect(_on_survey_travel_requested)
+	survey_map.close_requested.connect(_close_regional_survey)
+	docket_motion_layer.add_child(survey_map)
 	var tablet_content := MarginContainer.new()
 	tablet_content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	tablet_content.add_theme_constant_override("margin_left", 74)
@@ -594,7 +621,8 @@ func _start_world() -> void:
 	scheduler = EventScheduler.new(runner)
 	world_simulator = WorldSimulator.new()
 	world = WorldState.new()
-	actor = UrukSeeder.seed_campaign(world, CAMPAIGN_SEED, false)
+	actor = UrukSeeder.seed_campaign(world, CAMPAIGN_SEED, false, Registry.defs)
+	_configure_route_network()
 	creation_catalog = CharacterCreationResolver.load_catalog("res://data/character_creation/era_1_uruk.json")
 	current_era = Registry.get_era(&"uruk_storehouse")
 	context = EventContext.new()
@@ -618,6 +646,7 @@ func save_game() -> Dictionary:
 		"assignment_opportunities": assignment_opportunities.duplicate(true),
 		"active_world_assignment_id": String(active_world_assignment_id),
 		"selected_path": String(selected_path),
+		"survey_open": survey_map != null and survey_map.visible,
 	}
 	var result := SaveManager.save_game(world, session)
 	status_label.text = "SAVE SEALED / CAMPAIGN RECORDED" if bool(result.get("success", false)) else "SAVE FAILED / " + String(result.get("error", "Unknown error"))
@@ -634,6 +663,7 @@ func load_game() -> Dictionary:
 		return {"success": false, "error": "The save has no current player."}
 	world = restored_world
 	actor = restored_actor
+	_configure_route_network()
 	current_era = Registry.get_era_for_year(world.year)
 	context = EventContext.new()
 	context.world = world
@@ -669,6 +699,8 @@ func load_game() -> Dictionary:
 	else:
 		_show_case()
 	_refresh_compound()
+	if bool(session.get("survey_open", false)):
+		_open_regional_survey()
 	status_label.text = "CAMPAIGN RESTORED / RECORD RESUMED"
 	return {"success": true}
 
@@ -681,6 +713,9 @@ func _schedule_next_case() -> void:
 	context.year = world.year
 	current_era = Registry.get_era_for_year(world.year)
 	context.era = current_era
+	var active_era_id := current_era.id if current_era != null else &""
+	if route_network == null or route_network.era_id != active_era_id:
+		_configure_route_network()
 	if world.epic_summon_pending and not world.epic_summon_issued:
 		active_event = null
 		procedural_assignment = AssignmentGeneratorScript.create_epic_summons()
@@ -710,10 +745,9 @@ func _schedule_next_case() -> void:
 		})
 		while assignment_opportunities.size() > 3:
 			assignment_opportunities.pop_back()
-	if assignment_opportunities.size() == 3:
+	if not assignment_opportunities.is_empty():
 		_show_assignment_board()
 	else:
-		push_warning("Main: assignment pipeline produced fewer than three opportunities (%d)" % assignment_opportunities.size())
 		_show_end_of_queue()
 
 func _show_character_creation_screen(screen: int) -> void:
@@ -901,10 +935,10 @@ func _show_assignment_board() -> void:
 		callbacks.append(_select_assignment_opportunity.bind(index))
 		summaries.append("%d. %s / %s" % [index + 1, String(opportunity.get("kind", "work")).replace("_", " ").to_upper(), String(opportunity.get("title", "Work"))])
 	var payload := {
-		"title": "THE SCRIBE'S DESK / THREE OPPORTUNITIES",
+		"title": "THE SCRIBE'S DESK / %d OPPORTUNITIES" % assignment_opportunities.size(),
 		"left_card": {"title": "THE LIVING WORLD", "speaker_id": &"", "quote": "The city has continued its business while you were away from the desk.", "facts": "YEAR: %s\nPERIOD: %d / 12\nPENDING FORMS: %d\nACTIVE HAZARDS: %d" % [CalendarFormatter.format_year(world.year), world.period + 1, world.pending_forms.size(), world.hazards.filter(func(h: Dictionary) -> bool: return bool(h.get("active", false))).size()]},
 		"right_card": {"title": "AVAILABLE WORK", "speaker_id": &"shuruppak_ilu", "quote": "Choose the matter you will take responsibility for this period. The others remain in the world, whether you attend to them or not.", "facts": "\n".join(summaries)},
-		"prompt": "Three matters have reached your desk. Select one engagement, or pass without penalty.",
+		"prompt": "%d matters have reached your desk. Select one engagement, or pass without penalty." % assignment_opportunities.size(),
 		"choices": choices_payload
 	}
 	_render_docket_payload(payload, callbacks)
@@ -1634,9 +1668,83 @@ func _apply_faction_opinion(faction_id: StringName, amount: int, _reason: String
 	last_opinion_deltas[faction_id] = amount
 
 
+
+func _configure_route_network() -> void:
+	route_network = RouteNetworkScript.new()
+	var active_era := Registry.get_era_for_year(world.year)
+	var active_era_id := active_era.id if active_era != null else &""
+	if not route_network.configure(world, Registry.all_places(), Registry.all_routes(), active_era_id):
+		push_error("Main: regional route network could not be configured.")
+		return
+	travel_service = TravelServiceScript.new()
+	if not travel_service.configure(route_network, world_simulator):
+		push_error("Main: travel service could not be configured.")
+
+func _location_header_text() -> String:
+	var place := route_network.get_place(world.current_location_id) if route_network != null else null
+	var place_name := place.display_name.to_upper() if place != null else String(world.current_location_id).to_upper()
+	return "SCRIBE OF ERAS  /  %s / REGIONAL COMPOUND" % place_name
+
+func _toggle_regional_survey() -> void:
+	if survey_map == null or world == null or world.get_player() == null:
+		if status_label != null:
+			status_label.text = "THE SURVEY REQUIRES A CONFIRMED SCRIBE."
+		return
+	if survey_map.visible:
+		_close_regional_survey()
+		return
+	_open_regional_survey()
+
+func _open_regional_survey() -> void:
+	if survey_map == null or route_network == null or world == null:
+		return
+	var travel_allowed := phase not in ["character_creation", "era_complete", "case", "world_engagement"]
+	if not survey_map.configure(route_network, world, travel_allowed):
+		status_label.text = "SURVEY UNAVAILABLE / REGIONAL ROUTE DATA IS INCOMPLETE."
+		return
+	survey_map.visible = true
+	docket_overlay.visible = false
+	survey_button.text = "ROLL REGIONAL SURVEY"
+	AudioManager.play_docket_slide()
+
+func _close_regional_survey() -> void:
+	if survey_map == null:
+		return
+	survey_map.visible = false
+	if docket_overlay != null:
+		docket_overlay.visible = true
+	if survey_button != null:
+		survey_button.text = "UNROLL REGIONAL SURVEY"
+	AudioManager.play_docket_slide()
+
+func _on_survey_travel_requested(route_id: StringName, destination_id: StringName) -> void:
+	if phase in ["character_creation", "era_complete", "case", "world_engagement"] or travel_service == null or world == null:
+		return
+	var result := travel_service.travel(world, route_id, destination_id)
+	if not bool(result.get("success", false)):
+		status_label.text = "DEPARTURE REFUSED / " + String(result.get("error", "Route unavailable")).to_upper()
+		return
+	_close_regional_survey()
+	active_event = null
+	procedural_assignment.clear()
+	assignment_opportunities.clear()
+	active_world_assignment_id = &""
+	context.year = world.year
+	current_era = Registry.get_era_for_year(world.year)
+	context.era = current_era
+	context.world = world
+	context.actor = world.get_player()
+	actor = world.get_player()
+	_refresh_compound()
+	_schedule_next_case()
+
 func _refresh_compound() -> void:
 	if world == null:
 		return
+	if location_label != null:
+		location_label.text = _location_header_text()
+	if survey_button != null:
+		survey_button.disabled = world.get_player() == null
 	var mentor_trait := "unmarked"
 	for trait_id in actor.traits:
 		if trait_id in [&"exacting", &"stubborn", &"protective", &"diplomatic"]:

@@ -9,6 +9,7 @@ const DEFAULT_FOLDERS: Dictionary = {
 	"assignments": "res://data/assignments",
 	"places": "res://data/places",
 	"routes": "res://data/routes",
+	"institutions": "res://data/institutions",
 	"epics": "res://data/epics",
 }
 
@@ -19,6 +20,7 @@ var _definitions_by_category: Dictionary = {}
 func load_defaults() -> void:
 	for category in DEFAULT_FOLDERS:
 		load_folder(String(DEFAULT_FOLDERS[category]), String(category))
+	validate_world_references()
 
 ## Loads every .tres definition under a folder. Returns the number registered.
 func load_folder(folder_path: String, category: String = "") -> int:
@@ -44,6 +46,31 @@ func load_folder(folder_path: String, category: String = "") -> int:
 			registered += 1
 	return registered
 
+func validate_world_references() -> bool:
+	var valid := true
+	for place in all_places():
+		if place.parent_place_id != &"" and get_place(place.parent_place_id) == null:
+			_warn("DefinitionRegistry: place '%s' references missing parent '%s'" % [place.id, place.parent_place_id])
+			valid = false
+		if place.era_id != &"" and get_era(place.era_id) == null:
+			_warn("DefinitionRegistry: place '%s' references missing era '%s'" % [place.id, place.era_id])
+			valid = false
+	for institution in all_institutions():
+		if get_place(institution.place_id) == null:
+			_warn("DefinitionRegistry: institution '%s' references missing place '%s'" % [institution.id, institution.place_id])
+			valid = false
+		if get_era(institution.era_id) == null:
+			_warn("DefinitionRegistry: institution '%s' references missing era '%s'" % [institution.id, institution.era_id])
+			valid = false
+	for route in all_routes():
+		if get_place(route.origin_id) == null or get_place(route.destination_id) == null:
+			_warn("DefinitionRegistry: route '%s' references an unknown endpoint" % route.id)
+			valid = false
+		if route.era_id != &"" and get_era(route.era_id) == null:
+			_warn("DefinitionRegistry: route '%s' references missing era '%s'" % [route.id, route.era_id])
+			valid = false
+	return valid
+
 func register_event(definition: EventTemplate) -> bool:
 	return register_definition(definition, "events")
 
@@ -67,6 +94,12 @@ func register_place(definition: PlaceDef) -> bool:
 		_warn("DefinitionRegistry: rejected malformed PlaceDef")
 		return false
 	return register_definition(definition, "places")
+
+func register_institution(definition: InstitutionDef) -> bool:
+	if definition == null or not definition.is_valid():
+		_warn("DefinitionRegistry: rejected malformed InstitutionDef")
+		return false
+	return register_definition(definition, "institutions")
 
 func register_route(definition: RouteDef) -> bool:
 	if definition == null or not definition.is_valid():
@@ -96,6 +129,11 @@ func register_definition(definition: Resource, category: String) -> bool:
 		var place := definition as PlaceDef
 		if place == null or not place.is_valid():
 			_warn("DefinitionRegistry: rejected malformed PlaceDef")
+			return false
+	if category == "institutions":
+		var institution := definition as InstitutionDef
+		if institution == null or not institution.is_valid():
+			_warn("DefinitionRegistry: rejected malformed InstitutionDef")
 			return false
 	if category == "routes":
 		var route := definition as RouteDef
@@ -145,6 +183,17 @@ func get_assignment(definition_id: StringName) -> AssignmentDef:
 
 func get_place(definition_id: StringName) -> PlaceDef:
 	return get_definition(definition_id) as PlaceDef
+
+func get_institution(definition_id: StringName) -> InstitutionDef:
+	return get_definition(definition_id) as InstitutionDef
+
+func all_institutions() -> Array[InstitutionDef]:
+	var result: Array[InstitutionDef] = []
+	for definition in _definitions_by_category.get("institutions", []):
+		if definition is InstitutionDef:
+			result.append(definition)
+	result.sort_custom(func(a: InstitutionDef, b: InstitutionDef) -> bool: return String(a.id) < String(b.id))
+	return result
 
 func get_route(definition_id: StringName) -> RouteDef:
 	return get_definition(definition_id) as RouteDef

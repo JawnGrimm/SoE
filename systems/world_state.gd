@@ -5,6 +5,7 @@ const PERIODS_PER_YEAR := 12
 
 var year: int = 1200
 var period: int = 0
+var current_location_id: StringName = &"uruk"
 var master_seed: int = 0
 var rng_narrative := RandomNumberGenerator.new()
 var rng_sim := RandomNumberGenerator.new()
@@ -133,13 +134,29 @@ func _process_hazards() -> void:
 		var resource_id := StringName(hazard.get("resource", ""))
 		if rate <= 0 or resource_id == &"":
 			continue
-		var available := maxi(0, get_resource(resource_id, "institution", "", &"eanna_household"))
+		var place_id := StringName(hazard.get("place_id", ""))
+		var institution_id := StringName(hazard.get("institution_id", _get_place_institution_id(place_id)))
+		var resource_scope := String(hazard.get("resource_scope", "institution"))
+		var available := maxi(0, get_resource(resource_id, resource_scope, "", institution_id))
 		var lost := mini(available, rate)
 		if lost <= 0:
 			continue
-		modify_resource(resource_id, -lost, "institution", "", &"eanna_household")
+		modify_resource(resource_id, -lost, resource_scope, "", institution_id)
 		hazard["total_lost"] = int(hazard.get("total_lost", 0)) + lost
 		hazards[index] = hazard
+
+func _get_place_institution_id(place_id: StringName) -> StringName:
+	var cursor := place_id
+	var visited: Dictionary = {}
+	while cursor != &"" and not visited.has(cursor):
+		visited[cursor] = true
+		for institution_id in institutions:
+			var institution: Dictionary = institutions[institution_id]
+			if StringName(institution.get("place_id", "")) == cursor:
+				return StringName(institution_id)
+		var place: Dictionary = places.get(cursor, {})
+		cursor = StringName(place.get("parent", ""))
+	return &""
 
 func has_active_hazard(place_id: StringName, hazard_id: StringName = &"") -> bool:
 	for hazard in hazards:

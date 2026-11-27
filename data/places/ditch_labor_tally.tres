@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="PlaceDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/place_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ditch_labor_tally"
+display_name = "Ditch Labor Tally"
+place_type = &"work_record"
+region = &"lower_mesopotamia"
+parent_place_id = &"great_canal_cut_worksite"
+political_relation = &"institutional"
+era_id = &"uruk_storehouse"

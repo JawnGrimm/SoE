@@ -30,6 +30,12 @@ func get_era(definition_id: StringName) -> EraDef:
 func get_era_for_year(year: int) -> EraDef:
 	return defs.get_era_for_year(year)
 
+func get_institution(definition_id: StringName) -> InstitutionDef:
+	return defs.get_institution(definition_id)
+
+func all_institutions() -> Array[InstitutionDef]:
+	return defs.all_institutions()
+
 func get_route(definition_id: StringName) -> RouteDef:
 	return defs.get_route(definition_id)
 

@@ -28,8 +28,10 @@ func _hide_spoilage(world: WorldState, clerk: PersonEntity) -> Dictionary:
 	var institution: Dictionary = world.institutions.get(INSTITUTION_ID, {}).duplicate(true)
 	if institution.is_empty():
 		return {"success": false, "reason": "The Eanna institutional household is unavailable."}
-	var physical_barley := world.get_resource(&"barley", "institution", "", INSTITUTION_ID)
 	var records: Dictionary = institution.get("stock_records", {}).duplicate(true)
+	if bool(records.get("concealed_spoilage", false)):
+		return {"success": false, "reason": "The false quality declaration is already on the record."}
+	var physical_barley := world.get_resource(&"barley", "institution", "", INSTITUTION_ID)
 	records["barley_quality_declaration"] = "prime_seed_corn"
 	records["concealed_spoilage"] = true
 	records["declared_at_period"] = world.current_period_index()
@@ -59,6 +61,8 @@ func _pocket_measures(world: WorldState, clerk: PersonEntity) -> Dictionary:
 	if institution.is_empty():
 		return {"success": false, "reason": "The Eanna institutional household is unavailable."}
 	var records: Dictionary = institution.get("stock_records", {}).duplicate(true)
+	if bool(records.get("intake_tally_falsified", false)):
+		return {"success": false, "reason": "The two-measure intake discrepancy is already on the record."}
 	records["intake_tally_adjustment"] = -2
 	records["intake_tally_falsified"] = true
 	records["intake_tally_falsified_period"] = world.current_period_index()

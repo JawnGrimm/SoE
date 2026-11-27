@@ -11,5 +11,5 @@ region = &"lower_mesopotamia"
 political_relation = &"sovereign_core"
 exports = Array[StringName]([&"textiles", &"beer", &"grain", &"administrative_tablets"])
 imports = Array[StringName]([&"timber", &"copper", &"bitumen"])
-connected_to = Array[StringName]([&"eanna_precinct", &"anu_precinct", &"agricultural_hinterland", &"ur", &"umma", &"nippur", &"habuba_kabira", &"hacinebi", &"susa"])
 era_id = &"uruk_storehouse"
+survey_position = Vector2(145, 105)

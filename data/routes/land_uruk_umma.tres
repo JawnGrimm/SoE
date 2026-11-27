@@ -8,4 +8,6 @@ id = &"land_uruk_umma"
 origin_id = &"uruk"
 destination_id = &"umma"
 route_type = &"land"
+display_name = "Uruk-Umma Dust Road"
+era_id = &"uruk_storehouse"
 base_transit_periods = 1
