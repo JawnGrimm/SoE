@@ -486,7 +486,7 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 			else:
 				summary = "The institution's current stock records are reconciled. No discrepancy is presumed without a separate expected balance."
 				facts = "INSTITUTION: %s\nMEMBERS: %d / ACTIVITY RECORDS: %d\n%s" % [String(institution.get("name", institution_id)), int(data.get("member_count", institution.get("members", []).size())), int(data.get("activity_count", institution.get("activity_count", 0))), _live_stock_facts(stock, institution)]
-			facts += "\nTABLET / STOREHOUSE: recorded barley %d; live barley %d; quantity gap %+d." % [int(institution.get("stock_records", {}).get("barley_recorded", stock.get(&"barley", 0))), int(stock.get(&"barley", 0)), int(stock.get(&"barley", 0)) - int(institution.get("stock_records", {}).get("barley_recorded", stock.get(&"barley", 0)))]
+			facts += "\nTABLET / STOREHOUSE: recorded barley %d; live barley %d; quantity gap %d." % [int(institution.get("stock_records", {}).get("barley_recorded", stock.get(&"barley", 0))), int(stock.get(&"barley", 0)), int(stock.get(&"barley", 0)) - int(institution.get("stock_records", {}).get("barley_recorded", stock.get(&"barley", 0)))]
 			var ledger_records: Dictionary = institution.get("stock_records", {})
 			if bool(ledger_records.get("concealed_spoilage", false)):
 				facts += "\nTABLET / STOREHOUSE QUALITY GAP: tablet declares %s; physical tally records damp, mold-marked barley." % String(ledger_records.get("barley_quality_declaration", "unrecorded"))
@@ -503,7 +503,7 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 			var opinion := employer.get_opinion(actor.id) if employer != null else 0
 			summary = "The responsible official gives a position and a demand. It is testimony, not proof."
 			var stance := _official_stance(world, actor, employer, data, opinion)
-			facts = "OFFICIAL: %s\nOPINION OF SCRIBE: %+d\nOFFICE: %s\nSTANCE: “%s”" % [employer.display_name if employer != null else "No named official", opinion, String(employer.office_id) if employer != null else "Unassigned"]
+			facts = "OFFICIAL: %s\nOPINION OF SCRIBE: %d\nOFFICE: %s\nSTANCE: “%s”" % [employer.display_name if employer != null else "No named official", opinion, String(employer.office_id) if employer != null else "Unassigned"]
 		&"inspect_source":
 			if kind == &"hazard":
 				var hazard: Dictionary = record.get("source_data", {})
