@@ -339,7 +339,7 @@ func _run() -> void:
 	_check(uruk_a.master_seed == 987654321, "Uruk seeder should retain the campaign seed")
 	_check(uruk_a.year == -3200 and uruk_a.period == 0, "Uruk campaign should begin at its era start")
 	_check(uruk_a.people.size() == 17, "Uruk seeder should create the expanded seventeen-person roster")
-	_check(uruk_a.places.size() == 14, "Uruk seed should establish all authored settlements, local work areas, and form locations")
+	_check(uruk_a.places.size() == 20, "Uruk seed should establish all authored settlements, local work areas, and form locations")
 	_check(uruk_a.institutions.size() == 4 and uruk_a.institutions.has(&"nippur_shrine"), "Uruk seed should establish three local institutions plus the Nippur shrine ledger")
 	_check(uruk_a.social_groups.size() == 5, "Uruk seed should establish five working and household groups")
 	var seeded_tie_count := 0
