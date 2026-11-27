@@ -613,7 +613,7 @@ func _start_world() -> void:
 	_show_character_creation_screen(0)
 
 func can_save_game() -> bool:
-	return world != null and world.get_player() != null and phase in ["case", "opportunity_board", "world_engagement"] and (active_event != null or not procedural_assignment.is_empty() or not assignment_opportunities.is_empty() or active_world_assignment_id != &"")
+	return world != null and world.get_player() != null and phase in ["case", "opportunity_board", "world_engagement", "itinerary_docket"] and (active_event != null or not procedural_assignment.is_empty() or not assignment_opportunities.is_empty() or active_world_assignment_id != &"")
 
 func save_game() -> Dictionary:
 	if not can_save_game():
@@ -670,6 +670,10 @@ func load_game() -> Dictionary:
 	selected_path = StringName(session.get("selected_path", ""))
 	if active_world_assignment_id != &"":
 		_show_world_engagement()
+	elif String(session.get("phase", "")) == "itinerary_docket":
+		_show_itinerary_docket()
+	elif String(session.get("phase", "")) == "opportunity_board" and world.current_location_id == &"nippur":
+		_show_nippur_assignment_board()
 	elif String(session.get("phase", "")) == "opportunity_board" and not assignment_opportunities.is_empty():
 		_show_assignment_board()
 	elif active_event == null and procedural_assignment.is_empty():
