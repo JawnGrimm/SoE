@@ -240,7 +240,7 @@ func _simulate_epic(world: WorldState, definition: EpicDef, state: Dictionary) -
 	world.ensure_epic_review_state(definition.id)
 
 func _simulate_personal_upkeep(world: WorldState) -> void:
-	if world.total_periods <= 0 or world.total_periods % 3 != 0:
+	if world.periods_elapsed <= 0 or world.periods_elapsed % 3 != 0:
 		return
 	var player := world.get_player()
 	if player == null:
@@ -259,7 +259,7 @@ func _simulate_personal_upkeep(world: WorldState) -> void:
 		world.cedar_desk_log.append({"year": world.year, "period": world.period, "title": "UPKEEP IN ARREARS", "summary": "The household could not pay its two-silver seasonal account. Debt is recorded; work remains available."})
 
 func _tick_audit_reprimands(world: WorldState) -> void:
-	if world.total_periods <= 0 or world.total_periods % 6 != 0:
+	if world.periods_elapsed <= 0 or world.periods_elapsed % 6 != 0:
 		return
 	var player := world.get_player()
 	if player == null:
