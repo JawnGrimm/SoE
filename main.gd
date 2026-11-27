@@ -1912,7 +1912,7 @@ func _toggle_work_queue() -> void:
 	if work_queue_overlay.visible:
 		work_queue_overlay.call("close_queue")
 	else:
-		work_queue_overlay.call("open_queue", assignment_opportunities, work_queue_button)
+		work_queue_overlay.call("open_queue", assignment_opportunities, work_queue_button, phase == "opportunity_board")
 
 
 func _on_queue_opportunity_selected(index: int) -> void:
