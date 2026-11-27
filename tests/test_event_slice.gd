@@ -1202,14 +1202,17 @@ func _run() -> void:
 	gated_epic_world.stockpiles[&"canal_progress"] = 8
 	gated_epic_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 128, &"labor": 10}}
 	var gated_simulator := WorldSimulator.new(registry)
+	gated_epic_world.epic_summon_issued = true
+	gated_epic_world.cases_settled = 3
 	gated_simulator._simulate_epics(gated_epic_world)
 	var dormant_canal: Dictionary = gated_epic_world.epics.get(&"great_canal_cut", {})
-	_check(not bool(dormant_canal.get("active", true)) and gated_epic_world.get_resource(&"canal_progress") == 8 and not bool(dormant_canal.get("review_pending", false)), "Dormant Great Canal neither advances nor silts and requests no review")
+	_check(not bool(dormant_canal.get("active", true)) and gated_epic_world.get_resource(&"canal_progress") == 8 and not bool(dormant_canal.get("review_pending", false)), "Early summons after three dockets cannot launch or tick the Canal in Year -3200")
 	gated_epic_world.year = -3199
 	gated_epic_world.cases_settled = 8
 	gated_simulator._simulate_epics(gated_epic_world)
 	var launched_canal: Dictionary = gated_epic_world.epics.get(&"great_canal_cut", {})
 	_check(bool(launched_canal.get("active", false)) and gated_epic_world.get_resource(&"canal_progress") > 0 and bool(launched_canal.get("review_pending", false)), "Great Canal launches and opens its first review at the configured milestone")
+	_check(bool(launched_canal.get("review_initialized", false)) and String(launched_canal.get("review_summary", "")).contains("summons from the canal administration"), "The launch summons review summary survives Epic review initialization")
 
 	# A single assignment offers two inquiries, then forces a judgment.
 	var action_cap_world := WorldState.new()
