@@ -5,7 +5,7 @@ extends Control
 signal impression_added(action_id: StringName, glyph: String)
 signal verdict_sealed(glyph: String)
 
-const CUNEIFORM_FONT: Font = preload("res://assets/Noto_Sans_Cuneiform,Noto_Sans_Egyptian_Hieroglyphs/Noto_Sans_Cuneiform/NotoSansCuneiform-Regular.ttf")
+const CUNEIFORM_FONT: Font = preload("res://assets/fonts/NotoSansCuneiform-Regular.ttf")
 const ACTION_GLYPHS := {
 	&"examine_records": {"glyph": "𒁾", "label": "Written record / archive"},
 	&"reconcile_accounts": {"glyph": "𒂍", "label": "Storehouse / account"},
@@ -18,6 +18,7 @@ var title_label: Label
 var grid: GridContainer
 var impressions: Array[Dictionary] = []
 var reduced_motion := false
+var verdict_is_sealed := false
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(150, 170)
@@ -60,7 +61,7 @@ func set_case_title(value: String) -> void:
 		title_label.text = value.left(42) if not value.is_empty() else "No active case"
 
 func stamp_inquiry(action_id: StringName) -> bool:
-	if not ACTION_GLYPHS.has(action_id) or impressions.size() >= 8:
+	if not ACTION_GLYPHS.has(action_id) or impressions.size() >= 8 or verdict_is_sealed:
 		return false
 	var record: Dictionary = ACTION_GLYPHS[action_id]
 	var glyph := String(record.glyph)
@@ -73,13 +74,12 @@ func stamp_inquiry(action_id: StringName) -> bool:
 			cell.scale = Vector2(1.12, 1.12)
 			var tween := create_tween()
 			tween.tween_property(cell, "scale", Vector2.ONE, 0.12)
-		if AudioManager.has_method("play_tablet_snap"):
-			AudioManager.play_tablet_snap()
 	return true
 
 func seal_verdict() -> void:
-	if impressions.size() >= 8:
+	if impressions.size() >= 8 or verdict_is_sealed:
 		return
+	verdict_is_sealed = true
 	impressions.append({"glyph": VERDICT_GLYPH, "label": "Verdict sealed", "action_id": &"verdict"})
 	_refresh_grid()
 	verdict_sealed.emit(VERDICT_GLYPH)
