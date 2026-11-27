@@ -67,8 +67,8 @@ func _run() -> void:
 	_check(console.commands.has("soe inspect_world"), "World inspection command should be registered")
 	_check(console.commands.has("soe inspect_person"), "Person inspection command should be registered")
 	_check(console.commands.has("soe adjust_resource"), "Resource adjustment command should be registered")
-	_check(console.autocomplete.has("soe inspect_person:0"), "Person ID autocomplete should be registered")
-	_check(console.autocomplete.has("soe adjust_resource:0"), "Resource ID autocomplete should be registered")
+	_check(console.autocomplete.has(["soe inspect_person", 0]), "Person ID autocomplete should be registered")
+	_check(console.autocomplete.has(["soe adjust_resource", 0]), "Resource ID autocomplete should be registered")
 
 	var advance_command: Callable = console.commands["soe advance_periods"]
 	advance_command.call(4)
