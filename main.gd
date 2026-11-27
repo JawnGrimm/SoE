@@ -136,7 +136,7 @@ func _build_interface() -> void:
 	var header := HBoxContainer.new()
 	root.add_child(header)
 	var title := Label.new()
-	title.text = "URUK / EANNA STOREHOUSE"
+	title.text = "SCRIBE OF ERAS  /  REGIONAL COMPOUND"
 	location_label = title
 	title.add_theme_font_size_override("font_size", 23)
 	title.add_theme_color_override("font_color", Color("#e5d2a8"))
