@@ -1083,7 +1083,8 @@ func _select_assignment_opportunity(index: int) -> void:
 	if not AssignmentPipeline.begin(world, opportunity, actor):
 		if bool(opportunity.get("requires_travel", false)):
 			var dispatch_place := StringName(opportunity.get("dispatch_destination_id", opportunity.get("place_id", "")))
-			status_label.text = "PROVINCIAL DISPATCH / TRAVEL TO %s TO ANSWER THE SUMMONS" % _place_display_name(dispatch_place).to_upper()
+			var dispatch_place_name := String(world.places.get(dispatch_place, {}).get("name", dispatch_place))
+			status_label.text = "PROVINCIAL DISPATCH / TRAVEL TO %s TO ANSWER THE SUMMONS" % dispatch_place_name.to_upper()
 		else:
 			status_label.text = "WORK COULD NOT BE OPENED / SOURCE MAY HAVE CHANGED"
 		return
