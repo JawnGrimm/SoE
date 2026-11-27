@@ -823,11 +823,11 @@ func _add_creation_back_next() -> void:
 	if creation_screen < 8:
 		var next := Button.new()
 		next.text = "CONTINUE →"
-		var ready := true
+		var can_continue := true
 		if creation_screen >= 1 and creation_screen <= 6:
 			var question: Dictionary = creation_catalog.get("questions", [])[creation_screen - 1]
-			ready = creation_selections.get_answer(StringName(question.get("id", ""))) != &""
-		next.disabled = not ready
+			can_continue = creation_selections.get_answer(StringName(question.get("id", ""))) != &""
+		next.disabled = not can_continue
 		next.pressed.connect(_show_character_creation_screen.bind(creation_screen + 1))
 		row.add_child(next)
 
@@ -1084,7 +1084,7 @@ func _resolve_choice(index: int) -> void:
 	_record_case_settlement(silver_before, traits_before)
 	_show_result(active_event.outcomes[index])
 
-func _resolve_procedural_choice(index: int, choice: Dictionary) -> void:
+func _resolve_procedural_choice(_index: int, choice: Dictionary) -> void:
 	var effects: Dictionary = choice.get("effects", {})
 	var pair_parts := String(procedural_assignment.get("npc_pair", "")).split("|")
 	var left := world.get_person(StringName(pair_parts[0])) if pair_parts.size() > 0 else null
@@ -1627,7 +1627,7 @@ func _refresh_faction_standings() -> void:
 		line.text = "[color=#e0d4bd]%s[/color]  [color=%s]%+d[/color]" % [String(FACTION_LABELS.get(faction_id, faction_id)), color, standing]
 		roster_box.add_child(line)
 
-func _apply_faction_opinion(faction_id: StringName, amount: int, reason: String) -> void:
+func _apply_faction_opinion(faction_id: StringName, amount: int, _reason: String) -> void:
 	if faction_id == &"" or amount == 0:
 		return
 	world.change_faction_standing(faction_id, amount)

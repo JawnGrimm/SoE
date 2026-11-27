@@ -258,8 +258,8 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 			work_details = "Progress %d / %d. Current stage: %s. Recorded simulation entries: %d." % [progress, target, String(project_state.get("stage", "unrecorded")), notes.size()]
 			result_text = "The project's actual progress, stage, and recorded interruptions are entered in the archive. The crews continue their work independently."
 		&"pressure":
-			var institution_id := StringName(record.get("source_data", {}).get("institution_id", source_id))
-			var institution: Dictionary = world.institutions.get(institution_id, {})
+			var pressure_institution_id := StringName(record.get("source_data", {}).get("institution_id", source_id))
+			var institution: Dictionary = world.institutions.get(pressure_institution_id, {})
 			if institution.is_empty():
 				return {"success": false, "message": "The institution no longer exists."}
 			var resources: Dictionary = institution.get("stockpiles", {})
