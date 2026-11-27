@@ -45,7 +45,7 @@ func _hide_spoilage(world: WorldState, clerk: PersonEntity, institution_id: Stri
 		"threshold_tally": "North-Bay threshold tally: damp barley; mold visible along the lower measures.",
 		"discrepancy": "The dispatch certifies prime seed-corn while the independent threshold tally records damp, mold-marked grain.",
 	})
-	_record_intent(institution, world, &"intent_hide_spoilage")
+	_record_intent(institution, world, &"intent_hide_spoilage", clerk.id)
 	world.institutions[institution_id] = institution
 	clerk.memory.append({
 		"memory_id": &"grain_clerk_cover_up",
@@ -75,7 +75,7 @@ func _pocket_measures(world: WorldState, clerk: PersonEntity, institution_id: St
 		"threshold_tally": "Independent receiving tally: two measures are absent from the clerk's entered total.",
 		"discrepancy": "The intake record is short by two measures despite the dispatch certification.",
 	})
-	_record_intent(institution, world, &"intent_pocket_measures")
+	_record_intent(institution, world, &"intent_pocket_measures", clerk.id)
 	world.institutions[institution_id] = institution
 	clerk.memory.append({
 		"memory_id": &"grain_clerk_skimming",
@@ -89,7 +89,7 @@ func _log_deliveries(world: WorldState, _clerk: PersonEntity, institution_id: St
 	var institution: Dictionary = world.institutions.get(institution_id, {}).duplicate(true)
 	if institution.is_empty():
 		return {"success": false, "reason": "The Eanna institutional household is unavailable."}
-	_record_intent(institution, world, &"intent_log_deliveries")
+	_record_intent(institution, world, &"intent_log_deliveries", _clerk.id)
 	world.institutions[institution_id] = institution
 	return {"success": true, "intent_id": &"intent_log_deliveries", "period": world.current_period_index()}
 
@@ -107,9 +107,10 @@ func _queue_docket(institution: Dictionary, world: WorldState, intent_id: String
 	})
 	institution["npc_docket_queue"] = queue
 
-func _record_intent(institution: Dictionary, world: WorldState, intent_id: StringName) -> void:
+func _record_intent(institution: Dictionary, world: WorldState, intent_id: StringName, official_id: StringName) -> void:
 	institution["last_grain_clerk_agenda"] = {
 		"intent_id": intent_id,
+		"official_id": official_id,
 		"period": world.current_period_index(),
 	}
 	institution["agenda_history_count"] = int(institution.get("agenda_history_count", 0)) + 1
