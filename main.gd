@@ -78,7 +78,7 @@ var last_stock_snapshot: Dictionary = {}
 var last_delta_period: int = -1
 var docket_overlay: PanelContainer
 var docket_motion_layer: Control
-var archive_prop: TextureRect
+var archive_prop: TextureButton
 var stylus_prop: TextureRect
 var heirloom_label: Label
 var secret_toggle: Button
@@ -328,12 +328,16 @@ func _build_interface() -> void:
 	desk_props.add_theme_constant_override("separation", 14)
 	desk_props.alignment = BoxContainer.ALIGNMENT_CENTER
 	root.add_child(desk_props)
-	archive_prop = TextureRect.new()
-	archive_prop.texture = load("res://assets/desk/archive_stack.png")
-	archive_prop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	archive_prop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	archive_prop = TextureButton.new()
+	archive_prop.texture_normal = load("res://assets/desk/archive_stack.png")
+	archive_prop.texture_hover = archive_prop.texture_normal
+	archive_prop.texture_pressed = archive_prop.texture_normal
+	archive_prop.ignore_texture_size = true
+	archive_prop.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 	archive_prop.custom_minimum_size = Vector2(82, 44)
-	archive_prop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	archive_prop.focus_mode = Control.FOCUS_ALL
+	archive_prop.tooltip_text = "Open the archive / work queue."
+	archive_prop.pressed.connect(_toggle_work_queue)
 	desk_props.add_child(archive_prop)
 	stylus_prop = TextureRect.new()
 	stylus_prop.texture = load("res://assets/desk/Ancient Wrapped Wooden Stylus.png")
@@ -1649,6 +1653,8 @@ func _add_choice(label_text: String, callback: Callable, disabled: bool = false)
 	button.disabled = disabled
 	button.custom_minimum_size = Vector2(190, choice_height)
 	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	button.tooltip_text = label_text.replace("\\n", " — ")
+	button.focus_mode = Control.FOCUS_ALL
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.add_theme_font_size_override("font_size", 16)
@@ -1859,6 +1865,8 @@ func _open_regional_survey() -> void:
 		return
 	_set_evidence_visible(false)
 	survey_map.visible = true
+	if work_queue_button != null:
+		work_queue_button.visible = false
 	docket_overlay.visible = false
 	survey_button.text = "ROLL REGIONAL SURVEY"
 	AudioManager.play_docket_slide()
@@ -1872,6 +1880,8 @@ func _close_regional_survey() -> void:
 		docket_overlay.visible = true
 	if survey_button != null:
 		survey_button.text = "UNROLL REGIONAL SURVEY"
+	if work_queue_button != null:
+		work_queue_button.visible = phase != "character_creation"
 	AudioManager.play_docket_slide()
 
 func _on_survey_travel_requested(route_id: StringName, destination_id: StringName) -> void:
