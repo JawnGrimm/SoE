@@ -285,6 +285,11 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 			var progress := world.get_resource(progress_resource)
 			var target := int(project.get("target", 100))
 			var project_state: Dictionary = world.epics.get(source_id, {})
+			if not bool(project_state.get("review_pending", false)):
+				return {"success": false, "message": "This stage review has already been acknowledged."}
+			var presented_stage := int(project.get("review_stage", project_state.get("review_stage", -1)))
+			if presented_stage != int(project_state.get("review_stage", -2)) or String(project.get("review_reason", "")) != String(project_state.get("review_reason", "")):
+				return {"success": false, "message": "The project's conditions changed while this review was in progress. Return to the board for the current docket."}
 			var notes: Array = project_state.get("history_notes", [])
 			work_details = "Progress %d / %d. Current stage: %s. Recorded simulation entries: %d." % [progress, target, String(project_state.get("stage", "unrecorded")), notes.size()]
 			result_text = "The project's actual progress, stage, and recorded interruptions are entered in the archive. The crews continue their work independently."
