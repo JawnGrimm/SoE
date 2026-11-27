@@ -13,12 +13,18 @@ func _initialize() -> void:
 
 func _test_climax_is_terminal() -> void:
 	var world := WorldState.new()
+	world.year = -3200
+	world.stockpiles[&"canal_progress"] = 0
+	world.epics[&"great_canal_cut"] = {"active": true, "progress": 0, "target": 100, "progress_resource": &"canal_progress"}
+	assert(not Dedication.is_climax_due(world), "The boundary must not fire at the start of 3200 BCE.")
 	world.year = -3160
+	assert(Dedication.is_climax_due(world), "The BCE boundary should fire at 3160 BCE.")
+	world.year = -3190
 	world.stockpiles[&"canal_progress"] = 100
 	world.epics[&"great_canal_cut"] = {"active": true, "progress": 100, "target": 100, "progress_resource": &"canal_progress"}
 	assert(world.get_resource(&"canal_progress") == 100)
 	assert(world.is_active_epic_complete())
-	assert(world.year <= -3160)
+	assert(Dedication.is_climax_due(world))
 
 func _test_career_metrics_and_epitaphs() -> void:
 	var world := WorldState.new()
