@@ -104,6 +104,7 @@ func _run() -> void:
 
 	var emergency := Pipeline.resolve(world, actor, epic_id, &"epic_emergency")
 	_check(bool(emergency.get("success", false)), "Emergency Epic verdict resolves")
+	_check(String(emergency.get("message", "")).contains("Emergency rations reach the crews"), "Emergency verdict retains its specific consequence text")
 	_check(world.get_resource(&"barley", "institution", "", &"eanna_household") == 80 and world.get_resource(&"labor", "institution", "", &"eanna_household") == 18, "Emergency Epic verdict spends exactly 20 barley and 2 labor")
 	_check(world.get_resource(&"test_epic_progress") == 15, "Emergency Epic verdict advances progress by 15")
 	_check(not bool(world.epics.get(&"test_epic", {}).get("stalled", true)) and not bool(world.epics.get(&"test_epic", {}).get("review_pending", true)), "Emergency verdict clears stall and acknowledges the review")
@@ -123,6 +124,7 @@ func _run() -> void:
 	Pipeline.perform_action(world, actor, audit_id, &"reconcile_accounts")
 	var audit_result := Pipeline.resolve(world, actor, audit_id, &"epic_audit")
 	_check(bool(audit_result.get("success", false)), "Epic audit verdict resolves")
+	_check(String(audit_result.get("message", "")).contains("The cut is halted pending an audit"), "Audit verdict retains its specific consequence text")
 	_check(foreman.get_opinion(actor.id) == -3 and int(actor.flags.get(&"audit_exposure", 0)) == 0, "Epic audit applies foreman opinion and clears one exposure")
 	_check(int(actor.skills.xp.get(&"law", 0)) >= 15 and bool(world.epics.get(&"test_epic", {}).get("stalled", false)) and int(world.epics.get(&"test_epic", {}).get("audit_hold_until_period", -1)) == world.current_period_index() + 1, "Epic audit awards law XP and schedules a bounded hold")
 
@@ -142,6 +144,7 @@ func _run() -> void:
 	var silver_before_certify := int(actor.resources.get(&"silver", 0))
 	var certify_result := Pipeline.resolve(world, actor, certify_id, &"epic_certify")
 	_check(bool(certify_result.get("success", false)), "Uninspected Epic certification resolves")
+	_check(String(certify_result.get("message", "")).contains("certified on the crew"), "Certification verdict retains its specific consequence text")
 	_check(actor.resources[&"silver"] == silver_before_certify + 2 and actor.traits.has(&"pliable") and int(actor.flags.get(&"audit_exposure", 0)) == 1, "Certification grants two silver, pliable trait, and one exposure")
 	_check(world.has_flag(&"entangled_brewery_accounts", world.current_period_index()), "Certification sets the ledger inquest trigger flag")
 
