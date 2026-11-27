@@ -15,7 +15,8 @@ static func apply_choice(world: WorldState, actor: PersonEntity, choice: StringN
 			world.change_faction_standing(&"boatmens_guild", 25)
 			world.change_faction_standing(&"council_of_elders", 8)
 			world.world_flags[&"canal_crew_legacy"] = 1
-			actor.traits.append(&"honors_labor") if not actor.traits.has(&"honors_labor") else null
+			if not actor.traits.has(&"honors_labor"):
+				actor.traits.append(&"honors_labor")
 		&"temple_only":
 			world.change_faction_standing(&"eanna_temple", 35)
 			actor.resources[&"silver"] = int(actor.resources.get(&"silver", 0)) + 8
