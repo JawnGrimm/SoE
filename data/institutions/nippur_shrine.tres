@@ -8,6 +8,7 @@ id = &"nippur_shrine"
 display_name = "Nippur Shrine Establishment"
 institution_type = &"cultic_establishment"
 place_id = &"nippur"
+era_id = &"uruk_storehouse"
 members = Array[StringName]([])
 interests = Array[StringName]([&"offerings", &"ritual_supplies"])
 starting_stockpiles = {&"offerings": 24}
