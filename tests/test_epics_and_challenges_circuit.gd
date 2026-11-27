@@ -346,6 +346,14 @@ func _run() -> void:
 	_check(Array(dispatch_opportunity.get("tags", [])).has("DISPATCH FROM UMMA"), "Provincial dispatch carries the DISPATCH FROM UMMA tag")
 	_check(dispatch_opportunity in dispatch_board, "Provincial dispatch survives ordinary board rotation")
 	_check(String(dispatch_opportunity.get("title", "")).begins_with("DISPATCH FROM UMMA"), "Provincial dispatch is visibly identified in its docket title")
+	_check(not Pipeline.begin(dispatch_world, dispatch_opportunity, dispatch_actor), "A provincial dispatch cannot be investigated before the scribe travels to its institution")
+	dispatch_world.current_location_id = &"umma"
+	var arrived_dispatch: Dictionary = {}
+	for opportunity in Pipeline.generate_opportunities(dispatch_world, dispatch_actor):
+		if StringName(opportunity.get("source_id", "")) == requisition_id:
+			arrived_dispatch = opportunity
+			break
+	_check(not arrived_dispatch.is_empty() and Pipeline.begin(dispatch_world, arrived_dispatch, dispatch_actor), "The requisition opens for investigation after arrival in Umma")
 
 	_finished = true
 	if _failures.is_empty():
