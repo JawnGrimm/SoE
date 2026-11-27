@@ -756,14 +756,14 @@ func _schedule_next_case() -> void:
 			var lowest_priority := 2147483647
 			for candidate_index in range(1, assignment_opportunities.size()):
 				var candidate: Dictionary = assignment_opportunities[candidate_index]
-				if StringName(candidate.get("kind", "")) == &"event":
+				if StringName(candidate.get("kind", "")) in [&"event", &"project_review"]:
 					continue
 				var candidate_priority := int(candidate.get("priority", 0))
 				if candidate_priority <= lowest_priority:
 					lowest_priority = candidate_priority
 					remove_index = candidate_index
 			if remove_index < 0:
-				remove_index = assignment_opportunities.size() - 1
+				break
 			assignment_opportunities.remove_at(remove_index)
 	if not assignment_opportunities.is_empty():
 		_show_assignment_board()
