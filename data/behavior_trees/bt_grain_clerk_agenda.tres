@@ -1,7 +1,9 @@
-[gd_resource type="BehaviorTree" format=3]
+[gd_resource type="BehaviorTree" format=3 uid="uid://du8bjt5mdhfyx"]
 
-[ext_resource type="Script" path="res://systems/ai/tasks/bt_grain_clerk_condition.gd" id="1_condition"]
-[ext_resource type="Script" path="res://systems/ai/tasks/bt_grain_clerk_intent.gd" id="2_intent"]
+[ext_resource type="Script" uid="uid://chad51h4xjph7" path="res://systems/ai/tasks/bt_grain_clerk_condition.gd" id="1_condition"]
+[ext_resource type="Script" uid="uid://dxvprb1glk4an" path="res://systems/ai/tasks/bt_grain_clerk_intent.gd" id="2_intent"]
+
+[sub_resource type="BlackboardPlan" id="BlackboardPlan_ega5c"]
 
 [sub_resource type="BTCondition" id="BTCondition_roof_leak"]
 script = ExtResource("1_condition")
@@ -45,4 +47,5 @@ children = [SubResource("BTSequence_cover_up"), SubResource("BTSequence_skimming
 
 [resource]
 description = "One decision per WorldState period. The tree chooses intent; SoE validates and resolves it. Secret actions enqueue contradictory source records for the player's desk on the following period."
+blackboard_plan = SubResource("BlackboardPlan_ega5c")
 root_task = SubResource("BTSelector_grain_clerk_agenda")
