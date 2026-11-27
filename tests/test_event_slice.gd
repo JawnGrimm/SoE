@@ -368,6 +368,38 @@ func _run() -> void:
 			arrived_dispatch = true
 			_check(int(regional_form.get("declared_quantity", 0)) == 40 and int(regional_form.get("received_quantity", 0)) <= 40, "Remote arrival should preserve declared quantity and simulate actual received cargo")
 	_check(arrived_dispatch, "A remote shipment should create an arrival docket after its route travel time")
+	var dispatch_opportunity: Dictionary = {}
+	for regional_opportunity in AssignmentPipeline.generate_opportunities(regional_arrival_world, regional_arrival_player):
+		if StringName(regional_opportunity.get("source_data", {}).get("form_type", "")) == &"remote_dispatch":
+			dispatch_opportunity = regional_opportunity
+	_check(not dispatch_opportunity.is_empty(), "Arrived regional cargo should generate a world-driven assignment opportunity")
+	if not dispatch_opportunity.is_empty():
+		var dispatch_id := StringName(dispatch_opportunity.get("id", ""))
+		_check(AssignmentPipeline.begin(regional_arrival_world, dispatch_opportunity, regional_arrival_player), "Remote dispatch should enter the shared assignment lifecycle")
+		var dispatch_record := AssignmentPipeline.get_record(regional_arrival_world, dispatch_id)
+		_check(AssignmentPipeline.get_actions(dispatch_record).size() == 4, "Remote dispatch should offer shipment-specific approaches rather than the generic investigation list")
+		AssignmentPipeline.perform_action(regional_arrival_world, regional_arrival_player, dispatch_id, &"question_carrier")
+		AssignmentPipeline.perform_action(regional_arrival_world, regional_arrival_player, dispatch_id, &"inspect_cargo")
+		var refer_result := AssignmentPipeline.resolve(regional_arrival_world, regional_arrival_player, dispatch_id, &"refer")
+		_check(bool(refer_result.get("success", false)) and String(regional_arrival_world.shipments[&"shipment_000001"].get("status", "")) == "awaiting_origin", "Referring a dispatch should hold cargo and request a delayed origin account")
+		for reply_tick in range(2):
+			regional_arrival_world.advance_period()
+		var origin_reply_opportunity: Dictionary = {}
+		for reply_opportunity in AssignmentPipeline.generate_opportunities(regional_arrival_world, regional_arrival_player):
+			if StringName(reply_opportunity.get("source_data", {}).get("form_type", "")) == &"remote_origin_reply":
+				origin_reply_opportunity = reply_opportunity
+		_check(not origin_reply_opportunity.is_empty(), "Origin-side correspondence should become available only after its delay")
+		if not origin_reply_opportunity.is_empty():
+			var reply_assignment_id := StringName(origin_reply_opportunity.get("id", ""))
+			AssignmentPipeline.begin(regional_arrival_world, origin_reply_opportunity, regional_arrival_player)
+			AssignmentPipeline.perform_action(regional_arrival_world, regional_arrival_player, reply_assignment_id, &"examine_origin_copy")
+			AssignmentPipeline.perform_action(regional_arrival_world, regional_arrival_player, reply_assignment_id, &"compare_origin_copy")
+			var timber_before_accept := int(regional_arrival_world.institutions[&"eanna_household"].get("stockpiles", {}).get(&"timber", 0))
+			var accept_result := AssignmentPipeline.resolve(regional_arrival_world, regional_arrival_player, reply_assignment_id, &"certify")
+			var timber_after_accept := int(regional_arrival_world.institutions[&"eanna_household"].get("stockpiles", {}).get(&"timber", 0))
+			_check(bool(accept_result.get("success", false)) and String(regional_arrival_world.shipments[&"shipment_000001"].get("status", "")) == "accepted", "Origin reply should let the player settle the held shipment")
+			_check(timber_after_accept - timber_before_accept == int(regional_arrival_world.shipments[&"shipment_000001"].get("received_quantity", 0)), "Accepted cargo should change the destination institution by the actual received quantity")
+
 	var travel_start := RegionalWorldSystem.start_player_travel(regional_arrival_world, regional_arrival_player, &"habuba_kabira")
 	_check(bool(travel_start.get("success", false)) and int(travel_start.get("travel_periods", 0)) == 3, "Player should be able to accept a three-period regional journey")
 	for travel_tick in range(3):
