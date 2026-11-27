@@ -158,7 +158,6 @@ static func _seed_places(world: WorldState, definitions: DefinitionRegistry) -> 
 			"political_relation": definition.political_relation,
 			"exports": definition.exports.duplicate(),
 			"imports": definition.imports.duplicate(),
-			"connected_to": definition.connected_to.duplicate(),
 			"era_id": definition.era_id,
 			"survey_position": definition.survey_position
 		}
