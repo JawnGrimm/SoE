@@ -140,9 +140,16 @@ func _simulate_epics(world: WorldState) -> void:
 		state["sponsor_institution"] = definition.sponsor_institution
 		state["era_id"] = definition.era_id
 		state["initial_stage"] = definition.initial_stage
+		if StringName(epic_id) != &"great_canal_cut":
+			state["active"] = era_matches
+			if not era_matches:
+				world.epics[epic_id] = state
+				continue
+			_simulate_epic(world, definition, state)
+			continue
 		if not bool(state.get("active", false)):
-			var earned_canal := StringName(epic_id) == &"great_canal_cut" and world.year >= CANAL_LAUNCH_YEAR and world.cases_settled >= CANAL_CASES_REQUIRED
-			var summoned_canal := StringName(epic_id) == &"great_canal_cut" and world.epic_summon_issued
+			var earned_canal := world.year >= CANAL_LAUNCH_YEAR and world.cases_settled >= CANAL_CASES_REQUIRED
+			var summoned_canal := world.epic_summon_issued
 			if earned_canal or summoned_canal:
 				state["active"] = true
 				state["review_initialized"] = false
