@@ -97,7 +97,7 @@ func _build_surface() -> void:
 	var title_row := HBoxContainer.new()
 	body.add_child(title_row)
 	heading = Label.new()
-	heading.text = "REGIONAL SURVEY / LOWER EUPHRATES"
+	heading.text = "REGIONAL SURVEY / LOWER MESOPOTAMIA"
 	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	heading.add_theme_font_size_override("font_size", 15)
 	heading.add_theme_color_override("font_color", Color("#3a2818"))
@@ -163,6 +163,9 @@ func _build_route_graph() -> bool:
 		var place: PlaceDef = plotted_places[place_id]
 		if place == null or place.survey_position == Vector2.ZERO:
 			push_warning("RegionalSurveyMap: route endpoint '%s' has no authored survey position." % place_id)
+			map_view.free()
+			map_view = null
+			graph = null
 			return false
 		place_ids.append(place_id)
 	place_ids.sort()
@@ -242,6 +245,7 @@ func _refresh_route_summary() -> void:
 		return
 	var current_place := route_network.get_place(world.current_location_id)
 	var current_name := current_place.display_name if current_place != null else String(world.current_location_id)
+	heading.text = "REGIONAL SURVEY / %s" % String(current_place.region).replace("_", " ").to_upper() if current_place != null else "REGIONAL SURVEY"
 	location_summary.text = "YOU ARE HERE: %s  /  %s, MONTH %02d" % [current_name.to_upper(), CalendarFormatter.format_year(world.year), world.period + 1]
 	if not travel_allowed:
 		route_summary.text = "Finish the open docket before departure. The regional routes remain visible, but the barge will wait."
