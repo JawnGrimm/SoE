@@ -130,7 +130,7 @@ static func _requisition(actor: PersonEntity, world: WorldState, institution_id:
 			existing["dispatch_from"] = place_id
 			world.pending_forms[existing_index] = existing
 		return true
-	world.enqueue_form({"form_type": &"bailiff_requisition", "subject_id": place_id, "institution_id": institution_id, "target_institution_id": _regional_granary(world, place_id, institution_id), "urgency": 3, "year": world.year, "generated_by": actor.id, "generation_reason": &"canal_pressure_requisition", "generated_period": now, "created_period": now, "resource_pressure": pressure, "local_labor": labor, "canal_silt_hazard": silt})
+	world.enqueue_form({"form_type": &"bailiff_requisition", "subject_id": place_id, "institution_id": institution_id, "target_institution_id": _regional_granary(world, place_id, institution_id), "urgency": 3, "priority": 7, "year": world.year, "generated_by": actor.id, "generation_reason": &"canal_pressure_requisition", "generated_period": now, "created_period": now, "resource_pressure": pressure, "local_labor": labor, "canal_silt_hazard": silt})
 	var updated: Dictionary = world.institutions.get(institution_id, {}).duplicate(true)
 	updated["last_bailiff_requisition_period"] = now
 	world.institutions[institution_id] = updated
