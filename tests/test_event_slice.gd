@@ -621,6 +621,13 @@ func _run() -> void:
 	var identity_save := SaveCodec.decode_save(SaveCodec.encode_world(creation_world))
 	var identity_loaded: PersonEntity = identity_save.world.get_player() if bool(identity_save.get("success", false)) else null
 	_check(identity_loaded != null and identity_loaded.pronouns == &"they" and identity_loaded.institutional_designation == "of the marsh-fringe", "Pronouns and designation should survive save/load")
+	var legacy_payload := SaveCodec.encode_world(creation_world)
+	var legacy_person_data: Dictionary = legacy_payload["world"]["people"][String(creation_actor.id)]
+	legacy_person_data.erase("pronouns")
+	legacy_person_data.erase("institutional_designation")
+	var legacy_identity_save := SaveCodec.decode_save(legacy_payload)
+	var legacy_identity_actor: PersonEntity = legacy_identity_save.world.get_player() if bool(legacy_identity_save.get("success", false)) else null
+	_check(legacy_identity_actor != null and legacy_identity_actor.pronouns == &"" and legacy_identity_actor.institutional_designation == "", "Version 1 saves without identity fields should load with safe defaults")
 	_check(creation_actor.institutional_designation == "of the marsh-fringe", "Origin should compile to an institutional designation")
 	_check(creation_actor.has_flag(&"path_civil", creation_world.current_period_index()), "Civic orientation should set its canonical path flag")
 	_check(not creation_actor.has_flag(&"path_merchant", creation_world.current_period_index()), "Revised path should not leave the abandoned path flag")
