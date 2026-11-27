@@ -62,6 +62,8 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 
 	for institution_id in world.institutions.keys():
 		var institution: Dictionary = world.institutions[institution_id]
+		if not _is_local_to_current_location(world, StringName(institution.get("place_id", ""))):
+			continue
 		var pressure := int(institution.get("resource_pressure", 0))
 		if pressure < 1:
 			continue
@@ -101,6 +103,8 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 
 	for institution_id in world.institutions.keys():
 		var institution: Dictionary = world.institutions[institution_id]
+		if not _is_local_to_current_location(world, StringName(institution.get("place_id", ""))):
+			continue
 		var routine_id := StringName("work_ledger_%s_%d" % [institution_id, world.current_period_index()])
 		candidates.append({
 			"id": routine_id,
@@ -473,6 +477,21 @@ static func _form_title(form_type: StringName) -> String:
 		&"load_claim": "Load Allocation Claim"
 	}
 	return String(labels.get(form_type, String(form_type).replace("_", " ").capitalize()))
+
+static func _is_local_to_current_location(world: WorldState, place_id: StringName) -> bool:
+	if world == null or world.current_location_id == &"":
+		return true
+	if place_id == &"":
+		return true
+	var cursor := place_id
+	var visited: Dictionary = {}
+	while cursor != &"" and not visited.has(cursor):
+		if cursor == world.current_location_id:
+			return true
+		visited[cursor] = true
+		var place: Dictionary = world.places.get(cursor, {})
+		cursor = StringName(place.get("parent", ""))
+	return false
 
 static func _place_name(world: WorldState, place_id: StringName) -> String:
 	if place_id == &"":
