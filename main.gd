@@ -600,7 +600,7 @@ func _start_world() -> void:
 	scheduler = EventScheduler.new(runner)
 	world_simulator = WorldSimulator.new()
 	world = WorldState.new()
-	actor = UrukSeeder.seed_campaign(world, CAMPAIGN_SEED, false)
+	actor = UrukSeeder.seed_campaign(world, CAMPAIGN_SEED, false, Registry.defs)
 	_configure_route_network()
 	creation_catalog = CharacterCreationResolver.load_catalog("res://data/character_creation/era_1_uruk.json")
 	current_era = Registry.get_era(&"uruk_storehouse")
