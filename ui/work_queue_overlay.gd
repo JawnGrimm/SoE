@@ -93,7 +93,7 @@ func _rebuild() -> void:
 	sections.add_theme_constant_override("separation", 12)
 	scroll.add_child(sections)
 	var groups := [
-		{"id": "works", "title": "WORKS", "note": "Long accounts and institutional project reviews."},
+		{"id": "epics", "title": "EPICS", "note": "Monumental undertakings and macro-historical project reviews."},
 		{"id": "challenges", "title": "CHALLENGES", "note": "Unusual matters with a longer reach."},
 		{"id": "assignments", "title": "ASSIGNMENTS", "note": "Local forms, inspections, and routine commissions."}
 	]
@@ -134,9 +134,10 @@ func _rebuild() -> void:
 
 static func category_for(item: Dictionary) -> String:
 	var kind := StringName(item.get("kind", ""))
-	if kind == &"project_review" or kind == &"work" or bool(item.get("is_work", false)):
-		return "works"
-	if kind == &"challenge" or kind == &"career_challenge" or item.has("challenge_id"):
+	if kind in [&"project_review", &"epic", &"work"] or bool(item.get("is_work", false)):
+		return "epics"
+	var source_id := String(item.get("source_id", ""))
+	if kind == &"challenge" or kind == &"career_challenge" or item.has("challenge_id") or source_id.begins_with("challenge_"):
 		return "challenges"
 	return "assignments"
 

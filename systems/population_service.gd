@@ -223,8 +223,8 @@ func seat_institution_staff(world: WorldState, definitions: DefinitionRegistry) 
 				if person != null and person.location_id == place_id and person.office_id == &"" and person.generation_source == &"tier2":
 					candidates.append(person)
 			candidates.sort_custom(func(a: PersonEntity, b: PersonEntity) -> bool:
-					var a_score := a.skills.get_level(&"stewardship") + a.skills.get_level(&"arithmetic")
-					var b_score := b.skills.get_level(&"stewardship") + b.skills.get_level(&"arithmetic")
+					var a_score := a.skills.get_level(&"stewardship") + a.skills.get_level(&"arithmetic") + a.skills.get_level(&"literacy") + a.skills.get_level(&"law")
+					var b_score := b.skills.get_level(&"stewardship") + b.skills.get_level(&"arithmetic") + b.skills.get_level(&"literacy") + b.skills.get_level(&"law")
 					if a_score == b_score:
 						return String(a.id) < String(b.id)
 					return a_score > b_score
