@@ -133,6 +133,7 @@ func _build_surface() -> void:
 
 func _build_route_graph() -> void:
 	if map_view != null and is_instance_valid(map_view):
+		map_canvas.remove_child(map_view)
 		map_view.queue_free()
 	map_nodes.clear()
 	map_view = WorldmapViewScript.new()
