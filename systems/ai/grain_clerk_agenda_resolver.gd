@@ -40,7 +40,7 @@ func _hide_spoilage(world: WorldState, clerk: PersonEntity, institution_id: Stri
 	records["declared_at_period"] = world.current_period_index()
 	records["physical_barley_at_declaration"] = physical_barley
 	institution["stock_records"] = records
-	_queue_docket(institution, world, &"intent_hide_spoilage", {
+	_queue_docket(institution, world, &"intent_hide_spoilage", clerk.id, institution_id, {
 		"dispatch_record": "Dispatch docket: barley declared as prime seed-corn.",
 		"threshold_tally": "North-Bay threshold tally: damp barley; mold visible along the lower measures.",
 		"discrepancy": "The dispatch certifies prime seed-corn while the independent threshold tally records damp, mold-marked grain.",
@@ -70,7 +70,7 @@ func _pocket_measures(world: WorldState, clerk: PersonEntity, institution_id: St
 	records["intake_tally_falsified"] = true
 	records["intake_tally_falsified_period"] = world.current_period_index()
 	institution["stock_records"] = records
-	_queue_docket(institution, world, &"intent_pocket_measures", {
+	_queue_docket(institution, world, &"intent_pocket_measures", clerk.id, institution_id, {
 		"dispatch_record": "Intake docket: the full delivered measure is certified.",
 		"threshold_tally": "Independent receiving tally: two measures are absent from the clerk's entered total.",
 		"discrepancy": "The intake record is short by two measures despite the dispatch certification.",
@@ -93,7 +93,7 @@ func _log_deliveries(world: WorldState, _clerk: PersonEntity, institution_id: St
 	world.institutions[institution_id] = institution
 	return {"success": true, "intent_id": &"intent_log_deliveries", "period": world.current_period_index()}
 
-func _queue_docket(institution: Dictionary, world: WorldState, intent_id: StringName, evidence: Dictionary) -> void:
+func _queue_docket(institution: Dictionary, world: WorldState, intent_id: StringName, clerk_id: StringName, institution_id: StringName, evidence: Dictionary) -> void:
 	var queue: Array = institution.get("npc_docket_queue", []).duplicate(true)
 	queue.append({
 		"due_period": world.current_period_index() + 1,
@@ -101,8 +101,8 @@ func _queue_docket(institution: Dictionary, world: WorldState, intent_id: String
 		"subject_id": StringName(institution.get("place_id", "north_bay")),
 		"urgency": 3,
 		"intent_id": intent_id,
-		"clerk_id": StringName(institution.get("last_grain_clerk_id", "")),
-		"institution_id": StringName(institution.get("id", "")),
+		"clerk_id": clerk_id,
+		"institution_id": institution_id,
 		"npc_evidence": evidence.duplicate(true),
 	})
 	institution["npc_docket_queue"] = queue
