@@ -25,8 +25,18 @@ const ORIGIN_REPLY_ACTIONS := [
 	{"id": &"inspect_seal", "label": "Recheck the seal against the copy", "skill": &"intrigue", "xp": 8}
 ]
 
+
+const REGIONAL_WORK_ACTIONS := [
+	{"id": &"review_trade_manifest", "label": "Review the trade manifest", "skill": &"literacy", "xp": 8},
+	{"id": &"compare_trade_balance", "label": "Compare the trade balance", "skill": &"arithmetic", "xp": 8},
+	{"id": &"consult_local_factor", "label": "Consult the local trade factor", "skill": &"rhetoric", "xp": 8},
+	{"id": &"inspect_trade_goods", "label": "Inspect the goods and seals", "skill": &"stewardship", "xp": 8}
+]
+
 static func get_actions(record: Dictionary) -> Array:
 	var data: Dictionary = record.get("source_data", {})
+	if StringName(record.get("kind", "")) == &"regional_work":
+		return REGIONAL_WORK_ACTIONS
 	var form_type := StringName(data.get("form_type", ""))
 	if StringName(record.get("kind", "")) == &"form" and form_type == &"remote_dispatch":
 		return REMOTE_DISPATCH_ACTIONS
@@ -47,6 +57,8 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			continue
 		var form_type := StringName(form.get("form_type", ""))
 		if int(form.get("due_period", world.current_period_index())) > world.current_period_index():
+			continue
+		if form_type != &"remote_origin_reply" and not _is_local_to_actor(world, actor, StringName(form.get("subject_id", ""))):
 			continue
 		var subject_id := StringName(form.get("subject_id", ""))
 		var subject_name := _place_name(world, subject_id)
@@ -69,6 +81,8 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			continue
 		var hazard_id := StringName(hazard.get("id", ""))
 		var place_id := StringName(hazard.get("place_id", ""))
+		if not _is_local_to_actor(world, actor, place_id):
+			continue
 		candidates.append({
 			"id": StringName("work_hazard_%s_%d" % [hazard_id, world.current_period_index()]),
 			"kind": &"hazard",
@@ -84,6 +98,8 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 	for institution_id in world.institutions.keys():
 		var institution: Dictionary = world.institutions[institution_id]
 		var pressure := int(institution.get("resource_pressure", 0))
+		if not _is_local_to_actor(world, actor, StringName(institution.get("place_id", ""))):
+			continue
 		if pressure < 1:
 			continue
 		candidates.append({
@@ -106,6 +122,10 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			continue
 		var progress := world.get_resource(StringName(epic.get("progress_resource", "")))
 		var target := int(epic.get("target", 100))
+		var sponsor_id := StringName(epic.get("sponsor_institution", ""))
+		var sponsor_place := StringName(world.institutions.get(sponsor_id, {}).get("place_id", &"uruk"))
+		if not _is_local_to_actor(world, actor, sponsor_place):
+			continue
 		if target <= 0 or progress >= target:
 			continue
 		candidates.append({
@@ -122,6 +142,8 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 
 	for institution_id in world.institutions.keys():
 		var institution: Dictionary = world.institutions[institution_id]
+		if not _is_local_to_actor(world, actor, StringName(institution.get("place_id", ""))):
+			continue
 		var routine_id := StringName("work_ledger_%s_%d" % [institution_id, world.current_period_index()])
 		candidates.append({
 			"id": routine_id,
