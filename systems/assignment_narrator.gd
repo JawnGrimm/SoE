@@ -112,8 +112,9 @@ static func narrate_record_examination(record: Dictionary, actor: PersonEntity, 
 		beats.append({"kind": "observation", "speaker": "", "text": "The two accounts cannot both be true. Someone has made the contradiction durable by pressing it into clay."})
 	elif StringName(record.get("kind", "")) == &"form":
 		var form_type := String(source.get("form_type", ""))
+		var titles := {"pension_roll": "Pension Ledger", "grain_levy": "Grain Levy", "travel_pass": "Travel Pass", "succession_claim": "Succession Claim"}
 		var subject := String(source.get("subject_id", "the named place"))
-		beats.append({"kind": "document", "speaker": "The pending register", "text": "The entry names %s, concerning %s. Its urgency is marked %d." % [form_type.replace("_", " "), subject.replace("_", " "), int(source.get("urgency", 1))]})
+		beats.append({"kind": "document", "speaker": "The pending register", "text": "The %s concerns %s. Its urgency is marked %d." % [String(titles.get(form_type, "official record")), subject.replace("_", " "), int(source.get("urgency", 1))]})
 		beats.append({"kind": "observation", "speaker": "", "text": "The register tells you why the matter arrived. It does not tell you who is telling the truth."})
 	else:
 		beats.append({"kind": "document", "speaker": "The written record", "text": String(evidence.get("facts", "The source tablet carries the matter forward, but leaves its origin uncertain."))})
@@ -181,6 +182,16 @@ static func _contains_raw_metric(value: String) -> bool:
 	return false
 
 static func _clean_display(value: String, fallback: String) -> String:
-	if _contains_raw_metric(value):
-		return fallback
-	return value
+	var lines := PackedStringArray()
+	for line in value.split("\n"):
+		if line.strip_edges().begins_with("CAPABILITY APPLIED:"):
+			continue
+		lines.append(line)
+	var cleaned := "\n".join(lines)
+	var titles := {"FORM: pension_roll": "RECORD TYPE: Pension Ledger", "FORM: grain_levy": "RECORD TYPE: Grain Levy", "FORM: travel_pass": "RECORD TYPE: Travel Pass", "FORM: succession_claim": "RECORD TYPE: Succession Claim"}
+	for raw_title in titles:
+		cleaned = cleaned.replace(raw_title, titles[raw_title])
+	var form_pattern := RegEx.new()
+	form_pattern.compile("form_[0-9]+")
+	cleaned = form_pattern.sub(cleaned, "the pending record", true)
+	return fallback if _contains_raw_metric(cleaned) else cleaned
