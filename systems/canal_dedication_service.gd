@@ -36,6 +36,7 @@ static func apply_choice(world: WorldState, actor: PersonEntity, choice: StringN
 		&"temple_only":
 			world.change_faction_standing(&"eanna_temple", 35)
 			actor.resources[&"silver"] = int(actor.resources.get(&"silver", 0)) + 8
+			world.silver_earned += 8
 			world.world_flags[&"canal_temple_claim"] = 1
 		&"personal_seal":
 			world.world_flags[&"canal_personal_seal"] = 1
