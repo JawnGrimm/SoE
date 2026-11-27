@@ -4,6 +4,7 @@ extends Control
 
 signal return_to_title
 signal succession_requested
+signal restart_requested
 
 const STONE := Color("#D4B58A")
 const INK := Color("#261C14")
