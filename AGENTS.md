@@ -94,3 +94,15 @@ godot --headless --editor --path . --quit
 ```
 
 The office regression must exercise actual seeded seating and BT execution, not manually assigning the named officials' office IDs in the test fixture.
+
+
+## Player consequence visibility invariants
+
+Run the focused regression with `godot --headless --path . -s tests/test_consequence_visibility.gd` before the existing Era I circuit checks.
+
+- Assignment and procedural docket resolution return a transient typed `consequences` array alongside authored result text. Include named NPC opinion changes with reason, skill XP and any level-up, personal silver/debt, audit exposure, acquired traits, and newly changed flags where applicable.
+- Result presentation shows the authored narrative first, then a readable consequence ledger. Do not replace choice-specific Epic result text with generic receipts.
+- Consequence presentation and remote courier text are derived views; they do not mutate `WorldState`, `SaveCodec`, or the versioned save schema.
+- The Great Canal Cut remains visible from Uruk as backdrop and sends an urgent capital dispatch to a remote player in Umma or Nippur while stalled, disrupted, or awaiting review. Do not expose raw internal problem keys in courier prose.
+- Pending Great Canal Cut reviews appear in the remote work queue with `[REQUIRES TRAVEL TO URUK]`; selecting one explains that passage must be booked on the regional survey map and must not open a remote verdict.
+- Period audit/arrears deltas must be surfaced as archive notices after the desk board refreshes, so routine HUD refreshes cannot immediately erase them.

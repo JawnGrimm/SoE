@@ -1,6 +1,7 @@
 extends Control
 
 const CompoundContextScript = preload("res://systems/compound_context.gd")
+const ConsequenceVisibilityScript = preload("res://systems/consequence_visibility.gd")
 
 const AssignmentGeneratorScript = preload("res://systems/assignment_generator.gd")
 const AssignmentNarratorScript = preload("res://systems/assignment_narrator.gd")
@@ -95,6 +96,8 @@ var location_label: Label
 var case_heading: Label
 var dossier: RichTextLabel
 var prompt_label: Label
+var consequence_panel: PanelContainer
+var archive_notice_active := false
 var choices: VBoxContainer
 var stamp_history_row: HFlowContainer
 var dossier_label: Label
@@ -341,12 +344,16 @@ func _build_interface() -> void:
 	_apply_incised_text(dossier)
 	dossier.visible = false
 	mat_box.add_child(dossier)
+	consequence_panel = PanelContainer.new()
+	consequence_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	consequence_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	mat_box.add_child(consequence_panel)
 	prompt_label = Label.new()
 	prompt_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	prompt_label.add_theme_font_size_override("font_size", 17)
 	prompt_label.custom_minimum_size.y = 22
 	_apply_incised_text(prompt_label)
-	mat_box.add_child(prompt_label)
+	consequence_panel.add_child(prompt_label)
 	stamp_history_row = HFlowContainer.new()
 	stamp_history_row.custom_minimum_size.y = 0
 	stamp_history_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -795,6 +802,7 @@ func load_game() -> Dictionary:
 	return {"success": true}
 
 func _schedule_next_case() -> void:
+	archive_notice_active = false
 	_clear_stamp_history()
 	var current_player := world.get_player()
 	if current_player != null:
@@ -809,6 +817,7 @@ func _schedule_next_case() -> void:
 	if not world.world_flags.has(&"first_workday_mentor_seen"):
 		_show_first_workday_mentor()
 		return
+	_show_archive_notices()
 	if world.epic_summon_pending and not world.epic_summon_issued:
 		active_event = null
 		procedural_assignment = AssignmentGeneratorScript.create_epic_summons()
@@ -1115,6 +1124,9 @@ func _select_assignment_opportunity(index: int) -> void:
 		_show_case()
 		return
 	active_event = null
+	if bool(opportunity.get("requires_travel", false)) and StringName(opportunity.get("kind", "")) == &"project_review":
+		status_label.text = "CAPITAL REVIEW / %s. [REQUIRES TRAVEL TO URUK] Open the regional survey map and book passage to convene the Stage Review." % String(opportunity.get("title", "Great Canal Cut"))
+		return
 	if not AssignmentPipeline.begin(world, opportunity, actor):
 		if bool(opportunity.get("requires_travel", false)):
 			var dispatch_place := StringName(opportunity.get("dispatch_destination_id", opportunity.get("place_id", "")))
@@ -1251,7 +1263,7 @@ func _resolve_world_assignment(verdict: StringName) -> void:
 		return
 	active_world_assignment_id = &""
 	procedural_assignment.clear()
-	_show_procedural_result("ASSESSMENT SEALED", String(result.get("message", "The work is entered into the record.")))
+	_show_procedural_result("ASSESSMENT SEALED", String(result.get("message", "The work is entered into the record.")), result.get("consequences", []))
 
 func _abandon_world_assignment() -> void:
 	if active_world_assignment_id == &"" or not world.assignments.has(active_world_assignment_id):
@@ -1274,6 +1286,9 @@ func _show_case() -> void:
 	_render_docket_payload(AssignmentNarratorScript.translate_payload(_active_docket_payload()))
 
 func _render_docket_payload(payload: Dictionary, callbacks: Array = []) -> void:
+	if consequence_panel != null:
+		consequence_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+		prompt_label.add_theme_color_override("font_color", Color("#d6bd8b"))
 	_set_evidence_visible(true)
 	case_heading.add_theme_font_size_override("font_size", 20)
 	case_heading.text = "𒂍  " + String(payload.get("title", "Docket")).to_upper()
@@ -1341,11 +1356,20 @@ func _resolve_procedural_choice(_index: int, choice: Dictionary) -> void:
 	var right := world.get_person(StringName(pair_parts[1])) if pair_parts.size() > 1 else null
 	var silver_before := int(actor.resources.get(&"silver", 0))
 	var traits_before: Array[StringName] = actor.traits.duplicate()
+	var debt_before := int(actor.resources.get(&"debt", 0))
+	var exposure_before := int(actor.flags.get(&"audit_exposure", 0))
+	var skill_level_before := actor.skills.get_level(StringName(effects.get("skill", ""))) if StringName(effects.get("skill", "")) != &"" else 0
+	var opinion_before: Dictionary[StringName, int] = {}
+	for person_value in world.people.values():
+		if person_value != null and person_value.id != actor.id:
+			opinion_before[person_value.id] = person_value.get_opinion(actor.id)
+	var actor_flags_before: Dictionary = actor.flags.duplicate(true)
+	var world_flags_before: Dictionary = world.world_flags.duplicate(true)
 	last_opinion_deltas.clear()
 	var left_delta := int(effects.get("opinion_left", 0))
 	var right_delta := int(effects.get("opinion_right", 0))
 	var docket_kind := String(procedural_assignment.get("docket_kind", ""))
-	var opinion_reason := "Procedural docket: %s" % String(procedural_assignment.get("title", ""))
+	var opinion_reason := String(choice.get("opinion_reason", choice.get("result_text", "Procedural docket: %s" % String(procedural_assignment.get("title", "")))))
 	if docket_kind in ["local_path", "epic_summons"]:
 		_apply_faction_opinion(StringName(procedural_assignment.get("client_faction", "")), left_delta, opinion_reason)
 		_apply_faction_opinion(StringName(procedural_assignment.get("opposing_faction", "")), right_delta, opinion_reason)
@@ -1379,8 +1403,9 @@ func _resolve_procedural_choice(_index: int, choice: Dictionary) -> void:
 		if world.has_active_hazard(repair_place, repair_id):
 			world.repair_hazard(repair_place, repair_id)
 	var skill_id := StringName(effects.get("skill", ""))
+	var xp_amount := int(effects.get("xp", 0))
 	if skill_id != &"":
-		actor.skills.add_xp(skill_id, int(effects.get("xp", 0)))
+		actor.skills.add_xp(skill_id, xp_amount)
 	var trait_id := StringName(effects.get("trait", ""))
 	if trait_id != &"" and trait_id not in actor.traits:
 		actor.traits.append(trait_id)
@@ -1400,8 +1425,38 @@ func _resolve_procedural_choice(_index: int, choice: Dictionary) -> void:
 	if docket_kind == "local_path":
 		if world.record_local_path_docket():
 			result_text += " Three local docket seals have brought an emergency requisition from the canal administration."
+	var consequences: Array[Dictionary] = []
+	if skill_id != &"" and xp_amount > 0:
+		consequences.append({"type": "xp", "skill": skill_id, "delta": xp_amount})
+		var level_after := actor.skills.get_level(skill_id)
+		if level_after > skill_level_before:
+			consequences.append({"type": "level_up", "skill": skill_id, "new_level": level_after})
+	for person_value in world.people.values():
+		if person_value == null or person_value.id == actor.id:
+			continue
+		var opinion_change := person_value.get_opinion(actor.id) - int(opinion_before.get(person_value.id, person_value.get_opinion(actor.id)))
+		if opinion_change != 0:
+			consequences.append(AssignmentGeneratorScript.make_opinion_consequence(person_value, opinion_change, opinion_reason))
+	var silver_change := int(actor.resources.get(&"silver", 0)) - silver_before
+	if silver_change != 0:
+		consequences.append({"type": "silver", "delta": silver_change})
+	var debt_change := int(actor.resources.get(&"debt", 0)) - debt_before
+	if debt_change != 0:
+		consequences.append({"type": "debt", "delta": debt_change})
+	var exposure_change := int(actor.flags.get(&"audit_exposure", 0)) - exposure_before
+	if exposure_change != 0:
+		consequences.append({"type": "exposure", "delta": exposure_change})
+	for new_trait in actor.traits:
+		if new_trait not in traits_before:
+			consequences.append({"type": "trait", "name": String(new_trait).capitalize()})
+	for flag_key in actor.flags:
+		if not actor_flags_before.has(flag_key) or actor_flags_before[flag_key] != actor.flags[flag_key]:
+			consequences.append({"type": "flag", "name": String(flag_key)})
+	for flag_key in world.world_flags:
+		if not world_flags_before.has(flag_key) or world_flags_before[flag_key] != world.world_flags[flag_key]:
+			consequences.append({"type": "flag", "name": String(flag_key)})
 	var result_title := String(choice.get("result_title", "MARK MADE"))
-	_show_procedural_result(result_title, result_text)
+	_show_procedural_result(result_title, result_text, consequences)
 
 func _record_case_settlement(silver_before: int, traits_before: Array[StringName]) -> void:
 	world.record_case_settlement(actor, silver_before, traits_before)
@@ -1416,6 +1471,9 @@ func _play_outcome_foley(index: int) -> void:
 			AudioManager.play_tablet_snap()
 
 func _show_result(outcome: EventOutcome) -> void:
+	if consequence_panel != null:
+		consequence_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+		prompt_label.add_theme_color_override("font_color", Color("#d6bd8b"))
 	last_resolved_outcome = outcome
 	_clear_choices()
 	_set_phase("result")
@@ -1597,7 +1655,7 @@ func _debug_resource_ids() -> Array[String]:
 	ids.sort()
 	return ids
 
-func _show_procedural_result(result_title: String, result_text: String) -> void:
+func _show_procedural_result(result_title: String, result_text: String, consequences: Array = []) -> void:
 	_clear_choices()
 	_set_phase("result")
 	case_heading.text = "𒂍  " + result_title.to_upper()
@@ -1605,7 +1663,23 @@ func _show_procedural_result(result_title: String, result_text: String) -> void:
 	dossier.text = ""
 	_set_evidence_facts("", "")
 	_set_evidence_tension(0, 0)
-	prompt_label.text = result_text
+	prompt_label.text = ConsequenceVisibilityScript.format_ledger(result_text, consequences) if not consequences.is_empty() else result_text
+	if consequence_panel != null:
+		if not consequences.is_empty():
+			var ledger_style := StyleBoxFlat.new()
+			ledger_style.bg_color = Color("#302519")
+			ledger_style.border_color = Color("#e0b85c")
+			ledger_style.set_border_width_all(2)
+			ledger_style.set_corner_radius_all(4)
+			ledger_style.content_margin_left = 16
+			ledger_style.content_margin_right = 16
+			ledger_style.content_margin_top = 12
+			ledger_style.content_margin_bottom = 12
+			consequence_panel.add_theme_stylebox_override("panel", ledger_style)
+			prompt_label.add_theme_color_override("font_color", Color("#fff0ce"))
+		else:
+			consequence_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+			prompt_label.add_theme_color_override("font_color", Color("#d6bd8b"))
 	_add_choice("End Period", _advance_period)
 	_refresh_compound()
 
@@ -2178,6 +2252,23 @@ func _update_period_delta_feed() -> void:
 	period_delta_label.text = "SINCE LAST PERIOD\n" + ("\n".join(entries) if not entries.is_empty() else "No major changes recorded since last period.")
 
 
+func _show_archive_notices() -> void:
+	if world == null or status_label == null:
+		return
+	var notices := PackedStringArray()
+	for delta_value in world.last_period_deltas:
+		if not delta_value is Dictionary:
+			continue
+		var delta: Dictionary = delta_value
+		var category := StringName(delta.get("category", ""))
+		if category not in [&"audit", &"arrears"]:
+			continue
+		var detail := String(delta.get("text", "An archive adjustment was entered against your account."))
+		notices.append("ARCHIVE NOTICE FROM SHURUPPAK-ILU:\n%s" % detail)
+	archive_notice_active = not notices.is_empty()
+	if archive_notice_active:
+		status_label.text = "\n\n".join(notices)
+
 func _refresh_compound() -> void:
 	if world == null:
 		return
@@ -2196,7 +2287,6 @@ func _refresh_compound() -> void:
 			mentor_trait = String(trait_id)
 	heirloom_label.text = "MENTOR MARK: %s" % mentor_trait.to_upper()
 	dossier_label.text = _build_dossier_text()
-	canal_label.visible = world.current_location_id == &"uruk"
 	var active_epic_id := world.get_active_epic_id()
 	var active_epic := Registry.get_epic(active_epic_id)
 	if active_epic == null and current_era != null:
@@ -2204,16 +2294,24 @@ func _refresh_compound() -> void:
 			var epic_state: Dictionary = world.epics.get(epic_definition.id, {})
 			if epic_definition.era_id == current_era.id and bool(epic_state.get("active", false)):
 				active_epic = epic_definition
+				active_epic_id = epic_definition.id
 				break
 	var epic_title := active_epic.title if active_epic != null else "No active Epic"
 	var epic_progress := world.get_resource(active_epic.progress_resource) if active_epic != null else 0
 	var epic_target := active_epic.target if active_epic != null else 100
+	var epic_state: Dictionary = world.epics.get(active_epic_id, {}) if active_epic != null else {}
+	var courier_text := ConsequenceVisibilityScript.remote_courier_text(epic_state, epic_progress, epic_target) if world.current_location_id != &"uruk" and active_epic != null and active_epic_id == &"great_canal_cut" else ""
+	canal_label.visible = world.current_location_id == &"uruk" or not courier_text.is_empty()
+	if not courier_text.is_empty():
+		canal_label.text = courier_text
 	var filled := int(round(float(epic_progress) / maxf(1.0, float(epic_target)) * 10.0))
 	var bar_fill := clampi(filled, 0, 10)
-	if active_epic == null:
-		canal_label.text = "CANAL ADMINISTRATION / DORMANT\nNo summons has reached your desk. Local cases and regional work come first."
-	else:
-		canal_label.text = "ERA EPIC / BACKDROP\n%s\n[%s%s] %d / %d\nYour docket can move the project" % [epic_title.to_upper(), "=".repeat(bar_fill), "-".repeat(10 - bar_fill), epic_progress, epic_target]
+	if courier_text.is_empty():
+		if active_epic == null:
+			canal_label.text = "CANAL ADMINISTRATION / DORMANT\nNo summons has reached your desk. Local cases and regional work come first."
+		else:
+			canal_label.text = "ERA EPIC / BACKDROP\n%s\n[%s%s] %d / %d\nYour docket can move the project" % [epic_title.to_upper(), "=".repeat(bar_fill), "-".repeat(10 - bar_fill), epic_progress, epic_target]
 	_refresh_faction_standings()
 	year_label.text = CalendarFormatter.format_date(current_era, world.year, world.period)
-	status_label.text = "SEED %d  /  PERIOD %02d OF 12" % [world.master_seed, world.period + 1]
+	if not archive_notice_active:
+		status_label.text = "SEED %d  /  PERIOD %02d OF 12" % [world.master_seed, world.period + 1]

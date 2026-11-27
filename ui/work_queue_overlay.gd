@@ -116,6 +116,8 @@ func _rebuild() -> void:
 			var item := Narrator.translate_opportunity(_opportunities[index])
 			var button := Button.new()
 			var tags: Array = _opportunities[index].get("tags", [])
+			if bool(_opportunities[index].get("requires_travel", false)) and tags.is_empty():
+				tags = ["REQUIRES TRAVEL TO URUK"]
 			var tag_prefix := "[%s]\n" % String(tags[0]) if not tags.is_empty() else ""
 			button.text = "%s%s\n%s" % [tag_prefix, String(item.get("title", "Work")), String(item.get("summary", "A matter requires attention."))]
 			button.disabled = not _can_select
