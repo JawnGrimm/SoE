@@ -2014,6 +2014,12 @@ func _update_period_delta_feed() -> void:
 			snapshot["%s:%s" % [institution_id, resource_id]] = int(stocks[resource_id])
 	for resource_id in [&"silver", &"bread", &"beer"]:
 		snapshot["actor:%s" % resource_id] = int(actor.resources.get(resource_id, 0))
+	for faction_id in FACTION_LABELS.keys():
+		snapshot["faction:%s" % faction_id] = world.get_faction_standing(StringName(faction_id))
+	var active_epic_id := world.get_active_epic_id()
+	if active_epic_id != &"":
+		var epic_state: Dictionary = world.epics.get(active_epic_id, {})
+		snapshot["epic:%s" % active_epic_id] = int(epic_state.get("progress", world.get_resource(StringName(epic_state.get("progress_resource", "")))))
 	for key in snapshot.keys():
 		if last_stock_snapshot.has(key):
 			var delta := int(snapshot[key]) - int(last_stock_snapshot[key])
