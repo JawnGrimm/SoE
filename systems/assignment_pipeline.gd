@@ -52,13 +52,14 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 		var dispatch_tag := "DISPATCH FROM %s" % _place_name(world, place_id).to_upper() if is_dispatch else ""
 		if is_dispatch:
 			form_summary = "A provincial requisition from %s has remained unanswered for %d periods. The provincial office now demands an answer." % [_place_name(world, place_id), age_periods]
+		var base_priority := maxi(2 + urgency, int(form.get("priority", 0)))
 		candidates.append({
 			"id": StringName("work_form_%s_%d" % [form_id, world.current_period_index()]),
 			"kind": &"form",
 			"source_id": form_id,
 			"title": form_title,
 			"summary": form_summary,
-			"priority": 8 if is_dispatch else (6 if not npc_evidence.is_empty() else 2 + urgency),
+			"priority": 8 if is_dispatch else (6 if not npc_evidence.is_empty() else base_priority),
 			"tags": [dispatch_tag] if is_dispatch else [],
 			"dispatch": is_dispatch,
 			"requires_travel": is_dispatch and not is_local,
