@@ -73,7 +73,7 @@ static func get_geographic_vector(docket_id: StringName) -> Dictionary:
 		return (GEOGRAPHIC_VECTORS[docket_id] as Dictionary).duplicate(true)
 	return {"origin_id": &"uruk", "destination_id": &"uruk", "route_id": &"uruk_internal", "commodity_id": DOCKET_COMMODITIES.get(docket_id, &"administrative_record"), "route_mode": "within Uruk"}
 
-static func generate(world: WorldState, actor: PersonEntity, selected_path: StringName = &"") -> Dictionary:
+static func generate(world: WorldState, actor: PersonEntity, selected_path: StringName = &"", record_history: bool = true) -> Dictionary:
 	if world == null or actor == null:
 		return {}
 	var path_id := selected_path
@@ -83,7 +83,7 @@ static func generate(world: WorldState, actor: PersonEntity, selected_path: Stri
 				path_id = candidate
 				break
 	if PATH_DOCKET_DATA.has(path_id):
-		return _generate_path_docket(world, actor, path_id)
+		return _generate_path_docket(world, actor, path_id, record_history)
 	var archetypes: Array[StringName] = []
 	for item in ARCHETYPES:
 		if not world.recent_archetypes.has(item):
@@ -110,9 +110,10 @@ static func generate(world: WorldState, actor: PersonEntity, selected_path: Stri
 					fallback_archetypes.append(fallback_id)
 			if not fallback_archetypes.is_empty():
 				archetype = fallback_archetypes[world.rng_narrative.randi_range(0, fallback_archetypes.size() - 1)]
-	world.recent_archetypes.append(archetype)
-	while world.recent_archetypes.size() > 6:
-		world.recent_archetypes.pop_front()
+	if record_history:
+		world.recent_archetypes.append(archetype)
+		while world.recent_archetypes.size() > 6:
+			world.recent_archetypes.pop_front()
 	var people: Array[PersonEntity] = []
 	for person in world.people.values():
 		if person == null or person.id == actor.id:
@@ -156,9 +157,10 @@ static func generate(world: WorldState, actor: PersonEntity, selected_path: Stri
 				right = candidate
 				break
 	var pair := "%s|%s" % [left.id, right.id]
-	world.recent_npc_pairs.append(pair)
-	while world.recent_npc_pairs.size() > 6:
-		world.recent_npc_pairs.pop_front()
+	if record_history:
+		world.recent_npc_pairs.append(pair)
+		while world.recent_npc_pairs.size() > 6:
+			world.recent_npc_pairs.pop_front()
 	var place_id: StringName = &"uruk"
 	var place_keys: Array = world.places.keys()
 	if not place_keys.is_empty():
@@ -245,7 +247,7 @@ static func generate(world: WorldState, actor: PersonEntity, selected_path: Stri
 				payload.choices = [_choice("Allocate %s and repair" % repair_resource, "The hazard is repaired and its ongoing loss stops.", repair_resource, -repair_cost, 2, 2, "stewardship", 15, "", 2, true), _choice("Record loss; defer repair", "The hazard remains active; loss continues.", good, 0, -1, -1, "arithmetic", 5, "", 1)]
 	return payload
 
-static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_id: StringName) -> Dictionary:
+static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_id: StringName, record_history: bool = true) -> Dictionary:
 	var templates: Array = PATH_DOCKET_DATA.get(path_id, [])
 	if templates.is_empty():
 		return {}
@@ -298,13 +300,14 @@ static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_
 	var client_id := StringName(selected_pair.client)
 	var opposing_id := StringName(selected_pair.opposing)
 	var pair := "%s|%s" % [client_id, opposing_id]
-	world.recent_npc_pairs.append(pair)
-	while world.recent_npc_pairs.size() > 6:
-		world.recent_npc_pairs.pop_front()
 	var archetype_id := StringName("path_%s" % template.get("id", "docket"))
-	world.recent_archetypes.append(archetype_id)
-	while world.recent_archetypes.size() > 6:
-		world.recent_archetypes.pop_front()
+	if record_history:
+		world.recent_npc_pairs.append(pair)
+		while world.recent_npc_pairs.size() > 6:
+			world.recent_npc_pairs.pop_front()
+		world.recent_archetypes.append(archetype_id)
+		while world.recent_archetypes.size() > 6:
+			world.recent_archetypes.pop_front()
 	var client_name := String(PATH_FACTION_DISPLAY_NAMES.get(client_faction, String(client_faction).replace("_", " ").capitalize()))
 	var opposing_name := String(PATH_FACTION_DISPLAY_NAMES.get(opposing_faction, String(opposing_faction).replace("_", " ").capitalize()))
 	var title := String(template.get("title", "LOCAL DOCKET"))
@@ -334,6 +337,20 @@ static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_
 	payload.right_card.facts = route_line + "\n" + String(payload.right_card.facts)
 	return payload
 
+
+static func record_selection(world: WorldState, payload: Dictionary) -> void:
+	if world == null or payload.is_empty():
+		return
+	var archetype_id := StringName(payload.get("archetype", ""))
+	var pair := String(payload.get("npc_pair", ""))
+	if archetype_id != &"" and not world.recent_archetypes.has(archetype_id):
+		world.recent_archetypes.append(archetype_id)
+		while world.recent_archetypes.size() > 6:
+			world.recent_archetypes.pop_front()
+	if not pair.is_empty() and not world.recent_npc_pairs.has(pair):
+		world.recent_npc_pairs.append(pair)
+		while world.recent_npc_pairs.size() > 6:
+			world.recent_npc_pairs.pop_front()
 
 static func create_epic_summons() -> Dictionary:
 	return {
