@@ -421,7 +421,7 @@ func _run() -> void:
 		"origin_id": &"uruk", "destination_id": &"habuba_kabira",
 		"commodity_id": &"timber", "quantity": 12,
 		"seal_id": "uruk_quay_seal_02", "sender_id": &"geme_inana",
-		"destination_institution_id": &"exchange_network"
+		"destination_institution_id": &"habuba_trade_post"
 	})
 	var second_shipment_id := StringName(second_shipment_result.get("shipment_id", ""))
 	_check(bool(second_shipment_result.get("success", false)), "Regional system should launch additional world-driven shipments")
