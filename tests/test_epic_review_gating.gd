@@ -55,6 +55,26 @@ func _run() -> void:
 	state = world.epics[&"great_canal_cut"]
 	_check(int(state.get("review_stage", 0)) >= 1 and bool(state.get("review_pending", false)), "Crossing 25 percent should open the next stage review")
 
+	# A new shortage opens a problem review; an unchanged shortage stays latched.
+	sponsor_stockpiles[&"labor"] = 2
+	sponsor["stockpiles"] = sponsor_stockpiles
+	world.institutions[epic_def.sponsor_institution] = sponsor
+	simulator.advance_period(world)
+	state = world.epics[&"great_canal_cut"]
+	_check(String(state.get("review_reason", "")) == "labor_shortage" and bool(state.get("review_pending", false)), "New labor shortage should open a problem review")
+	world.resolve_epic_review(&"great_canal_cut", epic_def)
+	simulator.advance_period(world)
+	_check(not bool(world.epics[&"great_canal_cut"].get("review_pending", true)), "Persistent acknowledged shortage must not reopen every period")
+	sponsor_stockpiles[&"labor"] = 20
+	sponsor["stockpiles"] = sponsor_stockpiles
+	world.institutions[epic_def.sponsor_institution] = sponsor
+	simulator.advance_period(world)
+	sponsor_stockpiles[&"labor"] = 2
+	sponsor["stockpiles"] = sponsor_stockpiles
+	world.institutions[epic_def.sponsor_institution] = sponsor
+	simulator.advance_period(world)
+	_check(bool(world.epics[&"great_canal_cut"].get("review_pending", false)), "A shortage relapse after recovery should open a new review")
+
 	# Reviews belong to the sponsor's place, not the institution ID or player
 	# location; traveling away hides the pending Uruk review.
 	world.current_location_id = &"umma"
