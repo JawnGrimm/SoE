@@ -57,8 +57,8 @@ func _build() -> void:
 	epitaph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	epitaph.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.add_child(epitaph)
-	body.add_child(_label("THE PURSE\nSilver earned: %d   Held: %d\nDebt defaulted: %d   Unpaid upkeep: %d   Net worth: %d" % [int(summary.get("silver_earned", 0)), int(summary.get("silver_held", 0)), int(summary.get("debt_defaulted", 0)), int(summary.get("unpaid_upkeep", 0)), int(summary.get("net_worth", 0))], 15, INK))
-	body.add_child(_label("THE LAW & THE ARCHIVE\nLaw: %d   Literacy: %d   Arithmetic: %d\nIntegrity: %d / 100   Corruption: %d / 100\nAudit exposure: %d   Scandals buried: %d" % [int(summary.get("law", 0)), int(summary.get("literacy", 0)), int(summary.get("arithmetic", 0)), int(summary.get("integrity_score", 0)), int(summary.get("corruption_score", 0)), int(summary.get("audit_exposure", 0)), int(summary.get("scandals_buried", 0))], 15, INK))
+	body.add_child(_label("THE PURSE\nSilver earned: %d   Held: %d\nDebt cleared: %d   Defaulted: %d   Unpaid upkeep: %d\nNet worth: %d" % [int(summary.get("silver_earned", 0)), int(summary.get("silver_held", 0)), int(summary.get("debt_cleared", 0)), int(summary.get("debt_defaulted", 0)), int(summary.get("unpaid_upkeep", 0)), int(summary.get("net_worth", 0))], 15, INK))
+	body.add_child(_label("THE LAW & THE ARCHIVE\nLaw: %d   Literacy: %d   Arithmetic: %d\nIntegrity: %d / 100   Corruption: %d / 100\nAudit exposure: %d   Reprimands survived: %d\nScandals buried: %d" % [int(summary.get("law", 0)), int(summary.get("literacy", 0)), int(summary.get("arithmetic", 0)), int(summary.get("integrity_score", 0)), int(summary.get("corruption_score", 0)), int(summary.get("audit_exposure", 0)), int(summary.get("audit_reprimands_survived", 0)), int(summary.get("scandals_buried", 0))], 15, INK))
 	var standings: Dictionary = summary.get("character_standings", {})
 	var standing_lines := PackedStringArray()
 	for person_name in standings:
