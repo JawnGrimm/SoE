@@ -355,9 +355,15 @@ func _build_interface() -> void:
 	compound.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	compound.add_theme_stylebox_override("panel", _panel_style("#211d17", "#665238"))
 	body.add_child(compound)
+	var compound_scroll := ScrollContainer.new()
+	compound_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	compound_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	compound_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	compound.add_child(compound_scroll)
 	var compound_box := VBoxContainer.new()
+	compound_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	compound_box.add_theme_constant_override("separation", 10)
-	compound.add_child(compound_box)
+	compound_scroll.add_child(compound_box)
 	var compound_title := Label.new()
 	compound_title.text = "THE COMPOUND"
 	compound_title.add_theme_font_size_override("font_size", 17)
