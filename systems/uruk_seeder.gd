@@ -108,13 +108,28 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 
 	# The North-Bay roof is already leaking; each elapsed period spoils one measure of barley.
 	world.hazards.append({"id": &"roof_leak", "place_id": &"north_bay", "resource": &"barley", "rate": 1, "total_lost": 0, "active": true})
-	RegionalWorldSystem.launch_shipment(world, {
+	var initial_shipment_result := RegionalWorldSystem.launch_shipment(world, {
 		"origin_id": &"habuba_kabira", "destination_id": &"uruk",
 		"commodity_id": &"timber", "quantity": 40,
 		"seal_id": "habuba_governor_seal_01", "sender_id": &"enki_ili",
 		"destination_institution_id": &"eanna_household"
 	})
-	world.enqueue_form({"form_type": &"grain_levy", "subject_id": &"south_court_storehouse", "urgency": 1, "year": world.year})
+	if bool(initial_shipment_result.get("success", false)):
+		var initial_shipment_id := StringName(initial_shipment_result.get("shipment_id", ""))
+		var initial_shipment: Dictionary = world.shipments.get(initial_shipment_id, {})
+		var initial_trip_periods := RegionalWorldSystem.route_path_periods(world, initial_shipment.get("route_ids", []))
+		for route_period in range(initial_trip_periods):
+			RegionalWorldSystem.advance_period(world)
+		initial_shipment = world.shipments.get(initial_shipment_id, {})
+		initial_shipment["departure_period"] = world.current_period_index() - initial_trip_periods
+		world.shipments[initial_shipment_id] = initial_shipment
+		for arrival_form in world.pending_forms:
+			if StringName(arrival_form.get("shipment_id", "")) == initial_shipment_id:
+				arrival_form["departure_period"] = int(initial_shipment.get("departure_period", 0))
+				arrival_form["arrival_period"] = world.current_period_index()
+	# The grain levy remains part of the guided opening/tutorial and event fixtures,
+	# but is not generated as routine career work.
+	world.enqueue_form({"form_type": &"grain_levy", "subject_id": &"south_court_storehouse", "urgency": 1, "year": world.year, "tutorial_only": true})
 	return player
 
 static func attach_player(world: WorldState, player: PersonEntity) -> void:
