@@ -1,7 +1,10 @@
 class_name UrukSeeder
 extends RefCounted
 
-static func seed_campaign(world: WorldState, world_seed: int, add_player_to_world: bool = true) -> PersonEntity:
+static func seed_campaign(world: WorldState, world_seed: int, add_player_to_world: bool = true, definitions: DefinitionRegistry = null) -> PersonEntity:
+	if definitions == null:
+		definitions = DefinitionRegistry.new()
+		definitions.load_defaults()
 	world.set_world_seed(world_seed)
 	world.year = -3200
 	world.period = 0
@@ -65,8 +68,8 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 	world.people[&"nin_azu"] = _person(&"nin_azu", "Nin-azu", &"precinct_attendant", {"literacy": 2, "rhetoric": 2}, [&"devout", &"ambitious"])
 	world.people[&"geme_tur"] = _person(&"geme_tur", "Geme-tur", &"player_household", {"stewardship": 2}, [&"practical", &"blunt"])
 
-	_seed_places(world)
-	_seed_institutions_and_groups(world)
+	_seed_places(world, definitions)
+	_seed_institutions_and_groups(world, definitions)
 	_seed_relationships(world)
 	if add_player_to_world:
 		attach_player(world, player)
@@ -136,9 +139,8 @@ static func attach_player(world: WorldState, player: PersonEntity) -> void:
 	_link(world, &"shuruppak_ilu", world.player_id, &"mentor", 7, 8)
 	_link(world, &"geme_tur", world.player_id, &"family", 8, 9)
 
-static func _seed_places(world: WorldState) -> void:
-	# Keep local Eanna work areas, while canonical settlements come from
-	# immutable PlaceDef resources so dockets can share the same geography.
+static func _seed_places(world: WorldState, definitions: DefinitionRegistry) -> void:
+	# Small work areas remain runtime geography beneath their authored settlement.
 	world.places = {
 		&"eanna_precinct": {"name": "Eanna Precinct", "kind": &"institutional_precinct", "parent": &"uruk"},
 		&"anu_precinct": {"name": "Anu Precinct", "kind": &"cultic_precinct", "parent": &"uruk"},
@@ -148,13 +150,7 @@ static func _seed_places(world: WorldState) -> void:
 		&"great_canal_cut": {"name": "Great Canal Cut", "kind": &"canal_worksite", "parent": &"agricultural_hinterland"},
 		&"djebel_aruda": {"name": "Djebel Aruda", "kind": &"uruk_related_settlement", "region": &"upper_euphrates", "connected_to": [&"habuba_kabira"]}
 	}
-	var place_ids: Array[String] = ["uruk", "umma", "nippur", "ur", "habuba_kabira", "hacinebi", "susa"]
-	for place_id in place_ids:
-		var resource_path := "res://data/places/%s.tres" % place_id
-		var definition := ResourceLoader.load(resource_path) as PlaceDef
-		if definition == null or not definition.is_valid():
-			push_warning("UrukSeeder: failed to load canonical place '%s'" % resource_path)
-			continue
+	for definition in definitions.all_places():
 		world.places[definition.id] = {
 			"name": definition.display_name,
 			"kind": definition.place_type,
@@ -163,16 +159,14 @@ static func _seed_places(world: WorldState) -> void:
 			"exports": definition.exports.duplicate(),
 			"imports": definition.imports.duplicate(),
 			"connected_to": definition.connected_to.duplicate(),
-			"era_id": definition.era_id
+			"era_id": definition.era_id,
+			"survey_position": definition.survey_position
 		}
-static func _seed_institutions_and_groups(world: WorldState) -> void:
-	var eanna_members: Array[StringName] = [&"shuruppak_ilu", &"ur_nanna", &"utu_mansum", &"enlil_kisu", &"lu_nanshe"]
-	world.institutions = {
-		&"eanna_household": {"name": "Eanna Institutional Household", "kind": &"institutional_household", "place_id": &"eanna_precinct", "members": eanna_members, "interests": [&"grain", &"labor", &"storage", &"canal_work"]},
-		&"anu_establishment": {"name": "Anu Precinct Establishment", "kind": &"cultic_establishment", "place_id": &"anu_precinct", "members": [&"nin_azu", &"nin_kasi"], "interests": [&"offerings", &"beer", &"prestige"]},
-		&"exchange_network": {"name": "River and Overland Exchange", "kind": &"exchange_network", "place_id": &"uruk", "members": [&"geme_inana", &"enki_ili", &"ur_amas"], "interests": [&"transport", &"materials", &"exchange"]},
-		&"nippur_shrine": {"name": "Nippur Shrine Establishment", "kind": &"cultic_establishment", "place_id": &"nippur", "members": [], "interests": [&"offerings", &"ritual_supplies"], "stockpiles": {&"offerings": 24}, "activity_count": 0}
-	}
+
+static func _seed_institutions_and_groups(world: WorldState, definitions: DefinitionRegistry) -> void:
+	world.institutions.clear()
+	for definition in definitions.all_institutions():
+		world.institutions[definition.id] = definition.create_runtime_state()
 	world.social_groups = {
 		&"agricultural_households": {"name": "Agricultural Households", "kind": &"household_group", "place_id": &"agricultural_hinterland", "members": [&"ama_edin", &"geme_tur"], "resources": [&"barley", &"dates"]},
 		&"pastoral_households": {"name": "Pastoral Households", "kind": &"household_group", "place_id": &"agricultural_hinterland", "members": [&"ur_gula"], "resources": [&"sheep", &"goats", &"wool"]},
