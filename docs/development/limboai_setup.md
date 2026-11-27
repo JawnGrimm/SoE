@@ -1,6 +1,6 @@
 # LimboAI setup (Godot 4.7.2)
 
-Scribe of Eras uses the **LimboAI 1.8.1 GDExtension build**. The upstream GDExtension release supports Godot 4.6 and newer, including the project's Godot 4.7.2 target. Do not install an engine-module build; that requires a custom Godot executable.
+Scribe of Eras uses the **LimboAI 1.8.1 GDExtension build**. The pinned `gdextension-4.6` release supports Godot 4.6 and newer, including the project's Godot 4.7.2 target. Do not install an engine-module build; that requires a custom Godot executable.
 
 ## Install on Windows
 
@@ -14,7 +14,7 @@ Scribe of Eras uses the **LimboAI 1.8.1 GDExtension build**. The upstream GDExte
 
 4. Reopen `project.godot` in Godot 4.7.2 and let the filesystem scan finish.
 
-The installer downloads the pinned upstream release, verifies its SHA-256 checksum, locates `limboai.gdextension`, validates the Windows x86_64 editor library, and installs the package at `res://addons/limboai/`. If an existing `addons/limboai` folder is present, it is moved aside to a timestamped backup. If copying fails, the backup is restored.
+The installer downloads `limboai+v1.8.1.gdextension-4.6.zip`, verifies its SHA-256 checksum, locates `limboai.gdextension`, validates the Windows x86_64 editor library, and installs the package at `res://addons/limboai/`. If an existing `addons/limboai` folder is present, it is moved aside to a timestamped backup. If copying fails, the backup is restored.
 
 ## Important: GDExtension, not an editor plugin
 

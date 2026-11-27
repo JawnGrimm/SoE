@@ -34,7 +34,7 @@ The cover-up records a prime-seed-corn declaration while the independent thresho
 
 ## Dependency
 
-The project uses LimboAI 1.8.1 GDExtension for Godot 4.7.2. Native binaries are intentionally excluded from Git. The Windows installer at `tools/install_limboai.ps1` downloads the pinned release and verifies SHA-256. CI downloads and verifies the matching Linux x86_64 editor build before Godot import and tests.
+The project uses LimboAI 1.8.1 GDExtension for Godot 4.7.2. Native binaries are intentionally excluded from Git. The Windows installer at `tools/install_limboai.ps1` downloads the pinned release and verifies SHA-256. CI downloads and verifies the pinned cross-platform GDExtension package before Godot import and tests.
 
 ## Headless acceptance
 

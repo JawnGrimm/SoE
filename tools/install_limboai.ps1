@@ -4,9 +4,9 @@ param(
 
 $ErrorActionPreference = "Stop"
 $version = "v1.8.1"
-$assetName = "limboai+v1.8.1.godot-4.7.2.editor.windows.x86_64.zip"
-$assetUrl = "https://github.com/limbonaut/limboai/releases/download/$version/limboai%2Bv1.8.1.godot-4.7.2.editor.windows.x86_64.zip"
-$expectedSha256 = "c6e4516c59eed72de5dd798d78ff8da53b36a2dffabcf5f8aa01467ba88f6c0c"
+$assetName = "limboai+v1.8.1.gdextension-4.6.zip"
+$assetUrl = "https://github.com/limbonaut/limboai/releases/download/$version/limboai%2Bv1.8.1.gdextension-4.6.zip"
+$expectedSha256 = "0910411f8dbc0da8920f6c8bbbb6397c347cd9f2f193942468a702dfb11d5f0e"
 $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("soe-limboai-" + [guid]::NewGuid().ToString("N"))
 $zipPath = Join-Path $tempRoot $assetName
 $extractPath = Join-Path $tempRoot "extract"
@@ -15,7 +15,7 @@ $backup = Join-Path $ProjectRoot ("addons/limboai.backup-" + (Get-Date -Format "
 
 try {
     New-Item -ItemType Directory -Force -Path $tempRoot | Out-Null
-    Write-Host "Downloading LimboAI $version for Godot 4.7.2..."
+    Write-Host "Downloading the LimboAI $version GDExtension (Godot 4.6+ API)..."
     Invoke-WebRequest -Uri $assetUrl -OutFile $zipPath
     $actualSha256 = (Get-FileHash -Path $zipPath -Algorithm SHA256).Hash.ToLowerInvariant()
     if ($actualSha256 -ne $expectedSha256) {
