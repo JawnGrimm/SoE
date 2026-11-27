@@ -65,7 +65,9 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 	world.people[&"ab_kala"] = _person(&"ab_kala", "Ab-kala", &"potter", {"stewardship": 3, "arithmetic": 1}, [&"proud_of_work", &"impatient"])
 	world.people[&"nin_dada"] = _person(&"nin_dada", "Nin-dada", &"textile_worker", {"stewardship": 2}, [&"meticulous", &"quiet"])
 	world.people[&"ur_amas"] = _person(&"ur_amas", "Ur-amas", &"boat_operator", {"rhetoric": 2, "stewardship": 2}, [&"sociable", &"risk_tolerant"])
-	world.people[&"enki_ili"] = _person(&"enki_ili", "Enki-ili", &"external_trader", {"arithmetic": 3, "intrigue": 2}, [&"well_traveled", &"guarded"])
+	var external_trader := _person(&"enki_ili", "Enki-ili", &"external_trader", {"arithmetic": 3, "intrigue": 2}, [&"well_traveled", &"guarded"])
+	external_trader.current_location_id = &"habuba_kabira"
+	world.people[&"enki_ili"] = external_trader
 	world.people[&"nin_azu"] = _person(&"nin_azu", "Nin-azu", &"precinct_attendant", {"literacy": 2, "rhetoric": 2}, [&"devout", &"ambitious"])
 	world.people[&"geme_tur"] = _person(&"geme_tur", "Geme-tur", &"player_household", {"stewardship": 2}, [&"practical", &"blunt"])
 
@@ -198,7 +200,8 @@ static func _seed_institutions_and_groups(world: WorldState) -> void:
 	world.institutions = {
 		&"eanna_household": {"name": "Eanna Institutional Household", "kind": &"institutional_household", "place_id": &"eanna_precinct", "members": eanna_members, "interests": [&"grain", &"labor", &"storage", &"canal_work"]},
 		&"anu_establishment": {"name": "Anu Precinct Establishment", "kind": &"cultic_establishment", "place_id": &"anu_precinct", "members": [&"nin_azu", &"nin_kasi"], "interests": [&"offerings", &"beer", &"prestige"]},
-		&"exchange_network": {"name": "River and Overland Exchange", "kind": &"exchange_network", "place_id": &"uruk", "members": [&"geme_inana", &"enki_ili", &"ur_amas"], "interests": [&"transport", &"materials", &"exchange"]}
+		&"exchange_network": {"name": "River and Overland Exchange", "kind": &"exchange_network", "place_id": &"uruk", "members": [&"geme_inana", &"ur_amas"], "interests": [&"transport", &"materials", &"exchange"]},
+		&"habuba_trade_post": {"name": "Habuba Kabira Trade Enclave", "kind": &"trade_enclave", "place_id": &"habuba_kabira", "members": [&"enki_ili"], "interests": [&"timber", &"textiles", &"river_trade"], "stockpiles": {&"timber": 120, &"textiles": 6, &"beer": 12, &"silver": 24}, "activity_count": 3, "resource_pressure": 0}
 	}
 	world.social_groups = {
 		&"agricultural_households": {"name": "Agricultural Households", "kind": &"household_group", "place_id": &"agricultural_hinterland", "members": [&"ama_edin", &"geme_tur"], "resources": [&"barley", &"dates"]},
