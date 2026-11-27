@@ -1744,6 +1744,7 @@ func _show_memorial_tablet() -> void:
 	memorial_view = MemorialTabletViewScript.new()
 	memorial_view.return_to_title.connect(_return_to_title)
 	memorial_view.succession_requested.connect(_show_succession_preview)
+	memorial_view.restart_requested.connect(_restart_alpha)
 	add_child(memorial_view)
 	memorial_view.present(summary)
 	_set_phase("memorial")
@@ -1751,6 +1752,10 @@ func _show_memorial_tablet() -> void:
 
 func _return_to_title() -> void:
 	get_tree().change_scene_to_file("res://scenes/menus/main_menu/main_menu.tscn")
+
+
+func _restart_alpha() -> void:
+	get_tree().change_scene_to_file("res://main.tscn")
 
 
 func _show_succession_preview() -> void:
