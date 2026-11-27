@@ -74,7 +74,7 @@ func _tick_grain_clerk_agenda(world: WorldState) -> void:
 	scene_tree.root.add_child(agent)
 	var bt_player := BTPlayer.new()
 	bt_player.set_active(false)
-	bt_player.set_update_mode(2) # MANUAL: exactly one update per world period.
+	bt_player.set_update_mode(BTPlayer.UpdateMode.MANUAL) # Exactly one explicit update per world period.
 	bt_player.set_agent_node(NodePath(".."))
 	bt_player.set_scene_root_hint(agent)
 	bt_player.set_behavior_tree(GrainClerkAgendaTree)
@@ -235,7 +235,7 @@ func _simulate_economy(world: WorldState) -> void:
 	# Seasonal production varies with waterworks progress and the seeded sim stream.
 	# Periods are Uruk's broad agricultural cycle, not a scripted event schedule.
 	if p >= 4 and p <= 7:
-		var canal_bonus := int(_get_active_epic_progress(world) / 20)
+		var canal_bonus := floori(float(_get_active_epic_progress(world)) / 20.0)
 		_change(world, &"barley", world.rng_sim.randi_range(18, 34) + canal_bonus)
 	if p == 5 or p == 6:
 		_change(world, &"dates", world.rng_sim.randi_range(5, 11))

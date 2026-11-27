@@ -78,7 +78,7 @@ func _pocket_measures(world: WorldState, clerk: PersonEntity) -> Dictionary:
 	})
 	return {"success": true, "intent_id": &"intent_pocket_measures", "period": world.current_period_index()}
 
-func _log_deliveries(world: WorldState, clerk: PersonEntity) -> Dictionary:
+func _log_deliveries(world: WorldState, _clerk: PersonEntity) -> Dictionary:
 	var institution: Dictionary = world.institutions.get(INSTITUTION_ID, {}).duplicate(true)
 	if institution.is_empty():
 		return {"success": false, "reason": "The Eanna institutional household is unavailable."}

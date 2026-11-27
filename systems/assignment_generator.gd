@@ -233,14 +233,14 @@ static func generate(world: WorldState, actor: PersonEntity, selected_path: Stri
 				payload.choices = [_choice("Allocate %s and repair" % repair_resource, "The hazard is repaired and its ongoing loss stops.", repair_resource, -repair_cost, 2, 2, "stewardship", 15, "", 2, true), _choice("Record loss; defer repair", "The hazard remains active; loss continues.", good, 0, -1, -1, "arithmetic", 5, "", 1)]
 	return payload
 
-static func _generate_path_docket(world: WorldState, actor: PersonEntity, path_id: StringName) -> Dictionary:
+static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_id: StringName) -> Dictionary:
 	var templates: Array = PATH_DOCKET_DATA.get(path_id, [])
 	if templates.is_empty():
 		return {}
 	var eligible: Array = []
 	for template in templates:
-		var archetype_id := StringName("path_%s" % template.get("id", "docket"))
-		if world.recent_archetypes.is_empty() or StringName(world.recent_archetypes.back()) != archetype_id:
+		var candidate_archetype_id := StringName("path_%s" % template.get("id", "docket"))
+		if world.recent_archetypes.is_empty() or StringName(world.recent_archetypes.back()) != candidate_archetype_id:
 			eligible.append(template)
 	if eligible.is_empty():
 		eligible = templates
