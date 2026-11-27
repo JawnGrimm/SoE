@@ -206,7 +206,8 @@ func _run() -> void:
 		_check(not abandoned_reappeared, "An abandoned same-period opportunity must not reappear and become unopenable")
 		assignment_world.assignments.erase(abandoned_id)
 
-	# Sponsor institution resolves to its place: a Uruk Epic review is not local in Nippur.
+	# A pending Uruk Epic review is visible as a remote obligation in Nippur,
+	# but its travel gate must prevent opening a verdict from the provincial desk.
 	var regional_board_world := WorldState.new()
 	regional_board_world.current_location_id = &"nippur"
 	regional_board_world.places[&"uruk"] = {"name": "Uruk", "parent": &""}
@@ -214,11 +215,15 @@ func _run() -> void:
 	regional_board_world.institutions[&"eanna_household"] = {"place_id": &"uruk", "name": "Eanna"}
 	regional_board_world.epics[&"great_canal_cut"] = {"active": true, "completed": false, "progress": 10, "progress_resource": &"canal_progress", "target": 100, "sponsor_institution": &"eanna_household", "stage": "survey", "review_cycle": 0}
 	var regional_board := AssignmentPipelineScript.generate_opportunities(regional_board_world, assignment_actor, &"path_civil")
-	var remote_review_found := false
+	var remote_review: Dictionary = {}
 	for candidate in regional_board:
-		if StringName(candidate.get("kind", "")) == &"project_review":
-			remote_review_found = true
-	_check(not remote_review_found, "Uruk Epic review must be hidden while the player is in Nippur")
+		if StringName(candidate.get("kind", "")) == &"project_review" and StringName(candidate.get("source_id", "")) == &"great_canal_cut":
+			remote_review = candidate
+	_check(not remote_review.is_empty(), "Pending Uruk Epic review should remain visible as a remote obligation in Nippur")
+	if not remote_review.is_empty():
+		_check(bool(remote_review.get("requires_travel", false)) and StringName(remote_review.get("place_id", "")) == &"uruk", "Remote Great Canal review must identify Uruk as its travel destination")
+		_check(String(remote_review.get("summary", "")).contains("[REQUIRES TRAVEL TO URUK]"), "Remote Great Canal review must explain its travel gate on the board")
+		_check(not AssignmentPipelineScript.begin(regional_board_world, remote_review, assignment_actor), "Remote Great Canal review must not begin while the player is in Nippur")
 
 	# A non-Uruk career docket uses residents at the current settlement as its speakers.
 	var local_docket_world := WorldState.new()
