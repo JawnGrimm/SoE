@@ -74,6 +74,7 @@ General project rules:
 - `OfficeRunner` selects a LimboAI `.tres` by office ID, seeds Blackboard with `actor`, `institution`, and `world` (plus institution ID), and ticks manually once per period.
 - BT resources own decision flow. Shared condition/action tasks read Blackboard; one `OfficeAgendaResolver` validates and commits typed mutations. Never create per-office agent or resolver classes.
 - Grain-clerk and granary-clerk tokens share the grain BT. Umma granary and canal office are separate institutions. Nin-Enlil is seated only in `umma_granary`; Ur-Mes only in `umma_canal_bailiff`.
+- The Umma canal institution declares both `canal_bailiff` and `granary_clerk` in its staffed-office roles; the actual named seats remain distinct: Ur-Mes holds `canal_bailiff` in the canal institution, and Nin-Enlil holds `granary_clerk` in the granary. Do not double-list Nin-Enlil as a canal member.
 - Runtime membership and office maps rebuild from living valid members. Vacancies may be filled by eligible unseated people in the institution's place or parent settlement; do not retain orphan pointers.
 - `umma_granary` is registry-loaded from a Resource, uses a child place under Umma, and owns local stockpiles. Definitions remain immutable.
 - Bailiff forms retain issuing/target institution IDs and `created_period`; requests older than four periods escalate through the existing dispatch circuit. Archive and foreman consequences name the acting official and use existing debt/opinion/period-delta/Epic state.
