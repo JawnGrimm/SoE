@@ -10,6 +10,9 @@ extends Resource
 @export var interests: Array[StringName] = []
 @export var starting_stockpiles: Dictionary = {}
 @export var starting_activity_count: int = 0
+@export var ledger_work_title: String = ""
+@export_multiline var ledger_work_summary: String = ""
+@export var ledger_work_priority: int = 1
 
 func is_valid() -> bool:
 	return id != &"" and not display_name.strip_edges().is_empty() and place_id != &""
@@ -22,5 +25,8 @@ func create_runtime_state() -> Dictionary:
 		"members": members.duplicate(),
 		"interests": interests.duplicate(),
 		"stockpiles": starting_stockpiles.duplicate(true),
-		"activity_count": starting_activity_count
+		"activity_count": starting_activity_count,
+		"ledger_work_title": ledger_work_title,
+		"ledger_work_summary": ledger_work_summary,
+		"ledger_work_priority": ledger_work_priority
 	}
