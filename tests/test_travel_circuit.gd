@@ -120,9 +120,14 @@ func _run() -> void:
 	_check(int(eanna.get("agenda_evaluation_count", 0)) == 3, "Ur-Nanna's autonomous agenda evaluates once per transit period")
 	var last_agenda: Dictionary = eanna.get("last_grain_clerk_agenda", {})
 	_check(not last_agenda.is_empty(), "Ur-Nanna records an autonomous agenda decision while the player is away")
-	_check(StringName(last_agenda.get("intent_id", "")) == &"intent_hide_spoilage", "Ur-Nanna's LimboAI tree chooses the seeded concealment action during the journey")
 	var eanna_records: Dictionary = eanna.get("stock_records", {})
 	_check(bool(eanna_records.get("concealed_spoilage", false)) and String(eanna_records.get("barley_quality_declaration", "")) == "prime_seed_corn", "The return reveals Ur-Nanna falsified the barley quality record while the scribe was away")
+	var ur_nanna := world.get_person(&"ur_nanna")
+	var cover_up_memory_found := false
+	for memory in ur_nanna.memory:
+		if StringName(memory.get("memory_id", "")) == &"grain_clerk_cover_up":
+			cover_up_memory_found = true
+	_check(cover_up_memory_found, "Ur-Nanna's own chronicle records the cover-up decision made during the journey")
 	var return_opportunities := AssignmentPipelineScript.generate_opportunities(world, world.get_player())
 	var returned_grain_docket := false
 	for return_opportunity in return_opportunities:
