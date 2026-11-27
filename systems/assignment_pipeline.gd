@@ -321,6 +321,7 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 				form_institution["stockpiles"] = form_stock
 				world.institutions[form_institution_id] = form_institution
 				opinion_delta_override = -3
+				silver_award = 1
 				var archivist := world.get_person(&"shuruppak_ilu")
 				if archivist != null and world.current_location_id == &"uruk":
 					archivist.change_opinion(actor.id, 2, "The apprentice referred a concealed grain account for correction.", world.year)
