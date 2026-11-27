@@ -66,7 +66,7 @@ Current project configuration already includes:
 - Editor plugin enabled.
 - LimboConsole configuration file at `addons/limbo_console/limbo_console.cfg`.
 
-**Release-build guardrail:** the current addon configuration has `disable_in_release_build=false`. That means the console is not currently configured to disable itself in release builds. Phase 1 must correct this before adding SoE-specific commands. Debug commands must not ship as an available release-build interface.
+**Release-build guardrail:** `ConsoleOptions.disable_in_release_build` defaults to `false`, and the project-level config file at `res://addons/limbo_console.cfg` is absent from the tracked baseline. The bundled `addons/limbo_console/limbo_console.cfg` is not the path read by `ConsoleOptions`. Phase 1 must add the correctly located project config with `disable_in_release_build=true` before adding SoE-specific commands. Debug commands must not ship as an available release-build interface.
 
 The checked-in addon identifies itself as version 0.8.0. Its README advertises Godot 4.3; the repository's Godot 4.7.2 CI currently imports and tests the project successfully with the addon enabled. Phase 1 should continue to validate the actual checked-in source and CI rather than relying on the README badge as a compatibility guarantee.
 
