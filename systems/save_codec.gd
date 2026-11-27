@@ -54,6 +54,7 @@ static func decode_save(payload: Variant) -> Dictionary:
 	if not (data is Dictionary):
 		return {"success": false, "error": "Save is missing its world snapshot."}
 	var world := _world_from_data(data)
+	RegionalWorldSystem.ensure_regional_world(world)
 	if world.get_player() == null:
 		return {"success": false, "error": "Save has no valid current player."}
 	var session: Variant = payload.get("session", {})
