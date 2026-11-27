@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="OccupationDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/occupation_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"storehouse_worker"
+display_name = "Storehouse Worker"
+culture_tags = Array[StringName]([&"sumerian"])
+era_ids = Array[StringName]([&"uruk_storehouse"])
+office_id = &""
+skill_ranges = {&"stewardship": Vector2i(1, 2), &"arithmetic": Vector2i(0, 1)}
+trait_ids = Array[StringName]([&"resourceful"])
+weight = 4
