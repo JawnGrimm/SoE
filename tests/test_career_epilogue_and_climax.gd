@@ -85,6 +85,7 @@ func _test_dedication_choices() -> void:
 	assert(not Dedication.apply_choice(world, actor, &"honor_crews"))
 	var crew_world := WorldState.new()
 	var crew_scribe := PersonEntity.new()
+	crew_scribe.id = &"crew_scribe"
 	var foreman := PersonEntity.new()
 	foreman.id = &"enlil_kisu"
 	crew_world.people[foreman.id] = foreman
