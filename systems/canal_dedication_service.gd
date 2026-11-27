@@ -11,6 +11,10 @@ static func is_climax_due(world: WorldState) -> bool:
 	# BCE year numbers increase toward the boundary: -3200 precedes -3160.
 	return progress >= target or world.year >= -3160
 
+static func mark_climax_ready(world: WorldState) -> void:
+	if is_climax_due(world):
+		world.world_flags[&"canal_dedication_ready"] = -1
+
 static func can_personal_seal(actor: PersonEntity) -> bool:
 	return actor != null and actor.skills.get_level(&"law") >= 2 and actor.skills.get_level(&"literacy") >= 2
 
