@@ -750,7 +750,7 @@ static func _live_stock_facts(stock: Dictionary, institution: Dictionary) -> Str
 	resource_ids.sort()
 	for resource_value in resource_ids:
 		var resource_id := StringName(resource_value)
-		var resource_label := String(resource_id).replace("_", " ").to_upper()
+		var resource_label := String(resource_id).replace("_", " ").capitalize()
 		var amount := int(stock[resource_value])
 		if resource_id in [&"barley", &"labor", &"textiles"] and amount == 0 and not thresholds.has(StringName("%s_warn" % String(resource_id))):
 			continue
