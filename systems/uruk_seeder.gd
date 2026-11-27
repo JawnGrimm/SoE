@@ -161,8 +161,11 @@ static func attach_player(world: WorldState, player: PersonEntity) -> void:
 		world.institutions[&"eanna_household"] = household
 
 	for person in world.people.values():
-		if person == player:
+		if person == player or person.office_id == &"trade_factor":
 			continue
+		# Regional trade factors are generated world agents, not members of the
+		# authored Uruk roster. Their opinion defaults to neutral until a real
+		# interaction creates a relationship entry.
 		person.set_opinion(world.player_id, 5 if person.id == &"shuruppak_ilu" else 0)
 
 	# Restore the baseline mentor and household ties omitted while the player
