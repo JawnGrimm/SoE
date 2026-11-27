@@ -397,6 +397,7 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 			work_details = "Progress %d / %d. Current stage: %s. Recorded simulation entries: %d." % [progress, target, reviewed_stage, notes.size()]
 			match verdict:
 				&"epic_emergency":
+					silver_award = 0
 					if world.get_resource(&"barley", "institution", "", sponsor_id) < 20 or world.get_resource(&"labor", "institution", "", sponsor_id) < 2:
 						return {"success": false, "message": "The sponsor cannot spare 20 barley and 2 labor. No resources were spent."}
 					if not world.modify_resource(&"barley", -20, "institution", "", sponsor_id):
@@ -504,7 +505,7 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 
 	var employer_id := StringName(record.get("employer_id", ""))
 	var employer := world.get_person(employer_id)
-	var opinion_delta := opinion_delta_override if opinion_delta_override != 0 else (1 if accurate else -1)
+	var opinion_delta := opinion_delta_override if opinion_delta_override != 0 else (0 if custom_verdict else (1 if accurate else -1))
 	if not custom_verdict:
 		if employer != null:
 			employer.change_opinion(actor.id, opinion_delta, "Assignment assessment: %s" % String(record.get("title", "")), world.year)
