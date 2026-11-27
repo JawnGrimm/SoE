@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="PlaceDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/place_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"godin_tepe"
+display_name = "Godin Tepe"
+place_type = &"highland_settlement"
+region = &"zagros_highlands"
+political_relation = &"highland_partner"
+exports = Array[StringName]([&"livestock", &"stone", &"metal"])
+imports = Array[StringName]([&"textiles", &"grain", &"beer"])
+connected_to = Array[StringName]([&"susa"])
+era_id = &"uruk_storehouse"
