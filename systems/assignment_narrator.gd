@@ -93,7 +93,7 @@ static func _template_for(record: Dictionary) -> Dictionary:
 		if MATTER_TEMPLATES.has(value):
 			return MATTER_TEMPLATES[value]
 	var identifying_text := "%s %s %s %s" % [String(record.get("title", "")), String(record.get("summary", "")), String(record.get("matter_type", "")), String(record.get("kind", ""))]
-		.to_lower()
+	identifying_text = identifying_text.to_lower()
 	if identifying_text.contains("nippur") and (identifying_text.contains("shrine") or identifying_text.contains("grain")):
 		return MATTER_TEMPLATES[&"nippur_shrine_establishment"]
 	if identifying_text.contains("canal") or identifying_text.contains("embankment") or identifying_text.contains("progress_review"):
