@@ -283,6 +283,70 @@ func _run() -> void:
 		_check(StringName(cycle_two_opportunity.get("id", "")) == &"epic:great_canal_cut:r2:s1", "The next same-stage Epic review receives review cycle 2 identity")
 		_check(Pipeline.begin(review_world, cycle_two_opportunity, review_actor), "The cycle 2 Epic review also opens without overwriting prior reviews")
 
+	# Epic evidence must resolve its sponsor institution when the source snapshot
+	# carries sponsor_institution rather than institution_id.
+	var evidence_world := WorldState.new()
+	evidence_world.year = -3198
+	evidence_world.current_location_id = &"uruk"
+	evidence_world.places[&"uruk"] = {"name": "Uruk", "parent": ""}
+	evidence_world.institutions[&"eanna_household"] = {
+		"name": "Eanna Temple", "place_id": &"uruk", "members": [],
+		"stockpiles": {&"barley": 73, &"labor": 12, &"textiles": 4}
+	}
+	var evidence_actor := PersonEntity.new()
+	evidence_actor.id = &"evidence_scribe"
+	evidence_actor.display_name = "Evidence Scribe"
+	evidence_world.set_player(evidence_actor)
+	var evidence_opportunity := {
+		"id": &"epic:evidence_test:r0:s1", "kind": &"project_review",
+		"source_id": &"evidence_test", "sponsor_institution": &"eanna_household",
+		"title": "Evidence Test", "summary": "Inspect sponsor stores.",
+		"source_data": {"sponsor_institution": &"eanna_household"}
+	}
+	_check(Pipeline.begin(evidence_world, evidence_opportunity, evidence_actor), "Epic evidence fixture begins")
+	var evidence_result := Pipeline.perform_action(evidence_world, evidence_actor, &"epic:evidence_test:r0:s1", &"inspect_source")
+	_check(bool(evidence_result.get("success", false)), "Epic physical inspection records evidence")
+	_check(String(evidence_result.get("evidence", {}).get("facts", "")).contains("BIN COUNT / BARLEY: 73"), "Epic physical inspection reads sponsor storehouse bins instead of reporting zero")
+
+	# A requisition from another province ages into compulsory dispatch business.
+	var dispatch_world := WorldState.new()
+	dispatch_world.year = -3199
+	dispatch_world.period = 8
+	dispatch_world.current_location_id = &"uruk"
+	dispatch_world.places[&"uruk"] = {"name": "Uruk", "parent": ""}
+	dispatch_world.places[&"umma"] = {"name": "Umma", "parent": ""}
+	dispatch_world.places[&"umma_storehouse"] = {"name": "Umma Storehouse", "parent": &"umma"}
+	dispatch_world.institutions[&"umma_granary"] = {
+		"name": "Umma Granary", "place_id": &"umma", "members": [],
+		"stockpiles": {&"barley": 40}
+	}
+	var dispatch_actor := PersonEntity.new()
+	dispatch_actor.id = &"dispatch_scribe"
+	dispatch_actor.display_name = "Dispatch Scribe"
+	dispatch_world.set_player(dispatch_actor)
+	var requisition_id := dispatch_world.enqueue_form({
+		"form_type": &"bailiff_requisition", "subject_id": &"umma_storehouse",
+		"institution_id": &"umma_granary", "is_requisition": true,
+		"year": dispatch_world.year, "period": dispatch_world.period - 5,
+		"urgency": 1
+	})
+	# Explicitly age the form five periods; the enqueue timestamp remains its origin.
+	for form_index in range(dispatch_world.pending_forms.size()):
+		var aged_form: Dictionary = dispatch_world.pending_forms[form_index]
+		aged_form["created_period"] = dispatch_world.current_period_index() - 5
+		dispatch_world.pending_forms[form_index] = aged_form
+	var dispatch_board := Pipeline.generate_opportunities(dispatch_world, dispatch_actor)
+	var dispatch_opportunity: Dictionary = {}
+	for opportunity in dispatch_board:
+		if bool(opportunity.get("dispatch", false)):
+			dispatch_opportunity = opportunity
+			break
+	_check(not dispatch_opportunity.is_empty(), "An external requisition older than four periods appears on the Uruk board")
+	_check(int(dispatch_opportunity.get("priority", 0)) == 8, "Provincial dispatch priority is eight")
+	_check(Array(dispatch_opportunity.get("tags", [])).has("DISPATCH FROM UMMA"), "Provincial dispatch carries the DISPATCH FROM UMMA tag")
+	_check(dispatch_opportunity in dispatch_board, "Provincial dispatch survives ordinary board rotation")
+	_check(String(dispatch_opportunity.get("title", "")).begins_with("DISPATCH FROM UMMA"), "Provincial dispatch is visibly identified in its docket title")
+
 	_finished = true
 	if _failures.is_empty():
 		print("PASS: %d Epic/Challenge circuit checks" % _checks)
