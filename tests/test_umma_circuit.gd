@@ -82,7 +82,7 @@ func _run() -> void:
 	_check(not local_form.is_empty(), "Umma's own low labor stock generates a local bailiff requisition")
 	_check(int(local_form.get("priority", 0)) >= 7, "The local bailiff requisition keeps priority on the four-slot Umma board")
 	var canal_after_travel: Dictionary = world.institutions.get(&"umma_canal_bailiff", {})
-	_check(StringName(canal_after_travel.get("last_agenda_official_id", "")) == &"character_0013" and int(canal_after_travel.get("office_agenda_evaluation_count", 0)) > 0, "The seeded canal bailiff agenda ticks for Ur-Mes during travel")
+	_check(int(canal_after_travel.get("last_bailiff_requisition_period", -100)) == world.current_period_index() and int(canal_after_travel.get("office_agenda_evaluation_count", 0)) > 0, "The seeded canal bailiff agenda ticks and records Ur-Mes's requisition during travel")
 	_check(not local_pressure.is_empty(), "Umma pressure work is derived from Umma stockpiles")
 	for candidate in opportunities:
 		var candidate_source: Dictionary = candidate.get("source_data", {})
