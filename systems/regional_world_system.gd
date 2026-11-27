@@ -26,14 +26,22 @@ static func ensure_regional_world(world: WorldState) -> void:
 				"connected_to": definition.connected_to.duplicate(), "era_id": definition.era_id
 			}
 		else:
-			if not place.has("name"): place["name"] = definition.display_name
-			if not place.has("kind"): place["kind"] = definition.place_type
-			if not place.has("region"): place["region"] = definition.region
-			if not place.has("political_relation"): place["political_relation"] = definition.political_relation
-			if not place.has("exports"): place["exports"] = definition.exports.duplicate()
-			if not place.has("imports"): place["imports"] = definition.imports.duplicate()
-			if not place.has("connected_to"): place["connected_to"] = definition.connected_to.duplicate()
-			if not place.has("era_id"): place["era_id"] = definition.era_id
+			if not place.has("name"):
+				place["name"] = definition.display_name
+			if not place.has("kind"):
+				place["kind"] = definition.place_type
+			if not place.has("region"):
+				place["region"] = definition.region
+			if not place.has("political_relation"):
+				place["political_relation"] = definition.political_relation
+			if not place.has("exports"):
+				place["exports"] = definition.exports.duplicate()
+			if not place.has("imports"):
+				place["imports"] = definition.imports.duplicate()
+			if not place.has("connected_to"):
+				place["connected_to"] = definition.connected_to.duplicate()
+			if not place.has("era_id"):
+				place["era_id"] = definition.era_id
 		world.places[definition.id] = place
 	if not world.institutions.has(&"habuba_trade_post"):
 		var habuba_place: Dictionary = world.places.get(&"habuba_kabira", {})
