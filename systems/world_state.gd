@@ -438,6 +438,8 @@ func enqueue_form(form: Dictionary) -> StringName:
 		_next_form_sequence += 1
 	stored_form["id"] = form_id
 	stored_form["status"] = String(stored_form.get("status", "pending"))
+	if not stored_form.has("created_period"):
+		stored_form["created_period"] = current_period_index()
 	if stored_form.has("due_period") and int(stored_form["due_period"]) < current_period_index():
 		stored_form["status"] = "overdue"
 	pending_forms.append(stored_form)
