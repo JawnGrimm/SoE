@@ -1368,6 +1368,20 @@ func _run() -> void:
 	WorldSimulator.new(registry).advance_period(epic_reset_world)
 	_check(epic_reset_world.get_resource(&"canal_progress") > 0, "Canal Epic should resume autonomous progress after its new-shift reset")
 
+	# Seasonal upkeep uses elapsed campaign periods, not the negative BCE year index.
+	var upkeep_world := WorldState.new()
+	var upkeep_actor := PersonEntity.new()
+	upkeep_actor.id = &"upkeep_test_player"
+	upkeep_actor.resources[&"silver"] = 2
+	upkeep_world.set_player(upkeep_actor)
+	upkeep_world.periods_elapsed = 3
+	var upkeep_simulator := WorldSimulator.new(registry)
+	upkeep_simulator._simulate_personal_upkeep(upkeep_world)
+	_check(int(upkeep_actor.resources.get(&"silver", 0)) == 0 and int(upkeep_actor.flags.get(&"unpaid_upkeep", 0)) == 0, "Three elapsed periods charge two silver of household upkeep during BCE")
+	upkeep_world.periods_elapsed = 6
+	upkeep_simulator._simulate_personal_upkeep(upkeep_world)
+	_check(int(upkeep_actor.flags.get(&"unpaid_upkeep", 0)) == 2 and int(upkeep_actor.resources.get(&"silver", 0)) == 0, "Unpaid seasonal upkeep becomes recorded debt without blocking work")
+
 	# Once-per-character history survives JSON String/StringName conversion.
 	var labor_tally_event: EventTemplate = registry.get_event(&"case_12_labor_tally")
 	var labor_history_world := WorldState.new()
