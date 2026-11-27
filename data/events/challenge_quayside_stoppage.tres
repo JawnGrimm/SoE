@@ -184,5 +184,5 @@ description = "The Euphrates winds low and cold against the mud-brick quays. The
 era_tags = Array[StringName]([&"uruk"])
 weight = 10.0
 once_per_world = true
-conditions = Array[ExtResource("4")]([SubResource("condition_office"), SubResource("condition_year"), SubResource("condition_period"), SubResource("condition_consequence"), SubResource("condition_personal_silver")])
+conditions = Array[ExtResource("4")]([SubResource("condition_office"), SubResource("condition_year"), SubResource("condition_period"), SubResource("condition_consequence")])
 outcomes = Array[ExtResource("2")]([SubResource("outcome_silver"), SubResource("outcome_recant"), SubResource("outcome_force")])
