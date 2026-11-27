@@ -14,7 +14,11 @@ func configure(world_state: WorldState, place_definitions: Array[PlaceDef], rout
 	var next_places: Dictionary[StringName, PlaceDef] = {}
 	var next_routes: Dictionary[StringName, RouteDef] = {}
 	for place in place_definitions:
-		if place == null or not place.is_valid() or next_places.has(place.id):
+		if place == null or not place.is_valid():
+			return false
+		if active_era_id != &"" and place.era_id != &"" and place.era_id != active_era_id:
+			continue
+		if next_places.has(place.id):
 			return false
 		next_places[place.id] = place
 	for route in route_definitions:
