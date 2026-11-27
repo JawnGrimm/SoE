@@ -54,4 +54,4 @@ func set_queue_status(count: int, urgent_kind: String = "") -> void:
 	badge_label.text = "[%s]" % urgent_kind.to_upper() if not urgent_kind.is_empty() else ""
 	badge_label.visible = not urgent_kind.is_empty()
 	tooltip_text = "Open work queue. %d items%s" % [count, (", " + urgent_kind) if not urgent_kind.is_empty() else ""]
-	accessible_name = tooltip_text
+	text = "Open work queue"

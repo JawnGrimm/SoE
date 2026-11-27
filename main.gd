@@ -1443,7 +1443,7 @@ func _resolve_procedural_choice(_index: int, choice: Dictionary) -> void:
 	for person_value in world.people.values():
 		if person_value == null or person_value.id == actor.id:
 			continue
-		var opinion_change := person_value.get_opinion(actor.id) - int(opinion_before.get(person_value.id, person_value.get_opinion(actor.id)))
+		var opinion_change: int = person_value.get_opinion(actor.id) - int(opinion_before.get(person_value.id, person_value.get_opinion(actor.id)))
 		if opinion_change != 0:
 			consequences.append(AssignmentGeneratorScript.make_opinion_consequence(person_value, opinion_change, opinion_reason))
 	var silver_change := int(actor.resources.get(&"silver", 0)) - silver_before
@@ -2194,8 +2194,9 @@ func _on_queue_opportunity_selected(index: int) -> void:
 
 
 func _set_evidence_visible(is_visible: bool) -> void:
-	var map_open := survey_map != null and survey_map.visible
-	var full_workspace := phase == "character_creation" or map_open
+	var map_open: bool = survey_map != null and survey_map.visible
+	var full_workspace: bool = phase == "character_creation" or map_open
+	
 	var visible_now := is_visible and CedarDeskLayoutScript.evidence_visible(phase, map_open)
 	if clay_docket != null:
 		clay_docket.visible = not full_workspace
