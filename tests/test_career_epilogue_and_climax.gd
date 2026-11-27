@@ -83,6 +83,16 @@ func _test_dedication_choices() -> void:
 	assert(world.get_resource(&"canal_progress") == 100, "Era reset must preserve dedicated canal progress.")
 	assert(not bool(world.epics[&"great_canal_cut"].get("active", true)), "A dedicated canal must remain inactive.")
 	assert(not Dedication.apply_choice(world, actor, &"honor_crews"))
+	var crew_world := WorldState.new()
+	var crew_scribe := PersonEntity.new()
+	var foreman := PersonEntity.new()
+	foreman.id = &"enlil_kisu"
+	crew_world.people[foreman.id] = foreman
+	assert(Dedication.apply_choice(crew_world, crew_scribe, &"honor_crews"))
+	assert(crew_world.world_flags.has(&"canal_honest_legacy"))
+	assert(foreman.get_opinion(crew_scribe.id) == 15)
+	var crew_summary := Evaluator.evaluate(crew_world, crew_scribe)
+	assert(String(crew_summary.epitaph).contains("Reed-Friend"))
 
 func _test_event_definition_and_fresh_world() -> void:
 	var terminal_actor := PersonEntity.new()
