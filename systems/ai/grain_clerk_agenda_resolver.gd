@@ -48,7 +48,7 @@ func _hide_spoilage(world: WorldState, clerk: PersonEntity) -> Dictionary:
 		"year": world.year,
 		"involved": [&"north_bay", &"roof_leak"]
 	})
-	return {"success": true, "intent_id": intent_id, "period": world.current_period_index()}
+	return {"success": true, "intent_id": &"intent_hide_spoilage", "period": world.current_period_index()}
 
 func _pocket_measures(world: WorldState, clerk: PersonEntity) -> Dictionary:
 	var barley := world.get_resource(&"barley", "institution", "", INSTITUTION_ID)
@@ -76,7 +76,7 @@ func _pocket_measures(world: WorldState, clerk: PersonEntity) -> Dictionary:
 		"year": world.year,
 		"involved": [&"south_court_storehouse"]
 	})
-	return {"success": true, "intent_id": intent_id, "period": world.current_period_index()}
+	return {"success": true, "intent_id": &"intent_pocket_measures", "period": world.current_period_index()}
 
 func _log_deliveries(world: WorldState, clerk: PersonEntity) -> Dictionary:
 	var institution: Dictionary = world.institutions.get(INSTITUTION_ID, {}).duplicate(true)
