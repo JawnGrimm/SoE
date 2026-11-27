@@ -52,7 +52,9 @@ static func build_biography(catalog: Dictionary, selections: CharacterCreationSe
 	var validation := validate(catalog, selections)
 	if not validation.has("selected_answers"):
 		return ""
-	var lines: Array[String] = [selections.character_name.strip_edges(), String(catalog.get("display_context", ""))]
+	var origin_id := selections.get_answer(&"origin")
+	var designation := String(catalog.get("designation_by_origin", {}).get(String(origin_id), "compound entrant"))
+	var lines: Array[String] = [selections.character_name.strip_edges() + ", " + designation + ".", String(catalog.get("display_context", ""))]
 	for question_data in catalog.get("questions", []):
 		var answer := _find_answer(question_data, selections.get_answer(StringName(question_data.get("id", ""))))
 		var fragment := String(answer.get("biography", "")).strip_edges()
@@ -73,6 +75,11 @@ static func build_effects(catalog: Dictionary, selections: CharacterCreationSele
 			effect.target = String(effect_data.get("target", "actor"))
 			effect.parameters = effect_data.get("parameters", {}).duplicate(true)
 			effects.append(effect)
+	var biography_effect := EventEffect.new()
+	biography_effect.effect_type = &"add_memory"
+	biography_effect.target = "actor"
+	biography_effect.parameters = {"memory_id": "character_creation_biography", "text": build_biography(catalog, selections), "involved": []}
+	effects.append(biography_effect)
 	return effects
 
 static func commit(catalog: Dictionary, selections: CharacterCreationSelections, world: WorldState, actor: PersonEntity, era: EraDef, executor: EffectExecutor) -> Dictionary:
