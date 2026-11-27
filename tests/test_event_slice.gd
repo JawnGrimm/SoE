@@ -143,19 +143,19 @@ func _run() -> void:
 			&"form": form_opportunity = opportunity
 			&"hazard": hazard_opportunity = opportunity
 			&"ledger": ledger_opportunity = opportunity
-	_check(StringName(form_opportunity.get("employer_id", "")) == &"ur_nanna", "Grain levy work should route to the grain clerk responsible for the source office")
+	_check(StringName(form_opportunity.get("employer_id", "")) == &"ur_nanna", "Remote consignment work should route to its named carrier or sender")
 	_check(AssignmentPipeline.begin(assignment_world, form_opportunity, assignment_actor), "A selected world opportunity should enter the active assignment lifecycle")
 	var form_assignment_id := StringName(form_opportunity.get("id", ""))
 	var other_scribe := PersonEntity.new()
 	other_scribe.id = &"other_scribe"
 	_check(not bool(AssignmentPipeline.perform_action(assignment_world, other_scribe, form_assignment_id, &"examine_records").get("success", false)), "An engagement should only accept actions from its assigned scribe")
 	_check(not bool(AssignmentPipeline.resolve(assignment_world, assignment_actor, form_assignment_id, &"certify").get("success", false)), "An engagement should not permit assessment before investigation")
-	_check(bool(AssignmentPipeline.perform_action(assignment_world, assignment_actor, form_assignment_id, &"examine_records").get("success", false)), "Assignment should allow examination of its actual source record")
-	_check(bool(AssignmentPipeline.perform_action(assignment_world, assignment_actor, form_assignment_id, &"consult_official").get("success", false)), "Assignment should allow consultation as a separate investigative action")
-	_check(not bool(AssignmentPipeline.perform_action(assignment_world, assignment_actor, form_assignment_id, &"examine_records").get("success", false)), "An investigative action should not be recordable twice")
+	_check(bool(AssignmentPipeline.perform_action(assignment_world, assignment_actor, form_assignment_id, &"inspect_seal").get("success", false)), "Assignment should allow examination of its actual source record")
+	_check(bool(AssignmentPipeline.perform_action(assignment_world, assignment_actor, form_assignment_id, &"question_carrier").get("success", false)), "Assignment should allow consultation as a separate investigative action")
+	_check(not bool(AssignmentPipeline.perform_action(assignment_world, assignment_actor, form_assignment_id, &"inspect_seal").get("success", false)), "An investigative action should not be recordable twice")
 	var form_resolution := AssignmentPipeline.resolve(assignment_world, assignment_actor, form_assignment_id, &"certify")
 	_check(bool(form_resolution.get("success", false)), "Two investigative actions should permit a supported form assessment")
-	_check(assignment_world.pending_forms.is_empty(), "Certifying the generated form should resolve that exact source form")
+	_check(not assignment_world.has_pending_form(&"remote_dispatch"), "Certifying the generated form should resolve that exact remote dispatch")
 	var deferred_world := WorldState.new()
 	var deferred_actor := UrukSeeder.seed_campaign(deferred_world, 44004401)
 	var deferred_form: Dictionary = {}
@@ -165,10 +165,10 @@ func _run() -> void:
 			break
 	AssignmentPipeline.begin(deferred_world, deferred_form, deferred_actor)
 	var deferred_id := StringName(deferred_form.get("id", ""))
-	AssignmentPipeline.perform_action(deferred_world, deferred_actor, deferred_id, &"examine_records")
-	AssignmentPipeline.perform_action(deferred_world, deferred_actor, deferred_id, &"reconcile_accounts")
+	AssignmentPipeline.perform_action(deferred_world, deferred_actor, deferred_id, &"inspect_seal")
+	AssignmentPipeline.perform_action(deferred_world, deferred_actor, deferred_id, &"compare_manifest")
 	var deferred_result := AssignmentPipeline.resolve(deferred_world, deferred_actor, deferred_id, &"defer")
-	_check(bool(deferred_result.get("success", false)) and deferred_world.pending_forms.is_empty() and String(deferred_world.resolved_forms.back().get("disposition", "")) == "deferred", "Deferring an assessment should file that form as deferred rather than certified")
+	_check(bool(deferred_result.get("success", false)) and String(deferred_world.shipments[&"shipment_000001"].get("status", "")) == "held" and String(deferred_world.resolved_forms.back().get("disposition", "")) == "defer", "Deferring a dispatch should hold cargo and return it to the docket rather than certify it")
 	_check(AssignmentPipeline.begin(assignment_world, hazard_opportunity, assignment_actor), "Active hazard should become a selectable engagement")
 	var hazard_assignment_id := StringName(hazard_opportunity.get("id", ""))
 	AssignmentPipeline.perform_action(assignment_world, assignment_actor, hazard_assignment_id, &"consult_official")
@@ -183,7 +183,7 @@ func _run() -> void:
 	_check(bool(ledger_result.get("success", false)) and assignment_world.cedar_desk_log.size() == 3 and String(assignment_world.cedar_desk_log.back().get("category", "")) == "ledger", "Every completed engagement should enter the persistent work log with its source category")
 	_check(String(assignment_world.cedar_desk_log.front().get("responsible_character_id", "")) == String(assignment_actor.id) and String(assignment_world.cedar_desk_log.front().get("employer_id", "")) == "ur_nanna" and String(assignment_world.cedar_desk_log.front().get("institution_id", "")) == "eanna_household", "Work log should retain the responsible scribe, employer, and institution")
 	_check(assignment_world.cases_settled == 3, "Completed world-driven engagements should enter the existing career settlement counters")
-	_check(registry.all_places().size() == 7, "DefinitionRegistry should load the seven canonical Era 1 places")
+	_check(registry.all_places().size() == 12, "DefinitionRegistry should load the twelve canonical Era 1 places")
 	_check(registry.get_place(&"hacinebi") != null and registry.get_place(&"hacinebi").political_relation == &"foreign_enclave", "Typed place lookup should retain Hacinebi's autonomous local context")
 	var copper_vector := AssignmentGeneratorScript.get_geographic_vector(&"counterfeit_copper")
 	_check(copper_vector.origin_id == &"hacinebi" and copper_vector.destination_id == &"uruk" and copper_vector.commodity_id == &"copper", "Copper docket vector should use authored Hacinebi-to-Uruk geography")
