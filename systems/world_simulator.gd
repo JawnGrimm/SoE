@@ -113,6 +113,7 @@ func _simulate_epics(world: WorldState) -> void:
 				"progress_resource": definition.progress_resource,
 				"target": definition.target,
 				"title": definition.title,
+				"sponsor_institution": definition.sponsor_institution,
 				"era_id": definition.era_id,
 				"initial_stage": definition.initial_stage,
 				"stage": definition.initial_stage,
@@ -132,6 +133,7 @@ func _simulate_epics(world: WorldState) -> void:
 		state["progress_resource"] = definition.progress_resource
 		state["target"] = definition.target
 		state["title"] = definition.title
+		state["sponsor_institution"] = definition.sponsor_institution
 		state["era_id"] = definition.era_id
 		state["initial_stage"] = definition.initial_stage
 		if not era_matches:
