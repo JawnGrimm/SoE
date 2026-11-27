@@ -1,6 +1,7 @@
 extends Control
 
 const AssignmentGeneratorScript = preload("res://systems/assignment_generator.gd")
+const AssignmentNarratorScript = preload("res://systems/assignment_narrator.gd")
 const DevCommandRouterScript = preload("res://systems/dev_command_router.gd")
 const RouteNetworkScript = preload("res://systems/route_network.gd")
 const TravelServiceScript = preload("res://systems/travel_service.gd")
@@ -974,7 +975,7 @@ func _show_assignment_board() -> void:
 	var callbacks: Array[Callable] = []
 	var summaries := PackedStringArray()
 	for index in range(assignment_opportunities.size()):
-		var opportunity: Dictionary = assignment_opportunities[index]
+		var opportunity: Dictionary = AssignmentNarratorScript.translate_opportunity(assignment_opportunities[index])
 		var label := "%s\n%s" % [String(opportunity.get("title", "Work")), String(opportunity.get("summary", "A matter requires attention."))]
 		choices_payload.append({"label": label})
 		callbacks.append(_select_assignment_opportunity.bind(index))
@@ -1016,6 +1017,7 @@ func _show_world_engagement() -> void:
 		active_world_assignment_id = &""
 		_show_assignment_board()
 		return
+	record = AssignmentNarratorScript.translate_record(record)
 	_clear_choices()
 	_set_phase("world_engagement")
 	var actions: Dictionary = record.get("actions", {})
@@ -1101,7 +1103,7 @@ func _show_case() -> void:
 	_clear_stamp_history()
 	_clear_choices()
 	_set_phase("case")
-	_render_docket_payload(_active_docket_payload())
+	_render_docket_payload(AssignmentNarratorScript.translate_payload(_active_docket_payload()))
 
 func _render_docket_payload(payload: Dictionary, callbacks: Array = []) -> void:
 	case_heading.add_theme_font_size_override("font_size", 20)
