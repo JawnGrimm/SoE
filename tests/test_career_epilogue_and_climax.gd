@@ -2,12 +2,14 @@ extends SceneTree
 
 const Evaluator = preload("res://systems/career_evaluator.gd")
 const Dedication = preload("res://systems/canal_dedication_service.gd")
+const DedicationEvent = preload("res://data/events/epic_canal_dedication.tres")
 
 func _initialize() -> void:
 	_test_climax_is_terminal()
 	_test_career_metrics_and_epitaphs()
 	_test_export_text()
 	_test_dedication_choices()
+	_test_event_definition_and_fresh_world()
 	print("Career epilogue and canal climax checks passed.")
 	quit()
 
@@ -75,3 +77,14 @@ func _test_dedication_choices() -> void:
 	assert(Dedication.apply_choice(world, actor, &"personal_seal"))
 	assert(world.world_flags.has(&"canal_dedication_concluded"))
 	assert(not Dedication.apply_choice(world, actor, &"honor_crews"))
+
+func _test_event_definition_and_fresh_world() -> void:
+	assert(DedicationEvent.id == &"epic_canal_dedication")
+	assert(DedicationEvent.once_per_world)
+	assert(DedicationEvent.outcomes.size() == 3)
+	assert(DedicationEvent.conditions.size() == 1)
+	var first_world := WorldState.new()
+	first_world.world_flags[&"canal_dedication_concluded"] = 1
+	var next_world := WorldState.new()
+	assert(not next_world.world_flags.has(&"canal_dedication_concluded"), "A new career must not inherit the prior world's terminal flag.")
+	assert(next_world.get_resource(&"canal_progress") == 0)
