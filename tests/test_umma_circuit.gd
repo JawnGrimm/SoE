@@ -23,7 +23,7 @@ func _run() -> void:
 	_check(not umma.is_empty() and StringName(umma.get("place_id", "")) == &"umma", "Registry seeding creates Umma's canal bailiff institution")
 	var office_map: Dictionary = umma.get("offices", {})
 	var seated_ids: Array[StringName] = []
-	for office_id in [&"canal_bailiff", &"umma_granary_clerk"]:
+	for office_id in [&"canal_bailiff", &"granary_clerk"]:
 		var person_id := StringName(office_map.get(office_id, ""))
 		var person := world.get_person(person_id)
 		_check(person != null and person.location_id == &"umma" and person.office_id == office_id, "Umma office %s is held by a seated local Tier 2 resident" % office_id)
@@ -35,7 +35,7 @@ func _run() -> void:
 	SeederScript.seed_campaign(second_world, 32003200, true, registry)
 	var second_umma: Dictionary = second_world.institutions.get(&"umma_canal_bailiff", {})
 	var second_offices: Dictionary = second_umma.get("offices", {})
-	_check(StringName(second_offices.get(&"canal_bailiff", "")) == seated_ids[0] and StringName(second_offices.get(&"umma_granary_clerk", "")) == seated_ids[1], "Institutional seating is deterministic for an identical world seed")
+	_check(StringName(second_offices.get(&"canal_bailiff", "")) == seated_ids[0] and StringName(second_offices.get(&"granary_clerk", "")) == seated_ids[1], "Institutional seating is deterministic for an identical world seed")
 
 	var network := NetworkScript.new()
 	_check(network.configure(world, registry.all_places(), registry.all_routes(), &"uruk_storehouse"), "Regional route graph configures for Umma")
