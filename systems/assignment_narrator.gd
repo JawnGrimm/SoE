@@ -137,9 +137,8 @@ static func _canal_review_template(record: Dictionary) -> Dictionary:
 	var target := maxi(1, int(epic.get("target", 100)))
 	if stage.is_empty():
 		stage = "approaching_completion" if progress >= target * 0.75 else ("cutting" if progress >= target * 0.25 else "survey")
-	var history: Array = epic.get("history_notes", [])
-	var latest_note := String(history.back().get("note", "")) if not history.is_empty() else ""
-	var stalled := bool(epic.get("stalled", false)) or not String(epic.get("active_problem", "")).is_empty() or latest_note.contains("stalled") or latest_note.contains("reclaimed")
+	var last_reviewed_progress := int(epic.get("last_reviewed_progress", progress))
+	var stalled := bool(epic.get("stalled", false)) or not String(epic.get("active_problem", "")).is_empty() or progress < last_reviewed_progress
 	if stalled:
 		return MATTER_TEMPLATES[&"great_canal_cut"]
 	match stage:
