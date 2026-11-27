@@ -15,7 +15,7 @@ func _run() -> void:
 	var registry := RegistryScript.new()
 	registry.load_defaults()
 	var world := WorldState.new()
-	UrukSeederScript.seed_campaign(world, 32003200)
+	UrukSeederScript.seed_campaign(world, 32003200, true, registry)
 	var initial_institution: Dictionary = world.institutions[&"eanna_household"]
 	var initial_stock: Dictionary = initial_institution.get("stockpiles", {})
 	initial_stock[&"silver"] = 2 # Make both emergency and skimming branches eligible; selector priority must win.
@@ -74,7 +74,7 @@ func _run() -> void:
 	_check(int(institution.get("agenda_evaluation_count", 0)) == 2, "Ur-Nanna's tree is evaluated exactly once on each of two period advances")
 
 	var skim_world := WorldState.new()
-	UrukSeederScript.seed_campaign(skim_world, 32003201)
+	UrukSeederScript.seed_campaign(skim_world, 32003201, true, registry)
 	skim_world.repair_hazard(&"north_bay", &"roof_leak")
 	var skim_institution: Dictionary = skim_world.institutions[&"eanna_household"]
 	var skim_stock: Dictionary = skim_institution.get("stockpiles", {})
@@ -88,7 +88,7 @@ func _run() -> void:
 	_check(int(skim_institution.get("stock_records", {}).get("intake_tally_adjustment", 0)) == -2, "The skimming intent falsifies the intake record by two measures")
 
 	var routine_world := WorldState.new()
-	UrukSeederScript.seed_campaign(routine_world, 32003202)
+	UrukSeederScript.seed_campaign(routine_world, 32003202, true, registry)
 	routine_world.repair_hazard(&"north_bay", &"roof_leak")
 	var routine_institution: Dictionary = routine_world.institutions[&"eanna_household"]
 	var routine_stock: Dictionary = routine_institution.get("stockpiles", {})
