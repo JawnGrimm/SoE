@@ -915,7 +915,7 @@ func _show_regional_map() -> void:
 	var callbacks: Array[Callable] = []
 	for option in options:
 		var destination_id: StringName = option.place_id
-		payload.choices.append({"label": "%s / %d periods / route risk %d" % [String(option.name), int(option.travel_periods), int(option.route_risk_percent)]})
+		payload.choices.append({"label": "%s / %d periods / %d bread / %d beer / route risk %d" % [String(option.name), int(option.travel_periods), int(option.bread_required), int(option.beer_required), int(option.route_risk_percent)]})
 		callbacks.append(_begin_regional_travel.bind(destination_id))
 	_render_docket_payload(payload, callbacks)
 	_add_choice("Return to Work Board", _show_assignment_board)
@@ -931,7 +931,7 @@ func _begin_regional_travel(destination_id: StringName) -> void:
 		return
 	var destination_name := String(world.places.get(destination_id, {}).get("name", destination_id))
 	var periods := int(travel_result.get("travel_periods", 0))
-	_show_procedural_result("REGIONAL JOURNEY ACCEPTED", "You depart for %s. The route requires %d periods. The world advances while you travel; delays and incidents will be recorded." % [destination_name, periods])
+	_show_procedural_result("REGIONAL JOURNEY ACCEPTED", "You depart for %s. The route requires %d periods and consumes bread each period plus beer every third period. Any missing rations are purchased from local stores for silver. The world advances while you travel; route incidents are recorded." % [destination_name, periods])
 
 func _select_assignment_opportunity(index: int) -> void:
 	if phase != "opportunity_board" or index < 0 or index >= assignment_opportunities.size():
