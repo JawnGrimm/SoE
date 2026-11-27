@@ -12,8 +12,8 @@ const WorldmapStyleScript = preload("res://addons/worldmap_builder/resource_type
 
 var route_network: RouteNetwork
 var world: WorldState
-var map_view: Control
-var graph: Node2D
+var map_view: Variant
+var graph: Variant
 var map_nodes: Dictionary[StringName, int] = {}
 var selected_route_id: StringName = &""
 var selected_destination_id: StringName = &""
@@ -108,7 +108,7 @@ func _build_surface() -> void:
 	location_summary.add_theme_color_override("font_color", Color("#59432a"))
 	body.add_child(location_summary)
 	map_canvas = Control.new()
-	map_canvas.custom_minimum_size = Vector2(0, 170)
+	map_canvas.custom_minimum_size = Vector2(0, 210)
 	map_canvas.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	map_canvas.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	map_canvas.clip_contents = true
@@ -137,10 +137,9 @@ func _build_route_graph() -> void:
 	map_view = WorldmapViewScript.new()
 	map_view.name = "WorldmapBuilderSurveyView"
 	map_view.set("auto_minsize", false)
-	map_view.custom_minimum_size = Vector2(0, 170)
+	map_view.custom_minimum_size = Vector2(0, 210)
 	map_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	map_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	map_view.set("max_unlock_cost", 1)
 	var inactive_style := _make_style(Color("#806443"), Color("#9c8158"), 0)
 	var active_style := _make_style(Color("#5a3820"), Color("#6c4b28"), 2)
 	var reachable_style := _make_style(Color("#4e6650"), Color("#8b7447"), 1)
@@ -164,7 +163,7 @@ func _build_route_graph() -> void:
 	for index in range(place_ids.size()):
 		var place_id := place_ids[index]
 		var place: PlaceDef = plotted_places[place_id]
-		var node_data: WorldmapNodeData = WorldmapNodeDataScript.new()
+		var node_data: Variant = WorldmapNodeDataScript.new()
 		node_data.id = place.id
 		node_data.name = place.display_name
 		node_data.desc = "%s / %s" % [String(place.place_type).replace("_", " ").to_upper(), String(place.political_relation).replace("_", " ").to_upper()]
