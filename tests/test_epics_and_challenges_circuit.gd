@@ -1,6 +1,7 @@
 extends SceneTree
 
 const QueueScript = preload("res://ui/work_queue_overlay.gd")
+const MainScript = preload("res://main.gd")
 const Pipeline = preload("res://systems/assignment_pipeline.gd")
 const EventRunnerScript = preload("res://systems/event_runner.gd")
 const SaveCodec = preload("res://systems/save_codec.gd")
@@ -190,13 +191,16 @@ func _run() -> void:
 	_check(world.has_flag(&"thirsty_diggers", world.current_period_index()) and int(world.institutions[&"eanna_household"].get("local_opinion", 0)) == -1, "Rationing leaves pressure, sets thirsty diggers, and lowers local opinion")
 	_check(runner.is_eligible(SiltBreach, context), "Severe scribe plus thirsty diggers flag makes Silt Breach eligible")
 
-	var quayside_conditions_allow_broke_scribes := true
-	for condition in Quayside.conditions:
-		if condition.condition_type == &"resource_compare" and StringName(condition.parameters.get("resource", "")) == &"silver":
-			quayside_conditions_allow_broke_scribes = false
-	_check(quayside_conditions_allow_broke_scribes, "Quayside challenge remains available to broke scribes for its non-silver verdicts")
-	var main_source := FileAccess.get_file_as_string("res://main.gd")
-	_check(main_source.contains("outcome_silver") and main_source.contains('int(actor.resources.get(&"silver", 0)) < 4'), "The four-shekel silver outcome is disabled when the personal purse cannot cover it")
+	_check(Quayside.conditions.size() == 4, "Quayside remains available to broke scribes for its three non-silver verdicts")
+	var silver_outcome: EventOutcome
+	for outcome in Quayside.outcomes:
+		if String(outcome.label).begins_with("Purchase private rations"):
+			silver_outcome = outcome
+	_check(silver_outcome != null, "Quayside authored silver verdict is present")
+	if silver_outcome != null:
+		_check(MainScript._is_outcome_disabled_for_actor(Quayside.id, silver_outcome, 3), "Three personal silver disables the four-shekel verdict")
+		_check(not MainScript._is_outcome_disabled_for_actor(Quayside.id, silver_outcome, 4), "Four personal silver enables the four-shekel verdict")
+		_check(not MainScript._is_outcome_disabled_for_actor(&"challenge_other", silver_outcome, 0), "The Quayside-specific cost guard does not affect other challenges")
 
 	if _failures.is_empty():
 		print("PASS: %d Epic/Challenge circuit checks" % _checks)
