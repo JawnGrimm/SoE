@@ -12,6 +12,7 @@ var rng_people := RandomNumberGenerator.new()
 var stockpiles: Dictionary[StringName, int] = {}
 var epics: Dictionary[StringName, Dictionary] = {}
 var world_flags: Dictionary[StringName, int] = {}
+var routes: Dictionary[StringName, Dictionary] = {}
 var pending_forms: Array[Dictionary] = []
 var resolved_forms: Array[Dictionary] = []
 var event_history: Array[Dictionary] = []
@@ -109,6 +110,11 @@ func set_world_seed(new_seed: int) -> void:
 
 func current_period_index() -> int:
 	return year * PERIODS_PER_YEAR + period
+
+## Absolute simulation time, measured in the existing 12-period calendar.
+var total_periods: int:
+	get:
+		return current_period_index()
 
 func advance_period() -> void:
 	period += 1
@@ -267,6 +273,11 @@ func _process_period_deadlines() -> void:
 	for flag in world_flags.keys():
 		if int(world_flags[flag]) != -1 and now >= int(world_flags[flag]):
 			world_flags.erase(flag)
+	for route_id in routes.keys():
+		var route_state: Dictionary = routes[route_id]
+		var expiry := int(route_state.get("expiry_period", -1))
+		if bool(route_state.get("has_expiry", false)) and now >= expiry:
+			routes.erase(route_id)
 	for person in people.values():
 		for flag in person.flags.keys():
 			if int(person.flags[flag]) != -1 and now >= int(person.flags[flag]):
