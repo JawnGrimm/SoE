@@ -17,6 +17,7 @@ var world_flags: Dictionary[StringName, int] = {}
 var routes: Dictionary[StringName, Dictionary] = {}
 var pending_forms: Array[Dictionary] = []
 var resolved_forms: Array[Dictionary] = []
+var last_period_deltas: Array[Dictionary] = []
 var event_history: Array[Dictionary] = []
 var character_event_history: Dictionary[StringName, Array] = {}
 var people: Dictionary[StringName, PersonEntity] = {}
