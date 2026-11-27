@@ -756,7 +756,7 @@ func _schedule_next_case() -> void:
 			var lowest_priority := 2147483647
 			for candidate_index in range(1, assignment_opportunities.size()):
 				var candidate: Dictionary = assignment_opportunities[candidate_index]
-				if StringName(candidate.get("kind", "")) in [&"event", &"procedural_docket"]:
+				if StringName(candidate.get("kind", "")) == &"event":
 					continue
 				var candidate_priority := int(candidate.get("priority", 0))
 				if candidate_priority <= lowest_priority:
@@ -1062,7 +1062,7 @@ func _show_world_engagement() -> void:
 	var payload := {
 		"title": String(record.get("title", "ASSIGNMENT")),
 		"left_card": {"title": "WORLD SITUATION / %s" % String(record.get("kind", "work")).to_upper(), "speaker_id": &"", "quote": left_quote, "facts": "OPENED: %s / PERIOD %d" % [CalendarFormatter.format_year(world.year), world.period + 1]},
-		"right_card": {"title": "RESPONSIBLE OFFICE", "speaker_id": employer.id if employer != null else &"", "quote": right_quote, "facts": "%d / %d inquiries spent — choose your disposition%s\n\n%s" % [actions.size(), AssignmentPipeline.MAX_INVESTIGATION_ACTIONS, " — enter judgment" if actions.size() >= AssignmentPipeline.MAX_INVESTIGATION_ACTIONS else "", "\n\n".join(evidence_lines)]},
+		"right_card": {"title": "RESPONSIBLE OFFICE", "speaker_id": employer.id if employer != null else &"", "quote": right_quote, "facts": "%d / %d inquiries spent%s\n\n%s" % [actions.size(), AssignmentPipeline.MAX_INVESTIGATION_ACTIONS, " — enter judgment" if actions.size() >= AssignmentPipeline.MAX_INVESTIGATION_ACTIONS else "", "\n\n".join(evidence_lines)]},
 		"prompt": "Investigate the situation. Your skills affect what you can establish; your judgment determines what is entered.",
 		"choices": []
 	}
