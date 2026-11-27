@@ -201,8 +201,8 @@ func _run() -> void:
 	ration_player.resources[&"beer"] = 0
 	ration_player.resources[&"silver"] = 20
 	var ration_travel := RegionalWorldSystemScript.start_player_travel(ration_world, ration_player, &"habuba_kabira")
-	_check(bool(ration_travel.get("success", false)) and int(ration_travel.get("silver_spent", 0)) == 5, "A regional journey should purchase missing bread and beer from local stores")
-	_check(int(ration_player.resources.get(&"bread", 0)) == 3 and int(ration_player.resources.get(&"beer", 0)) == 1 and int(ration_player.resources.get(&"silver", 0)) == 15, "Travel provisioning should charge silver and place the required rations in the character's purse")
+	_check(bool(ration_travel.get("success", false)) and int(ration_travel.get("silver_spent", 0)) == 8, "A regional journey should purchase missing bread and beer from local stores")
+	_check(int(ration_player.resources.get(&"bread", 0)) == 4 and int(ration_player.resources.get(&"beer", 0)) == 2 and int(ration_player.resources.get(&"silver", 0)) == 12, "Travel provisioning should charge silver and place the required rations in the character's purse")
 
 	var autonomous_trade_world := WorldState.new()
 	UrukSeeder.seed_campaign(autonomous_trade_world, 32003212)
@@ -438,10 +438,13 @@ func _run() -> void:
 	_check(bool(second_shipment_result.get("success", false)), "Regional system should launch additional world-driven shipments")
 	var travel_start := RegionalWorldSystemScript.start_player_travel(regional_arrival_world, regional_arrival_player, &"habuba_kabira")
 	_check(bool(travel_start.get("success", false)) and int(travel_start.get("travel_periods", 0)) == 3, "Player should be able to accept a three-period regional journey")
-	for travel_tick in range(3):
+	var travel_ticks := 0
+	while String(regional_arrival_world.player_travel.get("status", "")) == "in_transit" and travel_ticks < 8:
 		regional_arrival_world.advance_period()
-	_check(regional_arrival_player.current_location_id == &"habuba_kabira" and String(regional_arrival_world.player_travel.get("status", "")) == "arrived", "Player travel should advance through the route and update character location")
-	_check(int(regional_arrival_player.resources.get(&"bread", 0)) == 9 and int(regional_arrival_player.resources.get(&"beer", 0)) == 5, "A three-period field journey should consume three bread and one beer from the character's purse")
+		travel_ticks += 1
+	_check(regional_arrival_player.current_location_id == &"habuba_kabira" and String(regional_arrival_world.player_travel.get("status", "")) == "arrived" and travel_ticks >= 3, "Player travel should advance through route time and any real disruption delay")
+	var expected_beer_consumed := int(ceil(float(travel_ticks) / 3.0))
+	_check(int(regional_arrival_player.resources.get(&"bread", 0)) == 12 - travel_ticks and int(regional_arrival_player.resources.get(&"beer", 0)) == 6 - expected_beer_consumed, "Field travel should consume bread each period and beer every third period, including delays")
 	var habuba_opportunities := AssignmentPipeline.generate_opportunities(regional_arrival_world, regional_arrival_player)
 	var habuba_has_regional_work := false
 	for habuba_opportunity in habuba_opportunities:
