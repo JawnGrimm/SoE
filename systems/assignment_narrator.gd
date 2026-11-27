@@ -130,7 +130,33 @@ static func narrate_record_examination(record: Dictionary, actor: PersonEntity, 
 		"closing": "The tablet has yielded a contradiction, not a verdict. The next voice may explain it—or make it worse."
 	}
 
+static func _canal_review_template(record: Dictionary) -> Dictionary:
+	var epic: Dictionary = record.get("source_data", {})
+	var stage := String(epic.get("stage", ""))
+	var progress := int(epic.get("progress", 0))
+	var target := maxi(1, int(epic.get("target", 100)))
+	if stage.is_empty():
+		stage = "approaching_completion" if progress >= target * 0.75 else ("cutting" if progress >= target * 0.25 else "survey")
+	var history: Array = epic.get("history_notes", [])
+	var latest_note := String(history.back().get("note", "")) if not history.is_empty() else ""
+	var stalled := bool(epic.get("stalled", false)) or not String(epic.get("active_problem", "")).is_empty() or latest_note.contains("stalled") or latest_note.contains("reclaimed")
+	if stalled:
+		return MATTER_TEMPLATES[&"great_canal_cut"]
+	match stage:
+		"survey":
+			return {"title": "THE CANAL SURVEY", "summary": "The survey stakes are set along the low ground. The first tally concerns distance, labor, and whose fields will lose a boundary."}
+		"cutting":
+			return {"title": "THE CANAL CUT", "summary": "The channel has reached the working cut. Earth moves by basket and shoulder; the clerk's figures move by seal."}
+		"approaching_completion":
+			return {"title": "THE LAST REACH", "summary": "The canal nears its intended line. The remaining work is less earth than obligation: gates, stores, and the names owed a share."}
+		"completed":
+			return {"title": "THE CANAL ENTERED IN THE RECORD", "summary": "The watercourse has reached its recorded measure. The final account must say what was built—and what the fields surrendered."}
+		_:
+			return {"title": "THE CANAL WORKS", "summary": "The crews continue along the marked line. Review the stage tally and the obligations attached to it."}
+
 static func _template_for(record: Dictionary) -> Dictionary:
+	if StringName(record.get("kind", "")) == &"project_review" and StringName(record.get("source_id", "")) == &"great_canal_cut":
+		return _canal_review_template(record)
 	for key in ["template_id", "source_id", "matter_id", "id"]:
 		var value := StringName(record.get(key, ""))
 		if MATTER_TEMPLATES.has(value):
