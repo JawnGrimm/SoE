@@ -345,7 +345,7 @@ func _run() -> void:
 	var seeded_tie_count := 0
 	for person in uruk_a.people.values():
 		seeded_tie_count += person.relationships.size()
-	_check(seeded_tie_count == 34, "Uruk seed should establish thirty-four directed relationship entries, including explicit player opinions and authored social/economic ties (found %d)" % seeded_tie_count)
+	_check(seeded_tie_count == 46, "Uruk seed should establish forty-six directed relationship entries, including generated residents, including explicit player opinions and authored social/economic ties (found %d)" % seeded_tie_count)
 	_check(uruk_a.get_person(&"geme_tur").relationships.has(uruk_player_a.id), "The player's household member should have an explicit family tie")
 	_check(uruk_a.get_person(&"ur_gula").relationships.has(&"nin_dada"), "Pastoral wool supply should connect to textile production")
 	_check(uruk_a.places.has(&"susa") and uruk_a.places.has(&"habuba_kabira"), "Uruk seed should include both external exchange settlements")
