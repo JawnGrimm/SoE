@@ -20,6 +20,7 @@ var _definitions_by_category: Dictionary = {}
 func load_defaults() -> void:
 	for category in DEFAULT_FOLDERS:
 		load_folder(String(DEFAULT_FOLDERS[category]), String(category))
+	validate_world_references()
 
 ## Loads every .tres definition under a folder. Returns the number registered.
 func load_folder(folder_path: String, category: String = "") -> int:
@@ -44,6 +45,18 @@ func load_folder(folder_path: String, category: String = "") -> int:
 		if register_definition(definition, resolved_category):
 			registered += 1
 	return registered
+
+func validate_world_references() -> bool:
+	var valid := true
+	for place in all_places():
+		if place.parent_place_id != &"" and get_place(place.parent_place_id) == null:
+			_warn("DefinitionRegistry: place '%s' references missing parent '%s'" % [place.id, place.parent_place_id])
+			valid = false
+	for institution in all_institutions():
+		if get_place(institution.place_id) == null:
+			_warn("DefinitionRegistry: institution '%s' references missing place '%s'" % [institution.id, institution.place_id])
+			valid = false
+	return valid
 
 func register_event(definition: EventTemplate) -> bool:
 	return register_definition(definition, "events")
