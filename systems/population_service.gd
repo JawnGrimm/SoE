@@ -197,7 +197,9 @@ func seat_institution_staff(world: WorldState, definitions: DefinitionRegistry) 
 	var seated_people: Dictionary = {}
 	for existing_institution in world.institutions.values():
 		for existing_member in existing_institution.get("members", []):
-			seated_people[StringName(existing_member)] = true
+			var existing_person := world.get_person(StringName(existing_member))
+			if existing_person != null and existing_person.office_id != &"" and not bool(existing_person.flags.get(&"dead", false)):
+				seated_people[existing_person.id] = true
 	var institution_ids: Array[StringName] = []
 	for key in world.institutions.keys():
 		institution_ids.append(StringName(key))
