@@ -189,3 +189,52 @@ func _weighted_pick_template(templates: Array[CharacterTemplate], definitions: D
 		if roll <= 0:
 			return template
 	return templates.back()
+
+
+func seat_institution_staff(world: WorldState, definitions: DefinitionRegistry) -> void:
+	if world == null or definitions == null:
+		return
+	var institution_ids: Array[StringName] = []
+	for key in world.institutions.keys():
+		institution_ids.append(StringName(key))
+	institution_ids.sort()
+	for institution_id in institution_ids:
+		var institution: Dictionary = world.institutions.get(institution_id, {})
+		var place_id := StringName(institution.get("place_id", ""))
+		var offices: Array[StringName] = []
+		for office_value in institution.get("staffed_offices", []):
+			offices.append(StringName(office_value))
+		offices.sort()
+		if place_id == &"" or offices.is_empty():
+			continue
+		var members: Array = institution.get("members", []).duplicate()
+		var office_map: Dictionary = institution.get("offices", {}).duplicate(true)
+		for office_id in offices:
+			var filled := false
+			for member_value in members:
+				var member := world.get_person(StringName(member_value))
+				if member != null and member.office_id == office_id:
+					filled = true
+					break
+			if filled:
+				continue
+			var candidates: Array[PersonEntity] = []
+			for person in world.people.values():
+				if person != null and person.location_id == place_id and person.office_id == &"" and person.generation_source == &"tier2":
+					candidates.append(person)
+			candidates.sort_custom(func(a: PersonEntity, b: PersonEntity) -> bool:
+					var a_score := a.skills.get_level(&"stewardship") + a.skills.get_level(&"arithmetic")
+					var b_score := b.skills.get_level(&"stewardship") + b.skills.get_level(&"arithmetic")
+					if a_score == b_score:
+						return String(a.id) < String(b.id)
+					return a_score > b_score
+			)
+			if candidates.is_empty():
+				continue
+			var selected := candidates[0]
+			selected.office_id = office_id
+			members.append(selected.id)
+			office_map[office_id] = selected.id
+		institution["members"] = members
+		institution["offices"] = office_map
+		world.institutions[institution_id] = institution

@@ -244,3 +244,4 @@ static func _seed_tier_two_population(world: WorldState, definitions: Definition
 		return
 	for place_id in [&"uruk", &"nippur", &"umma"]:
 		population.generate_people(world, definitions, place_id, &"sumerian", era_id, 4, &"initial_regional_roster")
+	population.seat_institution_staff(world, definitions)

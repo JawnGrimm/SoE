@@ -121,7 +121,7 @@ static func generate(world: WorldState, actor: PersonEntity, selected_path: Stri
 		if world.current_location_id != &"" and person.location_id != world.current_location_id:
 			continue
 		var office := String(person.office_id).to_lower()
-		if office.contains("carrier") or office.contains("steward") or office.contains("trader") or office.contains("brewer") or office.contains("builder") or office.contains("grain_clerk") or office.contains("storehouse") or office.contains("clerk"):
+		if person.office_id != &"" or office.contains("carrier") or office.contains("steward") or office.contains("trader") or office.contains("brewer") or office.contains("builder") or office.contains("grain_clerk") or office.contains("storehouse") or office.contains("clerk"):
 			people.append(person)
 	if people.size() < 2:
 		return {}

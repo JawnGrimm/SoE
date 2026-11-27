@@ -736,7 +736,7 @@ func _schedule_next_case() -> void:
 	for definition in Registry.get_definitions("events"):
 		if definition is EventTemplate:
 			event_templates.append(definition as EventTemplate)
-	active_event = scheduler.pick_next_event(world, actor, event_templates, current_era)
+	active_event = scheduler.pick_next_event(world, actor, event_templates, current_era) if world.current_location_id == &"uruk" else null
 	procedural_assignment.clear()
 	assignment_opportunities.clear()
 	active_world_assignment_id = &""

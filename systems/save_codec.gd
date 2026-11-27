@@ -95,6 +95,18 @@ static func _world_from_data(data: Dictionary) -> WorldState:
 	world._next_person_sequence = maxi(1, int(data.get("next_person_sequence", 1)))
 	world.places = _name_dictionary_map(data.get("places", {}))
 	world.institutions = _name_dictionary_map(data.get("institutions", {}))
+	for institution_id in world.institutions.keys():
+		var institution: Dictionary = world.institutions[institution_id]
+		institution["place_id"] = StringName(institution.get("place_id", ""))
+		institution["era_id"] = StringName(institution.get("era_id", ""))
+		institution["members"] = _name_array(institution.get("members", []))
+		institution["interests"] = _name_array(institution.get("interests", []))
+		institution["staffed_offices"] = _name_array(institution.get("staffed_offices", []))
+		institution["stockpiles"] = _name_int_map(institution.get("stockpiles", {}))
+		institution["periodic_deltas"] = _name_int_map(institution.get("periodic_deltas", {}))
+		institution["harvest_deltas"] = _name_int_map(institution.get("harvest_deltas", {}))
+		institution["offices"] = _name_name_map(institution.get("offices", {}))
+		world.institutions[institution_id] = institution
 	world.social_groups = _name_dictionary_map(data.get("social_groups", {}))
 	world.assignments = _name_dictionary_map(data.get("assignments", {}))
 	world.hazards = _dictionary_array(data.get("hazards", []))
@@ -179,6 +191,13 @@ static func _name_int_map(source: Variant) -> Dictionary[StringName, int]:
 	if source is Dictionary:
 		for key in source:
 			result[StringName(key)] = int(source[key])
+	return result
+
+static func _name_name_map(source: Variant) -> Dictionary[StringName, StringName]:
+	var result: Dictionary[StringName, StringName] = {}
+	if source is Dictionary:
+		for key in source:
+			result[StringName(key)] = StringName(source[key])
 	return result
 
 static func _name_dictionary_map(source: Variant) -> Dictionary[StringName, Dictionary]:

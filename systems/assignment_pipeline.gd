@@ -30,6 +30,13 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 		var overdue := String(form.get("status", "pending")) == "overdue"
 		var form_title := _form_title(form_type)
 		var form_summary := "%s requires an assessment at %s." % [form_title, subject_name]
+		var institution_id := StringName(form.get("institution_id", _institution_for_location(world, subject_id)))
+		var place_id := StringName(form.get("place_id", subject_id))
+		if institution_id != &"":
+			place_id = StringName(world.institutions.get(institution_id, {}).get("place_id", place_id))
+		var form_source := form.duplicate(true)
+		form_source["institution_id"] = institution_id
+		form_source["place_id"] = place_id
 		var npc_evidence: Dictionary = form.get("npc_evidence", {})
 		if not npc_evidence.is_empty():
 			form_title = "Contradictory North-Bay Grain Docket"
@@ -41,8 +48,8 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			"title": form_title,
 			"summary": form_summary,
 			"priority": urgency + (3 if overdue else 0) + _career_bonus(selected_path, form_type),
-			"employer_id": _form_employer(world, form_type),
-			"source_data": form.duplicate(true),
+			"employer_id": _resolve_local_employer(world, institution_id, place_id, _preferred_office(form_type)),
+			"source_data": form_source,
 			"path_id": selected_path
 		})
 
@@ -60,8 +67,8 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			"title": "Inspect %s" % _place_name(world, place_id),
 			"summary": "An active %s continues to damage institutional stores." % String(hazard_id).replace("_", " "),
 			"priority": 4 + int(hazard.get("rate", 0)) + _career_bonus(selected_path, &"hazard"),
-			"employer_id": &"ur_nanna" if world.get_person(&"ur_nanna") != null else &"",
-			"source_data": hazard.duplicate(true),
+			"employer_id": _resolve_local_employer(world, StringName(hazard.get("institution_id", _institution_for_location(world, place_id))), place_id, &"canal_bailiff"),
+			"source_data": _hazard_source(hazard, world),
 			"path_id": selected_path
 		})
 
@@ -79,8 +86,8 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			"title": "%s / Resource Pressure" % String(institution.get("name", institution_id)),
 			"summary": "The institution reports a pressure index of %d. Its current stockpiles need review." % pressure,
 			"priority": 2 + pressure + _career_bonus(selected_path, &"pressure"),
-			"employer_id": &"shuruppak_ilu" if world.get_person(&"shuruppak_ilu") != null else &"",
-			"source_data": {"institution_id": StringName(institution_id), "pressure": pressure},
+			"employer_id": _resolve_local_employer(world, StringName(institution_id), StringName(institution.get("place_id", "")), &""),
+			"source_data": {"institution_id": StringName(institution_id), "place_id": StringName(institution.get("place_id", "")), "pressure": pressure},
 			"path_id": selected_path
 		})
 
@@ -131,8 +138,8 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			"title": String(institution.get("ledger_work_title", "")) if not String(institution.get("ledger_work_title", "")).is_empty() else "%s / Periodic Account" % String(institution.get("name", institution_id)),
 			"summary": String(institution.get("ledger_work_summary", "")) if not String(institution.get("ledger_work_summary", "")).is_empty() else "Reconcile the institution's current membership, activity, and resource records.",
 			"priority": int(institution.get("ledger_work_priority", 1)) + _career_bonus(selected_path, &"ledger"),
-			"employer_id": &"shuruppak_ilu" if world.get_person(&"shuruppak_ilu") != null else &"",
-			"source_data": {"institution_id": StringName(institution_id), "member_count": institution.get("members", []).size(), "activity_count": int(institution.get("activity_count", 0))},
+			"employer_id": _resolve_local_employer(world, StringName(institution_id), StringName(institution.get("place_id", "")), &""),
+			"source_data": {"institution_id": StringName(institution_id), "place_id": StringName(institution.get("place_id", "")), "member_count": institution.get("members", []).size(), "activity_count": int(institution.get("activity_count", 0))},
 			"path_id": selected_path
 		})
 
@@ -301,11 +308,12 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 			var place_id := StringName(hazard.get("place_id", ""))
 			if verdict == &"repair":
 				var labor_cost := 3
+				var hazard_institution_id := StringName(hazard.get("institution_id", _institution_for_location(world, place_id)))
 				if not world.has_active_hazard(place_id, source_id):
 					return {"success": false, "message": "The hazard has already been repaired by someone else."}
-				if world.get_resource(&"labor", "institution", "", &"eanna_household") < labor_cost:
+				if world.get_resource(&"labor", "institution", "", hazard_institution_id) < labor_cost:
 					return {"success": false, "message": "The institution cannot spare the required labor. The hazard remains active."}
-				if not world.modify_resource(&"labor", -labor_cost, "institution", "", &"eanna_household"):
+				if not world.modify_resource(&"labor", -labor_cost, "institution", "", hazard_institution_id):
 					return {"success": false, "message": "The labor allocation was rejected."}
 				world.repair_hazard(place_id, source_id)
 				result_text = "Three labor are committed. The %s is taken out of service and its continuing loss stops." % String(source_id).replace("_", " ")
@@ -453,7 +461,7 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 				facts = "SITE: %s\nHAZARD: %s\nLOSS / PERIOD: %d %s\nTOTAL RECORDED LOSS: %d" % [_place_name(world, StringName(hazard.get("place_id", ""))), String(hazard.get("id", "")), int(hazard.get("rate", 0)), String(hazard.get("resource", "")), int(hazard.get("total_lost", 0))]
 				summary = "The active hazard is physically inspected. The recorded loss is checked against the current site condition."
 			else:
-				var institution_id := StringName(data.get("institution_id", &"eanna_household"))
+				var institution_id := StringName(data.get("institution_id", _institution_for_location(world, StringName(data.get("place_id", data.get("subject_id", ""))))))
 				var institution: Dictionary = world.institutions.get(institution_id, {})
 				var stock: Dictionary = institution.get("stockpiles", {})
 				var total := 0
@@ -514,6 +522,45 @@ static func _institution_for_location(world: WorldState, location_id: StringName
 		var institution_place := StringName(institution.get("place_id", ""))
 		if institution_place == location_id or (parent_id != &"" and institution_place == parent_id):
 			return StringName(institution_id)
+	return &""
+
+static func _preferred_office(form_type: StringName) -> StringName:
+	match form_type:
+		&"grain_levy", &"held_barley": return &"grain_clerk"
+		&"pension_roll": return &"tax_scribe"
+		&"consignment_receipt": return &"market_trader"
+		&"bailiff_requisition": return &"canal_bailiff"
+	return &""
+
+static func _hazard_source(hazard: Dictionary, world: WorldState) -> Dictionary:
+	var source := hazard.duplicate(true)
+	var place_id := StringName(source.get("place_id", ""))
+	source["institution_id"] = StringName(source.get("institution_id", _institution_for_location(world, place_id)))
+	source["place_id"] = place_id
+	return source
+
+static func _resolve_local_employer(world: WorldState, institution_id: StringName, place_id: StringName, preferred_office_id: StringName) -> StringName:
+	var institution: Dictionary = world.institutions.get(institution_id, {})
+	var members: Array = institution.get("members", [])
+	for member_value in members:
+		var member := world.get_person(StringName(member_value))
+		if member != null and member.office_id != &"" and (preferred_office_id == &"" or member.office_id == preferred_office_id):
+			return member.id
+	for member_value in members:
+		var member := world.get_person(StringName(member_value))
+		if member != null and member.office_id != &"":
+			return member.id
+	var local_ids: Array[StringName] = []
+	for person in world.people.values():
+		if person != null and person.location_id == place_id:
+			local_ids.append(person.id)
+	local_ids.sort()
+	if not local_ids.is_empty():
+		return local_ids[0]
+	if place_id == &"uruk":
+		for person in world.people.values():
+			if person != null and person.location_id == &"uruk" and (preferred_office_id == &"" or person.office_id == preferred_office_id):
+				return person.id
 	return &""
 
 static func _form_employer(world: WorldState, form_type: StringName) -> StringName:
