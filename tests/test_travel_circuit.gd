@@ -181,11 +181,10 @@ func _run() -> void:
 		"subject_id": &"umma",
 		"place_id": &"umma",
 		"institution_id": &"umma_canal_bailiff",
-		"urgency": 3
+		"urgency": 3,
+		"created_period": dispatch_world.current_period_index() - 5
 	})
 	var dispatch_simulator := WorldSimulatorScript.new(dispatch_registry)
-	for _period in range(5):
-		dispatch_simulator.advance_period(dispatch_world)
 	var dispatch_network := RouteNetworkScript.new()
 	_check(dispatch_network.configure(dispatch_world, dispatch_registry.all_places(), dispatch_registry.all_routes(), &"uruk_storehouse"), "The Umma dispatch fixture configures the authored regional route graph")
 	var dispatch_travel := TravelServiceScript.new()
