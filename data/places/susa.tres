@@ -11,5 +11,4 @@ region = &"susiana"
 political_relation = &"autonomous_peer"
 exports = Array[StringName]([&"highland_wool", &"stone", &"luxury_exchange"])
 imports = Array[StringName]([&"textiles", &"grain", &"beer"])
-connected_to = Array[StringName]([&"uruk"])
 era_id = &"uruk_storehouse"
