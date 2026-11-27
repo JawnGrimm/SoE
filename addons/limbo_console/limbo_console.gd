@@ -317,7 +317,8 @@ func unregister_command(p_func_or_name) -> void:
 	_commands.erase(cmd_name)
 	_command_descriptions.erase(cmd_name)
 
-	for i in range(1, 5):
+	# Argument autocomplete indices are zero-based.
+	for i in range(0, 5):
 		_argument_autocomplete_sources.erase([cmd_name, i])
 
 

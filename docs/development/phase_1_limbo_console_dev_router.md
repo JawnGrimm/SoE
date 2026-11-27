@@ -49,3 +49,7 @@ This step adds the project-level config with `disable_in_release_build=true`, an
 - clean unregistration.
 
 The existing event/period integration test remains unchanged and must continue to pass. CI runs both tests on Godot 4.7.2.
+
+## LimboConsole lifecycle correction
+
+The vendored LimboConsole cleanup loop originally skipped autocomplete argument index `0`, even though the public autocomplete API and command parser use zero-based argument indices. The router registers first-argument sources at index `0`, so this step corrects `unregister_command()` to clear indices `0` through `4`. The router test fake mirrors that behavior and asserts that autocomplete sources are removed with their commands.

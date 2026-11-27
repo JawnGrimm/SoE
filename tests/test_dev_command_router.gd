@@ -15,13 +15,14 @@ class FakeConsole:
 
 	func unregister_command(command_name: String) -> void:
 		commands.erase(command_name)
-		autocomplete.erase(command_name)
+		for argument_index in range(0, 5):
+			autocomplete.erase([command_name, argument_index])
 
 	func has_command(command_name: String) -> bool:
 		return commands.has(command_name)
 
 	func add_argument_autocomplete_source(command_name: String, argument_index: int, source: Callable) -> void:
-		autocomplete["%s:%d" % [command_name, argument_index]] = source
+		autocomplete[[command_name, argument_index]] = source
 
 	func info(message: String) -> void:
 		output.append(message)
@@ -86,6 +87,7 @@ func _run() -> void:
 
 	router.unregister()
 	_check(console.commands.is_empty(), "Unregister should remove only this router's commands")
+	_check(console.autocomplete.is_empty(), "Unregister should remove first-argument autocomplete sources")
 	_finish()
 
 
