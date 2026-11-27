@@ -8,5 +8,6 @@ id = &"exchange_network"
 display_name = "River and Overland Exchange"
 institution_type = &"exchange_network"
 place_id = &"uruk"
+era_id = &"uruk_storehouse"
 members = Array[StringName]([&"geme_inana", &"enki_ili", &"ur_amas"])
 interests = Array[StringName]([&"transport", &"materials", &"exchange"])
