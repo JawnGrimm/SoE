@@ -51,7 +51,6 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			form_summary = "Two records disagree about the barley held at %s. The dispatch docket declares prime seed-corn; the threshold tally records damp, mold-marked grain." % subject_name
 		var dispatch_tag := "DISPATCH FROM %s" % _place_name(world, place_id).to_upper() if is_dispatch else ""
 		if is_dispatch:
-			form_title = "%s / %s" % [dispatch_tag, form_title]
 			form_summary = "A provincial requisition from %s has remained unanswered for %d periods. The provincial office now demands an answer." % [_place_name(world, place_id), age_periods]
 		candidates.append({
 			"id": StringName("work_form_%s_%d" % [form_id, world.current_period_index()]),
