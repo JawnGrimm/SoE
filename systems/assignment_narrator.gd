@@ -92,6 +92,14 @@ static func _template_for(record: Dictionary) -> Dictionary:
 		var value := StringName(record.get(key, ""))
 		if MATTER_TEMPLATES.has(value):
 			return MATTER_TEMPLATES[value]
+	var identifying_text := "%s %s %s %s" % [String(record.get("title", "")), String(record.get("summary", "")), String(record.get("matter_type", "")), String(record.get("kind", ""))]
+		.to_lower()
+	if identifying_text.contains("nippur") and (identifying_text.contains("shrine") or identifying_text.contains("grain")):
+		return MATTER_TEMPLATES[&"nippur_shrine_establishment"]
+	if identifying_text.contains("canal") or identifying_text.contains("embankment") or identifying_text.contains("progress_review"):
+		return MATTER_TEMPLATES[&"great_canal_cut"]
+	if identifying_text.contains("offering") or identifying_text.contains("lapis") or identifying_text.contains("susa"):
+		return MATTER_TEMPLATES[&"offering_audit"]
 	return {}
 
 static func _contains_raw_metric(value: String) -> bool:
