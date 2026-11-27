@@ -4,6 +4,7 @@ extends RefCounted
 ## It never invents economic quantities: all facts are read from WorldState.
 
 const BOARD_SIZE := 4
+const MAX_INVESTIGATION_ACTIONS := 2
 const AssignmentGeneratorScript = preload("res://systems/assignment_generator.gd")
 const INVESTIGATION_ACTIONS := [
 	{"id": &"examine_records", "label": "Examine the written record", "skill": &"literacy", "xp": 8},
@@ -238,6 +239,8 @@ static func perform_action(world: WorldState, actor: PersonEntity, assignment_id
 	if StringName(record.get("actor_id", "")) != actor.id:
 		return {"success": false, "message": "This engagement belongs to another scribe."}
 	var actions: Dictionary = record.get("actions", {})
+	if actions.size() >= MAX_INVESTIGATION_ACTIONS:
+		return {"success": false, "message": "2 / 2 inquiries spent — choose your disposition."}
 	if actions.has(action_id):
 		return {"success": false, "message": "That action has already been recorded."}
 	var action: Dictionary = {}
@@ -283,6 +286,8 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 	var result_text := ""
 	var work_details := ""
 	var accurate := true
+	var opinion_delta_override := 0
+	var silver_award := 2
 	match kind:
 		&"form":
 			var form_data: Dictionary = record.get("source_data", {})
@@ -301,7 +306,46 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 			}, world.year)
 			if not resolved:
 				return {"success": false, "message": "The source form has already changed or been resolved."}
-			result_text = "The %s is entered as %s. The underlying matter remains subject to future world conditions." % [_form_title(StringName(form_data.get("form_type", ""))), disposition]
+			var form_type := StringName(form_data.get("form_type", ""))
+			var npc_evidence: Dictionary = form_data.get("npc_evidence", {})
+			var form_institution_id := StringName(form_data.get("institution_id", _institution_for_location(world, StringName(form_data.get("place_id", form_data.get("subject_id", ""))))))
+			var form_institution: Dictionary = world.institutions.get(form_institution_id, {})
+			var form_stock_records: Dictionary = form_institution.get("stock_records", {})
+			var concealed := not npc_evidence.is_empty() or bool(form_stock_records.get("concealed_spoilage", false))
+			if concealed and verdict == &"refer":
+				form_stock_records["concealed_spoilage"] = false
+				form_stock_records.erase("barley_quality_declaration")
+				form_institution["stock_records"] = form_stock_records
+				var form_stock: Dictionary = form_institution.get("stockpiles", {})
+				form_stock[&"barley"] = maxi(0, int(form_stock.get(&"barley", 0)) - 8)
+				form_institution["stockpiles"] = form_stock
+				world.institutions[form_institution_id] = form_institution
+				opinion_delta_override = -3
+				silver_award = 1
+				var archivist := world.get_person(&"shuruppak_ilu")
+				if archivist != null and world.current_location_id == &"uruk":
+					archivist.change_opinion(actor.id, 2, "The apprentice referred a concealed grain account for correction.", world.year)
+				world.cedar_desk_log.append({"year": world.year, "period": world.period, "title": "FORMAL AUDIT CORRECTION", "summary": "The damp-barley declaration was referred. Concealed spoilage was cleared, eight measures were struck from the usable stock, and the archive received the correction.", "institution_id": String(form_institution_id)})
+				result_text = "The %s is referred. Concealed spoilage is exposed, eight measures are struck from usable barley, and the archive records a formal correction." % _form_title(form_type)
+			elif concealed and verdict == &"certify":
+				opinion_delta_override = 2
+				silver_award = 4
+				actor.flags[&"audit_exposure"] = int(actor.flags.get(&"audit_exposure", 0)) + 1
+				form_institution["audit_exposure"] = int(form_institution.get("audit_exposure", 0)) + 1
+				world.institutions[form_institution_id] = form_institution
+				result_text = "The %s is certified. The official pays four silver; damp grain and the shortage remain concealed. Your name is exposed to an archive audit." % _form_title(form_type)
+			elif form_type in [&"bailiff_requisition", &"pension_roll"] and verdict == &"certify":
+				var relief_stock: Dictionary = form_institution.get("stockpiles", {})
+				var relief_resource := &"labor" if form_type == &"pension_roll" else &"barley"
+				var relief_amount := 3 if relief_resource == &"labor" else 12
+				relief_stock[relief_resource] = int(relief_stock.get(relief_resource, 0)) + relief_amount
+				form_institution["stockpiles"] = relief_stock
+				form_institution["resource_pressure"] = maxi(0, int(form_institution.get("resource_pressure", 0)) - 2)
+				form_institution["requisition_relief_note"] = "Authorized %d %s against the immediate backlog." % [relief_amount, String(relief_resource)]
+				world.institutions[form_institution_id] = form_institution
+				result_text = "The %s is certified. %d %s are reassigned to the institution; the immediate backlog is reduced." % [_form_title(form_type), relief_amount, String(relief_resource)]
+			else:
+				result_text = "The %s is entered as %s. The current stock and shortage remain visible for the next account." % [_form_title(form_type), disposition]
 		&"hazard":
 			var hazard: Dictionary = record.get("source_data", {})
 			var place_id := StringName(hazard.get("place_id", ""))
@@ -362,16 +406,18 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 			for resource_id in ledger_resources.keys():
 				ledger_lines.append("%s: %d" % [String(resource_id).replace("_", " ").capitalize(), int(ledger_resources[resource_id])])
 			work_details = "Members: %d. Activity records: %d. Stockpiles: %s" % [int(record.get("source_data", {}).get("member_count", ledger.get("members", []).size())), int(record.get("source_data", {}).get("activity_count", ledger.get("activity_count", 0))), "; ".join(ledger_lines)]
-			result_text = "The institution's actual membership, activity, and resource records are copied into the archive. No goods are created or moved by the act of recording them."
+			result_text = "The institution's membership, activity, and current stock ledger are entered in the archive. The recorded balances remain unchanged by this filing."
 		_:
 			return {"success": false, "message": "Unsupported world situation."}
 
 	var employer_id := StringName(record.get("employer_id", ""))
 	var employer := world.get_person(employer_id)
-	var opinion_delta := 1 if accurate else -1
+	var opinion_delta := opinion_delta_override if opinion_delta_override != 0 else (1 if accurate else -1)
 	if employer != null:
 		employer.change_opinion(actor.id, opinion_delta, "Assignment assessment: %s" % String(record.get("title", "")), world.year)
-	actor.resources[&"silver"] = int(actor.resources.get(&"silver", 0)) + (2 if accurate else 1)
+	if opinion_delta_override == 0:
+		silver_award = 2 if accurate else 1
+	actor.resources[&"silver"] = int(actor.resources.get(&"silver", 0)) + silver_award
 	actor.skills.add_xp(&"law" if accurate else &"arithmetic", 12 if accurate else 6)
 	record["status"] = "completed"
 	record["assessment"] = verdict
@@ -408,7 +454,7 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 		"outcome": result_text,
 		"details": work_details,
 		"relationship_delta": opinion_delta,
-		"silver_awarded": 2 if accurate else 1,
+		"silver_awarded": silver_award,
 		"skill_awarded": "law" if accurate else "arithmetic",
 		"skill_xp": 12 if accurate else 6,
 		"path_id": String(record.get("path_id", ""))
@@ -437,23 +483,28 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 				total += int(amount)
 			if kind == &"form":
 				summary = "The form is checked against the institution's current recorded position."
-				facts = "FORM: %s\nURGENCY: %d\nRECORDED STOCK: %d across %d resource types" % [String(data.get("form_type", "")), int(data.get("urgency", 0)), total, stock.size()]
+				facts = "FORM: %s\nURGENCY: %d\n%s" % [String(data.get("form_type", "")), int(data.get("urgency", 0)), _live_stock_facts(stock, institution)]
 			else:
 				summary = "The institution's current stock records are reconciled. No discrepancy is presumed without a separate expected balance."
-				facts = "INSTITUTION: %s\nMEMBERS: %d / ACTIVITY RECORDS: %d\nRECORDED STOCK: %d across %d resource types" % [String(institution.get("name", institution_id)), int(data.get("member_count", institution.get("members", []).size())), int(data.get("activity_count", institution.get("activity_count", 0))), total, stock.size()]
+				facts = "INSTITUTION: %s\nMEMBERS: %d / ACTIVITY RECORDS: %d\n%s" % [String(institution.get("name", institution_id)), int(data.get("member_count", institution.get("members", []).size())), int(data.get("activity_count", institution.get("activity_count", 0))), _live_stock_facts(stock, institution)]
+			facts += "\nTABLET / STOREHOUSE: recorded barley %d; live barley %d; quantity gap %d." % [int(institution.get("stock_records", {}).get("barley_recorded", stock.get(&"barley", 0))), int(stock.get(&"barley", 0)), int(stock.get(&"barley", 0)) - int(institution.get("stock_records", {}).get("barley_recorded", stock.get(&"barley", 0)))]
+			var ledger_records: Dictionary = institution.get("stock_records", {})
+			if bool(ledger_records.get("concealed_spoilage", false)):
+				facts += "\nTABLET / STOREHOUSE QUALITY GAP: tablet declares %s; physical tally records damp, mold-marked barley." % String(ledger_records.get("barley_quality_declaration", "unrecorded"))
 			facts += "\n" + _stock_detail(stock, skill_level, "ARITHMETIC")
 		&"examine_records":
 			if kind == &"form":
 				summary = "The form's origin and urgency are confirmed against the pending register."
-				facts = "FORM: %s\nSUBJECT: %s\nURGENCY: %d\nGENERATED BY: %s" % [String(data.get("form_type", "")), _place_name(world, StringName(data.get("subject_id", ""))), int(data.get("urgency", 0)), String(data.get("generated_by", "world"))]
+				facts = "FORM: %s\nSUBJECT: %s\nURGENCY: %d\nGENERATED BY: %s\nREASON: %s" % [String(data.get("form_type", "")), _place_name(world, StringName(data.get("subject_id", ""))), int(data.get("urgency", 0)), String(data.get("generated_by", "world")), String(data.get("generation_reason", "routine office request")).replace("_", " ")]
 			else:
 				summary = "The written record is examined. The current account can be compared with the live institution state."
 				facts = "SOURCE: %s\nPERIOD: %d\nSKILL: %s %d" % [String(record.get("source_id", "")), world.current_period_index(), "Literacy", skill_level]
 		&"consult_official":
 			var employer := world.get_person(StringName(record.get("employer_id", "")))
 			var opinion := employer.get_opinion(actor.id) if employer != null else 0
-			summary = "The responsible official's account is recorded. It is testimony, not proof."
-			facts = "OFFICIAL: %s\nOPINION OF SCRIBE: %+d\nOFFICE: %s" % [employer.display_name if employer != null else "No named official", opinion, String(employer.office_id) if employer != null else "Unassigned"]
+			summary = "The responsible official gives a position and a demand. It is testimony, not proof."
+			var stance := _official_stance(world, actor, employer, data, opinion)
+			facts = "OFFICIAL: %s\nOPINION OF SCRIBE: %d\nOFFICE: %s\nSTANCE: “%s”" % [employer.display_name if employer != null else "No named official", opinion, String(employer.office_id) if employer != null else "Unassigned", stance]
 		&"inspect_source":
 			if kind == &"hazard":
 				var hazard: Dictionary = record.get("source_data", {})
@@ -466,9 +517,16 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 				var total := 0
 				for amount in stock.values():
 					total += int(amount)
-				facts = "INSTITUTION: %s\nMEMBERS: %d / ACTIVITY RECORDS: %d\nRECORDED STOCK: %d across %d resource types" % [String(institution.get("name", institution_id)), int(data.get("member_count", institution.get("members", []).size())), int(data.get("activity_count", institution.get("activity_count", 0))), total, stock.size()]
-				facts += "\n" + _stock_detail(stock, skill_level, "STEWARDSHIP")
-				summary = "The storehouse is inspected against its current recorded stock. Physical-versus-book discrepancies require an independent count."
+				facts = "PHYSICAL SITE: %s\nBIN COUNT / BARLEY: %d | LABOR ROSTER: %d | TEXTILES: %d\nINSTITUTION: %s" % [_place_name(world, StringName(data.get("subject_id", data.get("place_id", "")))), int(stock.get(&"barley", 0)), int(stock.get(&"labor", 0)), int(stock.get(&"textiles", 0)), String(institution.get("name", institution_id))]
+				var physical_records: Dictionary = institution.get("stock_records", {})
+				if bool(physical_records.get("concealed_spoilage", false)):
+					facts += "\nPHYSICAL FINDING: damp or mold-marked barley contradicts the prime seed-corn declaration."
+				facts += "\n" + _live_stock_facts(stock, institution)
+				summary = "The physical storehouse is inspected. These are the current bin and roster counts, not a clerk's tablet claim."
+	var evidence_place := StringName(data.get("subject_id", data.get("place_id", "")))
+	for hazard in world.hazards:
+		if bool(hazard.get("active", false)) and StringName(hazard.get("place_id", "")) == evidence_place:
+			facts += "\nACTIVE HAZARD: %s / loss %d %s each period" % [String(hazard.get("id", "hazard")).replace("_", " "), int(hazard.get("rate", 0)), String(hazard.get("resource", "")).replace("_", " ")]
 	var npc_evidence: Dictionary = data.get("npc_evidence", {})
 	if not npc_evidence.is_empty():
 		facts += "\nAUTONOMOUS RECORDS"
@@ -503,7 +561,7 @@ static func _stock_detail(stock: Dictionary, skill_level: int, skill_label: Stri
 	if skill_level < 1:
 		detail = "The records identify stored resources, but no reliable ranking is established."
 	elif skill_level == 1:
-		detail = "The largest reserve appears to be %s; its quantity is not yet verified." % resource_name
+		detail = "Largest recorded reserve: %s / %d." % [resource_name, int(first.amount)]
 	else:
 		detail = "LARGEST RECORDED RESERVE: %s / %d" % [resource_name, int(first.amount)]
 	if skill_level >= 3 and ranked.size() > 1:
@@ -514,14 +572,62 @@ static func _stock_detail(stock: Dictionary, skill_level: int, skill_label: Stri
 static func _institution_for_location(world: WorldState, location_id: StringName) -> StringName:
 	if location_id == &"":
 		return &""
-	var place: Dictionary = world.places.get(location_id, {})
-	var parent_id := StringName(place.get("parent", ""))
-	for institution_id in world.institutions.keys():
-		var institution: Dictionary = world.institutions[institution_id]
-		var institution_place := StringName(institution.get("place_id", ""))
-		if institution_place == location_id or (parent_id != &"" and institution_place == parent_id):
-			return StringName(institution_id)
+	# These Uruk work records are Eanna household responsibilities, not
+	# agricultural-household or exchange ledgers merely because of their parent.
+	for worksite_id in [&"ditch_labor_tally", &"textile_workshop", &"brewery_delivery", &"river_fish_supply"]:
+		if location_id == worksite_id and world.institutions.has(&"eanna_household"):
+			return &"eanna_household"
+	var cursor := location_id
+	var visited: Dictionary = {}
+	while cursor != &"" and not visited.has(cursor):
+		visited[cursor] = true
+		for institution_id in world.institutions.keys():
+			var institution: Dictionary = world.institutions[institution_id]
+			if StringName(institution.get("place_id", "")) == cursor:
+				return StringName(institution_id)
+		var place: Dictionary = world.places.get(cursor, {})
+		cursor = StringName(place.get("parent", ""))
+	if visited.has(&"uruk") and world.institutions.has(&"eanna_household"):
+		return &"eanna_household"
 	return &""
+
+static func _live_stock_facts(stock: Dictionary, institution: Dictionary) -> String:
+	var thresholds: Dictionary = institution.get("pressure_thresholds", {})
+	var barley := int(stock.get(&"barley", 0))
+	var labor := int(stock.get(&"labor", 0))
+	var textiles := int(stock.get(&"textiles", 0))
+	var minimum_labor := int(thresholds.get(&"labor_warn", 8))
+	var barley_warn := int(thresholds.get(&"barley_warn", 105))
+	var textiles_warn := int(thresholds.get(&"textiles_warn", 3))
+	var lines := "Barley: %d (warn < %d) | Labor: %d (min %d) | Textiles: %d (warn < %d)" % [barley, barley_warn, labor, minimum_labor, textiles, textiles_warn]
+	var records: Dictionary = institution.get("stock_records", {})
+	if bool(records.get("concealed_spoilage", false)):
+		lines += "\nHAZARD: concealed spoilage; declaration=%s" % String(records.get("barley_quality_declaration", "unrecorded"))
+	return lines
+
+static func _official_stance(world: WorldState, actor: PersonEntity, official: PersonEntity, data: Dictionary, opinion: int) -> String:
+	if official == null:
+		return "No official will answer for this entry. Ask the archive to name the responsible hand."
+	var form_type := StringName(data.get("form_type", ""))
+	var institution_id := StringName(data.get("institution_id", _institution_for_location(world, StringName(data.get("place_id", data.get("subject_id", ""))))))
+	var institution: Dictionary = world.institutions.get(institution_id, {})
+	var records: Dictionary = institution.get("stock_records", {})
+	var npc_evidence: Dictionary = data.get("npc_evidence", {})
+	if not npc_evidence.is_empty() or bool(records.get("concealed_spoilage", false)):
+		if official.office_id == &"grain_clerk":
+			return "The seed-corn entry stands. The roof was poor, not my measure; certify the tablet and let the household keep its reserve."
+		return "This contradiction will reach the archive unless you refer it. I ask you to preserve the office's standing—and name who bears the loss."
+	if form_type in [&"bailiff_requisition", &"pension_roll"]:
+		if official.office_id == &"canal_bailiff":
+			return "The sluice is choked and the crew is short. Authorize labor now; the fields will pay for delay."
+		return "The roll is not a plea for favor. Certify the shortage and write whose stores must be reassigned."
+	if official.office_id == &"archive_keeper":
+		return "Do not make a patron's seal into evidence. Enter the source, and let the record name the responsible office."
+	if opinion >= 5 and (&"pliable" in official.traits or &"complicit" in official.traits):
+		return "We have kept one another's accounts before. A clean seal now will be remembered in your favor."
+	if opinion <= -5 or &"severe" in official.traits or &"exacting" in official.traits:
+		return "Do not ask me to soften a figure. Show the source and state plainly who carries the consequence."
+	return "The office asks for a clear finding: certify what the source supports, or refer what it cannot explain."
 
 static func _preferred_office(form_type: StringName) -> StringName:
 	match form_type:
@@ -560,7 +666,10 @@ static func _resolve_local_employer(world: WorldState, institution_id: StringNam
 		for person in world.people.values():
 			if person != null and person.location_id == &"uruk" and (preferred_office_id == &"" or person.office_id == preferred_office_id):
 				return person.id
-	return &""
+	var fallback := _form_employer(world, &"pension_roll")
+	if fallback != &"":
+		return fallback
+	return world.player_id
 
 static func _form_employer(world: WorldState, form_type: StringName) -> StringName:
 	var preferred_id: StringName = &"shuruppak_ilu"

@@ -1,5 +1,8 @@
 class_name WorldSimulator
 extends RefCounted
+
+const CANAL_LAUNCH_YEAR := -3199
+const CANAL_CASES_REQUIRED := 8
 ## Autonomous period simulation for the Uruk campaign.
 ## WorldState owns the calendar/deadline/hazard step; this class owns ongoing
 ## economy, institutional activity, and condition-driven docket generation.
@@ -22,6 +25,8 @@ func advance_period(world: WorldState) -> void:
 	_simulate_economy(world)
 	_simulate_institutions(world)
 	_simulate_epics(world)
+	_simulate_personal_upkeep(world)
+	_tick_audit_reprimands(world)
 	_simulate_people(world)
 	_tick_grain_clerk_agenda(world)
 	_generate_forms(world)
@@ -108,7 +113,7 @@ func _simulate_epics(world: WorldState) -> void:
 			continue
 		if not world.epics.has(definition.id):
 			world.epics[definition.id] = {
-				"active": true,
+				"active": definition.id != &"great_canal_cut",
 				"progress": world.get_resource(definition.progress_resource),
 				"progress_resource": definition.progress_resource,
 				"target": definition.target,
@@ -129,14 +134,38 @@ func _simulate_epics(world: WorldState) -> void:
 			continue
 		var state: Dictionary = world.epics[epic_id]
 		var era_matches := definition.era_id == &"" or (current_era != null and current_era.id == definition.era_id)
-		state["active"] = era_matches
 		state["progress_resource"] = definition.progress_resource
 		state["target"] = definition.target
 		state["title"] = definition.title
 		state["sponsor_institution"] = definition.sponsor_institution
 		state["era_id"] = definition.era_id
 		state["initial_stage"] = definition.initial_stage
+		if StringName(epic_id) != &"great_canal_cut":
+			state["active"] = era_matches
+			if not era_matches:
+				world.epics[epic_id] = state
+				continue
+			_simulate_epic(world, definition, state)
+			continue
+		if not bool(state.get("active", false)):
+			var earned_canal := world.year >= CANAL_LAUNCH_YEAR and world.cases_settled >= CANAL_CASES_REQUIRED
+			var summoned_canal := world.epic_summon_issued and world.year >= CANAL_LAUNCH_YEAR
+			if earned_canal or summoned_canal:
+				state["active"] = true
+				state["review_initialized"] = true
+				var launch_progress := int(state.get("progress", world.get_resource(definition.progress_resource)))
+				var launch_stage := world.get_epic_stage_index(launch_progress, definition.target)
+				state["review_stage"] = launch_stage
+				state["review_stage_label"] = world.get_epic_stage_label(launch_stage)
+				state["review_pending"] = true
+				state["review_reason"] = "summons" if summoned_canal else "earned_life"
+				state["review_summary"] = "A summons from the canal administration requires the apprentice's first formal project account."
+				world.cedar_desk_log.append({"year": world.year, "period": world.period, "title": "SUMMONS: THE GREAT CANAL CUT", "summary": "The apprentice has settled %d cases. The canal administration now requires a formal account of the Great Canal Cut." % world.cases_settled, "epic_id": String(epic_id)})
+			else:
+				world.epics[epic_id] = state
+				continue
 		if not era_matches:
+			state["active"] = false
 			world.epics[epic_id] = state
 			continue
 		_simulate_epic(world, definition, state)
@@ -213,6 +242,46 @@ func _simulate_epic(world: WorldState, definition: EpicDef, state: Dictionary) -
 	world.epics[definition.id] = state
 	world.stockpiles[resource_id] = progress
 	world.ensure_epic_review_state(definition.id)
+
+func _simulate_personal_upkeep(world: WorldState) -> void:
+	if world.periods_elapsed <= 0 or world.periods_elapsed % 3 != 0:
+		return
+	var player := world.get_player()
+	if player == null:
+		return
+	var silver := int(player.resources.get(&"silver", 0))
+	if silver >= 2:
+		player.resources[&"silver"] = silver - 2
+		player.flags[&"unpaid_upkeep"] = 0
+		world.cedar_desk_log.append({"year": world.year, "period": world.period, "title": "HOUSEHOLD UPKEEP", "summary": "Two silver paid for seasonal lodging and meals."})
+	else:
+		player.flags[&"unpaid_upkeep"] = int(player.flags.get(&"unpaid_upkeep", 0)) + 2 - silver
+		player.resources[&"silver"] = 0
+		var senior := world.get_person(&"shuruppak_ilu")
+		if senior != null:
+			senior.change_opinion(player.id, -1, "The apprentice's household account fell into arrears.", world.year)
+		world.cedar_desk_log.append({"year": world.year, "period": world.period, "title": "UPKEEP IN ARREARS", "summary": "The household could not pay its two-silver seasonal account. Debt is recorded; work remains available."})
+
+func _tick_audit_reprimands(world: WorldState) -> void:
+	if world.periods_elapsed <= 0 or world.periods_elapsed % 6 != 0:
+		return
+	var player := world.get_player()
+	if player == null:
+		return
+	var exposure := int(player.flags.get(&"audit_exposure", 0))
+	if exposure <= 0:
+		return
+	player.flags[&"audit_exposure"] = exposure - 1
+	var silver := int(player.resources.get(&"silver", 0))
+	if silver >= 2:
+		player.resources[&"silver"] = silver - 2
+	else:
+		player.flags[&"audit_debt"] = int(player.flags.get(&"audit_debt", 0)) + 2 - silver
+		player.resources[&"silver"] = 0
+	var archivist := world.get_person(&"shuruppak_ilu")
+	if archivist != null:
+		archivist.change_opinion(player.id, -2, "A concealed account was found in the archive audit.", world.year)
+	world.cedar_desk_log.append({"year": world.year, "period": world.period, "title": "ARCHIVE REPRIMAND", "summary": "Shuruppak-ilu found a concealed account. Two silver were fined or entered as debt."})
 
 func _simulate_economy(world: WorldState) -> void:
 	var p := world.period

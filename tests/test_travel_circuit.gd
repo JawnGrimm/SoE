@@ -69,6 +69,9 @@ func _run() -> void:
 	await process_frame
 	var river_route := network.get_route(&"river_uruk_nippur")
 	_check(river_route != null and river_route.downstream_destination_id == &"uruk", "The river definition identifies Uruk as the downstream destination")
+	var route_traveler := world.get_player()
+	route_traveler.resources[&"silver"] = 0 # Route debt must not strand the player.
+	var unpaid_route_fees_before := int(route_traveler.flags.get(&"unpaid_route_fees", 0))
 	var upstream_periods := network.get_transit_periods(&"river_uruk_nippur", &"uruk", &"nippur")
 	_check(upstream_periods == 2, "Uruk-to-Nippur river passage applies the one-period upstream penalty")
 	var nippur_index: int = survey_map.map_nodes.get(&"nippur", -1)
@@ -81,10 +84,12 @@ func _run() -> void:
 	_check(survey_map.board_selected_route() and journey_results.size() == 1, "The survey's Board Barge action invokes the authoritative travel service")
 	var upstream_result: Dictionary = journey_results[0]
 	_check(bool(upstream_result.get("success", false)) and int(upstream_result.get("transit_periods", 0)) == upstream_periods, "TravelService executes the complete upstream journey")
+	_check(int(route_traveler.flags.get(&"unpaid_route_fees", 0)) == unpaid_route_fees_before + 1, "A broke traveler records the one-silver route debt but is not soft-locked")
 	_check(world.current_location_id == &"nippur", "Arrival updates the persistent current location to Nippur")
 	var nippur_save := SaveCodecScript.decode_save(SaveCodecScript.encode_world(world, {"survey_open": true}))
 	var nippur_saved_world: WorldState = nippur_save.get("world") as WorldState
 	_check(bool(nippur_save.get("success", false)) and nippur_saved_world != null and nippur_saved_world.current_location_id == &"nippur", "Save/load preserves the player's location while away in Nippur")
+	_check(nippur_saved_world.periods_elapsed == world.periods_elapsed and world.periods_elapsed == 2, "Save/load preserves elapsed campaign periods independently of BCE calendar index")
 	_check(bool(nippur_save.get("session", {}).get("survey_open", false)), "Save/load preserves the cedar-desk survey's open state")
 	_check(world.year == -3200 and world.period == 2, "Two transit periods arrive in Month 3 of 3201 BCE")
 	var month_three := CalendarFormatterScript.format_date(registry.get_era(&"uruk_storehouse"), world.year, world.period)

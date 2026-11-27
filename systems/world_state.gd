@@ -5,6 +5,7 @@ const PERIODS_PER_YEAR := 12
 
 var year: int = 1200
 var period: int = 0
+var periods_elapsed: int = 0
 var current_location_id: StringName = &"uruk"
 var master_seed: int = 0
 var rng_narrative := RandomNumberGenerator.new()
@@ -195,6 +196,7 @@ var total_periods: int:
 		return current_period_index()
 
 func advance_period() -> void:
+	periods_elapsed += 1
 	period += 1
 	if period >= PERIODS_PER_YEAR:
 		period = 0
