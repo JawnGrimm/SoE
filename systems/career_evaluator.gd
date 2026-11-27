@@ -73,9 +73,15 @@ static func evaluate(world: WorldState, actor: PersonEntity) -> Dictionary:
 	var labor_outcome := _labor_outcome(world, epic)
 	var start_year := int(world.world_flags.get(&"career_start_year", -3200))
 	var orientation_label := "Unrecorded"
-	for path_id in [&"path_civil", &"path_religious", &"path_martial", &"path_merchant"]:
+	var orientation_labels := {
+		&"path_civil": "Government Scribe",
+		&"path_religious": "Religious Scribe",
+		&"path_martial": "Military Scribe",
+		&"path_merchant": "Merchant Scribe"
+	}
+	for path_id in orientation_labels:
 		if int(world.world_flags.get(&"professional_orientation", -1)) == int(path_id.hash()):
-			orientation_label = String(path_id).replace("path_", "").replace("_", " ").capitalize()
+			orientation_label = String(orientation_labels[path_id])
 	var law_level := actor.skills.get_level(&"law")
 	var literacy_level := actor.skills.get_level(&"literacy")
 	var epitaph := _epitaph(integrity, corruption, silver - debt - unpaid_upkeep, law_level, labor_outcome, primary_faction, actor)
