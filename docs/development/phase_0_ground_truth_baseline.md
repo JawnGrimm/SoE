@@ -10,7 +10,7 @@
 The next implementation work follows these decisions:
 
 - Use **Worldmap Builder only** for the future regional node-and-connection graph.
-- Do not integrate Province Map Builder as a second map workflow. Its existing tracked files are left untouched by this baseline step.
+- Do not integrate Province Map Builder as a second map workflow. At the recorded baseline commit, its files were still tracked; the later removal from main is noted below.
 - The regional map is a survey layer unrolled on the cedar desk. It must not replace the desk view or hide the compound ledger and tool tray.
 - Keep each implementation step in its own documented pull request.
 - The immediate implementation sequence is this baseline, followed by the LimboConsole developer command router.
@@ -34,7 +34,7 @@ The repository already contains the relevant foundations:
 | Existing tests | `tests/test_event_slice.gd` | Event, period, world simulation, persistence, and related integration checks live here |
 | CI | `.github/workflows/godot-ci.yml` | Imports the project and runs the event/period integration test on Godot 4.7.2 |
 
-The repository also currently tracks `addons/province_map_builder/` and a root-level `province-map-builder-main.zip`. They are not part of the approved map implementation. This PR deliberately does not delete or alter them.
+At the recorded baseline commit, the repository also tracked `addons/province_map_builder/` and a root-level `province-map-builder-main.zip`. A subsequent main commit (`4d3a138d3000ed30c424cd2ec25f9efd35018ddc`) removed the addon directory. Inspection of that commit found that `project.godot` still lists `res://addons/province_map_builder/plugin.cfg` as an enabled editor plugin. A separate cleanup PR is required to remove that stale reference; it is not bundled into the LimboConsole implementation.
 
 ## Existing period-advance path
 
