@@ -21,7 +21,7 @@ func _run() -> void:
 	_check(reviews.size() == 1, "Initial local board should expose one Epic review")
 	if not reviews.is_empty():
 		world.resolve_epic_review(&"great_canal_cut", epic_def)
-	board = pipeline.generate_opportunities(world, actor, &"government")
+	board = AssignmentPipeline.generate_opportunities(world, actor, &"government")
 	_check(_project_reviews(board).is_empty(), "Review latch must clear immediately in the same period")
 
 	# Old saves have no latch keys. Migration creates a single pending review,
