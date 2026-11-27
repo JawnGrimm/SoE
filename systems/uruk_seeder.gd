@@ -76,7 +76,7 @@ static func seed_campaign(world: WorldState, world_seed: int, add_player_to_worl
 	world.people[&"geme_tur"] = _person(&"geme_tur", "Geme-tur", &"player_household", {"stewardship": 2}, [&"practical", &"blunt"])
 
 	_seed_places(world, definitions)
-	_seed_institutions_and_groups(world, definitions)
+	_seed_institutions_and_groups(world, definitions, starting_era.id if starting_era != null else &"")
 	_seed_relationships(world)
 	if add_player_to_world:
 		attach_player(world, player)
@@ -163,11 +163,10 @@ static func _seed_places(world: WorldState, definitions: DefinitionRegistry) -> 
 			"survey_position": definition.survey_position
 		}
 
-static func _seed_institutions_and_groups(world: WorldState, definitions: DefinitionRegistry) -> void:
+static func _seed_institutions_and_groups(world: WorldState, definitions: DefinitionRegistry, active_era_id: StringName) -> void:
 	world.institutions.clear()
-	var active_era := definitions.get_era_for_year(world.year)
 	for definition in definitions.all_institutions():
-		if active_era != null and definition.era_id != active_era.id:
+		if active_era_id != &"" and definition.era_id != active_era_id:
 			continue
 		world.institutions[definition.id] = definition.create_runtime_state()
 	world.social_groups = {
