@@ -30,6 +30,7 @@ func get_available_destinations(world: WorldState) -> Array[Dictionary]:
 			"route_id": route_id,
 			"destination_id": destination_id,
 			"destination_name": destination.display_name,
+			"route_name": route.display_name,
 			"route_type": route.route_type,
 			"status": network.get_route_status(route_id),
 			"transit_periods": periods,
