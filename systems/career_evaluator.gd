@@ -126,6 +126,8 @@ static func generate_export_text(summary: Dictionary) -> String:
 	return "\n".join(lines)
 
 static func _epitaph(integrity: int, corruption: int, net_worth: int, law: int, labor_outcome: String, faction: StringName, actor: PersonEntity) -> String:
+	if actor.flags.has(&"name_on_monument"):
+		return "The Name Cut into the Sluice Stone"
 	if integrity >= 65 and law >= 2:
 		return "The Incorruptible Scaleman of the Lowlands"
 	if corruption >= 55 and net_worth > 5:
