@@ -6,6 +6,8 @@ const DevCommandRouterScript = preload("res://systems/dev_command_router.gd")
 const RouteNetworkScript = preload("res://systems/route_network.gd")
 const TravelServiceScript = preload("res://systems/travel_service.gd")
 const RegionalSurveyMapScript = preload("res://components/regional_survey_map.gd")
+const WorkQueueOverlayScript = preload("res://ui/work_queue_overlay.gd")
+const CUNEIFORM_FONT = preload("res://assets/Noto_Sans_Cuneiform,Noto_Sans_Egyptian_Hieroglyphs/Noto_Sans_Cuneiform/NotoSansCuneiform-Regular.ttf")
 const CAMPAIGN_SEED: int = 32003200
 const ROSTER_CAST: Array[StringName] = [&"shuruppak_ilu", &"utu_mansum", &"enlil_kisu", &"ur_nanna", &"nin_kasi", &"geme_inana", &"lu_nanshe"]
 const FACTION_LABELS := {
@@ -65,9 +67,18 @@ var dossier_label: Label
 var canal_label: Label
 var roster_box: VBoxContainer
 var status_label: Label
+var header_resource_label: Label
+var local_stock_label: Label
+var period_delta_label: Label
+var work_queue_overlay: Control
+var work_queue_button: Button
+var evidence_workspace: Control
+var period_delta_feed: Array[String] = []
+var last_stock_snapshot: Dictionary = {}
+var last_delta_period: int = -1
 var docket_overlay: PanelContainer
 var docket_motion_layer: Control
-var archive_prop: TextureRect
+var archive_prop: TextureButton
 var stylus_prop: TextureRect
 var heirloom_label: Label
 var secret_toggle: Button
@@ -148,10 +159,24 @@ func _build_interface() -> void:
 	year_label.add_theme_font_size_override("font_size", 14)
 	year_label.add_theme_color_override("font_color", Color("#c4ad7c"))
 	header.add_child(year_label)
+	header_resource_label = Label.new()
+	header_resource_label.add_theme_font_size_override("font_size", 12)
+	header_resource_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	header_resource_label.add_theme_color_override("font_color", Color("#e5d2a8"))
+	header_resource_label.tooltip_text = "Purse, debt, and current audit exposure. Values are live character/world state."
+	root.add_child(header_resource_label)
+	work_queue_button = Button.new()
+	work_queue_button.text = "ARCHIVE / QUEUE"
+	work_queue_button.tooltip_text = "Open Works, Challenges, and Assignments. Keyboard: focus and press Enter."
+	work_queue_button.custom_minimum_size = Vector2(142, 44)
+	work_queue_button.add_theme_font_size_override("font_size", 12)
+	work_queue_button.add_theme_stylebox_override("focus", _panel_style("#3a2b1d", "#f5e6d0"))
+	work_queue_button.pressed.connect(_toggle_work_queue)
+	header.add_child(work_queue_button)
 	var menu_button := Button.new()
 	menu_button.text = "☰  MENU"
 	menu_button.tooltip_text = "Open the in-game menu (Esc)"
-	menu_button.custom_minimum_size = Vector2(104, 34)
+	menu_button.custom_minimum_size = Vector2(104, 44)
 	menu_button.add_theme_font_size_override("font_size", 13)
 	menu_button.add_theme_color_override("font_color", Color("#e5d2a8"))
 	menu_button.add_theme_stylebox_override("normal", _panel_style("#3a2b1d", "#80653b"))
@@ -186,13 +211,13 @@ func _build_interface() -> void:
 	var desk_caption := Label.new()
 	desk_caption.text = "THE DESK  /  CEDAR AND REED"
 	desk_caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	desk_caption.add_theme_font_size_override("font_size", 10)
+	desk_caption.add_theme_font_size_override("font_size", 12)
 	desk_caption.add_theme_color_override("font_color", Color("#a99570"))
 	desk_toolbar.add_child(desk_caption)
 	survey_button = Button.new()
 	survey_button.text = "UNROLL REGIONAL SURVEY"
 	survey_button.tooltip_text = "Unroll the regional river-and-road survey on the cedar desk."
-	survey_button.add_theme_font_size_override("font_size", 10)
+	survey_button.add_theme_font_size_override("font_size", 12)
 	survey_button.add_theme_stylebox_override("normal", _panel_style("#3a2b1d", "#80653b"))
 	survey_button.add_theme_stylebox_override("hover", _panel_style("#604326", "#d0ad70"))
 	survey_button.pressed.connect(_toggle_regional_survey)
@@ -205,7 +230,8 @@ func _build_interface() -> void:
 	upper_workspace.add_theme_constant_override("separation", 6)
 	desk_box.add_child(upper_workspace)
 	var evidence_row := HBoxContainer.new()
-	evidence_row.custom_minimum_size.y = 116
+	evidence_workspace = evidence_row
+	evidence_row.custom_minimum_size.y = 172
 	evidence_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	evidence_row.add_theme_constant_override("separation", 12)
 	upper_workspace.add_child(evidence_row)
@@ -303,12 +329,17 @@ func _build_interface() -> void:
 	desk_props.add_theme_constant_override("separation", 14)
 	desk_props.alignment = BoxContainer.ALIGNMENT_CENTER
 	root.add_child(desk_props)
-	archive_prop = TextureRect.new()
-	archive_prop.texture = load("res://assets/desk/archive_stack.png")
-	archive_prop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	archive_prop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	archive_prop = TextureButton.new()
+	archive_prop.texture_normal = load("res://assets/desk/archive_stack.png")
+	archive_prop.texture_hover = archive_prop.texture_normal
+	archive_prop.texture_pressed = archive_prop.texture_normal
+	archive_prop.ignore_texture_size = true
+	archive_prop.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 	archive_prop.custom_minimum_size = Vector2(82, 44)
-	archive_prop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	archive_prop.focus_mode = Control.FOCUS_ALL
+	archive_prop.add_theme_stylebox_override("focus", _panel_style("#211a12", "#f5e6d0"))
+	archive_prop.tooltip_text = "Open the archive / work queue."
+	archive_prop.pressed.connect(_toggle_work_queue)
 	desk_props.add_child(archive_prop)
 	stylus_prop = TextureRect.new()
 	stylus_prop.texture = load("res://assets/desk/Ancient Wrapped Wooden Stylus.png")
@@ -330,9 +361,15 @@ func _build_interface() -> void:
 	compound.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	compound.add_theme_stylebox_override("panel", _panel_style("#211d17", "#665238"))
 	body.add_child(compound)
+	var compound_scroll := ScrollContainer.new()
+	compound_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	compound_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	compound_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	compound.add_child(compound_scroll)
 	var compound_box := VBoxContainer.new()
+	compound_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	compound_box.add_theme_constant_override("separation", 10)
-	compound.add_child(compound_box)
+	compound_scroll.add_child(compound_box)
 	var compound_title := Label.new()
 	compound_title.text = "THE COMPOUND"
 	compound_title.add_theme_font_size_override("font_size", 17)
@@ -352,6 +389,16 @@ func _build_interface() -> void:
 	canal_label.add_theme_font_size_override("font_size", 13)
 	canal_label.add_theme_color_override("font_color", Color("#d6bd8b"))
 	compound_box.add_child(canal_label)
+	local_stock_label = Label.new()
+	local_stock_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	local_stock_label.add_theme_font_size_override("font_size", 13)
+	local_stock_label.add_theme_color_override("font_color", Color("#e5d2a8"))
+	compound_box.add_child(local_stock_label)
+	period_delta_label = Label.new()
+	period_delta_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	period_delta_label.add_theme_font_size_override("font_size", 12)
+	period_delta_label.add_theme_color_override("font_color", Color("#c4ad7c"))
+	compound_box.add_child(period_delta_label)
 	var roster_title := Label.new()
 	roster_title.text = "FACTION STANDINGS  /  OPINION OF YOU"
 	roster_title.add_theme_font_size_override("font_size", 11)
@@ -362,7 +409,7 @@ func _build_interface() -> void:
 	compound_box.add_child(roster_box)
 	status_label = Label.new()
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	status_label.add_theme_font_size_override("font_size", 11)
+	status_label.add_theme_font_size_override("font_size", 12)
 	status_label.add_theme_color_override("font_color", Color("#a99570"))
 	compound_box.add_child(status_label)
 
@@ -398,6 +445,9 @@ func _build_interface() -> void:
 	cavity_label.text = "FALSE BOTTOM  /  No private reserve has been issued."
 	cavity_label.add_theme_color_override("font_color", Color("#c6b99f"))
 	secret_cavity.add_child(cavity_label)
+	work_queue_overlay = WorkQueueOverlayScript.new()
+	work_queue_overlay.connect("opportunity_selected", _on_queue_opportunity_selected)
+	add_child(work_queue_overlay)
 
 func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: String, quote: String, character_id: StringName = &"") -> PanelContainer:
 	var panel := PanelContainer.new()
@@ -421,19 +471,19 @@ func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: Strin
 	title.text = heading
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.add_theme_font_size_override("font_size", 12)
+	title.add_theme_font_size_override("font_size", 13)
 	title.add_theme_color_override("font_color", Color("#d6bd8b"))
 	header.add_child(title)
 	var speaker_label := Label.new()
 	speaker_label.text = speaker.to_upper()
-	speaker_label.add_theme_font_size_override("font_size", 10)
+	speaker_label.add_theme_font_size_override("font_size", 12)
 	speaker_label.add_theme_color_override("font_color", Color("#a99570"))
 	box.add_child(speaker_label)
 	var quote_label := Label.new()
 	quote_label.text = "“%s”" % quote
 	quote_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	quote_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	quote_label.add_theme_font_size_override("font_size", 13)
+	quote_label.add_theme_font_size_override("font_size", 14)
 	quote_label.add_theme_color_override("font_color", Color("#e0d4bd"))
 	box.add_child(quote_label)
 	# Evidence can contain a complete resource ledger. Keep it inside the card's
@@ -446,7 +496,7 @@ func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: Strin
 	facts_label.custom_minimum_size.y = 0
 	facts_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	facts_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	facts_label.add_theme_font_size_override("normal_font_size", 11)
+	facts_label.add_theme_font_size_override("normal_font_size", 12)
 	facts_label.add_theme_color_override("default_color", Color("#c7ad7e"))
 	box.add_child(facts_label)
 	if heading.begins_with("GRANARY"):
@@ -788,6 +838,7 @@ func _finish_first_workday_mentor() -> void:
 	_schedule_next_case()
 
 func _show_character_creation_screen(screen: int) -> void:
+	_set_evidence_visible(false)
 	creation_screen = clampi(screen, 0, 8)
 	_clear_stamp_history()
 	_clear_choices()
@@ -1166,6 +1217,7 @@ func _show_case() -> void:
 	_render_docket_payload(AssignmentNarratorScript.translate_payload(_active_docket_payload()))
 
 func _render_docket_payload(payload: Dictionary, callbacks: Array = []) -> void:
+	_set_evidence_visible(true)
 	case_heading.add_theme_font_size_override("font_size", 20)
 	case_heading.text = "𒂍  " + String(payload.get("title", "Docket")).to_upper()
 	dossier.visible = false
@@ -1591,6 +1643,7 @@ func _add_choice(label_text: String, callback: Callable, disabled: bool = false)
 	choices.add_child(row)
 	var wedge := Label.new()
 	wedge.text = "𒁹"
+	wedge.add_theme_font_override("font", CUNEIFORM_FONT)
 	wedge.custom_minimum_size.x = 34
 	wedge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	wedge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -1602,8 +1655,11 @@ func _add_choice(label_text: String, callback: Callable, disabled: bool = false)
 	button.disabled = disabled
 	button.custom_minimum_size = Vector2(190, choice_height)
 	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	button.tooltip_text = label_text.replace("\\n", " — ")
+	button.focus_mode = Control.FOCUS_ALL
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.add_theme_stylebox_override("focus", _panel_style("#00000000", "#f5e6d0"))
 	button.add_theme_font_size_override("font_size", 16)
 	_apply_incised_text(button)
 	button.add_theme_color_override("font_color", Color("#3b2819"))
@@ -1624,6 +1680,7 @@ func _add_choice(label_text: String, callback: Callable, disabled: bool = false)
 	button.add_theme_stylebox_override("pressed", button_pressed)
 	var stamp := Label.new()
 	stamp.text = "𒂍" if label_text.contains("Temple") else "𒁹"
+	stamp.add_theme_font_override("font", CUNEIFORM_FONT)
 	stamp.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	stamp.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	stamp.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -1710,6 +1767,7 @@ func _record_choice_stamp(button: Button, stamp: Label) -> void:
 	stamp_history_row.visible = true
 	var entry := Label.new()
 	entry.text = stamp.text
+	entry.add_theme_font_override("font", CUNEIFORM_FONT)
 	entry.custom_minimum_size = Vector2(32, 34)
 	entry.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	entry.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -1809,7 +1867,10 @@ func _open_regional_survey() -> void:
 	if not survey_map.configure(route_network, world, travel_allowed):
 		status_label.text = "SURVEY UNAVAILABLE / REGIONAL ROUTE DATA IS INCOMPLETE."
 		return
+	_set_evidence_visible(false)
 	survey_map.visible = true
+	if work_queue_button != null:
+		work_queue_button.visible = false
 	docket_overlay.visible = false
 	survey_button.text = "ROLL REGIONAL SURVEY"
 	AudioManager.play_docket_slide()
@@ -1817,11 +1878,14 @@ func _open_regional_survey() -> void:
 func _close_regional_survey() -> void:
 	if survey_map == null:
 		return
+	_set_evidence_visible(phase != "character_creation")
 	survey_map.visible = false
 	if docket_overlay != null:
 		docket_overlay.visible = true
 	if survey_button != null:
 		survey_button.text = "UNROLL REGIONAL SURVEY"
+	if work_queue_button != null:
+		work_queue_button.visible = phase != "character_creation"
 	AudioManager.play_docket_slide()
 
 func _on_survey_travel_requested(route_id: StringName, destination_id: StringName) -> void:
@@ -1845,13 +1909,145 @@ func _on_survey_travel_requested(route_id: StringName, destination_id: StringNam
 	_refresh_compound()
 	_schedule_next_case()
 
+
+func _toggle_work_queue() -> void:
+	if work_queue_overlay == null:
+		return
+	if work_queue_overlay.visible:
+		work_queue_overlay.call("close_queue")
+	else:
+		work_queue_overlay.call("open_queue", assignment_opportunities, work_queue_button, phase == "opportunity_board")
+
+
+func _on_queue_opportunity_selected(index: int) -> void:
+	if index < 0 or index >= assignment_opportunities.size():
+		return
+	_select_assignment_opportunity(index)
+
+
+func _set_evidence_visible(is_visible: bool) -> void:
+	if evidence_workspace != null:
+		evidence_workspace.visible = is_visible
+	if evidence_left != null:
+		evidence_left.visible = is_visible
+	if evidence_right != null:
+		evidence_right.visible = is_visible
+
+
+func _refresh_header_status() -> void:
+	if header_resource_label == null or actor == null:
+		return
+	var silver := int(actor.resources.get(&"silver", 0))
+	var bread := int(actor.resources.get(&"bread", 0))
+	var beer := int(actor.resources.get(&"beer", 0))
+	var debt := int(actor.resources.get(&"debt", maxi(0, -silver)))
+	var flags: Dictionary = world.world_flags
+	var audit_exposure := int(flags.get(&"audit_exposure", flags.get(&"grain_scandal", 0)))
+	var audit_text := "AUDIT EXPOSED" if audit_exposure > 0 else "AUDIT QUIET"
+	var currency := String(current_era.currency_name) if current_era != null else "silver"
+	header_resource_label.text = "PURSE %d %s  ·  DEBT %d  ·  BREAD %d  ·  BEER %d  ·  %s" % [silver, currency.to_upper(), debt, bread, beer, audit_text]
+
+
+func _local_institution_ids() -> Array[StringName]:
+	var result: Array[StringName] = []
+	if world == null:
+		return result
+	for institution_value in world.institutions.keys():
+		var institution_id := StringName(institution_value)
+		var institution: Dictionary = world.institutions[institution_id]
+		var cursor := StringName(institution.get("place_id", ""))
+		var visited: Dictionary = {}
+		while cursor != &"" and not visited.has(cursor):
+			if cursor == world.current_location_id:
+				result.append(institution_id)
+				break
+			visited[cursor] = true
+			cursor = StringName(world.places.get(cursor, {}).get("parent", ""))
+	result.sort()
+	return result
+
+
+func _refresh_local_stock_facts() -> void:
+	if local_stock_label == null or world == null:
+		return
+	var place_name := String(world.places.get(world.current_location_id, {}).get("name", world.current_location_id))
+	var lines := PackedStringArray(["LOCAL STORES / %s" % place_name.to_upper()])
+	var institution_ids := _local_institution_ids()
+	if institution_ids.is_empty():
+		lines.append("No institution is registered at this location.")
+	for institution_id in institution_ids:
+		var institution: Dictionary = world.institutions.get(institution_id, {})
+		lines.append(String(institution.get("name", institution_id)))
+		var stocks: Dictionary = institution.get("stockpiles", {})
+		var stock_keys := stocks.keys()
+		stock_keys.sort()
+		if stock_keys.is_empty():
+			lines.append("  No stockpile recorded")
+		else:
+			var stock_lines := PackedStringArray()
+			for resource_value in stock_keys:
+				var resource_id := StringName(resource_value)
+				stock_lines.append("%s %d" % [String(resource_id).replace("_", " ").capitalize(), int(stocks[resource_id])])
+			lines.append("  " + "  ·  ".join(stock_lines))
+		var officials := PackedStringArray()
+		for member_value in institution.get("members", []):
+			var person := world.get_person(StringName(member_value))
+			if person != null and person.office_id != &"":
+				officials.append("%s (%s)" % [person.display_name, String(person.office_id).replace("_", " ")])
+		lines.append("  Officials: " + (", ".join(officials) if not officials.is_empty() else "none recorded"))
+	local_stock_label.text = "\n".join(lines)
+
+
+func _update_period_delta_feed() -> void:
+	if world == null or actor == null or period_delta_label == null:
+		return
+	var period_index := world.current_period_index()
+	if period_index != last_delta_period:
+		last_delta_period = period_index
+		period_delta_feed.clear()
+	var snapshot: Dictionary = {}
+	for institution_id in _local_institution_ids():
+		var institution: Dictionary = world.institutions.get(institution_id, {})
+		var stocks: Dictionary = institution.get("stockpiles", {})
+		for resource_value in stocks.keys():
+			var resource_id := StringName(resource_value)
+			snapshot["%s:%s" % [institution_id, resource_id]] = int(stocks[resource_id])
+	for resource_id in [&"silver", &"bread", &"beer"]:
+		snapshot["actor:%s" % resource_id] = int(actor.resources.get(resource_id, 0))
+	for faction_id in FACTION_LABELS.keys():
+		snapshot["faction:%s" % faction_id] = world.get_faction_standing(StringName(faction_id))
+	var active_epic_id := world.get_active_epic_id()
+	if active_epic_id != &"":
+		var epic_state: Dictionary = world.epics.get(active_epic_id, {})
+		snapshot["epic:%s" % active_epic_id] = int(epic_state.get("progress", world.get_resource(StringName(epic_state.get("progress_resource", "")))))
+	for key in snapshot.keys():
+		if last_stock_snapshot.has(key):
+			var delta := int(snapshot[key]) - int(last_stock_snapshot[key])
+			if delta != 0:
+				var direction := "+" if delta > 0 else ""
+				period_delta_feed.append("%s %s%d" % [String(key).replace(":", " / ").replace("_", " "), direction, delta])
+	last_stock_snapshot = snapshot
+	while period_delta_feed.size() > 6:
+		period_delta_feed.pop_front()
+	var body := "No resource changes recorded this period."
+	if not period_delta_feed.is_empty():
+		body = "\n".join(period_delta_feed)
+	period_delta_label.text = "PERIOD DELTAS\n" + body
+
+
+
 func _refresh_compound() -> void:
 	if world == null:
 		return
+	_refresh_header_status()
+	_refresh_local_stock_facts()
+	_update_period_delta_feed()
 	if location_label != null:
 		location_label.text = _location_header_text()
 	if survey_button != null:
 		survey_button.disabled = world.get_player() == null
+	if work_queue_button != null:
+		work_queue_button.visible = phase != "character_creation" and (survey_map == null or not survey_map.visible)
 	var mentor_trait := "unmarked"
 	for trait_id in actor.traits:
 		if trait_id in [&"exacting", &"stubborn", &"protective", &"diplomatic", &"pliable", &"severe", &"cautious"]:

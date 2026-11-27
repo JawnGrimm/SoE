@@ -26,3 +26,13 @@ General project rules:
 - Assignment verdicts must change persistent world state when the matter warrants it: institutional stock/pressure, concealed records, relationships, audit exposure, and the career chronicle. Silver pressure must create debt/reprimand rather than a travel or work soft-lock.
 - Uruk work-record sub-places resolve to their responsible institution through explicit ownership first, then parent-place routing. Do not leave assignment institution_id or employer_id blank when a valid local institution/person exists.
 - Slice A does not add settlements, redesign the desk, or implement Phase B succession. Keep Era I work focused on the apprentice's local/regional career and the first meaningful judgment loop.
+
+## UI and accessibility guardrails
+
+- Read `ACCESSIBILITY.md` before changing desk, HUD, menus, overlays, or other player-facing controls.
+- Keep reusable presentation components under `ui/`; keep assignment generation/resolution, world mutation, and save behavior in `systems/`.
+- UI controls must call the existing pipeline and SaveManager APIs. Do not directly mutate simulation state from presentation scripts.
+- Keep transient UI state (open panels, focus, queue filters, animation state) out of save data.
+- Provide keyboard equivalents for clickable desk props, visible focus, meaningful labels/tooltips, and Escape handling for overlays. Cuneiform glyphs are decorative/atmospheric and must always be paired with plain-language labels.
+- Hide evidence/character panels when a screen needs the full workspace (character creation, regional survey); restore them when returning to normal desk phases.
+- Verify contrast, focus order/restoration, resize behavior, and reduced motion manually in a running build. Headless tests do not establish visual accessibility.

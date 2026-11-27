@@ -86,3 +86,9 @@ jobs:
 
       - name: Run developer command router tests
         run: godot --headless --path . --script res://tests/test_dev_command_router.gd
+
+      - name: Run assignment board review selection tests
+        run: godot --headless --path . --script res://tests/test_assignment_board_selection.gd
+
+      - name: Run work queue grouping tests
+        run: godot --headless --path . --script res://tests/test_work_queue_overlay.gd
