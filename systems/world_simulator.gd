@@ -380,6 +380,7 @@ func _simulate_people(world: WorldState) -> void:
 	if player == null:
 		return
 	var institution_ids: Array[StringName] = []
+	var simulated_officials: Dictionary = {}
 	for value in world.institutions.keys():
 		institution_ids.append(StringName(value))
 	institution_ids.sort()
@@ -388,8 +389,9 @@ func _simulate_people(world: WorldState) -> void:
 		var member_ids: Array = institution.get("members", []).duplicate()
 		for member_value in member_ids:
 			var official := world.get_person(StringName(member_value))
-			if official == null or official.office_id == &"":
+			if official == null or official.office_id == &"" or simulated_officials.has(official.id):
 				continue
+			simulated_officials[official.id] = true
 			_tick_office_agenda(world, official, institution, institution_id)
 
 func _tick_office_agenda(world: WorldState, official: PersonEntity, institution: Dictionary, institution_id: StringName = &"") -> void:
@@ -404,53 +406,60 @@ func _tick_office_agenda(world: WorldState, official: PersonEntity, institution:
 			_tick_labor_foreman_agenda(world, official, institution, institution_id)
 
 func _tick_grain_clerk_agenda_for(world: WorldState, official: PersonEntity, institution: Dictionary, institution_id: StringName) -> void:
-	var resources: Dictionary = institution.get("stockpiles", {})
-	var thresholds: Dictionary = institution.get("pressure_thresholds", {})
+	var now := world.current_period_index()
+	institution["agenda_evaluation_count"] = int(institution.get("agenda_evaluation_count", 0)) + 1
+	institution["last_grain_clerk_id"] = official.id
+	world.institutions[institution_id] = institution
+	var main_loop := Engine.get_main_loop()
+	if main_loop is SceneTree:
+		var scene_tree := main_loop as SceneTree
+		var agent: Node = GrainClerkAgentScript.new()
+		agent.set("world", world)
+		agent.set("clerk", official)
+		agent.set("institution_id", institution_id)
+		scene_tree.root.add_child(agent)
+		var bt_player := BTPlayer.new()
+		bt_player.set_active(false)
+		bt_player.set_update_mode(BTPlayer.MANUAL)
+		bt_player.set_agent_node(NodePath(".."))
+		bt_player.set_scene_root_hint(agent)
+		bt_player.set_behavior_tree(GrainClerkAgendaTree)
+		agent.add_child(bt_player)
+		bt_player.set_active(true)
+		bt_player.update(0.0)
+		bt_player.set_active(false)
+		agent.free()
+	else:
+		push_warning("WorldSimulator: grain clerk agenda requires a SceneTree for LimboAI evaluation")
+
+	# A local shortage also creates a contradictory delivery record. The tree
+	# remains responsible for authored cover-up/skimming/custody behavior.
+	var updated: Dictionary = world.institutions.get(institution_id, {}).duplicate(true)
+	var resources: Dictionary = updated.get("stockpiles", {})
+	var thresholds: Dictionary = updated.get("pressure_thresholds", {})
 	var barley := int(resources.get(&"barley", 0))
 	var warning := int(thresholds.get(&"barley_warn", 105))
-	var records: Dictionary = institution.get("stock_records", {}).duplicate(true)
-	var spoilage := bool(records.get("concealed_spoilage", false))
-	if barley >= warning and not spoilage:
-		return
-	var now := world.current_period_index()
-	var agenda_period := int(institution.get("grain_agenda_last_period", -100))
-	if now - agenda_period < FORM_COOLDOWN_PERIODS:
-		return
-	institution["grain_agenda_last_period"] = now
-	institution["agenda_evaluation_count"] = int(institution.get("agenda_evaluation_count", 0)) + 1
-	# Record manipulation is local to the seated clerk's institution.
-	if barley < warning and not records.has("shortage_declaration"):
-		records["shortage_declaration"] = "delivery_balance_pending"
-		records["shortage_declaration_period"] = now
-		institution["stock_records"] = records
-		var form := {
+	var records: Dictionary = updated.get("stock_records", {}).duplicate(true)
+	if barley < warning and not bool(records.get("shortage_docket_issued", false)):
+		records["shortage_docket_issued"] = true
+		records["shortage_docket_period"] = now
+		updated["stock_records"] = records
+		var place_id := StringName(updated.get("place_id", institution_id))
+		world.enqueue_form({
 			"form_type": &"contradictory_grain_docket",
-			"subject_id": StringName(institution.get("place_id", institution_id)),
+			"subject_id": place_id,
 			"institution_id": institution_id,
 			"urgency": 4,
 			"year": world.year,
 			"generated_by": official.id,
-			"generation_reason": &"grain_clerk_record_discrepancy",
+			"generation_reason": &"local_granary_shortage",
 			"generated_period": now,
-			"evidence": {"physical_barley": barley, "declared_status": "delivery_balance_pending", "office_id": official.office_id}
-		}
-		world.enqueue_form(form)
-	elif spoilage:
-		var form := {
-			"form_type": &"contradictory_grain_docket",
-			"subject_id": StringName(institution.get("place_id", institution_id)),
-			"institution_id": institution_id,
-			"urgency": 5,
-			"year": world.year,
-			"generated_by": official.id,
-			"generation_reason": &"concealed_grain_spoilage",
-			"generated_period": now,
-			"evidence": {"physical_barley": barley, "declared_quality": records.get("barley_quality_declaration", "unrecorded")}
-		}
-		world.enqueue_form(form)
-	institution["last_grain_clerk_agenda"] = {"official_id": official.id, "period": now, "barley": barley}
-	world.institutions[institution_id] = institution
-	_record_period_delta(world, "grain", "%s: grain records questioned at %s (%d barley)" % [official.display_name, String(institution.get("name", institution_id)), barley])
+			"created_period": now,
+			"evidence": {"physical_barley": barley, "declared_status": "delivery_balance_pending"}
+		})
+		_record_period_delta(world, "grain", "%s recorded a local barley discrepancy at %s (%d barley)" % [official.display_name, String(updated.get("name", institution_id)), barley])
+	updated["last_grain_clerk_agenda"] = updated.get("last_grain_clerk_agenda", {})
+	world.institutions[institution_id] = updated
 
 func _tick_canal_bailiff_agenda(world: WorldState, official: PersonEntity, institution: Dictionary, institution_id: StringName) -> void:
 	var resources: Dictionary = institution.get("stockpiles", {})
