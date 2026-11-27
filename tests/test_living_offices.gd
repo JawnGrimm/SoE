@@ -88,6 +88,12 @@ func _run() -> void:
 	world.epics[&"great_canal_cut"] = epic
 	world.set_flag(&"thirsty_diggers", world.current_period_index() + 2) # Expiry is exclusive; keep it active through the next simulated period.
 	simulator.advance_period(world)
+	var foreman_debug: Array[String] = []
+	for institution_id in world.institutions.keys():
+		var office_state: Dictionary = world.institutions[institution_id]
+		if foreman.id in office_state.get("members", []):
+			foreman_debug.append("%s last=%s ticks=%s" % [institution_id, office_state.get("last_foreman_reaction_period", "missing"), office_state.get("office_agenda_evaluation_count", 0)])
+	print("FOREMAN DEBUG: id=%s office=%s now=%s thirsty=%s institutions=%s epic=%s deltas=%s" % [foreman.id, foreman.office_id, world.current_period_index(), world.world_flags.get(&"thirsty_diggers", "missing"), foreman_debug, world.epics.get(&"great_canal_cut", {}), world.last_period_deltas])
 	_check(world.has_flag(&"canal_crew_slowdown", world.current_period_index()), "Thirsty diggers trigger canal crew slowdown")
 	epic = world.epics.get(&"great_canal_cut", {})
 	_check(bool(epic.get("crew_disruption", false)), "Foreman marks active Epic disrupted")
