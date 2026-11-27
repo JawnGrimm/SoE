@@ -71,6 +71,10 @@ limbo_console_search_history={
 
 locale/translations=PackedStringArray("res://addons/maaacks_menus_template/base/translations/menus_translations.en.translation", "res://addons/maaacks_menus_template/base/translations/menus_translations.fr.translation", "res://addons/maaacks_menus_template/base/translations/menus_translations.zh_CN.translation", "res://addons/maaacks_menus_template/base/translations/menus_translations.zh_TW.translation")
 
+[limbo_ai]
+
+behavior_tree/behavior_tree_default_dir="res://data/behavior_trees"
+
 [maaacks_menus_template]
 
 disable_install_wizard=true
