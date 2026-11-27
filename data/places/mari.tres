@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="PlaceDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/place_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"mari"
+display_name = "Mari"
+place_type = &"river_city"
+region = &"middle_euphrates"
+political_relation = &"river_partner"
+exports = Array[StringName]([&"river_trade", &"wool"])
+imports = Array[StringName]([&"timber", &"textiles", &"grain"])
+connected_to = Array[StringName]([&"habuba_kabira", &"tell_brak"])
+era_id = &"uruk_storehouse"
