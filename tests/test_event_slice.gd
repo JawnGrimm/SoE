@@ -344,9 +344,9 @@ func _run() -> void:
 	var uruk_player_b := UrukSeeder.seed_campaign(uruk_b, 987654321)
 	_check(uruk_a.master_seed == 987654321, "Uruk seeder should retain the campaign seed")
 	_check(uruk_a.year == -3200 and uruk_a.period == 0, "Uruk campaign should begin at its era start")
-	_check(uruk_a.people.size() == 17, "Uruk seeder should create the expanded seventeen-person roster")
+	_check(uruk_a.people.size() == 28, "Uruk seeder should create the core roster and regional trade factors")
 	_check(uruk_a.places.size() == 19, "Uruk seed should establish twelve regional settlements plus seven local and connected places")
-	_check(uruk_a.institutions.size() == 4, "Uruk seed should establish the core institutions and the Habuba trade enclave")
+	_check(uruk_a.institutions.size() == 15, "Uruk seed should establish core institutions and trade houses across the connected regional network")
 	_check(uruk_a.social_groups.size() == 5, "Uruk seed should establish five working and household groups")
 	var seeded_tie_count := 0
 	for person in uruk_a.people.values():
