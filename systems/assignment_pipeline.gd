@@ -4,6 +4,7 @@ extends RefCounted
 ## It never invents economic quantities: all facts are read from WorldState.
 
 const BOARD_SIZE := 3
+const AssignmentGeneratorScript = preload("res://systems/assignment_generator.gd")
 const INVESTIGATION_ACTIONS := [
 	{"id": &"examine_records", "label": "Examine the written record", "skill": &"literacy", "xp": 8},
 	{"id": &"reconcile_accounts", "label": "Reconcile the figures", "skill": &"arithmetic", "xp": 8},
@@ -91,7 +92,7 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			continue
 		var progress := world.get_resource(StringName(epic.get("progress_resource", "")))
 		var target := int(epic.get("target", 100))
-		if target <= 0 or progress >= target:
+		if target <= 0 or progress >= target or not _project_review_due(world, StringName(epic_id), epic, progress):
 			continue
 		candidates.append({
 			"id": StringName("work_project_%s_%d" % [epic_id, world.current_period_index()]),
@@ -119,6 +120,22 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			"priority": int(institution.get("ledger_work_priority", 1)) + _career_bonus(selected_path, &"ledger"),
 			"employer_id": &"shuruppak_ilu" if world.get_person(&"shuruppak_ilu") != null else &"",
 			"source_data": {"institution_id": StringName(institution_id), "member_count": institution.get("members", []).size(), "activity_count": int(institution.get("activity_count", 0))},
+			"path_id": selected_path
+		})
+
+	# The career-path docket joins ordinary world work on the same board.
+	var procedural_payload := AssignmentGeneratorScript.generate(world, actor, selected_path)
+	if not procedural_payload.is_empty():
+		var procedural_archetype := StringName(procedural_payload.get("archetype", "docket"))
+		candidates.append({
+			"id": StringName("work_procedural_%s_%d" % [procedural_archetype, world.current_period_index()]),
+			"kind": &"procedural_docket",
+			"source_id": procedural_archetype,
+			"title": String(procedural_payload.get("title", "Local Docket")),
+			"summary": String(procedural_payload.get("prompt", "A local matter awaits your judgment.")),
+			"priority": 5,
+			"employer_id": &"",
+			"source_data": procedural_payload.duplicate(true),
 			"path_id": selected_path
 		})
 
@@ -263,7 +280,13 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 			var target := int(project.get("target", 100))
 			var project_state: Dictionary = world.epics.get(source_id, {})
 			var notes: Array = project_state.get("history_notes", [])
-			work_details = "Progress %d / %d. Current stage: %s. Recorded simulation entries: %d." % [progress, target, String(project_state.get("stage", "unrecorded")), notes.size()]
+			var reviewed_stage := String(project_state.get("stage", "unrecorded"))
+			work_details = "Progress %d / %d. Current stage: %s. Recorded simulation entries: %d." % [progress, target, reviewed_stage, notes.size()]
+			project_state["last_reviewed_progress"] = progress
+			project_state["last_reviewed_stage"] = reviewed_stage
+			world.epics[source_id] = project_state
+			record["reviewed_progress"] = progress
+			record["reviewed_stage"] = reviewed_stage
 			result_text = "The project's actual progress, stage, and recorded interruptions are entered in the archive. The crews continue their work independently."
 		&"pressure":
 			var pressure_institution_id := StringName(record.get("source_data", {}).get("institution_id", source_id))
@@ -508,3 +531,34 @@ static func _place_name(world: WorldState, place_id: StringName) -> String:
 	if world.places.has(place_id):
 		return String(world.places[place_id].get("name", place_id))
 	return String(place_id).replace("_", " ").capitalize()
+
+
+static func _project_review_due(world: WorldState, epic_id: StringName, epic: Dictionary, progress: int) -> bool:
+	var current_stage := String(epic.get("stage", ""))
+	if epic.has("last_reviewed_progress"):
+		var reviewed_progress := int(epic.get("last_reviewed_progress", -1))
+		var reviewed_stage := String(epic.get("last_reviewed_stage", ""))
+		return current_stage != reviewed_stage or progress >= reviewed_progress + 20
+
+	# Migrate older saves from completed assignment records. Active reviews block
+	# another; completed reviews return after a stage change or twenty progress.
+	var latest_review: Dictionary = {}
+	var latest_period := -1
+	for assignment_value in world.assignments.values():
+		var assignment: Dictionary = assignment_value
+		if StringName(assignment.get("kind", "")) != &"project_review" or StringName(assignment.get("source_id", "")) != epic_id:
+			continue
+		if String(assignment.get("status", "")) == "active":
+			return false
+		var completed_period := int(assignment.get("completed_period", assignment.get("started_period", -1)))
+		if completed_period >= latest_period:
+			latest_period = completed_period
+			latest_review = assignment
+	if latest_review.is_empty():
+		return true
+	var source_data: Dictionary = latest_review.get("source_data", {})
+	var reviewed_progress := int(latest_review.get("reviewed_progress", source_data.get("progress", -1)))
+	var reviewed_stage := String(latest_review.get("reviewed_stage", source_data.get("stage", "")))
+	if reviewed_progress < 0:
+		return false
+	return current_stage != reviewed_stage or progress >= reviewed_progress + 20
