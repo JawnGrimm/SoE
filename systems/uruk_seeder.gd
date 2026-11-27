@@ -161,7 +161,10 @@ static func _seed_places(world: WorldState, definitions: DefinitionRegistry) -> 
 
 static func _seed_institutions_and_groups(world: WorldState, definitions: DefinitionRegistry) -> void:
 	world.institutions.clear()
+	var active_era := definitions.get_era_for_year(world.year)
 	for definition in definitions.all_institutions():
+		if active_era != null and definition.era_id != active_era.id:
+			continue
 		world.institutions[definition.id] = definition.create_runtime_state()
 	world.social_groups = {
 		&"agricultural_households": {"name": "Agricultural Households", "kind": &"household_group", "place_id": &"agricultural_hinterland", "members": [&"ama_edin", &"geme_tur"], "resources": [&"barley", &"dates"]},
