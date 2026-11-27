@@ -15,7 +15,7 @@ static func evaluate(world: WorldState, actor: PersonEntity) -> Dictionary:
 	if world == null or actor == null:
 		return {}
 	var silver := int(actor.resources.get(&"silver", 0))
-	var debt := maxi(0, int(actor.resources.get(&"debt", actor.flags.get(&"debt", 0))))
+	var debt := maxi(0, maxi(int(actor.resources.get(&"debt", 0)), int(actor.flags.get(&"audit_debt", actor.flags.get(&"debt", 0)))))
 	var unpaid_upkeep := maxi(0, int(actor.flags.get(&"unpaid_upkeep", 0)))
 	var corruption_flags := [&"phantom_barley_measure", &"entangled_brewery_accounts", &"complicit", &"bribe_accepted", &"concealed_accounts"]
 	var audit_exposure := maxi(int(world.world_flags.get(&"audit_exposure", 0)), int(actor.flags.get(&"audit_exposure", 0)))
@@ -29,8 +29,8 @@ static func evaluate(world: WorldState, actor: PersonEntity) -> Dictionary:
 		corruption += 20
 	if actor.flags.has(&"bribe_accepted") or actor.flags.has(&"concealed_accounts"):
 		corruption += 18
-	var corrections := int(world.world_flags.get(&"honest_corrections", 0))
-	var exposure_clears := int(world.world_flags.get(&"exposure_clears", 0))
+	var corrections := maxi(int(world.world_flags.get(&"honest_corrections", 0)), _count_log_title(world, "FORMAL AUDIT CORRECTION"))
+	var exposure_clears := int(world.world_flags.get(&"exposure_clears", 0)) + _count_log_phrase(world, "audit exposure is cleared")
 	var mentor := world.get_person(&"shuruppak_ilu")
 	var mentor_trust := int(actor.relationships.get(&"shuruppak_ilu", {}).get("trust", 0))
 	if mentor != null:
@@ -159,6 +159,20 @@ static func _character_standings(world: WorldState, actor: PersonEntity) -> Dict
 	var boatmen := int(world.faction_standings.get(&"boatmens_guild", 0))
 	result["Boatmen"] = boatmen
 	return result
+
+static func _count_log_title(world: WorldState, title: String) -> int:
+	var count := 0
+	for entry in world.cedar_desk_log:
+		if String(entry.get("title", "")).to_upper() == title:
+			count += 1
+	return count
+
+static func _count_log_phrase(world: WorldState, phrase: String) -> int:
+	var count := 0
+	for entry in world.cedar_desk_log:
+		if String(entry.get("summary", "")).to_lower().contains(phrase.to_lower()):
+			count += 1
+	return count
 
 static func _buried_scandals(world: WorldState) -> int:
 	var count := 0
