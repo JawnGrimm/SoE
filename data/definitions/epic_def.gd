@@ -3,6 +3,9 @@ extends Resource
 
 @export var id: StringName = &""
 @export var title: String = ""
+@export var description: String = ""
+## Optional milestone bands; empty uses legacy 0/25/50/75 percent stages.
+@export var stages: Array[Dictionary] = []
 @export var era_id: StringName = &""
 @export var progress_resource: StringName = &""
 @export var initial_stage: String = "survey"
