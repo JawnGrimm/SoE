@@ -926,8 +926,9 @@ func _begin_regional_travel(destination_id: StringName) -> void:
 		return
 	var travel_result := RegionalWorldSystem.start_player_travel(world, actor, destination_id)
 	if not bool(travel_result.get("success", false)):
-		status_label.text = String(travel_result.get("error", "Travel could not begin."))
+		var travel_error := String(travel_result.get("error", "Travel could not begin."))
 		_show_regional_map()
+		status_label.text = travel_error
 		return
 	var destination_name := String(world.places.get(destination_id, {}).get("name", destination_id))
 	var periods := int(travel_result.get("travel_periods", 0))
