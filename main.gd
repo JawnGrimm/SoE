@@ -168,14 +168,14 @@ func _build_interface() -> void:
 	work_queue_button = Button.new()
 	work_queue_button.text = "ARCHIVE / QUEUE"
 	work_queue_button.tooltip_text = "Open Works, Challenges, and Assignments. Keyboard: focus and press Enter."
-	work_queue_button.custom_minimum_size = Vector2(142, 36)
+	work_queue_button.custom_minimum_size = Vector2(142, 44)
 	work_queue_button.add_theme_font_size_override("font_size", 12)
 	work_queue_button.pressed.connect(_toggle_work_queue)
 	header.add_child(work_queue_button)
 	var menu_button := Button.new()
 	menu_button.text = "☰  MENU"
 	menu_button.tooltip_text = "Open the in-game menu (Esc)"
-	menu_button.custom_minimum_size = Vector2(104, 34)
+	menu_button.custom_minimum_size = Vector2(104, 44)
 	menu_button.add_theme_font_size_override("font_size", 13)
 	menu_button.add_theme_color_override("font_color", Color("#e5d2a8"))
 	menu_button.add_theme_stylebox_override("normal", _panel_style("#3a2b1d", "#80653b"))
@@ -1851,13 +1851,13 @@ func _toggle_regional_survey() -> void:
 	_open_regional_survey()
 
 func _open_regional_survey() -> void:
-	_set_evidence_visible(false)
 	if survey_map == null or route_network == null or world == null:
 		return
 	var travel_allowed := phase not in ["character_creation", "era_complete", "case", "world_engagement"]
 	if not survey_map.configure(route_network, world, travel_allowed):
 		status_label.text = "SURVEY UNAVAILABLE / REGIONAL ROUTE DATA IS INCOMPLETE."
 		return
+	_set_evidence_visible(false)
 	survey_map.visible = true
 	docket_overlay.visible = false
 	survey_button.text = "ROLL REGIONAL SURVEY"
@@ -2025,6 +2025,8 @@ func _refresh_compound() -> void:
 		location_label.text = _location_header_text()
 	if survey_button != null:
 		survey_button.disabled = world.get_player() == null
+	if work_queue_button != null:
+		work_queue_button.visible = phase != "character_creation" and (survey_map == null or not survey_map.visible)
 	var mentor_trait := "unmarked"
 	for trait_id in actor.traits:
 		if trait_id in [&"exacting", &"stubborn", &"protective", &"diplomatic", &"pliable", &"severe", &"cautious"]:
