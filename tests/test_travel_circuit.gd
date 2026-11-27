@@ -89,6 +89,7 @@ func _run() -> void:
 	var nippur_save := SaveCodecScript.decode_save(SaveCodecScript.encode_world(world, {"survey_open": true}))
 	var nippur_saved_world: WorldState = nippur_save.get("world") as WorldState
 	_check(bool(nippur_save.get("success", false)) and nippur_saved_world != null and nippur_saved_world.current_location_id == &"nippur", "Save/load preserves the player's location while away in Nippur")
+	_check(nippur_saved_world.periods_elapsed == world.periods_elapsed and world.periods_elapsed == 2, "Save/load preserves elapsed campaign periods independently of BCE calendar index")
 	_check(bool(nippur_save.get("session", {}).get("survey_open", false)), "Save/load preserves the cedar-desk survey's open state")
 	_check(world.year == -3200 and world.period == 2, "Two transit periods arrive in Month 3 of 3201 BCE")
 	var month_three := CalendarFormatterScript.format_date(registry.get_era(&"uruk_storehouse"), world.year, world.period)
