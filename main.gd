@@ -10,6 +10,9 @@ const RouteNetworkScript = preload("res://systems/route_network.gd")
 const TravelServiceScript = preload("res://systems/travel_service.gd")
 const RegionalSurveyMapScript = preload("res://components/regional_survey_map.gd")
 const WorkQueueOverlayScript = preload("res://ui/work_queue_overlay.gd")
+const CedarDeskHeaderScript = preload("res://ui/cedar_desk_header.gd")
+const ClayDocketPropScript = preload("res://ui/clay_docket_prop.gd")
+const ArchiveStackPropScript = preload("res://ui/archive_stack_prop.gd")
 const CUNEIFORM_FONT = preload("res://assets/Noto_Sans_Cuneiform,Noto_Sans_Egyptian_Hieroglyphs/Noto_Sans_Cuneiform/NotoSansCuneiform-Regular.ttf")
 const CAMPAIGN_SEED: int = 32003200
 const ROSTER_CAST: Array[StringName] = [&"shuruppak_ilu", &"utu_mansum", &"enlil_kisu", &"ur_nanna", &"nin_kasi", &"geme_inana", &"lu_nanshe"]
@@ -115,7 +118,11 @@ var last_stock_snapshot: Dictionary = {}
 var last_delta_period: int = -1
 var docket_overlay: PanelContainer
 var docket_motion_layer: Control
-var archive_prop: TextureButton
+var archive_prop: Control
+var cedar_header: CedarDeskHeader
+var clay_docket: ClayDocketProp
+var archive_stack: ArchiveStackProp
+var upper_workspace_control: VBoxContainer
 var stylus_prop: TextureRect
 var heirloom_label: Label
 var secret_toggle: Button
@@ -183,6 +190,10 @@ func _build_interface() -> void:
 	var root := VBoxContainer.new()
 	root.add_theme_constant_override("separation", 4)
 	margin.add_child(root)
+	cedar_header = CedarDeskHeaderScript.new()
+	cedar_header.custom_minimum_size.y = 42
+	cedar_header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	root.add_child(cedar_header)
 	var header := HBoxContainer.new()
 	root.add_child(header)
 	var title := Label.new()
@@ -260,26 +271,33 @@ func _build_interface() -> void:
 	survey_button.pressed.connect(_toggle_regional_survey)
 	desk_toolbar.add_child(survey_button)
 	var upper_workspace := VBoxContainer.new()
+	upper_workspace_control = upper_workspace
 	upper_workspace.custom_minimum_size.y = 0
 	upper_workspace.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	# Evidence cards are fixed-height; the docket receives the remaining vertical space.
-	upper_workspace.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	upper_workspace.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	upper_workspace.size_flags_stretch_ratio = 58.0
 	upper_workspace.add_theme_constant_override("separation", 6)
 	desk_box.add_child(upper_workspace)
 	var evidence_row := HBoxContainer.new()
 	evidence_workspace = evidence_row
-	evidence_row.custom_minimum_size.y = 172
+	evidence_row.custom_minimum_size.y = 0
 	evidence_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	evidence_row.add_theme_constant_override("separation", 12)
 	upper_workspace.add_child(evidence_row)
 	evidence_left = _make_evidence_panel(evidence_row, "GRANARY TERRACES  /  TEMPLE", "Ur-Nanna", "The temple cellars are cold, dry, and exact. The gods demand honest measures.", &"ur_nanna")
 	evidence_right = _make_evidence_panel(evidence_row, "RIVER QUAYS  /  LANDING", "Enlil-kisu", "The river road is dangerous and hungry. We respect the scribe who knows what a boatman endures.", &"enlil_kisu")
+	var lower_workspace := HBoxContainer.new()
+	lower_workspace.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lower_workspace.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	lower_workspace.size_flags_stretch_ratio = 42.0
+	lower_workspace.add_theme_constant_override("separation", 8)
+	desk_box.add_child(lower_workspace)
 	docket_motion_layer = Control.new()
 	docket_motion_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	docket_motion_layer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	docket_motion_layer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	docket_motion_layer.custom_minimum_size.y = 256
-	desk_box.add_child(docket_motion_layer)
+	docket_motion_layer.size_flags_stretch_ratio = 62.0
+	lower_workspace.add_child(docket_motion_layer)
 	docket_overlay = PanelContainer.new()
 	docket_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var tablet_style := StyleBoxTexture.new()
@@ -300,6 +318,18 @@ func _build_interface() -> void:
 	tablet_style.content_margin_bottom = 0.0
 	docket_overlay.add_theme_stylebox_override("panel", tablet_style)
 	docket_motion_layer.add_child(docket_overlay)
+	clay_docket = ClayDocketPropScript.new()
+	clay_docket.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	clay_docket.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	clay_docket.size_flags_stretch_ratio = 22.0
+	clay_docket.impression_added.connect(_on_clay_impression_added)
+	lower_workspace.add_child(clay_docket)
+	archive_stack = ArchiveStackPropScript.new()
+	archive_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	archive_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	archive_stack.size_flags_stretch_ratio = 16.0
+	archive_stack.pressed.connect(_toggle_work_queue)
+	lower_workspace.add_child(archive_stack)
 	survey_map = RegionalSurveyMapScript.new()
 	survey_map.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	survey_map.visible = false
@@ -365,37 +395,7 @@ func _build_interface() -> void:
 	choices.add_theme_constant_override("separation", 5)
 	mat_box.add_child(choices)
 
-	var desk_props := HBoxContainer.new()
-	desk_props.custom_minimum_size.y = 42
-	desk_props.size_flags_vertical = Control.SIZE_SHRINK_END
-	desk_props.add_theme_constant_override("separation", 14)
-	desk_props.alignment = BoxContainer.ALIGNMENT_CENTER
-	root.add_child(desk_props)
-	archive_prop = TextureButton.new()
-	archive_prop.texture_normal = load("res://assets/desk/archive_stack.png")
-	archive_prop.texture_hover = archive_prop.texture_normal
-	archive_prop.texture_pressed = archive_prop.texture_normal
-	archive_prop.ignore_texture_size = true
-	archive_prop.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
-	archive_prop.custom_minimum_size = Vector2(82, 44)
-	archive_prop.focus_mode = Control.FOCUS_ALL
-	archive_prop.add_theme_stylebox_override("focus", _panel_style("#211a12", "#f5e6d0"))
-	archive_prop.tooltip_text = "Open the archive / work queue."
-	archive_prop.pressed.connect(_toggle_work_queue)
-	desk_props.add_child(archive_prop)
-	stylus_prop = TextureRect.new()
-	stylus_prop.texture = load("res://assets/desk/Ancient Wrapped Wooden Stylus.png")
-	stylus_prop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	stylus_prop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	stylus_prop.custom_minimum_size = Vector2(100, 40)
-	stylus_prop.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	stylus_prop.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	stylus_prop.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	desk_props.add_child(stylus_prop)
-	var seal_prop := CylinderSealProp.new()
-	seal_prop.custom_minimum_size = Vector2(52, 52)
-	seal_prop.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	desk_props.add_child(seal_prop)
+	# Clay docket and archive stack are now physical controls in the lower workspace.
 
 	var compound := PanelContainer.new()
 	compound.custom_minimum_size.x = 280
@@ -1147,6 +1147,8 @@ func _show_world_engagement() -> void:
 		_show_assignment_board()
 		return
 	record = AssignmentNarratorScript.translate_record(record)
+	if clay_docket != null:
+		clay_docket.set_case_title(String(record.get("title", "Active case")))
 	_clear_choices()
 	_set_phase("world_engagement")
 	var actions: Dictionary = record.get("actions", {})
@@ -1221,6 +1223,8 @@ func _world_assignment_action(action_id: StringName) -> void:
 		status_label.text = String(result.get("message", "Action could not be recorded."))
 		return
 	AudioManager.play_stylus_mark()
+	if clay_docket != null:
+		clay_docket.stamp_inquiry(action_id)
 	if action_id == &"examine_records":
 		var record := AssignmentPipeline.get_record(world, active_world_assignment_id)
 		var evidence: Dictionary = result.get("evidence", {})
@@ -1263,6 +1267,8 @@ func _resolve_world_assignment(verdict: StringName) -> void:
 		return
 	active_world_assignment_id = &""
 	procedural_assignment.clear()
+	if clay_docket != null:
+		clay_docket.seal_verdict()
 	_show_procedural_result("ASSESSMENT SEALED", String(result.get("message", "The work is entered into the record.")), result.get("consequences", []))
 
 func _abandon_world_assignment() -> void:
@@ -1498,6 +1504,10 @@ func _advance_period_once() -> bool:
 		return false
 	assignment_opportunities.clear()
 	active_world_assignment_id = &""
+	if clay_docket != null:
+		clay_docket.impressions.clear()
+		clay_docket._refresh_grid()
+		clay_docket.set_case_title("New period")
 	_clear_stamp_history()
 	world_simulator.advance_period(world)
 	last_opinion_deltas.clear()
@@ -2181,6 +2191,8 @@ func _on_queue_opportunity_selected(index: int) -> void:
 
 
 func _set_evidence_visible(is_visible: bool) -> void:
+	if upper_workspace_control != null:
+		upper_workspace_control.visible = is_visible
 	if evidence_workspace != null:
 		evidence_workspace.visible = is_visible
 	if evidence_left != null:
@@ -2190,7 +2202,12 @@ func _set_evidence_visible(is_visible: bool) -> void:
 
 
 func _refresh_header_status() -> void:
-	if header_resource_label == null or actor == null:
+	if actor == null:
+		return
+	if cedar_header != null:
+		cedar_header.update_status(world, actor, current_era)
+	_refresh_archive_stack()
+	if header_resource_label == null:
 		return
 	var silver := int(actor.resources.get(&"silver", 0))
 	var bread := int(actor.resources.get(&"bread", 0))
@@ -2202,6 +2219,26 @@ func _refresh_header_status() -> void:
 	var currency := String(current_era.currency_name) if current_era != null else "silver"
 	header_resource_label.text = "PURSE %d %s  ·  DEBT %d  ·  BREAD %d  ·  BEER %d  ·  %s" % [silver, currency.to_upper(), debt, bread, beer, audit_text]
 
+
+func _on_clay_impression_added(_action_id: StringName, _glyph: String) -> void:
+	AudioManager.play_tablet_snap()
+
+func _refresh_archive_stack() -> void:
+	if archive_stack == null:
+		return
+	var urgent_kind := ""
+	for opportunity in assignment_opportunities:
+		var tags: Array = opportunity.get("tags", [])
+		var text_value := String(opportunity.get("title", "")) + " " + " ".join(PackedStringArray(tags))
+		if text_value.to_upper().contains("SUMMONS"):
+			urgent_kind = "SUMMONS"
+			break
+		if text_value.to_upper().contains("CHALLENGE"):
+			urgent_kind = "CHALLENGE"
+			break
+		if text_value.to_upper().contains("DISPATCH"):
+			urgent_kind = "DISPATCH"
+	archive_stack.set_queue_status(assignment_opportunities.size(), urgent_kind)
 
 func _local_institution_ids() -> Array[StringName]:
 	return CompoundContextScript.institution_ids(world, world.current_location_id)
