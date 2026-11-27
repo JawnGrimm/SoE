@@ -76,6 +76,8 @@ func reset_epic_for_new_shift(epic_id: StringName, initial_stage: String = "") -
 	if epic_id == &"":
 		return
 	var epic_state: Dictionary = epics.get(epic_id, {})
+	if epic_id == &"great_canal_cut" and (bool(epic_state.get("dedicated", false)) or world_flags.has(&"canal_dedication_concluded")):
+		return
 	var resource_id := StringName(epic_state.get("progress_resource", ""))
 	if resource_id != &"":
 		stockpiles[resource_id] = 0

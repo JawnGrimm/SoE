@@ -57,7 +57,7 @@ func update_status(world: WorldState, actor: PersonEntity, era: EraDef) -> void:
 	var place: Dictionary = world.places.get(world.current_location_id, {})
 	var place_name := String(place.get("name", world.current_location_id)).to_upper()
 	var month := posmod(world.period, 12) + 1
-	var season := ["INUNDATION", "INUNDATION", "INUNDATION", "EMERGENCE", "EMERGENCE", "EMERGENCE", "HARVEST", "HARVEST", "HARVEST", "REST", "REST", "REST"][month - 1]
+	var season: String = ["INUNDATION", "INUNDATION", "INUNDATION", "EMERGENCE", "EMERGENCE", "EMERGENCE", "HARVEST", "HARVEST", "HARVEST", "REST", "REST", "REST"][month - 1]
 	place_label.text = "%s · %s (M%02d)" % [place_name, season, month]
 	var office := String(actor.office_id).replace("_", " ").capitalize()
 	office_label.text = "OFFICE: %s" % (office if not office.is_empty() else "Apprentice Scribe")

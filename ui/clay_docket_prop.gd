@@ -119,6 +119,8 @@ func seal_verdict() -> void:
 		tween.tween_property(self, "position", position, 0.025)
 
 func _refresh_grid() -> void:
+	if grid == null:
+		return
 	for index in range(grid.get_child_count()):
 		var cell := grid.get_child(index)
 		var label := cell.get_child(0) as Label

@@ -70,6 +70,9 @@ jobs:
       - name: Run Cedar Desk Overhaul regression tests
         run: godot --headless --path . --script res://tests/test_cedar_desk_overhaul.gd
 
+      - name: Run canal dedication and career epilogue regression tests
+        run: godot --headless --path . --script res://tests/test_career_epilogue_and_climax.gd
+
       - name: Run player consequence visibility regression tests
         run: godot --headless --path . --script res://tests/test_consequence_visibility.gd
 

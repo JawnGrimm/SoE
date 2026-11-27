@@ -1,6 +1,10 @@
 extends Control
 
 const CompoundContextScript = preload("res://systems/compound_context.gd")
+const CareerEvaluatorScript = preload("res://systems/career_evaluator.gd")
+const CanalDedicationServiceScript = preload("res://systems/canal_dedication_service.gd")
+const MemorialTabletViewScript = preload("res://ui/memorial_tablet_view.gd")
+const CanalDedicationEvent: EventTemplate = preload("res://data/events/epic_canal_dedication.tres")
 const ConsequenceVisibilityScript = preload("res://systems/consequence_visibility.gd")
 
 const AssignmentGeneratorScript = preload("res://systems/assignment_generator.gd")
@@ -90,6 +94,7 @@ var creation_catalog: Dictionary = {}
 var creation_selections := CharacterCreationSelections.new()
 var creation_screen: int = 0
 var phase := "case"
+var memorial_view: MemorialTabletView
 var last_opinion_deltas: Dictionary[StringName, int] = {}
 var active_left_speaker_id: StringName = &""
 var active_right_speaker_id: StringName = &""
@@ -809,12 +814,18 @@ func _schedule_next_case() -> void:
 	context.actor = actor
 	context.year = world.year
 	current_era = Registry.get_era_for_year(world.year)
+	if CareerEvaluatorScript.is_terminal_failure(actor):
+		_show_memorial_tablet()
+		return
 	context.era = current_era
 	var active_era_id := current_era.id if current_era != null else &""
 	if route_network == null or route_network.era_id != active_era_id:
 		_configure_route_network()
 	if not world.world_flags.has(&"first_workday_mentor_seen"):
 		_show_first_workday_mentor()
+		return
+	if _canal_dedication_due():
+		_show_canal_dedication()
 		return
 	_show_archive_notices()
 	if world.epic_summon_pending and not world.epic_summon_issued:
@@ -872,8 +883,14 @@ func _show_first_workday_mentor() -> void:
 	prompt_label.text = "The mentor sets a tablet before you. No time passes. No assignment is issued."
 	var mentor_id := creation_selections.get_answer(&"instruction_mentor")
 	var lines: Dictionary = creation_catalog.get("first_workday_mentor_lines", {})
-	dossier.text = String(lines.get(String(mentor_id), "The mentor places a blank tablet before you. “Make your mark.”"))
+	dossier.text = String(lines.get(String(mentor_id), "The mentor places a blank tablet before you. “Make your mark.”")) + "\n\n“Here is your tablet [Clay Docket]. Here is the dispatch stack from the daybook [Archive Stack]. When the boatmen bring claims, record what the clay proves, not what their tongues swear.”\n\nYour starting purse contains 2 silver. The reed stylus and cylinder seal are yours to use; the Cedar Desk is ready."
 	_add_choice("Take the reed / begin work", _finish_first_workday_mentor)
+	if choices.get_child_count() > 0:
+		var first_row := choices.get_child(0)
+		if first_row is HBoxContainer and first_row.get_child_count() > 1:
+			var first_button := first_row.get_child(1)
+			if first_button is Button:
+				first_button.grab_focus()
 
 func _finish_first_workday_mentor() -> void:
 	if phase != "first_workday_mentor":
@@ -1039,6 +1056,8 @@ func _confirm_character_creation() -> void:
 		_show_character_creation_screen(8)
 		return
 	selected_path = creation_selections.get_answer(&"professional_orientation")
+	world.world_flags[&"professional_orientation"] = int(selected_path.hash())
+	world.world_flags[&"career_start_year"] = world.year
 	world.local_path_dockets_settled = 0
 	world.epic_summon_pending = false
 	world.epic_summon_issued = false
@@ -1514,6 +1533,9 @@ func _advance_period_once() -> bool:
 	_clear_stamp_history()
 	world_simulator.advance_period(world)
 	last_opinion_deltas.clear()
+	if _canal_dedication_due():
+		_show_canal_dedication()
+		return false
 	if world.is_active_epic_complete() and not world.era_completion_started:
 		_show_era_completion()
 		return false
@@ -1695,6 +1717,69 @@ func _show_procedural_result(result_title: String, result_text: String, conseque
 			prompt_label.add_theme_color_override("font_color", Color("#d6bd8b"))
 	_add_choice("End Period", _advance_period)
 	_refresh_compound()
+
+func _canal_dedication_due() -> bool:
+	return world != null and world.get_player() != null and CanalDedicationServiceScript.is_climax_due(world)
+
+
+func _show_canal_dedication() -> void:
+	if phase == "canal_dedication" or phase == "memorial":
+		return
+	CanalDedicationServiceScript.mark_climax_ready(world)
+	active_event = CanalDedicationEvent
+	procedural_assignment.clear()
+	_clear_stamp_history()
+	_clear_choices()
+	_set_phase("canal_dedication")
+	case_heading.text = CanalDedicationEvent.title.to_upper()
+	dossier.visible = true
+	dossier.text = CanalDedicationEvent.description
+	prompt_label.text = "The final act is yours. What shall the monument record?"
+	_set_evidence_facts("%s\n%s" % [CanalDedicationEvent.evidence_left_title, CanalDedicationEvent.evidence_left_quote], "%s\n%s" % [CanalDedicationEvent.evidence_right_title, CanalDedicationEvent.evidence_right_quote])
+	var choice_ids: Array[StringName] = [&"honor_crews", &"temple_only", &"personal_seal"]
+	for index in range(mini(choice_ids.size(), CanalDedicationEvent.outcomes.size())):
+		var outcome: EventOutcome = CanalDedicationEvent.outcomes[index]
+		var disabled := choice_ids[index] == &"personal_seal" and not CanalDedicationServiceScript.can_personal_seal(actor)
+		var choice_text := outcome.label + "\n" + outcome.description_override
+		if choice_ids[index] == &"personal_seal":
+			choice_text += "\nRequires Law 2 and Literacy 2."
+		_add_choice(choice_text, _conclude_canal_dedication.bind(choice_ids[index]), disabled)
+
+
+func _conclude_canal_dedication(choice: StringName) -> void:
+	if not CanalDedicationServiceScript.apply_choice(world, actor, choice):
+		return
+	_show_memorial_tablet()
+
+
+func _show_memorial_tablet() -> void:
+	if memorial_view != null and is_instance_valid(memorial_view):
+		memorial_view.queue_free()
+	var summary := CareerEvaluatorScript.evaluate(world, actor)
+	memorial_view = MemorialTabletViewScript.new()
+	memorial_view.return_to_title.connect(_return_to_title)
+	memorial_view.succession_requested.connect(_show_succession_preview)
+	memorial_view.restart_requested.connect(_restart_alpha)
+	add_child(memorial_view)
+	memorial_view.present(summary)
+	_set_phase("memorial")
+
+
+func _return_to_title() -> void:
+	get_tree().change_scene_to_file("res://scenes/menus/main_menu/main_menu.tscn")
+
+
+func _restart_alpha() -> void:
+	get_tree().change_scene_to_file("res://main.tscn")
+
+
+func _show_succession_preview() -> void:
+	var dialog := AcceptDialog.new()
+	dialog.title = "A Seal Passed Forward"
+	dialog.dialog_text = "The next scribe will inherit the world your records helped shape. Succession is preview-only in this alpha; return to the title screen to begin a new career."
+	add_child(dialog)
+	dialog.popup_centered()
+
 
 func _show_era_completion() -> void:
 	world.era_completion_started = true
