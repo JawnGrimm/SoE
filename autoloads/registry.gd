@@ -48,8 +48,20 @@ func get_place(definition_id: StringName) -> PlaceDef:
 func all_places() -> Array[PlaceDef]:
 	return defs.all_places()
 
-func get_trait(definition_id: StringName) -> Resource:
+func get_trait(definition_id: StringName) -> TraitDef:
 	return defs.get_trait(definition_id)
+
+func get_occupation(definition_id: StringName) -> OccupationDef:
+	return defs.get_occupation(definition_id)
+
+func get_character_template(definition_id: StringName) -> CharacterTemplate:
+	return defs.get_character_template(definition_id)
+
+func all_occupations() -> Array[OccupationDef]:
+	return defs.all_occupations()
+
+func all_character_templates() -> Array[CharacterTemplate]:
+	return defs.all_character_templates()
 
 func get_form(definition_id: StringName) -> Resource:
 	return defs.get_form(definition_id)
