@@ -158,7 +158,7 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			"title": String(procedural_payload.get("title", "Local Docket")),
 			"summary": String(procedural_payload.get("prompt", "A local matter awaits your judgment.")),
 			"priority": 5,
-			"employer_id": &"",
+			"employer_id": _resolve_local_employer(world, _institution_for_location(world, world.current_location_id), world.current_location_id, &""),
 			"source_data": procedural_payload.duplicate(true),
 			"path_id": selected_path
 		})
