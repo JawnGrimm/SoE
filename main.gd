@@ -43,7 +43,7 @@ var phase := "case"
 var last_opinion_deltas: Dictionary[StringName, int] = {}
 var active_left_speaker_id: StringName = &""
 var active_right_speaker_id: StringName = &""
-var dev_command_router: RefCounted
+var dev_command_router
 
 var year_label: Label
 var case_heading: Label
@@ -1223,6 +1223,8 @@ func _debug_advance_periods(count: int) -> Dictionary:
 		return {"success": false, "error": "Finish character creation before advancing the world from the console."}
 	if phase == "era_complete":
 		return {"success": false, "error": "Begin the next era before advancing the world again."}
+	if phase not in ["result", "end_of_queue"]:
+		return {"success": false, "error": "Advance from a result or an empty desk queue; finish the current case or engagement first."}
 	if count < 1 or count > 120:
 		return {"success": false, "error": "Period count must be between 1 and 120."}
 
