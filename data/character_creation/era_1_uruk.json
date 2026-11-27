@@ -2,77 +2,761 @@
   "era_id": "uruk_storehouse",
   "location_id": "uruk",
   "display_context": "Uruk · c. 3200 BCE",
+  "designation_by_origin": {
+    "origin_city_ward": "city-born",
+    "origin_marsh": "marsh-born",
+    "origin_canal_village": "canal-village",
+    "origin_herding_camp": "herding-camp",
+    "origin_trading_town": "foreign-origin"
+  },
   "questions": [
     {
       "id": "origin",
-      "title": "Where did you come from?",
-      "prompt": "Before you learned to work with tablets, what kind of work and people shaped your world?",
+      "title": "Origins",
+      "prompt": "Name the place first. Not the family. Families lie. I can check places.",
       "answers": [
-        {"id":"origin_provisioning","title":"Food and provisioning","description":"You grew up around the preparation, storage, and movement of food. You learned how much work sits behind an apparently simple allocation.","biography":"You grew up around the preparation, storage, and movement of food.","effects":[{"effect_type":"set_flag","parameters":{"flag":"origin_provisioning","scope":"actor"}},{"effect_type":"set_flag","parameters":{"flag":"familiarity_provisioning","scope":"actor"}}]},
-        {"id":"origin_fields_herds","title":"Fields and herds","description":"Much of the work you knew began beyond the city: fields, animals, seasonal tasks, and bringing produce where it was needed.","biography":"Much of your early life was shaped by fields, herds, seasonal work, and the movement of produce.","effects":[{"effect_type":"set_flag","parameters":{"flag":"origin_fields_herds","scope":"actor"}},{"effect_type":"set_flag","parameters":{"flag":"familiarity_agropastoral","scope":"actor"}}]},
-        {"id":"origin_skilled_making","title":"Skilled making","description":"You grew up around people who shaped useful things, judged materials, and knew how much work a finished object concealed.","biography":"You grew up around skilled making, material judgment, and the work concealed inside finished objects.","effects":[{"effect_type":"set_flag","parameters":{"flag":"origin_skilled_making","scope":"actor"}},{"effect_type":"set_flag","parameters":{"flag":"familiarity_materials","scope":"actor"}}]},
-        {"id":"origin_exchange","title":"Exchange and movement","description":"You knew the work of moving goods: deliveries, routes, quantities, handovers, and the people waiting at the other end.","biography":"You knew the work of moving goods: routes, deliveries, handovers, and the people waiting at the other end.","effects":[{"effect_type":"set_flag","parameters":{"flag":"origin_exchange","scope":"actor"}},{"effect_type":"set_flag","parameters":{"flag":"familiarity_exchange","scope":"actor"}}]}
+        {
+          "id": "origin_city_ward",
+          "title": "A ward inside the city walls",
+          "description": "You grew up where neighbors knew one another's households and histories.",
+          "biography": "Born within the walls, where every neighbor knew whose child you were and what the family had done last winter.",
+          "effects": [
+            {
+              "effect_type": "set_flag",
+              "target": "actor",
+              "parameters": {
+                "flag": "origin_city_ward",
+                "scope": "actor"
+              }
+            }
+          ]
+        },
+        {
+          "id": "origin_marsh",
+          "title": "The southern marsh-fringe",
+          "description": "The city was something you visited, not the center of your world.",
+          "biography": "From the marsh-fringe, where tithes were paid in reed-bundles and the city happened at a distance.",
+          "effects": [
+            {
+              "effect_type": "set_flag",
+              "target": "actor",
+              "parameters": {
+                "flag": "origin_marsh",
+                "scope": "actor"
+              }
+            }
+          ]
+        },
+        {
+          "id": "origin_canal_village",
+          "title": "A barley village on the canals",
+          "description": "You knew the irrigated plain and the storehouse's claim on each harvest.",
+          "biography": "Raised on the irrigated plain, in a house that measured its year by what the storehouse took.",
+          "effects": [
+            {
+              "effect_type": "set_flag",
+              "target": "actor",
+              "parameters": {
+                "flag": "origin_canal_village",
+                "scope": "actor"
+              }
+            }
+          ]
+        },
+        {
+          "id": "origin_herding_camp",
+          "title": "A herding camp on the desert edge",
+          "description": "Your people moved with flocks and were rarely entered in city records.",
+          "biography": "Of the herding camps, known to the city as wool and mutton, and entered in no record before this one.",
+          "effects": [
+            {
+              "effect_type": "set_flag",
+              "target": "actor",
+              "parameters": {
+                "flag": "origin_herding_camp",
+                "scope": "actor"
+              }
+            }
+          ]
+        },
+        {
+          "id": "origin_trading_town",
+          "title": "A trading town far from the plain",
+          "description": "You came from beyond the local network, with a name the clerk may not know how to write.",
+          "biography": "A stranger to the plain, recorded as the clerk heard your name, not quite as it was said.",
+          "effects": [
+            {
+              "effect_type": "set_flag",
+              "target": "actor",
+              "parameters": {
+                "flag": "origin_trading_town",
+                "scope": "actor"
+              }
+            }
+          ]
+        }
       ]
     },
     {
       "id": "responsibility",
-      "title": "What did people rely on you to do?",
-      "prompt": "When you were old enough to be useful, what did people begin to trust you with?",
+      "title": "Responsibilities",
+      "prompt": "Everyone drags something through that gate. Tell me what was tied to your ankle.",
       "answers": [
-        {"id":"responsibility_count","title":"Count or measure","description":"You were asked to count, compare, or measure things that someone else needed to account for.","biography":"People began asking you to count, compare, and measure what others needed to account for.","effects":[{"effect_type":"set_flag","parameters":{"flag":"familiarity_quantities","scope":"actor"}}]},
-        {"id":"responsibility_deliveries","title":"Help with deliveries","description":"You learned who was expecting a delivery, what had to travel, and what could go wrong between handover and arrival.","biography":"You learned who was expecting a delivery, what had to travel, and what could go wrong between handover and arrival.","requires":{"origin":["origin_provisioning","origin_fields_herds","origin_exchange"]},"effects":[{"effect_type":"set_flag","parameters":{"flag":"familiarity_deliveries","scope":"actor"}}]},
-        {"id":"responsibility_quality","title":"Judge materials or quality","description":"You learned to notice when material, workmanship, or condition did not match what was expected.","biography":"You learned to notice when material, workmanship, or condition did not match what was expected.","requires":{"origin":["origin_provisioning","origin_fields_herds","origin_skilled_making"]},"effects":[{"effect_type":"set_flag","parameters":{"flag":"familiarity_quality","scope":"actor"}}]},
-        {"id":"responsibility_coordinate","title":"Coordinate a small task","description":"People began relying on you to remember who was doing what and whether the work had been finished.","biography":"People began relying on you to remember who was doing what and whether the work had been finished.","effects":[{"effect_type":"set_flag","parameters":{"flag":"familiarity_coordination","scope":"actor"}}]},
-        {"id":"responsibility_record","title":"Observe a record or seal in use","description":"You watched someone use a mark, seal, token, or tablet to make a transaction or responsibility recognizable.","biography":"You watched someone use a mark, seal, token, or tablet to make a transaction or responsibility recognizable.","requires":{"origin":["origin_provisioning","origin_skilled_making","origin_exchange"]},"effects":[{"effect_type":"set_flag","parameters":{"flag":"familiarity_records_observed","scope":"actor"}}]}
+        {
+          "id": "responsibility_grain_debt",
+          "title": "A grain debt",
+          "description": "The storehouse already has a claim on your household.",
+          "biography": "Arrived owing a seed-loan unpaid across two sowings, a debt the storehouse knew before a word was spoken.",
+          "effects": [
+            {
+              "effect_type": "set_flag",
+              "target": "actor",
+              "parameters": {
+                "flag": "responsibility_grain_debt",
+                "scope": "actor"
+              }
+            }
+          ]
+        },
+        {
+          "id": "responsibility_dependents",
+          "title": "Mouths that depended on you",
+          "description": "Other people depended on your work and its ration.",
+          "biography": "Carried an aging parent and younger siblings, whose rations depended on your place.",
+          "effects": [
+            {
+              "effect_type": "set_flag",
+              "target": "actor",
+              "parameters": {
+                "flag": "responsibility_dependents",
+                "scope": "actor"
+              }
+            }
+          ]
+        },
+        {
+          "id": "responsibility_household",
+          "title": "A household you owed",
+          "description": "A household expects repayment in favors as well as goods.",
+          "biography": "Indebted to a household that expected repayment in favors as well as grain.",
+          "effects": [
+            {
+              "effect_type": "set_flag",
+              "target": "actor",
+              "parameters": {
+                "flag": "responsibility_household",
+                "scope": "actor"
+              }
+            }
+          ]
+        },
+        {
+          "id": "responsibility_kinsman",
+          "title": "A kinsman's missing obligation",
+          "description": "Someone in your family left an obligation behind—and vanished.",
+          "biography": "Answered for a kinsman's shortfall, and for the kinsman who vanished with it.",
+          "effects": [
+            {
+              "effect_type": "set_flag",
+              "target": "actor",
+              "parameters": {
+                "flag": "responsibility_kinsman",
+                "scope": "actor"
+              }
+            }
+          ]
+        },
+        {
+          "id": "responsibility_none",
+          "title": "Nothing",
+          "description": "No debt, dependents, or quarrel. The clerk finds this suspicious.",
+          "biography": "Owed nothing and owing nothing, recorded as a puzzle rather than a virtue.",
+          "effects": [
+            {
+              "effect_type": "set_flag",
+              "target": "actor",
+              "parameters": {
+                "flag": "responsibility_none",
+                "scope": "actor"
+              }
+            }
+          ]
+        }
       ]
     },
     {
       "id": "formative_experience",
-      "title": "What stayed with you?",
-      "prompt": "Was there an experience that changed what you paid attention to?",
+      "title": "Formative / The day that stayed",
+      "prompt": "Every scribe points at one day. The day a mark on clay did what a hand couldn't. Give me yours.",
       "answers": [
-        {"id":"experience_discrepancy","title":"A quantity did not match","description":"A quantity everyone relied on turned out not to match what had actually been received or used.","biography":"You remember a quantity that did not match what had actually been received or used.","requires":{"responsibility":["responsibility_count","responsibility_deliveries"]},"effects":[{"effect_type":"add_memory","parameters":{"memory_id":"life_quantity_discrepancy","text":"A quantity everyone relied on did not match what had actually been received or used.","involved":[]}}]},
-        {"id":"experience_blame","title":"You were blamed unfairly","description":"You were held responsible for a mistake you did not believe was yours.","biography":"You were once held responsible for a mistake you did not believe was yours.","effects":[{"effect_type":"add_memory","parameters":{"memory_id":"life_unfair_blame","text":"I was held responsible for a mistake I did not believe was mine.","involved":[]}}]},
-        {"id":"experience_disagreement","title":"You helped settle a disagreement","description":"Two people remembered an agreement differently, and you helped establish what each had actually seen or promised.","biography":"You helped settle a disagreement by establishing what each person had actually seen or promised.","requires":{"responsibility":["responsibility_count","responsibility_deliveries","responsibility_quality"]},"effects":[{"effect_type":"add_memory","parameters":{"memory_id":"life_settled_disagreement","text":"I helped establish what each person had actually seen or promised.","involved":[]}}]},
-        {"id":"experience_trust","title":"You were trusted with an adult responsibility","description":"Someone gave you responsibility before others thought you were ready.","biography":"Someone trusted you with a responsibility before others thought you were ready.","effects":[{"effect_type":"add_memory","parameters":{"memory_id":"life_early_trust","text":"Someone trusted me with an adult responsibility before others thought I was ready.","involved":[]}}]}
+        {
+          "id": "experience_discrepancy",
+          "title": "The day a count was wrong",
+          "description": "A quay tally cost someone their place; you had counted the baskets.",
+          "biography": "Learned early that a number can ruin a person, having counted the baskets yourself on the day one did.",
+          "effects": [
+            {
+              "effect_type": "add_memory",
+              "target": "actor",
+              "parameters": {
+                "memory_id": "life_quantity_discrepancy",
+                "text": "A quantity everyone relied on did not match what had actually been received or used.",
+                "involved": []
+              }
+            },
+            {
+              "effect_type": "gain_skill_xp",
+              "target": "actor",
+              "parameters": {
+                "skill": "arithmetic",
+                "amount": 25
+              }
+            }
+          ]
+        },
+        {
+          "id": "experience_secret_tablet",
+          "title": "The day you read what you shouldn't have",
+          "description": "A visiting official left a tablet unattended. You puzzled out marks not meant for you.",
+          "biography": "Learned marks from a tablet left unguarded, and kept what it said ever since.",
+          "effects": [
+            {
+              "effect_type": "add_memory",
+              "target": "actor",
+              "parameters": {
+                "memory_id": "life_unpermitted_reading",
+                "text": "I puzzled out marks on a tablet that had been left unattended.",
+                "involved": []
+              }
+            },
+            {
+              "effect_type": "gain_skill_xp",
+              "target": "actor",
+              "parameters": {
+                "skill": "literacy",
+                "amount": 25
+              }
+            }
+          ]
+        },
+        {
+          "id": "experience_boundary",
+          "title": "The day a boundary dispute was settled",
+          "description": "A household lost land it rightly held because the other side had a tablet.",
+          "biography": "Watched a household lose land it rightly held because the other side had a tablet and theirs did not.",
+          "effects": [
+            {
+              "effect_type": "add_memory",
+              "target": "actor",
+              "parameters": {
+                "memory_id": "life_documented_boundary",
+                "text": "I saw a household lose land it rightly held because the other side had a tablet.",
+                "involved": []
+              }
+            },
+            {
+              "effect_type": "gain_skill_xp",
+              "target": "actor",
+              "parameters": {
+                "skill": "law",
+                "amount": 25
+              }
+            }
+          ]
+        },
+        {
+          "id": "experience_storehouse",
+          "title": "The day the storehouse nearly ran out",
+          "description": "You watched ration priority in a bad season.",
+          "biography": "Saw what a short season did to a storehouse, and which names were last on the ration.",
+          "effects": [
+            {
+              "effect_type": "add_memory",
+              "target": "actor",
+              "parameters": {
+                "memory_id": "life_storehouse_shortage",
+                "text": "I saw scarcity decide whose name came last on the ration.",
+                "involved": []
+              }
+            },
+            {
+              "effect_type": "gain_skill_xp",
+              "target": "actor",
+              "parameters": {
+                "skill": "stewardship",
+                "amount": 25
+              }
+            }
+          ]
+        },
+        {
+          "id": "experience_seal",
+          "title": "The day you saw what a seal could do",
+          "description": "A pressed mark changed whose grain was whose.",
+          "biography": "Understood in one afternoon that the mark pressed in clay mattered more than whoever pressed it.",
+          "effects": [
+            {
+              "effect_type": "add_memory",
+              "target": "actor",
+              "parameters": {
+                "memory_id": "life_seal_power",
+                "text": "I saw a seal mark change whose grain was whose.",
+                "involved": []
+              }
+            },
+            {
+              "effect_type": "gain_skill_xp",
+              "target": "actor",
+              "parameters": {
+                "skill": "intrigue",
+                "amount": 25
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "formative_vulnerability",
+      "title": "Formative / The one you would rather not tell",
+      "prompt": "Now the one you'd rather not tell me. I'll write it down either way.",
+      "answers": [
+        {
+          "id": "vulnerability_took",
+          "title": "You took something that wasn't yours",
+          "description": "Grain, a seal-blank, or a token; someone else took blame.",
+          "biography": "Took what was not to be taken, and let another bear the blame.",
+          "effects": [
+            {
+              "effect_type": "add_memory",
+              "target": "actor",
+              "parameters": {
+                "memory_id": "life_took_and_blame",
+                "text": "I took something that was not mine and let another bear the blame.",
+                "involved": []
+              }
+            }
+          ]
+        },
+        {
+          "id": "vulnerability_silence",
+          "title": "You saw a wrong and said nothing",
+          "description": "A short count, a pressed seal, or a beating. You stayed silent.",
+          "biography": "Witnessed a wrong and kept quiet, and remembers who saw the silence.",
+          "effects": [
+            {
+              "effect_type": "add_memory",
+              "target": "actor",
+              "parameters": {
+                "memory_id": "life_witnessed_silence",
+                "text": "I witnessed a wrong and kept quiet.",
+                "involved": []
+              }
+            }
+          ]
+        },
+        {
+          "id": "vulnerability_named",
+          "title": "You gave a name",
+          "description": "An official asked about a neighbor. You never learned what happened.",
+          "biography": "Gave a neighbor's name to an official, and never learned what became of the neighbor.",
+          "effects": [
+            {
+              "effect_type": "add_memory",
+              "target": "actor",
+              "parameters": {
+                "memory_id": "life_gave_name",
+                "text": "I gave a neighbor's name to an official and never learned what followed.",
+                "involved": []
+              }
+            }
+          ]
+        },
+        {
+          "id": "vulnerability_left",
+          "title": "You left someone behind",
+          "description": "A sibling or friend wanted the place you took.",
+          "biography": "Took the place that was offered and left behind the one who had hoped for it.",
+          "effects": [
+            {
+              "effect_type": "add_memory",
+              "target": "actor",
+              "parameters": {
+                "memory_id": "life_left_someone",
+                "text": "I took a place someone close to me had hoped to receive.",
+                "involved": []
+              }
+            }
+          ]
+        },
+        {
+          "id": "vulnerability_nothing",
+          "title": "Nothing",
+          "description": "The clerk writes 'nothing' and remembers that you said it.",
+          "biography": "Declined a second account, which the clerk recorded as one.",
+          "effects": [
+            {
+              "effect_type": "add_memory",
+              "target": "actor",
+              "parameters": {
+                "memory_id": "life_declined_second_account",
+                "text": "I declined to give a second account of my past.",
+                "involved": []
+              }
+            }
+          ]
+        }
       ]
     },
     {
       "id": "entry_into_scribal_work",
-      "title": "How did you find your way to the tablets?",
-      "prompt": "How did the chance to learn the work of a scribe come to you?",
+      "title": "Entry",
+      "prompt": "How did you come through that gate? Not why. How. The how decides who owns the first season.",
       "answers": [
-        {"id":"entry_introduction","title":"Someone introduced you","description":"Someone who knew you or your work introduced you to a person involved in keeping records.","biography":"Someone who knew your work introduced you to the people who kept records.","effects":[{"effect_type":"set_relationship","parameters":{"other_id":"ur_nanna","relation_type":"introducer","strength":1,"trust":0,"reciprocal":true}},{"effect_type":"set_relationship","parameters":{"other_id":"shuruppak_ilu","relation_type":"trainer","strength":1,"trust":0,"reciprocal":true}}]},
-        {"id":"entry_recommendation","title":"Your work earned a recommendation","description":"Someone noticed how you handled a responsibility and recommended that you be given a chance to learn.","biography":"Your handling of practical work earned a recommendation and a chance to learn under supervision.","effects":[{"effect_type":"set_relationship","parameters":{"other_id":"ur_nanna","relation_type":"recommender","strength":1,"trust":0,"reciprocal":true}},{"effect_type":"set_relationship","parameters":{"other_id":"shuruppak_ilu","relation_type":"trainer","strength":1,"trust":0,"reciprocal":true}}]},
-        {"id":"entry_assistant","title":"You were needed as an assistant","description":"A group needed a dependable assistant, and you were brought in to learn by helping.","biography":"A group needed a dependable assistant, and you were brought in to learn by helping under supervision.","effects":[{"effect_type":"set_relationship","parameters":{"other_id":"ur_nanna","relation_type":"work_tie","strength":1,"trust":0,"reciprocal":true}},{"effect_type":"set_relationship","parameters":{"other_id":"shuruppak_ilu","relation_type":"trainer","strength":1,"trust":0,"reciprocal":true}}]},
-        {"id":"entry_encounter","title":"An encounter opened a door","description":"A delivery, disagreement, or other piece of work brought you into contact with someone willing to teach you.","biography":"An encounter during practical work brought you into contact with someone willing to teach you.","effects":[{"effect_type":"set_relationship","parameters":{"other_id":"enlil_kisu","relation_type":"introducer","strength":1,"trust":0,"reciprocal":true}},{"effect_type":"set_relationship","parameters":{"other_id":"shuruppak_ilu","relation_type":"trainer","strength":1,"trust":0,"reciprocal":true}}]}
+        {
+          "id": "entry_debt_pledge",
+          "title": "Debt pledge",
+          "description": "You entered as collateral against an obligation.",
+          "biography": "Entered as collateral against a debt, and worth more to the compound while the debt stayed unpaid.",
+          "effects": [
+            {
+              "effect_type": "set_flag",
+              "target": "actor",
+              "parameters": {
+                "flag": "entry_debt_pledge",
+                "scope": "actor"
+              }
+            }
+          ]
+        },
+        {
+          "id": "entry_temple_draft",
+          "title": "Temple draft",
+          "description": "The temple claimed first call on your service.",
+          "biography": "Drawn into the compound by temple levy, and answerable to the temple before anyone else.",
+          "effects": [
+            {
+              "effect_type": "set_flag",
+              "target": "actor",
+              "parameters": {
+                "flag": "entry_temple_draft",
+                "scope": "actor"
+              }
+            }
+          ]
+        },
+        {
+          "id": "entry_family_placement",
+          "title": "Family placement",
+          "description": "Your family placed you and expects a return.",
+          "biography": "Placed by family, who counted what they spent.",
+          "effects": [
+            {
+              "effect_type": "set_flag",
+              "target": "actor",
+              "parameters": {
+                "flag": "entry_family_placement",
+                "scope": "actor"
+              }
+            }
+          ]
+        },
+        {
+          "id": "entry_walked_in",
+          "title": "Walked in",
+          "description": "No pledge, levy, or sponsor. The clerk let you stay.",
+          "biography": "Entered unsummoned and tolerated, which was not the same as belonging.",
+          "effects": [
+            {
+              "effect_type": "set_flag",
+              "target": "actor",
+              "parameters": {
+                "flag": "entry_walked_in",
+                "scope": "actor"
+              }
+            }
+          ]
+        }
       ]
     },
     {
-      "id": "first_instruction",
-      "title": "What did you learn first?",
-      "prompt": "Your first instruction did not teach you everything. What part of the work became familiar first?",
+      "id": "instruction_mentor",
+      "title": "Instruction",
+      "prompt": "Three names are open. Who will you lodge under? A blank tablet waits. “Make your mark.”",
       "answers": [
-        {"id":"instruction_quantities","title":"Quantities and commodity notation","description":"You practiced recording quantities beside the goods they described, and learned that a number only made sense in its proper system.","biography":"Your first instruction concerned quantities, commodity notation, and the measures used in the work around you.","effects":[{"effect_type":"set_flag","parameters":{"flag":"familiarity_commodity_notation","scope":"actor"}}]},
-        {"id":"instruction_tablet_preparation","title":"Clay, stylus, and tablet preparation","description":"You learned how clay behaved, how a tablet was prepared, and how marks had to be made to remain legible.","biography":"You learned how clay behaved, how a tablet was prepared, and how marks had to be made to remain legible.","effects":[{"effect_type":"set_flag","parameters":{"flag":"familiarity_tablet_preparation","scope":"actor"}}]},
-        {"id":"instruction_signs","title":"Signs and category lists","description":"You practiced recognizing and reproducing a limited set of signs and categories used in the work around you.","biography":"You practiced a limited set of signs and categories used in the work around you.","effects":[{"effect_type":"set_flag","parameters":{"flag":"familiarity_sign_categories","scope":"actor"}}]},
-        {"id":"instruction_records","title":"Checking and organizing records","description":"You helped compare entries, keep related information together, and notice when two accounts did not agree.","biography":"You helped compare entries, keep related information together, and notice when two accounts did not agree.","effects":[{"effect_type":"set_flag","parameters":{"flag":"familiarity_record_comparison","scope":"actor"}}]}
+        {
+          "id": "mentor_shuruppak_ilu",
+          "title": "Shuruppak-ilu · West wing archives",
+          "description": "A senior scribe who points at a mistake and waits for you to hear it.",
+          "biography": "Instructed under Shuruppak-ilu, who valued an honest gap in the record above a tidy lie.",
+          "effects": [
+            {
+              "effect_type": "set_relationship",
+              "target": "actor",
+              "parameters": {
+                "other_id": "shuruppak_ilu",
+                "relation_type": "trainer",
+                "strength": 1,
+                "trust": 0,
+                "reciprocal": true
+              }
+            },
+            {
+              "effect_type": "set_flag",
+              "target": "actor",
+              "parameters": {
+                "flag": "mentor_shuruppak_ilu",
+                "scope": "actor"
+              }
+            }
+          ]
+        },
+        {
+          "id": "mentor_utu_mansum",
+          "title": "Utu-mansum · The gate",
+          "description": "A tax scribe who has never once been rushed.",
+          "biography": "Lodged under Utu-mansum at the gate, where every mark had to be defended to an angry boatman.",
+          "effects": [
+            {
+              "effect_type": "set_relationship",
+              "target": "actor",
+              "parameters": {
+                "other_id": "utu_mansum",
+                "relation_type": "trainer",
+                "strength": 1,
+                "trust": 0,
+                "reciprocal": true
+              }
+            },
+            {
+              "effect_type": "set_flag",
+              "target": "actor",
+              "parameters": {
+                "flag": "mentor_utu_mansum",
+                "scope": "actor"
+              }
+            }
+          ]
+        },
+        {
+          "id": "mentor_ur_nanna",
+          "title": "Ur-Nanna · Storehouse Bay Four",
+          "description": "A temple steward who listens to weather like other men listen to creditors.",
+          "biography": "Taken in by Ur-Nanna, who taught how to keep a storehouse from rotting from the inside, and to share the blame when it did.",
+          "effects": [
+            {
+              "effect_type": "set_relationship",
+              "target": "actor",
+              "parameters": {
+                "other_id": "ur_nanna",
+                "relation_type": "trainer",
+                "strength": 1,
+                "trust": 0,
+                "reciprocal": true
+              }
+            },
+            {
+              "effect_type": "set_flag",
+              "target": "actor",
+              "parameters": {
+                "flag": "mentor_ur_nanna",
+                "scope": "actor"
+              }
+            }
+          ]
+        }
       ]
     },
     {
       "id": "professional_orientation",
-      "title": "What kind of work are you drawn toward?",
-      "prompt": "Scribes serve many kinds of people and institutions. What kind of responsibility do you hope to make your own?",
+      "title": "Path",
+      "prompt": "Scribes serve many people and institutions. What responsibility do you hope to make your own?",
       "answers": [
-        {"id":"path_civil","title":"Civic / Government","description":"You are drawn to the work of institutions: organizing resources, keeping responsibilities clear, and helping collective work function. In Uruk, this may bring you into administration associated with storage, distribution, labor, and institutional coordination. It grants no office or authority.","biography":"You are drawn toward civic administration: organizing resources, keeping responsibilities clear, and helping collective work function in Uruk.","effects":[{"effect_type":"set_flag","parameters":{"flag":"path_civil","scope":"actor"}},{"effect_type":"set_relationship","parameters":{"other_id":"ur_nanna","relation_type":"work_tie","strength":1,"trust":0,"reciprocal":true}}]},
-        {"id":"path_religious","title":"Religious","description":"You are drawn to institutions and people whose work is connected with sacred practice, ritual, and the responsibilities that support them. In Uruk, sacred and economic administration may overlap; this grants no priestly title or ritual authority.","biography":"You are drawn toward responsibilities connected with sacred practice and the institutions that support them.","effects":[{"effect_type":"set_flag","parameters":{"flag":"path_religious","scope":"actor"}},{"effect_type":"set_flag","parameters":{"flag":"familiarity_sacred_institutions","scope":"actor"}}]},
-        {"id":"path_martial","title":"Martial / Military","description":"You are drawn to work supporting security, organized movement, and the coordination of people and resources in dangerous circumstances. In Uruk, this is a custody and transport connection, not a military posting or standing army.","biography":"You are drawn toward work involving security, custody, and the safe movement of people and resources.","effects":[{"effect_type":"set_flag","parameters":{"flag":"path_martial","scope":"actor"}},{"effect_type":"set_relationship","parameters":{"other_id":"enlil_kisu","relation_type":"work_tie","strength":1,"trust":0,"reciprocal":true}}]},
-        {"id":"path_merchant","title":"Commercial / Merchant","description":"You are drawn to exchange: moving goods, maintaining relationships between counterparties, and making sure what is promised reaches the people expecting it. In Uruk, this means procurement, exchange, delivery, and movement networks—not a modern merchant house.","biography":"You are drawn toward commercial work: exchange, delivery, and the relationships between people moving and receiving goods.","effects":[{"effect_type":"set_flag","parameters":{"flag":"path_merchant","scope":"actor"}},{"effect_type":"set_relationship","parameters":{"other_id":"geme_inana","relation_type":"work_tie","strength":1,"trust":0,"reciprocal":true}},{"effect_type":"set_relationship","parameters":{"other_id":"enlil_kisu","relation_type":"work_tie","strength":1,"trust":0,"reciprocal":true}}]}
+        {
+          "id": "path_merchant",
+          "title": "Commercial",
+          "description": "Exchange, delivery, and the people waiting at the other end.",
+          "biography": "Drawn toward commercial work: exchange, delivery, and the relationships between people moving and receiving goods.",
+          "effects": [
+            {
+              "effect_type": "set_flag",
+              "target": "actor",
+              "parameters": {
+                "flag": "path_merchant",
+                "scope": "actor"
+              }
+            },
+            {
+              "effect_type": "set_relationship",
+              "target": "actor",
+              "parameters": {
+                "other_id": "geme_inana",
+                "relation_type": "work_tie",
+                "strength": 1,
+                "trust": 0,
+                "reciprocal": true
+              }
+            },
+            {
+              "effect_type": "set_relationship",
+              "target": "actor",
+              "parameters": {
+                "other_id": "enlil_kisu",
+                "relation_type": "work_tie",
+                "strength": 1,
+                "trust": 0,
+                "reciprocal": true
+              }
+            }
+          ]
+        },
+        {
+          "id": "path_martial",
+          "title": "Martial",
+          "description": "Security, custody, and safe movement—not a military command.",
+          "biography": "Drawn toward work involving security, custody, and the safe movement of people and resources.",
+          "effects": [
+            {
+              "effect_type": "set_flag",
+              "target": "actor",
+              "parameters": {
+                "flag": "path_martial",
+                "scope": "actor"
+              }
+            },
+            {
+              "effect_type": "set_relationship",
+              "target": "actor",
+              "parameters": {
+                "other_id": "enlil_kisu",
+                "relation_type": "work_tie",
+                "strength": 1,
+                "trust": 0,
+                "reciprocal": true
+              }
+            }
+          ]
+        },
+        {
+          "id": "path_civil",
+          "title": "Civic",
+          "description": "Organizing resources and keeping institutional responsibilities clear.",
+          "biography": "Drawn toward civic administration: organizing resources, keeping responsibilities clear, and helping collective work function.",
+          "effects": [
+            {
+              "effect_type": "set_flag",
+              "target": "actor",
+              "parameters": {
+                "flag": "path_civil",
+                "scope": "actor"
+              }
+            },
+            {
+              "effect_type": "set_relationship",
+              "target": "actor",
+              "parameters": {
+                "other_id": "ur_nanna",
+                "relation_type": "work_tie",
+                "strength": 1,
+                "trust": 0,
+                "reciprocal": true
+              }
+            }
+          ]
+        },
+        {
+          "id": "path_religious",
+          "title": "Religious",
+          "description": "Sacred practice and the institutions that support it; no priestly title is granted.",
+          "biography": "Drawn toward responsibilities connected with sacred practice and the institutions that support them.",
+          "effects": [
+            {
+              "effect_type": "set_flag",
+              "target": "actor",
+              "parameters": {
+                "flag": "path_religious",
+                "scope": "actor"
+              }
+            },
+            {
+              "effect_type": "set_flag",
+              "target": "actor",
+              "parameters": {
+                "flag": "familiarity_sacred_institutions",
+                "scope": "actor"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "identity_response",
+      "title": "Identity",
+      "prompt": "The clerk places a disputed tally before you. Which mark do you make? He records the answer, then names what it has shown.",
+      "answers": [
+        {
+          "id": "identity_exacting",
+          "title": "You ask for the count to be checked again",
+          "description": "You refuse to close the tablet until every measure agrees.",
+          "biography": "The clerk called the habit exacting.",
+          "effects": [
+            {
+              "effect_type": "add_trait",
+              "target": "actor",
+              "parameters": {
+                "trait_id": "exacting"
+              }
+            }
+          ]
+        },
+        {
+          "id": "identity_pliable",
+          "title": "You accept the correction that keeps the queue moving",
+          "description": "You make room for the person waiting behind the record.",
+          "biography": "The clerk called the habit pliable.",
+          "effects": [
+            {
+              "effect_type": "add_trait",
+              "target": "actor",
+              "parameters": {
+                "trait_id": "pliable"
+              }
+            }
+          ]
+        },
+        {
+          "id": "identity_severe",
+          "title": "You reject the entry and require the responsible mark",
+          "description": "You make the record answer to the rule, even when the answer is hard.",
+          "biography": "The clerk called the habit severe.",
+          "effects": [
+            {
+              "effect_type": "add_trait",
+              "target": "actor",
+              "parameters": {
+                "trait_id": "severe"
+              }
+            }
+          ]
+        },
+        {
+          "id": "identity_cautious",
+          "title": "You set the tablet aside until the witness is present",
+          "description": "You will not make a mark whose consequences you cannot yet see.",
+          "biography": "The clerk called the habit cautious.",
+          "effects": [
+            {
+              "effect_type": "add_trait",
+              "target": "actor",
+              "parameters": {
+                "trait_id": "cautious"
+              }
+            }
+          ]
+        }
       ]
     }
   ],
-  "identity_placeholders": {
-    "traits": "Your starting traits will be chosen here in a later character-design pass.",
-    "ambition": "Your character's ambition will be defined here. It is not an objective or progression track yet."
-  }
+  "creation_narration": "This biography is game narration, not an in-world tablet. The clerk records only answers and marks that actually exist."
 }
