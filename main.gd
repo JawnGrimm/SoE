@@ -672,8 +672,6 @@ func load_game() -> Dictionary:
 		_show_world_engagement()
 	elif String(session.get("phase", "")) == "itinerary_docket":
 		_show_itinerary_docket()
-	elif String(session.get("phase", "")) == "opportunity_board" and world.current_location_id == &"nippur":
-		_show_nippur_assignment_board()
 	elif String(session.get("phase", "")) == "opportunity_board" and not assignment_opportunities.is_empty():
 		_show_assignment_board()
 	elif active_event == null and procedural_assignment.is_empty():
@@ -693,9 +691,6 @@ func _schedule_next_case() -> void:
 	context.year = world.year
 	current_era = Registry.get_era_for_year(world.year)
 	context.era = current_era
-	if world.current_location_id == &"nippur":
-		_show_nippur_assignment_board()
-		return
 	if world.epic_summon_pending and not world.epic_summon_issued:
 		active_event = null
 		procedural_assignment = AssignmentGeneratorScript.create_epic_summons()
@@ -1019,10 +1014,7 @@ func _resolve_world_assignment(verdict: StringName) -> void:
 		return
 	active_world_assignment_id = &""
 	procedural_assignment.clear()
-	if world.current_location_id == &"nippur":
-		_show_nippur_itinerary_ready("ASSESSMENT SEALED", String(result.get("message", "The work is entered into the record.")))
-	else:
-		_show_procedural_result("ASSESSMENT SEALED", String(result.get("message", "The work is entered into the record.")))
+	_show_procedural_result("ASSESSMENT SEALED", String(result.get("message", "The work is entered into the record.")))
 
 func _abandon_world_assignment() -> void:
 	if active_world_assignment_id == &"" or not world.assignments.has(active_world_assignment_id):
@@ -1031,10 +1023,7 @@ func _abandon_world_assignment() -> void:
 	record["status"] = "abandoned"
 	world.assignments[active_world_assignment_id] = record
 	active_world_assignment_id = &""
-	if world.current_location_id == &"nippur":
-		_show_nippur_itinerary_ready("AUDIT CLOSED", "The offering audit is closed without certification. The local docket is retained in the archive.")
-	else:
-		_show_procedural_result("WORK SET ASIDE", "The matter remains in the world. No penalty is recorded for declining it.")
+	_show_procedural_result("WORK SET ASIDE", "The matter remains in the world. No penalty is recorded for declining it.")
 
 func _decline_opportunities() -> void:
 	if phase != "opportunity_board":
@@ -1671,74 +1660,6 @@ func _location_header_text() -> String:
 	var place := route_network.get_place(world.current_location_id) if route_network != null else null
 	var place_name := place.display_name.to_upper() if place != null else String(world.current_location_id).to_upper()
 	return "SCRIBE OF ERAS  /  %s / REGIONAL COMPOUND" % place_name
-
-func _show_nippur_assignment_board() -> void:
-	var existing: Dictionary = world.assignments.get(NIPPUR_AUDIT_ID, {})
-	var status := String(existing.get("status", ""))
-	if status in ["completed", "abandoned"]:
-		_show_nippur_itinerary_ready("NIPPUR DOCKET CLOSED", "The shrine-offerings matter has been closed. You may now return downriver to Uruk.")
-		return
-	if status == "active":
-		active_world_assignment_id = NIPPUR_AUDIT_ID
-		_show_world_engagement()
-		return
-	var shrine: Dictionary = world.institutions.get(&"nippur_shrine", {})
-	if shrine.is_empty():
-		push_error("Main: Nippur shrine institution is missing from the seeded world.")
-		return
-	assignment_opportunities = [{
-		"id": NIPPUR_AUDIT_ID,
-		"kind": &"ledger",
-		"source_id": &"nippur_shrine",
-		"title": "Audit Nippur Shrine Offerings",
-		"summary": "Reconcile the shrine's offering register against the stores held in the provincial compound.",
-		"priority": 100,
-		"employer_id": &"",
-		"source_data": {
-			"institution_id": &"nippur_shrine",
-			"place_id": &"nippur",
-			"member_count": shrine.get("members", []).size(),
-			"activity_count": int(shrine.get("activity_count", 0))
-		},
-		"path_id": selected_path
-	}]
-	_clear_stamp_history()
-	_clear_choices()
-	_set_phase("opportunity_board")
-	var payload := {
-		"title": "NIPPUR / PROVINCIAL COMPOUND",
-		"left_card": {
-			"title": "SHRINE OFFERINGS REGISTER",
-			"speaker_id": &"",
-			"quote": "The shrine's offering roll has arrived for review. The provincial compound requests a clean account before the next river dispatch.",
-			"facts": "LOCATION: NIPPUR\nRECORDED OFFERINGS: %d\nACTIVITY ENTRIES: %d" % [
-				int(shrine.get("stockpiles", {}).get(&"offerings", 0)),
-				int(shrine.get("activity_count", 0))
-			]
-		},
-		"right_card": {
-			"title": "LOCAL ASSIGNMENT",
-			"speaker_id": &"",
-			"quote": "This is the one matter currently requiring a visiting scribe's attention.",
-			"facts": "AUDIT THE OFFERING REGISTER\nCompare the written account with the shrine's current stores."
-		},
-		"prompt": "A local docket has been placed on the cedar desk.",
-		"choices": [{"label": "Open / Audit Nippur Shrine Offerings"}]
-	}
-	_render_docket_payload(payload, [Callable(self, "_select_assignment_opportunity").bind(0)])
-	_refresh_compound()
-
-func _show_nippur_itinerary_ready(result_title: String, result_text: String) -> void:
-	_clear_choices()
-	_set_phase("result")
-	case_heading.text = "𒂍  " + result_title.to_upper()
-	dossier.visible = false
-	dossier.text = ""
-	_set_evidence_facts("", "")
-	_set_evidence_tension(0, 0)
-	prompt_label.text = result_text
-	_add_choice("Open Itinerary Docket / Return to Uruk", _show_itinerary_docket)
-	_refresh_compound()
 
 func _show_itinerary_docket() -> void:
 	if travel_service == null or world == null:
