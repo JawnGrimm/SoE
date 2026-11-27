@@ -171,10 +171,12 @@ func _simulate_epics(world: WorldState) -> void:
 			var progress := int(latest.get("progress", world.get_resource(definition.progress_resource)))
 			var stage := world.get_epic_stage_index(progress, int(latest.get("target", definition.target)), definition)
 			var reviewed_stage := int(latest.get("reviewed_stage", -1))
-			if stage > reviewed_stage and not bool(latest.get("review_pending", false)):
+			if problem_key.is_empty() and stage > reviewed_stage and not bool(latest.get("review_pending", false)):
 				latest["review_pending"] = true
 				latest["review_stage"] = stage
 				latest["review_stage_label"] = world.get_epic_stage_label(stage, definition)
+				latest["review_reason"] = "stage_reached"
+				latest["review_summary"] = "Work reached %s (%d / %d)." % [latest["review_stage_label"], progress, int(latest.get("target", definition.target))]
 		world.epics[epic_id] = latest
 
 func _detect_epic_problem(world: WorldState, definition: EpicDef) -> Dictionary:
