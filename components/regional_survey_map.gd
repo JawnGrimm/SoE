@@ -18,6 +18,7 @@ var graph: Variant
 var map_nodes: Dictionary[StringName, int] = {}
 var selected_route_id: StringName = &""
 var selected_destination_id: StringName = &""
+var travel_allowed := true
 
 var heading: Label
 var route_summary: Label
@@ -28,11 +29,12 @@ var map_canvas: Control
 func _ready() -> void:
 	_build_surface()
 
-func configure(network: RouteNetwork, current_world: WorldState) -> bool:
+func configure(network: RouteNetwork, current_world: WorldState, allow_travel: bool = true) -> bool:
 	if network == null or current_world == null:
 		return false
 	route_network = network
 	world = current_world
+	travel_allowed = allow_travel
 	selected_route_id = &""
 	selected_destination_id = &""
 	_build_route_graph()
@@ -61,7 +63,7 @@ func select_destination(destination_id: StringName) -> bool:
 	return can_board_selected_route()
 
 func can_board_selected_route() -> bool:
-	return route_network != null and world != null and selected_route_id != &"" and selected_destination_id != &"" and route_network.get_transit_periods(selected_route_id, world.current_location_id, selected_destination_id) > 0
+	return travel_allowed and route_network != null and world != null and selected_route_id != &"" and selected_destination_id != &"" and route_network.get_transit_periods(selected_route_id, world.current_location_id, selected_destination_id) > 0
 
 func board_selected_route() -> bool:
 	if not can_board_selected_route():
@@ -236,6 +238,11 @@ func _refresh_route_summary() -> void:
 	var current_place := route_network.get_place(world.current_location_id)
 	var current_name := current_place.display_name if current_place != null else String(world.current_location_id)
 	location_summary.text = "YOU ARE HERE: %s  /  %s, MONTH %02d" % [current_name.to_upper(), CalendarFormatter.format_year(world.year), world.period + 1]
+	if not travel_allowed:
+		route_summary.text = "Finish the open docket before departure. The regional routes remain visible, but the barge will wait."
+		board_button.text = "FINISH CURRENT DOCKET FIRST"
+		board_button.disabled = true
+		return
 	if selected_route_id == &"":
 		route_summary.text = "Choose a connected settlement on the survey. The current seal marks your place of departure."
 		board_button.text = "SELECT A CONNECTED SETTLEMENT"
