@@ -43,6 +43,15 @@ static func ensure_regional_world(world: WorldState) -> void:
 			if not place.has("era_id"):
 				place["era_id"] = definition.era_id
 		world.places[definition.id] = place
+	if world.institutions.has(&"eanna_household"):
+		var eanna_institution: Dictionary = world.institutions[&"eanna_household"]
+		var eanna_stock: Dictionary = eanna_institution.get("stockpiles", {})
+		if not eanna_stock.has(&"bread"):
+			eanna_stock[&"bread"] = 40
+		if not eanna_stock.has(&"beer"):
+			eanna_stock[&"beer"] = 20
+		eanna_institution["stockpiles"] = eanna_stock
+		world.institutions[&"eanna_household"] = eanna_institution
 	if not world.institutions.has(&"habuba_trade_post"):
 		var habuba_place: Dictionary = world.places.get(&"habuba_kabira", {})
 		var habuba_exports: Array = habuba_place.get("exports", [&"timber", &"limestone"])
