@@ -10,20 +10,34 @@ var calculator := TravelCalculator.new()
 func configure(world_state: WorldState, place_definitions: Array[PlaceDef], route_definitions: Array[RouteDef]) -> bool:
 	if world_state == null:
 		return false
-	world = world_state
-	places.clear()
-	routes.clear()
+	var next_places: Dictionary[StringName, PlaceDef] = {}
+	var next_routes: Dictionary[StringName, RouteDef] = {}
 	for place in place_definitions:
-		if place == null or not place.is_valid() or places.has(place.id):
+		if place == null or not place.is_valid() or next_places.has(place.id):
 			return false
-		places[place.id] = place
+		next_places[place.id] = place
 	for route in route_definitions:
-		if route == null or not route.is_valid() or routes.has(route.id):
+		if route == null or not route.is_valid() or next_routes.has(route.id):
 			return false
-		if not places.has(route.origin_id) or not places.has(route.destination_id):
+		if not next_places.has(route.origin_id) or not next_places.has(route.destination_id):
 			return false
-		routes[route.id] = route
+		next_routes[route.id] = route
+	world = world_state
+	places = next_places
+	routes = next_routes
 	return true
+
+func get_place(place_id: StringName) -> PlaceDef:
+	return places.get(place_id) as PlaceDef
+
+func get_route(route_id: StringName) -> RouteDef:
+	return routes.get(route_id) as RouteDef
+
+func get_route_between(from_id: StringName, to_id: StringName) -> RouteDef:
+	for route in routes.values():
+		if (route.origin_id == from_id and route.destination_id == to_id) or (route.origin_id == to_id and route.destination_id == from_id):
+			return route
+	return null
 
 func get_route_status(route_id: StringName) -> StringName:
 	if not routes.has(route_id) or world == null:
@@ -42,9 +56,7 @@ func get_transit_periods(route_id: StringName, from_id: StringName, to_id: Strin
 	return calculator.calculate_transit_periods(routes[route_id], from_id, to_id, world)
 
 func set_route_disruption(route_id: StringName, status: StringName, expiry_period: int = -1, transit_penalty_periods: int = 0) -> bool:
-	if world == null or not routes.has(route_id):
-		return false
-	if status not in [&"disrupted", &"closed"]:
+	if world == null or not routes.has(route_id) or status not in [&"disrupted", &"closed"]:
 		return false
 	world.routes[route_id] = {
 		"status": status,
