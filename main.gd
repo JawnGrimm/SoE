@@ -14,7 +14,7 @@ const CedarDeskHeaderScript = preload("res://ui/cedar_desk_header.gd")
 const ClayDocketPropScript = preload("res://ui/clay_docket_prop.gd")
 const ArchiveStackPropScript = preload("res://ui/archive_stack_prop.gd")
 const CedarDeskLayoutScript = preload("res://ui/cedar_desk_layout.gd")
-const CUNEIFORM_FONT = preload("res://assets/Noto_Sans_Cuneiform,Noto_Sans_Egyptian_Hieroglyphs/Noto_Sans_Cuneiform/NotoSansCuneiform-Regular.ttf")
+const CUNEIFORM_FONT = preload("res://assets/fonts/NotoSansCuneiform-Regular.ttf")
 const CAMPAIGN_SEED: int = 32003200
 const ROSTER_CAST: Array[StringName] = [&"shuruppak_ilu", &"utu_mansum", &"enlil_kisu", &"ur_nanna", &"nin_kasi", &"geme_inana", &"lu_nanshe"]
 const FACTION_LABELS := {
@@ -200,13 +200,14 @@ func _build_interface() -> void:
 	var header := HBoxContainer.new()
 	root.add_child(header)
 	var title := Label.new()
-	title.text = "SCRIBE OF ERAS  /  REGIONAL COMPOUND"
+	title.text = "SCRIBE OF ERAS  /  CEDAR DESK"
 	location_label = title
 	title.add_theme_font_size_override("font_size", 23)
 	title.add_theme_color_override("font_color", Color("#e5d2a8"))
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
 	year_label = Label.new()
+	year_label.visible = false
 	year_label.add_theme_font_size_override("font_size", 14)
 	year_label.add_theme_color_override("font_color", Color("#c4ad7c"))
 	header.add_child(year_label)
@@ -286,6 +287,7 @@ func _build_interface() -> void:
 	evidence_workspace = evidence_row
 	evidence_row.custom_minimum_size.y = 0
 	evidence_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	evidence_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	evidence_row.add_theme_constant_override("separation", 12)
 	upper_workspace.add_child(evidence_row)
 	evidence_left = _make_evidence_panel(evidence_row, "GRANARY TERRACES  /  TEMPLE", "Ur-Nanna", "The temple cellars are cold, dry, and exact. The gods demand honest measures.", &"ur_nanna")
@@ -304,23 +306,16 @@ func _build_interface() -> void:
 	lower_workspace.add_child(docket_motion_layer)
 	docket_overlay = PanelContainer.new()
 	docket_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	var tablet_style := StyleBoxTexture.new()
-	tablet_style.texture = load("res://assets/desk/clay_docket.png")
-	tablet_style.texture_margin_left = 96.0
-	tablet_style.texture_margin_right = 96.0
-	tablet_style.texture_margin_top = 82.0
-	tablet_style.texture_margin_bottom = 82.0
-	# Extend the clay surface beyond the control bounds so the visible tablet
-	# fills the docket bay instead of leaving a dark halo around the asset.
-	tablet_style.expand_margin_left = 14.0
-	tablet_style.expand_margin_right = 14.0
-	tablet_style.expand_margin_top = 12.0
-	tablet_style.expand_margin_bottom = 12.0
-	tablet_style.content_margin_left = 0.0
-	tablet_style.content_margin_right = 0.0
-	tablet_style.content_margin_top = 0.0
-	tablet_style.content_margin_bottom = 0.0
-	docket_overlay.add_theme_stylebox_override("panel", tablet_style)
+	var action_style := StyleBoxFlat.new()
+	action_style.bg_color = Color("#1E1913")
+	action_style.border_color = Color("#B88656")
+	action_style.set_border_width_all(2)
+	action_style.set_corner_radius_all(6)
+	action_style.content_margin_left = 16
+	action_style.content_margin_right = 16
+	action_style.content_margin_top = 12
+	action_style.content_margin_bottom = 12
+	docket_overlay.add_theme_stylebox_override("panel", action_style)
 	docket_motion_layer.add_child(docket_overlay)
 	clay_docket = ClayDocketPropScript.new()
 	clay_docket.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -343,10 +338,10 @@ func _build_interface() -> void:
 	_build_journey_overlay()
 	var tablet_content := MarginContainer.new()
 	tablet_content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	tablet_content.add_theme_constant_override("margin_left", 74)
-	tablet_content.add_theme_constant_override("margin_right", 74)
-	tablet_content.add_theme_constant_override("margin_top", 48)
-	tablet_content.add_theme_constant_override("margin_bottom", 48)
+	tablet_content.add_theme_constant_override("margin_left", 18)
+	tablet_content.add_theme_constant_override("margin_right", 18)
+	tablet_content.add_theme_constant_override("margin_top", 14)
+	tablet_content.add_theme_constant_override("margin_bottom", 14)
 	docket_overlay.add_child(tablet_content)
 	var tablet_scroll := ScrollContainer.new()
 	tablet_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1512,9 +1507,7 @@ func _advance_period_once() -> bool:
 	assignment_opportunities.clear()
 	active_world_assignment_id = &""
 	if clay_docket != null:
-		clay_docket.impressions.clear()
-		clay_docket.verdict_is_sealed = false
-		clay_docket._refresh_grid()
+		clay_docket.clear_impressions()
 		clay_docket.set_case_title("New period")
 	_clear_stamp_history()
 	world_simulator.advance_period(world)
