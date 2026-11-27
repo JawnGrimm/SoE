@@ -177,7 +177,7 @@ static func _seed_places(world: WorldState) -> void:
 		&"south_court_storehouse": {"name": "South Court Storehouse", "kind": &"storehouse", "parent": &"eanna_precinct"},
 		&"north_bay": {"name": "North-Bay", "kind": &"work_area", "parent": &"eanna_precinct"},
 		&"great_canal_cut": {"name": "Great Canal Cut", "kind": &"canal_worksite", "parent": &"agricultural_hinterland"},
-		&"djebel_aruda": {"name": "Djebel Aruda", "kind": &"uruk_related_settlement", "region": &"upper_euphrates", "connected_to": [&"habuba_kabira"]}
+		&"djebel_aruda": {"name": "Djebel Aruda", "kind": &"uruk_related_settlement", "region": &"upper_euphrates", "political_relation": &"regional_partner", "exports": [&"timber", &"copper"], "imports": [&"grain", &"textiles", &"beer"], "connected_to": [&"habuba_kabira"]}
 	}
 	var place_ids: Array[String] = ["uruk", "umma", "nippur", "ur", "habuba_kabira", "hacinebi", "susa", "eridu", "mari", "tell_brak", "hamoukar", "godin_tepe"]
 	for place_id in place_ids:
