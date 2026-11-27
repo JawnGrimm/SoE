@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="PlaceDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/place_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"eanna_precinct"
+display_name = "Eanna Precinct"
+place_type = &"institutional_precinct"
+region = &"lower_mesopotamia"
+parent_place_id = &"uruk"
+political_relation = &"institutional"
+era_id = &"uruk_storehouse"
