@@ -170,6 +170,7 @@ func _build_interface() -> void:
 	work_queue_button.tooltip_text = "Open Works, Challenges, and Assignments. Keyboard: focus and press Enter."
 	work_queue_button.custom_minimum_size = Vector2(142, 44)
 	work_queue_button.add_theme_font_size_override("font_size", 12)
+	work_queue_button.add_theme_stylebox_override("focus", _panel_style("#3a2b1d", "#f5e6d0"))
 	work_queue_button.pressed.connect(_toggle_work_queue)
 	header.add_child(work_queue_button)
 	var menu_button := Button.new()
@@ -336,6 +337,7 @@ func _build_interface() -> void:
 	archive_prop.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 	archive_prop.custom_minimum_size = Vector2(82, 44)
 	archive_prop.focus_mode = Control.FOCUS_ALL
+	archive_prop.add_theme_stylebox_override("focus", _panel_style("#211a12", "#f5e6d0"))
 	archive_prop.tooltip_text = "Open the archive / work queue."
 	archive_prop.pressed.connect(_toggle_work_queue)
 	desk_props.add_child(archive_prop)
@@ -1657,6 +1659,7 @@ func _add_choice(label_text: String, callback: Callable, disabled: bool = false)
 	button.focus_mode = Control.FOCUS_ALL
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.add_theme_stylebox_override("focus", _panel_style("#00000000", "#f5e6d0"))
 	button.add_theme_font_size_override("font_size", 16)
 	_apply_incised_text(button)
 	button.add_theme_color_override("font_color", Color("#3b2819"))
@@ -1764,6 +1767,7 @@ func _record_choice_stamp(button: Button, stamp: Label) -> void:
 	stamp_history_row.visible = true
 	var entry := Label.new()
 	entry.text = stamp.text
+	entry.add_theme_font_override("font", CUNEIFORM_FONT)
 	entry.custom_minimum_size = Vector2(32, 34)
 	entry.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	entry.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
