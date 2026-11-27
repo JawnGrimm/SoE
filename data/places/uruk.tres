@@ -13,3 +13,4 @@ exports = Array[StringName]([&"textiles", &"beer", &"grain", &"administrative_ta
 imports = Array[StringName]([&"timber", &"copper", &"bitumen"])
 connected_to = Array[StringName]([&"eanna_precinct", &"anu_precinct", &"agricultural_hinterland", &"ur", &"umma", &"nippur", &"habuba_kabira", &"hacinebi", &"susa"])
 era_id = &"uruk_storehouse"
+survey_position = Vector2(145, 105)
