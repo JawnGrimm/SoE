@@ -1,49 +1,66 @@
-[gd_resource type="BehaviorTree" format=3 load_steps=17]
-[ext_resource type="Script" path="res://systems/ai/tasks/bt_office_condition.gd" id="1_condition"]
-[ext_resource type="Script" path="res://systems/ai/tasks/bt_office_action.gd" id="2_action"]
+[gd_resource type="BehaviorTree" format=3 uid="uid://yfe0b10mc8o5"]
+
+[ext_resource type="Script" uid="uid://dmqiduha4hgnv" path="res://systems/ai/tasks/bt_office_condition.gd" id="1_condition"]
+[ext_resource type="Script" uid="uid://b8es0feikcmmk" path="res://systems/ai/tasks/bt_office_action.gd" id="2_action"]
+
 [sub_resource type="BlackboardPlan" id="Plan"]
+
 [sub_resource type="BTCondition" id="Roof"]
 script = ExtResource("1_condition")
 condition_id = &"grain_roof_leak_active"
+
 [sub_resource type="BTCondition" id="Fear"]
 script = ExtResource("1_condition")
 condition_id = &"grain_actor_fear_above_five"
+
 [sub_resource type="BTAction" id="Hide"]
 script = ExtResource("2_action")
 action_id = &"grain_hide_spoilage"
+
 [sub_resource type="BTSequence" id="Coverup"]
 custom_name = "Emergency Cover-Up / Self-Preservation"
 children = [SubResource("Roof"), SubResource("Fear"), SubResource("Hide")]
+
 [sub_resource type="BTCondition" id="Surplus"]
 script = ExtResource("1_condition")
 condition_id = &"grain_barley_above_400"
+
 [sub_resource type="BTCondition" id="Debt"]
 script = ExtResource("1_condition")
 condition_id = &"grain_silver_below_five"
+
 [sub_resource type="BTAction" id="Pocket"]
 script = ExtResource("2_action")
 action_id = &"grain_pocket_measures"
+
 [sub_resource type="BTSequence" id="Skimming"]
 custom_name = "Skim Surplus / Debt"
 children = [SubResource("Surplus"), SubResource("Debt"), SubResource("Pocket")]
+
 [sub_resource type="BTCondition" id="Shortage"]
 script = ExtResource("1_condition")
 condition_id = &"grain_barley_below_warning"
+
 [sub_resource type="BTCondition" id="DocketNeeded"]
 script = ExtResource("1_condition")
 condition_id = &"grain_shortage_docket_needed"
+
 [sub_resource type="BTAction" id="IssueShortage"]
 script = ExtResource("2_action")
 action_id = &"grain_issue_shortage_docket"
+
 [sub_resource type="BTSequence" id="ShortageSequence"]
 custom_name = "Record Local Barley Deficit"
 children = [SubResource("Shortage"), SubResource("DocketNeeded"), SubResource("IssueShortage")]
+
 [sub_resource type="BTAction" id="Log"]
 script = ExtResource("2_action")
 action_id = &"grain_log_deliveries"
+
 [sub_resource type="BTSelector" id="GrainSelector"]
 custom_name = "Grain Clerk / Granary Clerk Agenda"
 children = [SubResource("Coverup"), SubResource("Skimming"), SubResource("ShortageSequence"), SubResource("Log")]
+
 [resource]
 description = "One decision per seated grain clerk per period. Blackboard supplies actor, institution, and world; this BT selects intent."
 blackboard_plan = SubResource("Plan")
