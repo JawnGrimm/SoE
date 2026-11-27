@@ -76,6 +76,7 @@ func _test_dedication_choices() -> void:
 	assert(Dedication.can_personal_seal(actor))
 	assert(Dedication.apply_choice(world, actor, &"personal_seal"))
 	assert(world.world_flags.has(&"canal_dedication_concluded"))
+	assert(not world.world_flags.has(&"canal_dedication_ready"))
 	assert(not Dedication.apply_choice(world, actor, &"honor_crews"))
 
 func _test_event_definition_and_fresh_world() -> void:
