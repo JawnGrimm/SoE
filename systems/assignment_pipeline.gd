@@ -120,7 +120,9 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 		var sponsor_id := StringName(epic.get("sponsor_institution", &"eanna_household"))
 		var sponsor: Dictionary = world.institutions.get(sponsor_id, {})
 		var place_id := StringName(sponsor.get("place_id", ""))
-		if not _is_local_to_current_location(world, place_id):
+		var is_local_review := _is_local_to_current_location(world, place_id)
+		var remote_canal_review := StringName(epic_id) == &"great_canal_cut" and world.current_location_id in [&"umma", &"nippur"] and not is_local_review
+		if not is_local_review and not remote_canal_review:
 			continue
 		var progress := int(epic.get("progress", world.get_resource(StringName(epic.get("progress_resource", "")))))
 		var target := int(epic.get("target", 100))
@@ -129,6 +131,8 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 		var review_reason := String(epic.get("review_reason", "stage_reached"))
 		var title_suffix := stage_label if review_reason in ["project_opened", "stage_reached"] else _epic_problem_label(review_reason)
 		var review_summary := String(epic.get("review_summary", "Review labor, supply, and project progress."))
+		if remote_canal_review:
+			review_summary = "[REQUIRES TRAVEL TO URUK] " + review_summary + " Book passage on the regional survey map to convene this review."
 		candidates.append({
 			"id": StringName("epic:%s:r%d:s%d" % [epic_id, int(epic.get("review_cycle", 0)), review_stage]),
 			"review_cycle": int(epic.get("review_cycle", 0)),
@@ -138,7 +142,9 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 			"place_id": place_id,
 			"title": "%s — %s" % [String(epic.get("title", epic_id)), title_suffix],
 			"summary": "%s (%d / %d)." % [review_summary.trim_suffix("."), progress, target],
-			"priority": 2 + _career_bonus(selected_path, &"project"),
+			"requires_travel": remote_canal_review,
+			"tags": ["REQUIRES TRAVEL TO URUK"] if remote_canal_review else [],
+			"priority": 90 if remote_canal_review else 2 + _career_bonus(selected_path, &"project"),
 			"employer_id": &"shuruppak_ilu" if world.get_person(&"shuruppak_ilu") != null else &"",
 			"source_data": epic.duplicate(true),
 			"path_id": selected_path
@@ -335,6 +341,18 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 	var custom_skill_xp := 0
 	var silver_before := int(actor.resources.get(&"silver", 0))
 	var traits_before: Array[StringName] = actor.traits.duplicate()
+	var debt_before := int(actor.resources.get(&"debt", 0))
+	var exposure_before := int(actor.flags.get(&"audit_exposure", 0))
+	var opinion_before: Dictionary[StringName, int] = {}
+	for person_value in world.people.values():
+		if person_value != null and person_value.id != actor.id:
+			opinion_before[person_value.id] = person_value.get_opinion(actor.id)
+	var skill_levels_before: Dictionary[StringName, int] = {}
+	for skill_key in [&"literacy", &"arithmetic", &"law", &"rhetoric", &"intrigue", &"stewardship"]:
+		skill_levels_before[skill_key] = actor.skills.get_level(skill_key)
+	var actor_flags_before: Dictionary = actor.flags.duplicate(true)
+	var world_flags_before: Dictionary = world.world_flags.duplicate(true)
+	var opinion_reasons: Dictionary[StringName, String] = {}
 	match kind:
 		&"form":
 			var form_data: Dictionary = record.get("source_data", {})
@@ -372,6 +390,7 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 				var archivist := world.get_person(&"shuruppak_ilu")
 				if archivist != null and world.current_location_id == &"uruk":
 					archivist.change_opinion(actor.id, 2, "The apprentice referred a concealed grain account for correction.", world.year)
+					opinion_reasons[archivist.id] = "The apprentice referred a concealed grain account for correction."
 				world.cedar_desk_log.append({"year": world.year, "period": world.period, "title": "FORMAL AUDIT CORRECTION", "summary": "The damp-barley declaration was referred. Concealed spoilage was cleared, eight measures were struck from the usable stock, and the archive received the correction.", "institution_id": String(form_institution_id)})
 				result_text = "The %s is referred. Concealed spoilage is exposed, eight measures are struck from usable barley, and the archive records a formal correction." % _form_title(form_type)
 			elif concealed and verdict == &"certify":
@@ -448,6 +467,7 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 					var foreman := world.get_person(foreman_id)
 					if foreman != null:
 						foreman.change_opinion(actor.id, -3, "Halted the canal cut to challenge the foreman's labor roll.", world.year)
+						opinion_reasons[foreman.id] = "Halted the canal cut to challenge the foreman's labor roll."
 					actor.skills.add_xp(&"law", 15)
 					custom_skill_id = &"law"
 					custom_skill_xp = 15
@@ -597,7 +617,47 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 		world.record_case_settlement(actor, silver_before, traits_before)
 	else:
 		world.record_case_settlement(actor, int(actor.resources.get(&"silver", 0)) - (2 if accurate else 1), actor.traits.duplicate())
-	return {"success": true, "message": result_text, "accurate": accurate}
+	var consequences: Array[Dictionary] = []
+	var skill_for_xp := custom_skill_id if custom_skill_id != &"" else (&"law" if accurate else &"arithmetic")
+	var xp_for_skill := custom_skill_xp if custom_verdict else (12 if accurate else 6)
+	if skill_for_xp != &"" and xp_for_skill > 0:
+		consequences.append({"type": "xp", "skill": skill_for_xp, "delta": xp_for_skill})
+		var level_after := actor.skills.get_level(skill_for_xp)
+		var level_before := int(skill_levels_before.get(skill_for_xp, level_after))
+		if level_after > level_before:
+			consequences.append({"type": "level_up", "skill": skill_for_xp, "new_level": level_after})
+	for person_value in world.people.values():
+		if person_value == null or person_value.id == actor.id:
+			continue
+		var opinion_change: int = person_value.get_opinion(actor.id) - int(opinion_before.get(person_value.id, person_value.get_opinion(actor.id)))
+		if opinion_change == 0:
+			continue
+		var office_title := String(person_value.office_id).replace("_", " ").capitalize() if person_value.office_id != &"" else "Official"
+		var opinion_reason := String(opinion_reasons.get(person_value.id, record.get("opinion_reason", "Assignment assessment: %s" % String(record.get("title", "")))))
+		if StringName(record.get("kind", "")) == &"project_review" and person_value.id == StringName(record.get("source_data", {}).get("foreman_id", &"enlil_kisu")):
+			opinion_reason = "Halted the canal cut to challenge the foreman's labor roll."
+		consequences.append({"type": "opinion", "target_name": person_value.display_name, "target_title": office_title, "delta": opinion_change, "reason": opinion_reason})
+	var silver_delta := int(actor.resources.get(&"silver", 0)) - silver_before
+	if silver_delta != 0:
+		consequences.append({"type": "silver", "delta": silver_delta})
+	var debt_delta := int(actor.resources.get(&"debt", 0)) - debt_before
+	if debt_delta != 0:
+		consequences.append({"type": "debt", "delta": debt_delta})
+	var exposure_delta := int(actor.flags.get(&"audit_exposure", 0)) - exposure_before
+	if exposure_delta != 0:
+		consequences.append({"type": "exposure", "delta": exposure_delta})
+	for trait_value in actor.traits:
+		if trait_value not in traits_before:
+			consequences.append({"type": "trait", "name": String(trait_value).capitalize()})
+	for flag_key in actor.flags:
+		if flag_key == &"audit_exposure":
+			continue
+		if not actor_flags_before.has(flag_key) or actor_flags_before[flag_key] != actor.flags[flag_key]:
+			consequences.append({"type": "flag", "name": String(flag_key)})
+	for flag_key in world.world_flags:
+		if not world_flags_before.has(flag_key) or world_flags_before[flag_key] != world.world_flags[flag_key]:
+			consequences.append({"type": "flag", "name": String(flag_key)})
+	return {"success": true, "message": result_text, "accurate": accurate, "consequences": consequences}
 
 static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dictionary, action_id: StringName, skill_level: int) -> Dictionary:
 	var kind := StringName(record.get("kind", ""))
