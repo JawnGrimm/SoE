@@ -351,7 +351,9 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 						return {"success": false, "message": "The source institution no longer has the proposed quantity."}
 					var origin_id := StringName(work_data.get("origin_id", ""))
 					var destination_id := StringName(work_data.get("destination_id", ""))
-					var sender_id := &"enki_ili" if origin_id == &"habuba_kabira" else &"geme_inana"
+					var sender_id := StringName(world.places.get(origin_id, {}).get("regional_agent_id", &"geme_inana"))
+					if origin_id == &"uruk":
+						sender_id = &"geme_inana"
 					var launched := RegionalWorldSystem.launch_shipment(world, {
 						"origin_id": origin_id, "destination_id": destination_id,
 						"commodity_id": commodity_id, "quantity": quantity,
