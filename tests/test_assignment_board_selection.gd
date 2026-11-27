@@ -1,6 +1,7 @@
 extends SceneTree
 
 const Pipeline = preload("res://systems/assignment_pipeline.gd")
+const Narrator = preload("res://systems/assignment_narrator.gd")
 
 var _checks := 0
 var _failures: Array[String] = []
@@ -10,7 +11,7 @@ func _initialize() -> void:
 
 func _run() -> void:
 	var candidates: Array[Dictionary] = [
-		{"id": &"review_canal", "kind": &"project_review"},
+		{"id": &"review_canal", "kind": &"project_review", "source_id": &"great_canal_cut"},
 		{"id": &"review_temple", "kind": &"project_review"},
 		{"id": &"form_a", "kind": &"form"},
 		{"id": &"hazard_a", "kind": &"hazard"},
@@ -22,6 +23,12 @@ func _run() -> void:
 	_check(_contains_id(board, &"review_canal"), "Canal review must not be displaced by board rotation")
 	_check(_contains_id(board, &"review_temple"), "Every pending review must be retained")
 	_check(_contains_id(board, &"story"), "Reserve a procedural story slot when capacity allows")
+	var live_stock := Pipeline._live_stock_facts({&"clay": 4, &"labor": 2}, {"pressure_thresholds": {&"labor_warn": 5}})
+	_check(live_stock.contains("Clay: 4"), "Evidence should report arbitrary recorded stock resources")
+	_check(live_stock.contains("Labor: 2"), "Evidence should report actual labor stock")
+	_check(not live_stock.contains("Barley") and not live_stock.contains("Textiles"), "Missing stock keys must not be invented as zero-valued resources")
+	_check(Narrator._contains_raw_metric("FORM: pension_roll"), "Raw form identifiers must be caught by narrative cleanup")
+	_check(Narrator._contains_raw_metric("CAPABILITY APPLIED"), "Internal capability diagnostics must be caught by narrative cleanup")
 	var overfull_reviews: Array[Dictionary] = [
 		{"id": &"review_1", "kind": &"project_review"},
 		{"id": &"review_2", "kind": &"project_review"},
