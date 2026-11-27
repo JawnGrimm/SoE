@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RouteDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/route_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"uruk_ur_river"
+from_place_id = &"uruk"
+to_place_id = &"ur"
+route_type = &"river_barge"
+travel_periods = 1
+loss_risk_percent = 8
+era_id = &"uruk_storehouse"
