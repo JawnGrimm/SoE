@@ -8,5 +8,6 @@ id = &"anu_establishment"
 display_name = "Anu Precinct Establishment"
 institution_type = &"cultic_establishment"
 place_id = &"anu_precinct"
+era_id = &"uruk_storehouse"
 members = Array[StringName]([&"nin_azu", &"nin_kasi"])
 interests = Array[StringName]([&"offerings", &"beer", &"prestige"])
