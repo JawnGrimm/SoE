@@ -1668,7 +1668,9 @@ func _apply_faction_opinion(faction_id: StringName, amount: int, _reason: String
 
 func _configure_route_network() -> void:
 	route_network = RouteNetworkScript.new()
-	if not route_network.configure(world, Registry.all_places(), Registry.all_routes()):
+	var active_era := Registry.get_era_for_year(world.year)
+	var active_era_id := active_era.id if active_era != null else &""
+	if not route_network.configure(world, Registry.all_places(), Registry.all_routes(), active_era_id):
 		push_error("Main: regional route network could not be configured.")
 		return
 	travel_service = TravelServiceScript.new()
