@@ -66,3 +66,13 @@ General project rules:
 - Compound information is scoped to `WorldState.current_location_id`. Uruk factions and Eanna content must not leak into Umma or Nippur; show local institutions and seated officials.
 - `WorldSimulator` and `TravelService` record categorized changes in `WorldState.last_period_deltas`. Clear at the start of each simulation period, persist via `SaveCodec`, and render only the latest four in `SINCE LAST PERIOD`. UI must not infer causal events from resource snapshots.
 - Cuneiform fonts belong under `res://assets/fonts/`; preserve license/provenance text when moving existing assets.
+
+
+## Living office agenda invariants
+
+- WorldSimulator._simulate_people() dispatches by the office held by a seated member, never by named NPC IDs. Pass the institution runtime state into the agenda; a successor inherits office behavior without inheriting the former holder's identity or pointers.
+- Canonical office tokens include grain_clerk, granary_clerk, canal_bailiff, archive_keeper, labor_foreman, and carrier_foreman. Legacy umma_granary_clerk is normalized to granary_clerk at seating boundaries.
+- Institution membership and offices maps are runtime state. Remove missing/deceased references, rebuild mappings from actual seated people, and fill vacancies only with eligible unseated local people. Never leave an orphaned office-holder reference.
+- Grain clerks retain the authored LimboAI agenda, but its agent and resolver receive the current official and institution. Use institution-local stockpiles, thresholds, forms, and agenda state for both Uruk and Umma.
+- Bailiff requisitions retain issuing institution and created_period; a request unanswered for more than four periods escalates through the existing provincial dispatch circuit. Office agenda state and pending forms must round-trip through SaveCodec.
+- Archive audits and foreman disruptions are office-driven. Record the acting official in consequences and period deltas; the Great Canal Cut consumes the existing thirsty_diggers / canal_crew_slowdown disruption flags rather than a parallel Epic simulator.
