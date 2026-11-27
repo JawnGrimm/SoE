@@ -932,7 +932,7 @@ func _begin_regional_travel(destination_id: StringName) -> void:
 		return
 	var destination_name := String(world.places.get(destination_id, {}).get("name", destination_id))
 	var periods := int(travel_result.get("travel_periods", 0))
-	_show_procedural_result("REGIONAL JOURNEY ACCEPTED", "You depart for %s. The route requires %d periods and consumes bread each period plus beer every third period. Local stores charged %d silver for any missing rations. The world advances while you travel; route incidents are recorded." % [destination_name, periods, int(travel_result.get("silver_spent", 0))])
+	_show_procedural_result("REGIONAL JOURNEY ACCEPTED", "You depart for %s. The route requires %d periods; each leg carries a contingency ration in case of disruption. Bread is consumed each period and beer every third period. Local stores charged %d silver for any missing rations. The world advances while you travel; route incidents can add real delay." % [destination_name, periods, int(travel_result.get("silver_spent", 0))])
 
 func _select_assignment_opportunity(index: int) -> void:
 	if phase != "opportunity_board" or index < 0 or index >= assignment_opportunities.size():
