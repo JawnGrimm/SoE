@@ -194,6 +194,10 @@ func _weighted_pick_template(templates: Array[CharacterTemplate], definitions: D
 func seat_institution_staff(world: WorldState, definitions: DefinitionRegistry) -> void:
 	if world == null or definitions == null:
 		return
+	var seated_people: Dictionary = {}
+	for existing_institution in world.institutions.values():
+		for existing_member in existing_institution.get("members", []):
+			seated_people[StringName(existing_member)] = true
 	var institution_ids: Array[StringName] = []
 	for key in world.institutions.keys():
 		institution_ids.append(StringName(key))
@@ -237,9 +241,13 @@ func seat_institution_staff(world: WorldState, definitions: DefinitionRegistry) 
 			var candidates: Array[PersonEntity] = []
 			for person_value in world.people.values():
 				var person: PersonEntity = person_value
-				if person != null and not bool(person.flags.get(&"dead", false)) and person.location_id == place_id and person.office_id == &"" and person.generation_source == &"tier2":
+				if person != null and not bool(person.flags.get(&"dead", false)) and person.location_id == place_id and not seated_people.has(person.id) and person.generation_source == &"tier2" and (person.office_id == &"" or _canonical_office_id(person.office_id) == office_id):
 					candidates.append(person)
 			candidates.sort_custom(func(a: PersonEntity, b: PersonEntity) -> bool:
+				var a_exact := _canonical_office_id(a.office_id) == office_id
+				var b_exact := _canonical_office_id(b.office_id) == office_id
+				if a_exact != b_exact:
+					return a_exact
 				var a_score := a.skills.get_level(&"stewardship") + a.skills.get_level(&"arithmetic") + a.skills.get_level(&"literacy") + a.skills.get_level(&"law")
 				var b_score := b.skills.get_level(&"stewardship") + b.skills.get_level(&"arithmetic") + b.skills.get_level(&"literacy") + b.skills.get_level(&"law")
 				if a_score == b_score:
@@ -253,6 +261,7 @@ func seat_institution_staff(world: WorldState, definitions: DefinitionRegistry) 
 			if selected.id not in members:
 				members.append(selected.id)
 			office_map[office_id] = selected.id
+			seated_people[selected.id] = true
 		institution["members"] = members
 		institution["offices"] = office_map
 		world.institutions[institution_id] = institution
