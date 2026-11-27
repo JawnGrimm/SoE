@@ -62,8 +62,6 @@ func _run() -> void:
 	var outbound := travel.travel(world, &"land_uruk_umma", &"umma")
 	_check(bool(outbound.get("success", false)) and world.current_location_id == &"umma", "Uruk-to-Umma travel advances and changes the current location")
 
-	var canal_after_travel: Dictionary = world.institutions.get(&"umma_canal_bailiff", {})
-	print("UMMA DEBUG: canal offices=%s members=%s pressure=%s agenda_ticks=%s last_official=%s last_office=%s last_requisition=%s forms=%s" % [canal_after_travel.get("offices", {}), canal_after_travel.get("members", []), canal_after_travel.get("resource_pressure", -1), canal_after_travel.get("office_agenda_evaluation_count", 0), canal_after_travel.get("last_agenda_official_id", ""), canal_after_travel.get("last_agenda_office_id", ""), canal_after_travel.get("last_bailiff_requisition_period", ""), world.pending_forms.map(func(form: Dictionary) -> String: return "%s:%s:%s" % [form.get("id", ""), form.get("form_type", ""), form.get("generated_by", "")])])
 	var player := world.get_player()
 	var opportunities := PipelineScript.generate_opportunities(world, player)
 	var umma_ledger: Dictionary = {}
@@ -82,6 +80,9 @@ func _run() -> void:
 			procedural = opportunity
 	_check(not umma_ledger.is_empty(), "Umma's institution-specific ledger is on the local board")
 	_check(not local_form.is_empty(), "Umma's own low labor stock generates a local bailiff requisition")
+	_check(int(local_form.get("priority", 0)) >= 7, "The local bailiff requisition keeps priority on the four-slot Umma board")
+	var canal_after_travel: Dictionary = world.institutions.get(&"umma_canal_bailiff", {})
+	_check(StringName(canal_after_travel.get("last_agenda_official_id", "")) == &"character_0013" and int(canal_after_travel.get("office_agenda_evaluation_count", 0)) > 0, "The seeded canal bailiff agenda ticks for Ur-Mes during travel")
 	_check(not local_pressure.is_empty(), "Umma pressure work is derived from Umma stockpiles")
 	for candidate in opportunities:
 		var candidate_source: Dictionary = candidate.get("source_data", {})
