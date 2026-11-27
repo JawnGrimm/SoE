@@ -95,6 +95,9 @@ func execute_selected_journey(world: WorldState, actor: PersonEntity, destinatio
 	for _period_index in range(periods):
 		simulator.advance_period(world)
 	world.current_location_id = destination_id
+	world.last_period_deltas.append({"category": "travel", "text": "Arrived at %s (%s)" % [destination_name, "-1 silver fare paid" if fare_paid > 0 else "passage fee entered as debt"]})
+	while world.last_period_deltas.size() > 12:
+		world.last_period_deltas.pop_front()
 	var fare_text := "paid one silver passage fare" if fare_paid > 0 else "deferred the one-silver passage fee"
 	var log_entry := "Traveled from %s to %s via %s; %s." % [origin_name, destination_name, route.display_name, fare_text]
 	return {
