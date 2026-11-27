@@ -360,14 +360,12 @@ func _run() -> void:
 	_check(not regional_path.is_empty() and RegionalWorldSystem.route_path_periods(uruk_a, regional_path) == 3, "Habuba-to-Uruk river route should take three periods")
 	var regional_arrival_world := WorldState.new()
 	var regional_arrival_player := UrukSeeder.seed_campaign(regional_arrival_world, 32003209)
-	for period_tick in range(3):
-		regional_arrival_world.advance_period()
 	var arrived_dispatch := false
 	for regional_form in regional_arrival_world.pending_forms:
-		if StringName(regional_form.get("form_type", "")) == &"remote_dispatch":
+		if StringName(regional_form.get("form_type", "")) == &"remote_dispatch" and StringName(regional_form.get("shipment_id", "")) == &"shipment_000001":
 			arrived_dispatch = true
 			_check(int(regional_form.get("declared_quantity", 0)) == 40 and int(regional_form.get("received_quantity", 0)) <= 40, "Remote arrival should preserve declared quantity and simulate actual received cargo")
-	_check(arrived_dispatch, "A remote shipment should create an arrival docket after its route travel time")
+	_check(arrived_dispatch, "The opening career docket should include a completed regional consignment from Habuba Kabira")
 	var dispatch_opportunity: Dictionary = {}
 	for regional_opportunity in AssignmentPipeline.generate_opportunities(regional_arrival_world, regional_arrival_player):
 		if StringName(regional_opportunity.get("source_data", {}).get("form_type", "")) == &"remote_dispatch":
@@ -400,11 +398,20 @@ func _run() -> void:
 			_check(bool(accept_result.get("success", false)) and String(regional_arrival_world.shipments[&"shipment_000001"].get("status", "")) == "accepted", "Origin reply should let the player settle the held shipment")
 			_check(timber_after_accept - timber_before_accept == int(regional_arrival_world.shipments[&"shipment_000001"].get("received_quantity", 0)), "Accepted cargo should change the destination institution by the actual received quantity")
 
+	var second_shipment_result := RegionalWorldSystem.launch_shipment(regional_arrival_world, {
+		"origin_id": &"uruk", "destination_id": &"habuba_kabira",
+		"commodity_id": &"timber", "quantity": 12,
+		"seal_id": "uruk_quay_seal_02", "sender_id": &"geme_inana",
+		"destination_institution_id": &"exchange_network"
+	})
+	var second_shipment_id := StringName(second_shipment_result.get("shipment_id", ""))
+	_check(bool(second_shipment_result.get("success", false)), "Regional system should launch additional world-driven shipments")
 	var travel_start := RegionalWorldSystem.start_player_travel(regional_arrival_world, regional_arrival_player, &"habuba_kabira")
 	_check(bool(travel_start.get("success", false)) and int(travel_start.get("travel_periods", 0)) == 3, "Player should be able to accept a three-period regional journey")
 	for travel_tick in range(3):
 		regional_arrival_world.advance_period()
 	_check(regional_arrival_player.current_location_id == &"habuba_kabira" and String(regional_arrival_world.player_travel.get("status", "")) == "arrived", "Player travel should advance through the route and update character location")
+	_check(String(regional_arrival_world.shipments.get(second_shipment_id, {}).get("status", "")) == "arrived", "A moving shipment should arrive after its route's elapsed periods")
 
 	var world_graph_is_closed := true
 	for person in uruk_a.people.values():
