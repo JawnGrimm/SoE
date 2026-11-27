@@ -3,6 +3,7 @@ extends RefCounted
 ## Headless route graph. The map UI reads this model; it never owns simulation rules.
 
 var world: WorldState
+var era_id: StringName = &""
 var places: Dictionary[StringName, PlaceDef] = {}
 var routes: Dictionary[StringName, RouteDef] = {}
 var calculator := TravelCalculator.new()
@@ -25,6 +26,7 @@ func configure(world_state: WorldState, place_definitions: Array[PlaceDef], rout
 			return false
 		next_routes[route.id] = route
 	world = world_state
+	era_id = active_era_id
 	places = next_places
 	routes = next_routes
 	return true
