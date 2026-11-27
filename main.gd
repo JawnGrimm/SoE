@@ -751,8 +751,13 @@ func _schedule_next_case() -> void:
 			"summary": active_event.description,
 			"priority": 100
 		})
-		while assignment_opportunities.size() > 3:
-			assignment_opportunities.pop_back()
+		while assignment_opportunities.size() > AssignmentPipeline.BOARD_SIZE:
+			var remove_index := assignment_opportunities.size() - 1
+			for candidate_index in range(assignment_opportunities.size() - 1, 0, -1):
+				if StringName(assignment_opportunities[candidate_index].get("kind", "")) != &"procedural_docket":
+					remove_index = candidate_index
+					break
+			assignment_opportunities.remove_at(remove_index)
 	if not assignment_opportunities.is_empty():
 		_show_assignment_board()
 	else:
