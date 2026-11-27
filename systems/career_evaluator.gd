@@ -12,7 +12,7 @@ const FACTION_LABELS := {
 }
 
 static func is_terminal_failure(actor: PersonEntity) -> bool:
-	return actor != null and (actor.flags.has(&"dead") or actor.flags.has(&"bankrupt"))
+	return actor != null and (bool(actor.flags.get(&"dead", false)) or bool(actor.flags.get(&"bankrupt", false)))
 
 static func evaluate(world: WorldState, actor: PersonEntity) -> Dictionary:
 	if world == null or actor == null:
