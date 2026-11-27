@@ -479,7 +479,27 @@ static func _advance_player_travel(world: WorldState) -> void:
 		travel["remaining_periods"] = maxi(1, int(world.routes.get(StringName(route_ids[route_index]), {}).get("travel_periods", 1)))
 	world.player_travel = travel
 
-static func simulate_regional_flows(world: WorldState) -> void:
+static func effective_route_risk(world: WorldState, route_id: StringName) -> int:
+	if world == null or not world.routes.has(route_id):
+		return 100
+	var route: Dictionary = world.routes[route_id]
+	var risk := int(route.get("loss_risk_percent", 0))
+	if world.current_period_index() < int(route.get("risk_modifier_until", -1)):
+		risk += int(route.get("risk_modifier", 0))
+	return clampi(risk, 0, 100)
+
+static func provision_route(world: WorldState, route_id: StringName, risk_reduction: int = 8, duration_periods: int = 3) -> bool:
+	if world == null or not world.routes.has(route_id) or risk_reduction <= 0 or duration_periods <= 0:
+		return false
+	var route: Dictionary = world.routes[route_id]
+	if not bool(route.get("active", true)):
+		return false
+	route["risk_modifier"] = -risk_reduction
+	route["risk_modifier_until"] = world.current_period_index() + duration_periods
+	world.routes[route_id] = route
+	return true
+
+static func simulate_regional_flows(world: WorldState -> void:
 	if world == null:
 		return
 	var place_ids: Array = world.places.keys()
