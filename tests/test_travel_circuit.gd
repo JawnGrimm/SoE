@@ -167,7 +167,36 @@ func _run() -> void:
 	_check(bool(decoded.get("success", false)) and restored != null and restored.current_location_id == &"uruk", "Save/load preserves the current settlement after the circuit")
 	_check(bool(decoded.get("session", {}).get("survey_open", false)), "Save/load preserves survey visibility in the desk session")
 
-	print("Nippur travel circuit: %d checks, %d failures" % [checks, failures.size()])
+	# Provincial dispatch acceptance: the aged requisition becomes local
+	# after the one-period journey and can then enter the normal assignment flow.
+	var dispatch_actor := world.get_player()
+	dispatch_actor.resources[&"silver"] = 1
+	var dispatch_form_id := world.enqueue_form({
+		"id": &"form_000005",
+		"form_type": &"bailiff_requisition",
+		"subject_id": &"umma",
+		"place_id": &"umma",
+		"institution_id": &"umma_canal_bailiff",
+		"urgency": 3,
+		"created_period": world.current_period_index() - 5
+	})
+	var departure_index := world.current_period_index()
+	var departure_silver := int(dispatch_actor.resources.get(&"silver", 0))
+	var journey := travel.execute_journey(world, dispatch_actor, &"umma")
+	_check(bool(journey.get("success", false)) and int(journey.get("elapsed_periods", 0)) == 1, "Uruk-to-Umma journey completes in one simulation period")
+	_check(world.current_period_index() == departure_index + 1 and world.current_location_id == &"umma", "The journey advances the calendar before setting the player's arrival location")
+	_check(int(journey.get("fare_paid", 0)) == 1 and int(dispatch_actor.resources.get(&"silver", 0)) == departure_silver - 1, "The journey deducts the one-silver passage fare from the traveler")
+	_check(String(journey.get("origin", "")) == "Uruk" and String(journey.get("destination", "")) == "Umma" and not String(journey.get("log_entry", "")).is_empty(), "The journey returns named endpoints and a chronicle-ready travel line")
+	var arrived_board := AssignmentPipelineScript.generate_opportunities(world, dispatch_actor)
+	var arrived_dispatch: Dictionary = {}
+	for candidate in arrived_board:
+		if StringName(candidate.get("source_id", "")) == dispatch_form_id:
+			arrived_dispatch = candidate
+			break
+	_check(not arrived_dispatch.is_empty() and not bool(arrived_dispatch.get("requires_travel", true)), "The Umma requisition becomes a local assignment after arrival")
+	_check(AssignmentPipelineScript.begin(world, arrived_dispatch, dispatch_actor), "The player can open form_000005 after disembarking in Umma")
+
+	print("Nippur and Umma travel circuits: %d checks, %d failures" % [checks, failures.size()])
 	for failure in failures:
 		printerr(failure)
 	quit(1 if not failures.is_empty() else 0)

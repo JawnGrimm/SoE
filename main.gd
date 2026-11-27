@@ -29,12 +29,46 @@ class CylinderSealProp extends Control:
 		draw_line(Vector2(18, 27), Vector2(43, 27), Color("#e0c28a"), 2.0)
 		draw_line(Vector2(18, 40), Vector2(43, 40), Color("#5b4228"), 2.0)
 
+class CanalJourneyTableau extends Control:
+	var route_type: StringName = &"river"
+
+	func _draw() -> void:
+		var w := size.x
+		var h := size.y
+		draw_rect(Rect2(Vector2.ZERO, size), Color("#d7bd8d"))
+		draw_circle(Vector2(w * 0.82, h * 0.22), 23.0, Color("#d99c4d"))
+		draw_rect(Rect2(0, h * 0.48, w, h * 0.52), Color("#87978a") if route_type == &"river" else Color("#b69a6b"))
+		draw_colored_polygon(PackedVector2Array([Vector2(0, h * 0.48), Vector2(w * 0.22, h * 0.37), Vector2(w * 0.46, h * 0.5), Vector2(w * 0.7, h * 0.39), Vector2(w, h * 0.48), Vector2(w, h * 0.6), Vector2(0, h * 0.6)]), Color("#9a895f"))
+		for reed_x in [w * 0.08, w * 0.15, w * 0.91, w * 0.96]:
+			draw_line(Vector2(reed_x, h * 0.76), Vector2(reed_x - 5.0, h * 0.35), Color("#52664b"), 3.0)
+			draw_line(Vector2(reed_x, h * 0.76), Vector2(reed_x + 7.0, h * 0.42), Color("#68734a"), 2.0)
+		if route_type == &"river":
+			draw_rect(Rect2(0, h * 0.64, w, h * 0.36), Color("#667f80"))
+			for wave_x in range(25, int(w), 78):
+				draw_line(Vector2(wave_x, h * 0.82), Vector2(wave_x + 36, h * 0.82), Color("#b7c2a8"), 1.5)
+			draw_colored_polygon(PackedVector2Array([Vector2(w * 0.34, h * 0.7), Vector2(w * 0.68, h * 0.7), Vector2(w * 0.61, h * 0.84), Vector2(w * 0.4, h * 0.84)]), Color("#5b3824"))
+			draw_line(Vector2(w * 0.51, h * 0.7), Vector2(w * 0.51, h * 0.28), Color("#4b3524"), 4.0)
+			draw_colored_polygon(PackedVector2Array([Vector2(w * 0.5, h * 0.31), Vector2(w * 0.5, h * 0.64), Vector2(w * 0.64, h * 0.64)]), Color("#e4d2a6"))
+			draw_circle(Vector2(w * 0.5, h * 0.62), 5.0, Color("#3d2a1c"))
+		else:
+			draw_colored_polygon(PackedVector2Array([Vector2(w * 0.34, h * 0.76), Vector2(w * 0.72, h * 0.76), Vector2(w * 0.64, h * 0.86), Vector2(w * 0.4, h * 0.86)]), Color("#65452c"))
+			draw_circle(Vector2(w * 0.43, h * 0.87), 10.0, Color("#3c2b1f"))
+			draw_circle(Vector2(w * 0.65, h * 0.87), 10.0, Color("#3c2b1f"))
+			draw_line(Vector2(w * 0.34, h * 0.75), Vector2(w * 0.7, h * 0.75), Color("#d6b783"), 4.0)
+
 var runner: EventRunner
 var scheduler: EventScheduler
 var world_simulator: WorldSimulator
 var route_network: RouteNetwork
 var travel_service: TravelService
 var survey_map: Variant
+var journey_overlay: Control
+var journey_tableau: CanalJourneyTableau
+var journey_heading: Label
+var journey_route_label: Label
+var journey_narrative: Label
+var journey_cost_label: Label
+var journey_disembark_button: Button
 var survey_button: Button
 var world: WorldState
 var actor: PersonEntity
@@ -269,6 +303,7 @@ func _build_interface() -> void:
 	survey_map.travel_requested.connect(_on_survey_travel_requested)
 	survey_map.close_requested.connect(_close_regional_survey)
 	docket_motion_layer.add_child(survey_map)
+	_build_journey_overlay()
 	var tablet_content := MarginContainer.new()
 	tablet_content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	tablet_content.add_theme_constant_override("margin_left", 74)
@@ -1913,21 +1948,136 @@ func _close_regional_survey() -> void:
 func _on_survey_travel_requested(route_id: StringName, destination_id: StringName) -> void:
 	if phase in ["character_creation", "era_complete", "case", "world_engagement"] or travel_service == null or world == null:
 		return
-	var result := travel_service.travel(world, route_id, destination_id)
+	var traveler := world.get_player()
+	var result := travel_service.execute_selected_journey(world, traveler, destination_id, route_id)
 	if not bool(result.get("success", false)):
 		status_label.text = "DEPARTURE REFUSED / " + String(result.get("error", "Route unavailable")).to_upper()
 		return
 	_close_regional_survey()
+	_show_journey_vignette(result)
+
+
+func _build_journey_overlay() -> void:
+	journey_overlay = Control.new()
+	journey_overlay.name = "JourneyVignette"
+	journey_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	journey_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	journey_overlay.visible = false
+	add_child(journey_overlay)
+
+	var shade := ColorRect.new()
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	shade.color = Color(0.055, 0.04, 0.025, 0.94)
+	shade.mouse_filter = Control.MOUSE_FILTER_STOP
+	journey_overlay.add_child(shade)
+
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	journey_overlay.add_child(center)
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(700, 500)
+	var card_style := StyleBoxFlat.new()
+	card_style.bg_color = Color("#e4d0a6")
+	card_style.border_color = Color("#6d4d2d")
+	card_style.set_border_width_all(3)
+	card_style.set_corner_radius_all(5)
+	card_style.content_margin_left = 26
+	card_style.content_margin_right = 26
+	card_style.content_margin_top = 22
+	card_style.content_margin_bottom = 22
+	card.add_theme_stylebox_override("panel", card_style)
+	center.add_child(card)
+
+	var body := VBoxContainer.new()
+	body.add_theme_constant_override("separation", 12)
+	card.add_child(body)
+
+	journey_heading = Label.new()
+	journey_heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	journey_heading.add_theme_font_size_override("font_size", 23)
+	journey_heading.add_theme_color_override("font_color", Color("#382719"))
+	body.add_child(journey_heading)
+
+	journey_route_label = Label.new()
+	journey_route_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	journey_route_label.add_theme_font_size_override("font_size", 14)
+	journey_route_label.add_theme_color_override("font_color", Color("#725333"))
+	body.add_child(journey_route_label)
+
+	journey_tableau = CanalJourneyTableau.new()
+	journey_tableau.custom_minimum_size = Vector2(640, 170)
+	journey_tableau.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.add_child(journey_tableau)
+
+	journey_narrative = Label.new()
+	journey_narrative.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	journey_narrative.custom_minimum_size.y = 72
+	journey_narrative.add_theme_font_size_override("font_size", 15)
+	journey_narrative.add_theme_color_override("font_color", Color("#382719"))
+	body.add_child(journey_narrative)
+
+	journey_cost_label = Label.new()
+	journey_cost_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	journey_cost_label.add_theme_font_size_override("font_size", 14)
+	journey_cost_label.add_theme_color_override("font_color", Color("#5d432a"))
+	body.add_child(journey_cost_label)
+
+	journey_disembark_button = Button.new()
+	journey_disembark_button.custom_minimum_size = Vector2(320, 46)
+	journey_disembark_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	journey_disembark_button.add_theme_font_size_override("font_size", 14)
+	journey_disembark_button.add_theme_stylebox_override("focus", _panel_style("#3a2b1d", "#f5e6d0"))
+	journey_disembark_button.pressed.connect(_disembark_from_journey)
+	body.add_child(journey_disembark_button)
+
+
+func _show_journey_vignette(result: Dictionary) -> void:
+	if journey_overlay == null or world == null:
+		return
+	var origin_name := String(result.get("origin", result.get("origin_id", "Unknown")))
+	var destination_name := String(result.get("destination", result.get("destination_id", "Unknown")))
+	var route_name := String(result.get("route_name", "Regional passage"))
+	var route_type := StringName(result.get("route_type", ""))
+	var periods := int(result.get("elapsed_periods", result.get("transit_periods", 1)))
+	var fare_paid := int(result.get("fare_paid", 0))
+	var fare_due := int(result.get("fare_due", 1))
+	journey_heading.text = "EN ROUTE: %s  →  %s" % [origin_name.to_upper(), destination_name.to_upper()]
+	journey_route_label.text = "%s  ·  %d PERIOD%s IN TRANSIT" % [route_name, periods, "" if periods == 1 else "S"]
+	journey_tableau.route_type = route_type
+	journey_tableau.queue_redraw()
+	var last_shekel := fare_paid > 0 and int(world.get_player().resources.get(&"silver", 0)) == 0
+	var passage_text := ""
+	if fare_paid > 0:
+		passage_text = "You pay your last shekel of silver for passage." if last_shekel else "You pay one silver for passage."
+	else:
+		passage_text = "You have no silver for passage; the fee is carried as debt."
+	if route_type == &"river":
+		journey_narrative.text = "%s The reed barge slides between high bulrushes and dried silt embankments. Word from %s is that the local office has more trouble than its ledgers admit." % [passage_text, destination_name]
+	else:
+		journey_narrative.text = "%s The road runs between low fields and dried canal embankments. Word from %s is that the local office has more trouble than its ledgers admit." % [passage_text, destination_name]
+	if StringName(result.get("destination_id", "")) == &"umma":
+		journey_narrative.text += " Umma's bailiff has had three work crews walk off the levee."
+	var fare_summary := "-%d SILVER (PASSAGE FARE)" % fare_paid if fare_paid > 0 else "%d SILVER FARE DEFERRED / ROUTE DEBT RECORDED" % fare_due
+	journey_cost_label.text = "%s  ·  %s  ·  PERIOD %02d" % [fare_summary, CalendarFormatter.format_year(world.year), world.period + 1]
+	journey_disembark_button.text = "DISEMBARK AT %s OUTPOST" % destination_name.to_upper()
+	journey_overlay.visible = true
+	journey_disembark_button.grab_focus()
+
+
+func _disembark_from_journey() -> void:
+	if journey_overlay == null or not journey_overlay.visible or world == null:
+		return
+	journey_overlay.visible = false
 	active_event = null
 	procedural_assignment.clear()
 	assignment_opportunities.clear()
 	active_world_assignment_id = &""
+	actor = world.get_player()
 	context.year = world.year
 	current_era = Registry.get_era_for_year(world.year)
 	context.era = current_era
 	context.world = world
-	context.actor = world.get_player()
-	actor = world.get_player()
+	context.actor = actor
 	_refresh_compound()
 	_schedule_next_case()
 
