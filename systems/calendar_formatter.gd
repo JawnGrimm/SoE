@@ -8,10 +8,11 @@ static func format_year(year: int) -> String:
 
 static func format_date(era: EraDef, year: int, period: int) -> String:
 	var period_text := _format_period(era, period)
+	var month_text := "Month %02d" % (clampi(period, 0, WorldState.PERIODS_PER_YEAR - 1) + 1)
 	var year_text := format_year(year)
 	if era == null or era.display_name.is_empty():
-		return "%s • %s" % [period_text, year_text]
-	return "%s • %s • %s" % [era.display_name, period_text, year_text]
+		return "%s • %s • %s" % [period_text, month_text, year_text]
+	return "%s • %s • %s • %s" % [era.display_name, period_text, month_text, year_text]
 
 static func _format_period(era: EraDef, period: int) -> String:
 	var period_number := maxi(period, 0)
