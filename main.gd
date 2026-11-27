@@ -1234,13 +1234,15 @@ func _debug_advance_periods(count: int) -> Dictionary:
 		advanced += 1
 		if not can_continue:
 			break
+	var fast_forward_note := " Intervening desk offers were superseded without player resolution." if advanced > 1 else ""
 	return {
 		"success": true,
-		"message": "Advanced %d period(s). Now %s, period %d / 12.%s" % [
+		"message": "Advanced %d period(s). Now %s, period %d / 12.%s%s" % [
 			advanced,
 			CalendarFormatter.format_year(world.year),
 			world.period + 1,
-			" Era Epic completed; advancement stopped." if world.era_completion_started else ""
+			" Era Epic completed; advancement stopped." if world.era_completion_started else "",
+			fast_forward_note
 		]
 	}
 
