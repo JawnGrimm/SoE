@@ -1,6 +1,7 @@
 extends SceneTree
 
 const Pipeline = preload("res://systems/assignment_pipeline.gd")
+const Narrator = preload("res://systems/assignment_narrator.gd")
 const CompoundContext = preload("res://systems/compound_context.gd")
 const SaveCodec = preload("res://systems/save_codec.gd")
 var checks := 0
@@ -14,6 +15,10 @@ func _run() -> void:
 	_check(Pipeline._live_stock_facts({"offerings": 24}, {}).contains("OFFERINGS: 24"), "Custom shrine offerings are displayed")
 	_check(not Pipeline._live_stock_facts({"offerings": 24}, {}).contains("BARLEY: 0"), "Shrines do not invent barley")
 	_check(Pipeline._live_stock_facts({}, {}).contains("None on record"), "Empty inventory reports none on record")
+	var clean_evidence := Pipeline._sanitize_evidence_text("CAPABILITY APPLIED: inspect_source\\nFORM: pension_roll / form_000005")
+	_check(not clean_evidence.contains("CAPABILITY APPLIED:") and not clean_evidence.contains("form_00000"), "Evidence strips capability diagnostics and internal form IDs")
+	var clean_dossier := Narrator._clean_display("FORM: pension_roll", "Fallback")
+	_check(clean_dossier.contains("RECORD TYPE: Pension Ledger"), "Dossier translates raw form labels into authored titles")
 	var world := WorldState.new()
 	world.places[&"uruk"] = {"parent": &""}
 	world.places[&"umma"] = {"parent": &""}
