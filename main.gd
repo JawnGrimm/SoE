@@ -40,6 +40,7 @@ var active_event: EventTemplate
 var procedural_assignment: Dictionary = {}
 var assignment_opportunities: Array[Dictionary] = []
 var active_world_assignment_id: StringName = &""
+var latest_investigation_scene: Dictionary = {}
 var context: EventContext
 var current_era: EraDef
 var last_resolved_outcome: EventOutcome
@@ -1034,6 +1035,8 @@ func _show_world_engagement() -> void:
 	var left_quote := String(record.get("summary", "A matter requires professional attention."))
 	var employer := world.get_person(StringName(record.get("employer_id", "")))
 	var right_quote := "The record is incomplete. Read it, reconcile the figures, hear the responsible official, and inspect the source before making your assessment."
+	if not latest_investigation_scene.is_empty():
+		right_quote = _format_investigation_scene(latest_investigation_scene)
 	var payload := {
 		"title": String(record.get("title", "ASSIGNMENT")),
 		"left_card": {"title": "WORLD SITUATION / %s" % String(record.get("kind", "work")).to_upper(), "speaker_id": &"", "quote": left_quote, "facts": "OPENED: %s / PERIOD %d" % [CalendarFormatter.format_year(world.year), world.period + 1]},
@@ -1045,7 +1048,7 @@ func _show_world_engagement() -> void:
 	for action in AssignmentPipeline.INVESTIGATION_ACTIONS:
 		var action_id: StringName = action.id
 		var done := actions.has(action_id)
-		payload.choices.append({"label": String(action.label) + (" / RECORDED" if done else "")})
+		payload.choices.append({"label": String(action.label)})
 		callbacks.append(_world_assignment_action.bind(action_id))
 		payload.choices.back()["disabled"] = done
 	_render_docket_payload(payload, callbacks)
@@ -1071,7 +1074,39 @@ func _world_assignment_action(action_id: StringName) -> void:
 		status_label.text = String(result.get("message", "Action could not be recorded."))
 		return
 	AudioManager.play_stylus_mark()
+	if action_id == &"examine_records":
+		var record := AssignmentPipeline.get_record(world, active_world_assignment_id)
+		var evidence: Dictionary = result.get("evidence", {})
+		latest_investigation_scene = AssignmentNarratorScript.narrate_record_examination(record, actor, world, evidence)
+	else:
+		latest_investigation_scene.clear()
 	_show_world_engagement()
+
+func _format_investigation_scene(scene: Dictionary) -> String:
+	var lines := PackedStringArray()
+	var heading := String(scene.get("heading", "A moment at the desk"))
+	if not heading.is_empty():
+		lines.append("— %s —" % heading)
+	for beat in scene.get("beats", []):
+		if not beat is Dictionary:
+			continue
+		var speaker := String(beat.get("speaker", ""))
+		var text := String(beat.get("text", ""))
+		if text.is_empty():
+			continue
+		match String(beat.get("kind", "")):
+			"dialogue":
+				lines.append("%s: “%s”" % [speaker, text])
+			"internal_monologue":
+				lines.append("THOUGHT — %s: %s" % [speaker, text])
+			"document":
+				lines.append("%s: %s" % [speaker, text])
+			_:
+				lines.append(text)
+	var closing := String(scene.get("closing", ""))
+	if not closing.is_empty():
+		lines.append(closing)
+	return "\\n\\n".join(lines)
 
 func _resolve_world_assignment(verdict: StringName) -> void:
 	if phase != "world_engagement":
