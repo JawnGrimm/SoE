@@ -487,6 +487,11 @@ static func _is_local_to_current_location(world: WorldState, place_id: StringNam
 		return true
 	if place_id == &"":
 		return true
+	if world.institutions.has(place_id):
+		place_id = StringName(world.institutions[place_id].get("place_id", ""))
+	if place_id == &"" or not world.places.has(place_id):
+		# Unplaced forms are compound-wide until they receive a PlaceDef.
+		return true
 	var cursor := place_id
 	var visited: Dictionary = {}
 	while cursor != &"" and not visited.has(cursor):
