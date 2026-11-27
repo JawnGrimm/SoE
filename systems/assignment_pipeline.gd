@@ -303,6 +303,8 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 	var opinion_delta_override := 0
 	var silver_award := 2
 	var custom_verdict := false
+	var custom_skill_id: StringName = &""
+	var custom_skill_xp := 0
 	var silver_before := int(actor.resources.get(&"silver", 0))
 	var traits_before: Array[StringName] = actor.traits.duplicate()
 	match kind:
@@ -419,10 +421,13 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 					if foreman != null:
 						foreman.change_opinion(actor.id, -3, "Halted the canal cut to challenge the foreman's labor roll.", world.year)
 					actor.skills.add_xp(&"law", 15)
+					custom_skill_id = &"law"
+					custom_skill_xp = 15
 					actor.flags[&"audit_exposure"] = maxi(0, int(actor.flags.get(&"audit_exposure", 0)) - 1)
 					silver_award = 0
 					opinion_delta_override = -3
 					project_state["stalled"] = true
+					project_state["audit_hold_until_period"] = world.current_period_index() + 1
 					result_text = "The cut is halted pending an audit. The foreman's standing with you falls by three; your law skill gains fifteen experience, and one audit exposure is cleared."
 				&"epic_certify":
 					if not world.modify_resource(progress_resource, 10, "world"):
@@ -549,8 +554,8 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 		"details": work_details,
 		"relationship_delta": opinion_delta,
 		"silver_awarded": silver_award,
-		"skill_awarded": "law" if accurate else "arithmetic",
-		"skill_xp": 12 if accurate else 6,
+		"skill_awarded": String(custom_skill_id) if custom_verdict else ("law" if accurate else "arithmetic"),
+		"skill_xp": custom_skill_xp if custom_verdict else (12 if accurate else 6),
 		"path_id": String(record.get("path_id", ""))
 	})
 	actor.memory.append({
