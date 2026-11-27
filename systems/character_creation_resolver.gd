@@ -1,7 +1,6 @@
 class_name CharacterCreationResolver
 extends RefCounted
-## Resolves an uncommitted draft into a biography and one effect batch.
-## No WorldState mutation occurs during selection, validation, or preview.
+## Pure draft validation/preview; commit is the only WorldState mutation boundary.
 
 static func load_catalog(path: String) -> Dictionary:
 	if not FileAccess.file_exists(path):
@@ -13,54 +12,17 @@ static func load_catalog(path: String) -> Dictionary:
 		return {}
 	return parsed
 
-static func is_answer_available(catalog: Dictionary, selections: CharacterCreationSelections, _question_id: StringName, answer: Dictionary) -> Dictionary:
-	if selections == null:
-		return {"available": false, "reason": "Character choices are unavailable."}
-	var requirements: Dictionary = answer.get("requires", {})
-	for required_question_variant in requirements.keys():
-		var required_question := StringName(required_question_variant)
-		var required_answer := selections.get_answer(required_question)
-		var allowed: Array = requirements[required_question_variant]
-		if required_answer == &"":
-			return {"available": false, "reason": "Choose %s first." % _question_title(catalog, required_question)}
-		if not allowed.has(String(required_answer)):
-			var allowed_titles: Array[String] = []
-			var required_data := _find_question(catalog, required_question)
-			for allowed_id in allowed:
-				var allowed_answer := _find_answer(required_data, StringName(allowed_id))
-				allowed_titles.append(String(allowed_answer.get("title", allowed_id)))
-			return {"available": false, "reason": "Requires %s: %s." % [_question_title(catalog, required_question), ", ".join(allowed_titles)]}
-	return {"available": true, "reason": ""}
-
-static func prune_invalid_answers(catalog: Dictionary, selections: CharacterCreationSelections) -> Array[StringName]:
-	var cleared: Array[StringName] = []
-	if selections == null or selections.committed:
-		return cleared
-	var changed := true
-	while changed:
-		changed = false
-		for question_data in catalog.get("questions", []):
-			var question_id := StringName(question_data.get("id", ""))
-			var answer_id := selections.get_answer(question_id)
-			if answer_id == &"":
-				continue
-			var answer := _find_answer(question_data, answer_id)
-			if answer.is_empty() or not bool(is_answer_available(catalog, selections, question_id, answer).get("available", false)):
-				selections.clear_answer(question_id)
-				if not cleared.has(question_id):
-					cleared.append(question_id)
-				changed = true
-	return cleared
-
 static func _find_question(catalog: Dictionary, question_id: StringName) -> Dictionary:
 	for question_data in catalog.get("questions", []):
 		if StringName(question_data.get("id", "")) == question_id:
 			return question_data
 	return {}
 
-static func _question_title(catalog: Dictionary, question_id: StringName) -> String:
-	var question := _find_question(catalog, question_id)
-	return String(question.get("title", question_id))
+static func _find_answer(question_data: Dictionary, answer_id: StringName) -> Dictionary:
+	for answer in question_data.get("answers", []):
+		if StringName(answer.get("id", "")) == answer_id:
+			return answer
+	return {}
 
 static func validate(catalog: Dictionary, selections: CharacterCreationSelections) -> Dictionary:
 	var errors: Array[String] = []
@@ -70,6 +32,8 @@ static func validate(catalog: Dictionary, selections: CharacterCreationSelection
 		errors.append("This character-creation draft has already been committed.")
 	if selections.character_name.strip_edges().is_empty():
 		errors.append("Enter a name before confirming the biography.")
+	if not CharacterCreationSelections.PRONOUNS.has(selections.pronouns):
+		errors.append("Choose he, she, or they before the intake begins.")
 	var selected_answers: Dictionary[StringName, Dictionary] = {}
 	for question_data in catalog.get("questions", []):
 		var question_id := StringName(question_data.get("id", ""))
@@ -79,20 +43,9 @@ static func validate(catalog: Dictionary, selections: CharacterCreationSelection
 			continue
 		var answer := _find_answer(question_data, answer_id)
 		if answer.is_empty():
-			errors.append("The selected answer for %s is no longer available." % question_id)
+			errors.append("The selected answer for %s is not in this intake." % question_id)
 			continue
 		selected_answers[question_id] = answer
-	for question_data in catalog.get("questions", []):
-		var question_id := StringName(question_data.get("id", ""))
-		if not selected_answers.has(question_id):
-			continue
-		var answer: Dictionary = selected_answers[question_id]
-		var requirements: Dictionary = answer.get("requires", {})
-		for required_question_variant in requirements.keys():
-			var required_question := StringName(required_question_variant)
-			var allowed: Array = requirements[required_question_variant]
-			if not allowed.has(String(selections.get_answer(required_question))):
-				errors.append("That combination is not available. Revisit %s before continuing." % required_question)
 	return {"valid": errors.is_empty(), "errors": errors, "selected_answers": selected_answers}
 
 static func build_biography(catalog: Dictionary, selections: CharacterCreationSelections) -> String:
@@ -136,18 +89,16 @@ static func commit(catalog: Dictionary, selections: CharacterCreationSelections,
 	context.actor = actor
 	context.era = era
 	context.year = world.year
-	# The only mutation point: the draft actor enters WorldState and every
-	# selected consequence uses the same EventEffect vocabulary as gameplay.
+	# Keep the actor out of the world until all validation has passed.
 	world.people[actor.id] = actor
 	if not world.set_player(actor):
+		world.people.erase(actor.id)
 		return {"committed": false, "errors": ["The player character could not be registered in WorldState."]}
-	executor.execute_all(effects, context)
 	actor.display_name = selections.character_name.strip_edges()
+	actor.pronouns = selections.pronouns
+	var origin_id := selections.get_answer(&"origin")
+	actor.institutional_designation = String(catalog.get("designation_by_origin", {}).get(String(origin_id), "compound entrant"))
+	executor.execute_all(effects, context)
 	selections.committed = true
 	return {"committed": true, "errors": [], "effect_count": effects.size()}
 
-static func _find_answer(question_data: Dictionary, answer_id: StringName) -> Dictionary:
-	for answer in question_data.get("answers", []):
-		if StringName(answer.get("id", "")) == answer_id:
-			return answer
-	return {}
