@@ -3,6 +3,7 @@ extends SceneTree
 var checks := 0
 var failures: Array[String] = []
 
+const SaveCodecScript = preload("res://systems/save_codec.gd")
 const URUK: PlaceDef = preload("res://data/places/uruk.tres")
 const NIPPUR: PlaceDef = preload("res://data/places/nippur.tres")
 const UMMA: PlaceDef = preload("res://data/places/umma.tres")
@@ -17,23 +18,27 @@ func _run() -> void:
 	world.year = -3200
 	world.period = 0
 	var network := RouteNetwork.new()
-	_check(network.configure(world, [URUK, NIPPUR, UMMA], [RIVER, LAND]), "Three-location graph configures")
-	_check(network.places.size() == 3 and network.routes.size() == 2, "Graph contains exactly three places and two routes")
-	_check(network.routes.has(&"river_uruk_nippur") and network.routes.has(&"land_uruk_umma") and not network.routes.has(&"river_nippur_umma"), "Graph has only the two intended arteries")
-	_check(network.get_transit_periods(RIVER.id, &"nippur", &"uruk") == 1, "Downstream Nippur-to-Uruk grain journey takes one period")
+	_check(network.configure(world, [URUK, NIPPUR, UMMA], [RIVER, LAND]) and network.places.size() == 3 and network.routes.size() == 2 and not network.routes.has(&"river_nippur_umma"), "Network is exactly three locations and two intended arteries")
+	_check(network.get_transit_periods(RIVER.id, &"nippur", &"uruk") == 1, "Downstream Nippur-to-Uruk journey takes one period")
 	_check(network.get_transit_periods(RIVER.id, &"uruk", &"nippur") == 2, "Upstream Uruk-to-Nippur journey takes two periods")
 	_check(network.get_transit_periods(LAND.id, &"uruk", &"umma") == 1, "Baseline land journey takes one period")
 	_check(network.get_transit_periods(RIVER.id, &"nippur", &"umma") == -1, "Non-adjacent travel is rejected")
 	var now := world.total_periods
-	_check(network.set_route_disruption(RIVER.id, &"disrupted", now + 2, 1) and world.routes.has(RIVER.id), "Timed disruption is stored in WorldState.routes")
-	_check(network.get_route_status(RIVER.id) == &"disrupted" and network.get_transit_periods(RIVER.id, &"nippur", &"uruk") == 2, "Disruption changes route status and transit estimate")
+	_check(network.set_route_disruption(RIVER.id, &"disrupted", now + 2, 1) and world.routes.has(RIVER.id) and network.get_route_status(RIVER.id) == &"disrupted" and network.get_transit_periods(RIVER.id, &"nippur", &"uruk") == 2, "Timed disruption is stored in WorldState and affects route status and transit")
 	world.advance_period()
-	_check(network.get_route_status(RIVER.id) == &"disrupted", "Disruption remains active before expiry")
+	_check(network.get_route_status(RIVER.id) == &"disrupted", "Disruption remains active before its expiry period")
 	world.advance_period()
-	_check(network.get_route_status(RIVER.id) == &"open" and not world.routes.has(RIVER.id), "Disruption expires on its exact expiry period")
-	_check(network.get_route_status(LAND.id) == &"open" and network.get_transit_periods(LAND.id, &"uruk", &"umma") == 1, "Unaffected land route remains available")
+	_check(network.get_route_status(RIVER.id) == &"open" and not world.routes.has(RIVER.id), "Disruption expires on its exact second-period deadline")
 	_check(network.set_route_disruption(LAND.id, &"closed") and network.get_transit_periods(LAND.id, &"uruk", &"umma") == -1, "Closed route rejects travel")
-	_check(RIVER.base_transit_periods == 1 and RIVER.downstream_destination_id == &"uruk", "Runtime disruption never mutates shared route definitions")
+	_check(network.clear_route_disruption(LAND.id) and network.get_route_status(LAND.id) == &"open" and network.get_transit_periods(LAND.id, &"uruk", &"umma") == 1, "Clearing disruption restores the original route")
+	var player := PersonEntity.new()
+	player.id = &"route_test_player"
+	world.set_player(player)
+	network.set_route_disruption(LAND.id, &"disrupted", world.total_periods + 3, 1)
+	var encoded := SaveCodecScript.encode_world(world)
+	var decoded := SaveCodecScript.decode_save(encoded)
+	var restored: WorldState = decoded.get("world") as WorldState
+	_check(bool(decoded.get("success", false)) and restored != null and restored.routes.has(LAND.id) and restored.routes[LAND.id] == world.routes[LAND.id] and RIVER.base_transit_periods == 1 and RIVER.downstream_destination_id == &"uruk", "Save/load preserves runtime disruption without mutating shared route definitions")
 	print("Route network: %d checks, %d failures" % [checks, failures.size()])
 	for failure in failures:
 		printerr(failure)
