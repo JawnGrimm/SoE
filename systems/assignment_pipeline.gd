@@ -545,7 +545,7 @@ static func _is_local_to_current_location(world: WorldState, place_id: StringNam
 		cursor = StringName(place.get("parent", ""))
 	return false
 
-func _epic_problem_label(reason: String) -> String:
+static func _epic_problem_label(reason: String) -> String:
 	match reason:
 		"labor_shortage": return "Labor Shortage Review"
 		"barley_shortage": return "Ration Shortage Review"
