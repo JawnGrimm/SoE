@@ -99,7 +99,12 @@ static func generate(world: WorldState, actor: PersonEntity, selected_path: Stri
 				break
 		var shortage_pressure := world.get_resource(&"barley") < 100 or world.get_resource(&"labor") < 8
 		if not active_hazard and not shortage_pressure:
-			archetype = &"delivery_mismatch"
+			var fallback_archetypes: Array[StringName] = []
+			for fallback_id in archetypes:
+				if fallback_id != &"hazard_check" and (world.recent_archetypes.is_empty() or fallback_id != StringName(world.recent_archetypes.back())):
+					fallback_archetypes.append(fallback_id)
+			if not fallback_archetypes.is_empty():
+				archetype = fallback_archetypes[world.rng_narrative.randi_range(0, fallback_archetypes.size() - 1)]
 	world.recent_archetypes.append(archetype)
 	while world.recent_archetypes.size() > 6:
 		world.recent_archetypes.pop_front()
@@ -245,7 +250,13 @@ static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_
 		if not world.recent_archetypes.has(candidate_archetype_id):
 			eligible.append(template)
 	if eligible.is_empty():
-		eligible = templates
+		var previous_archetype := StringName(world.recent_archetypes.back()) if not world.recent_archetypes.is_empty() else &""
+		for template in templates:
+			var candidate_archetype_id := StringName("path_%s" % template.get("id", "docket"))
+			if candidate_archetype_id != previous_archetype:
+				eligible.append(template)
+		if eligible.is_empty():
+			eligible = templates
 	var template: Dictionary = eligible[world.rng_narrative.randi_range(0, eligible.size() - 1)]
 	var client_faction := StringName(template.get("client", ""))
 	var opposing_faction := StringName(template.get("opposing", ""))
