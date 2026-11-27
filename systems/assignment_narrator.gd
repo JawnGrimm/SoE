@@ -96,7 +96,6 @@ static func narrate_record_examination(record: Dictionary, actor: PersonEntity, 
 	## A first-person tablet scene for the first investigative action.
 	## This is presentation only; evidence and effects are resolved by AssignmentPipeline.
 	var source: Dictionary = record.get("source_data", {})
-	var title := String(record.get("title", "the matter"))
 	var official := world.get_person(StringName(record.get("employer_id", ""))) if world != null else null
 	var official_name := official.display_name if official != null else "the responsible clerk"
 	var npc_evidence: Dictionary = source.get("npc_evidence", {})
