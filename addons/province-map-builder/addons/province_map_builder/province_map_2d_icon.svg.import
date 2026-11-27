@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dlmvp3f1l01wg"
-path="res://.godot/imported/province_map_2d_icon.svg-04ccf4d1edcc2217b0510931de0e2731.ctex"
+path="res://.godot/imported/province_map_2d_icon.svg-47d70124dd54ae9920ed8210cfba822f.ctex"
 metadata={
 "has_editor_variant": true,
 "vram_texture": false
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://addons/province_map_builder/province_map_2d_icon.svg"
-dest_files=["res://.godot/imported/province_map_2d_icon.svg-04ccf4d1edcc2217b0510931de0e2731.ctex"]
+source_file="res://addons/province-map-builder/addons/province_map_builder/province_map_2d_icon.svg"
+dest_files=["res://.godot/imported/province_map_2d_icon.svg-47d70124dd54ae9920ed8210cfba822f.ctex"]
 
 [params]
 
