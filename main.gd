@@ -1003,6 +1003,7 @@ func _select_assignment_opportunity(index: int) -> void:
 	var opportunity := assignment_opportunities[index]
 	if StringName(opportunity.get("kind", "")) == &"procedural_docket":
 		procedural_assignment = (opportunity.get("source_data", {}) as Dictionary).duplicate(true)
+		AssignmentGeneratorScript.record_selection(world, procedural_assignment)
 		active_event = null
 		AudioManager.play_docket_slide()
 		_show_case()
