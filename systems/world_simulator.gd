@@ -31,62 +31,34 @@ func advance_period(world: WorldState) -> void:
 	_generate_forms(world)
 
 func _deliver_grain_clerk_dockets(world: WorldState) -> void:
-	var institution: Dictionary = world.institutions.get(&"eanna_household", {})
-	if institution.is_empty():
-		return
-	var queue: Array = institution.get("npc_docket_queue", []).duplicate(true)
-	if queue.is_empty():
-		return
-	var remaining: Array = []
-	var now := world.current_period_index()
-	for docket in queue:
-		var npc_evidence: Dictionary = docket.get("npc_evidence", {})
-		if int(docket.get("due_period", now + 1)) > now:
-			remaining.append(docket)
+	for institution_id in world.institutions.keys():
+		var institution: Dictionary = world.institutions[institution_id]
+		var queue: Array = institution.get("npc_docket_queue", []).duplicate(true)
+		if queue.is_empty():
 			continue
-		var form_type := StringName(docket.get("form_type", &"held_barley"))
-		var subject_id := StringName(docket.get("subject_id", &"north_bay"))
-		world.enqueue_form({
-			"id": StringName("ur_nanna_grain_docket_%d" % now),
-			"form_type": form_type,
-			"subject_id": subject_id,
-			"urgency": int(docket.get("urgency", 4)),
-			"year": world.year,
-			"generated_by": &"ur_nanna",
-			"generation_reason": &"autonomous_grain_clerk_action",
-			"npc_intent_id": StringName(docket.get("intent_id", "")),
-			"npc_evidence": npc_evidence.duplicate(true),
-		})
-	institution["npc_docket_queue"] = remaining
-	world.institutions[&"eanna_household"] = institution
-
-func _tick_grain_clerk_agenda(world: WorldState) -> void:
-	var clerk := world.get_person(&"ur_nanna")
-	if clerk == null or clerk.office_id != &"grain_clerk":
-		return
-	var institution: Dictionary = world.institutions.get(&"eanna_household", {})
-	institution["agenda_evaluation_count"] = int(institution.get("agenda_evaluation_count", 0)) + 1
-	world.institutions[&"eanna_household"] = institution
-	var main_loop := Engine.get_main_loop()
-	if not (main_loop is SceneTree):
-		push_warning("WorldSimulator: cannot tick Ur-Nanna's LimboAI agenda without a SceneTree")
-		return
-	var scene_tree := main_loop as SceneTree
-	var agent: Node = GrainClerkAgentScript.new()
-	agent.set("world", world)
-	agent.set("clerk", clerk)
-	scene_tree.root.add_child(agent)
-	var bt_player := BTPlayer.new()
-	bt_player.set_active(false)
-	bt_player.set_update_mode(BTPlayer.MANUAL) # Exactly one explicit update per world period.
-	bt_player.set_agent_node(NodePath(".."))
-	bt_player.set_scene_root_hint(agent)
-	bt_player.set_behavior_tree(GrainClerkAgendaTree)
-	agent.add_child(bt_player)
-	bt_player.set_active(true)
-	bt_player.update(0.0)
-	bt_player.set_active(false)
-	agent.free()
+		var remaining: Array = []
+		var now := world.current_period_index()
+		for docket in queue:
+			if int(docket.get("due_period", now + 1)) > now:
+				remaining.append(docket)
+				continue
+			var clerk_id := StringName(docket.get("clerk_id", docket.get("generated_by", "")))
+			var form_type := StringName(docket.get("form_type", "held_barley"))
+			var subject_id := StringName(docket.get("subject_id", institution.get("place_id", "")))
+			world.enqueue_form({
+				"id": StringName("office_docket_%s_%d" % [String(clerk_id), now]),
+				"form_type": form_type,
+				"subject_id": subject_id,
+				"urgency": int(docket.get("urgency", 4)),
+				"year": world.year,
+				"generated_by": clerk_id,
+				"generation_reason": &"autonomous_office_action",
+				"npc_intent_id": StringName(docket.get("intent_id", "")),
+				"npc_evidence": Dictionary(docket.get("npc_evidence", {})).duplicate(true),
+				"institution_id": StringName(institution_id)
+			})
+		institution["npc_docket_queue"] = remaining
+		world.institutions[institution_id] = institution
 
 func _get_definition_registry() -> DefinitionRegistry:
 	if definition_registry != null:
@@ -275,33 +247,14 @@ func _simulate_personal_upkeep(world: WorldState) -> void:
 	else:
 		player.flags[&"unpaid_upkeep"] = int(player.flags.get(&"unpaid_upkeep", 0)) + 2 - silver
 		player.resources[&"silver"] = 0
-		var senior := world.get_person(&"shuruppak_ilu")
-		if senior != null:
-			senior.change_opinion(player.id, -1, "The apprentice's household account fell into arrears.", world.year)
+		for official_value in world.people.values():
+			var official: PersonEntity = official_value
+			if official != null and official.office_id == &"archive_keeper":
+				official.change_opinion(player.id, -1, "The apprentice's household account fell into arrears.", world.year)
+				break
 		world.cedar_desk_log.append({"year": world.year, "period": world.period, "title": "UPKEEP IN ARREARS", "summary": "The household could not pay its two-silver seasonal account. Debt is recorded; work remains available."})
 		_record_period_delta(world, "arrears", "Upkeep in arrears: %d silver held (%d debt accrued)" % [silver, 2 - silver])
 
-func _tick_audit_reprimands(world: WorldState) -> void:
-	if world.periods_elapsed <= 0 or world.periods_elapsed % 6 != 0:
-		return
-	var player := world.get_player()
-	if player == null:
-		return
-	var exposure := int(player.flags.get(&"audit_exposure", 0))
-	if exposure <= 0:
-		return
-	player.flags[&"audit_exposure"] = exposure - 1
-	var silver := int(player.resources.get(&"silver", 0))
-	if silver >= 2:
-		player.resources[&"silver"] = silver - 2
-	else:
-		player.flags[&"audit_debt"] = int(player.flags.get(&"audit_debt", 0)) + 2 - silver
-		player.resources[&"silver"] = 0
-	var archivist := world.get_person(&"shuruppak_ilu")
-	if archivist != null:
-		archivist.change_opinion(player.id, -2, "A concealed account was found in the archive audit.", world.year)
-	world.cedar_desk_log.append({"year": world.year, "period": world.period, "title": "ARCHIVE REPRIMAND", "summary": "Shuruppak-ilu found a concealed account. Two silver were fined or entered as debt."})
-	_record_period_delta(world, "audit", "Archive reprimand: -2 silver debt to Shuruppak-ilu" if silver < 2 else "Archive reprimand: -2 silver fine to Shuruppak-ilu")
 
 func _simulate_economy(world: WorldState) -> void:
 	var p := world.period
