@@ -466,6 +466,80 @@ static func _advance_player_travel(world: WorldState) -> void:
 		travel["remaining_periods"] = maxi(1, int(world.routes.get(StringName(route_ids[route_index]), {}).get("travel_periods", 1)))
 	world.player_travel = travel
 
+static func simulate_regional_flows(world: WorldState) -> void:
+	if world == null:
+		return
+	var place_ids: Array = world.places.keys()
+	place_ids.sort()
+	for place_id_variant in place_ids:
+		var origin_id := StringName(place_id_variant)
+		var place: Dictionary = world.places[origin_id]
+		var institution_id := &"eanna_household" if origin_id == &"uruk" else StringName(place.get("regional_institution_id", ""))
+		if institution_id == &"" or not world.institutions.has(institution_id):
+			continue
+		var institution: Dictionary = world.institutions[institution_id]
+		var stockpiles: Dictionary = institution.get("stockpiles", {})
+		var exports: Array = place.get("exports", [])
+		var activity := int(institution.get("activity_count", 1))
+		var flow_chance := clampf(0.08 + float(activity) * 0.04, 0.08, 0.28)
+		for commodity_variant in exports:
+			var commodity_id := StringName(commodity_variant)
+			var available := int(stockpiles.get(commodity_id, 0))
+			if available < 4:
+				continue
+			var destination_id := _find_trade_destination(world, origin_id, commodity_id)
+			if destination_id == &"" or _has_open_shipment(world, origin_id, destination_id, commodity_id):
+				continue
+			if world.rng_sim.randf() >= flow_chance:
+				break
+			var quantity := world.rng_sim.randi_range(4, mini(12, available))
+			if not world.modify_resource(commodity_id, -quantity, "institution", "", institution_id):
+				break
+			var destination_institution_id := &"eanna_household" if destination_id == &"uruk" else StringName(world.places.get(destination_id, {}).get("regional_institution_id", ""))
+			var sender_id := StringName(place.get("regional_agent_id", &"geme_inana"))
+			if origin_id == &"uruk":
+				sender_id = &"geme_inana"
+			var launched := launch_shipment(world, {
+				"origin_id": origin_id, "destination_id": destination_id,
+				"commodity_id": commodity_id, "quantity": quantity,
+				"seal_id": "%s_trade_seal_%d" % [String(origin_id), world.current_period_index()],
+				"sender_id": sender_id, "destination_institution_id": destination_institution_id
+			})
+			if not bool(launched.get("success", false)):
+				world.modify_resource(commodity_id, quantity, "institution", "", institution_id)
+			break
+
+static func _find_trade_destination(world: WorldState, origin_id: StringName, commodity_id: StringName) -> StringName:
+	var selected_place := &""
+	var shortest := 2147483647
+	for place_id_variant in world.places.keys():
+		var place_id := StringName(place_id_variant)
+		if place_id == origin_id:
+			continue
+		var place: Dictionary = world.places[place_id]
+		var imports: Array = place.get("imports", [])
+		if not imports.has(commodity_id):
+			continue
+		var institution_id := &"eanna_household" if place_id == &"uruk" else StringName(place.get("regional_institution_id", ""))
+		if institution_id == &"" or not world.institutions.has(institution_id):
+			continue
+		var route_ids := find_route_path(world, origin_id, place_id)
+		if route_ids.is_empty():
+			continue
+		var duration := route_path_periods(world, route_ids)
+		if duration < shortest:
+			shortest = duration
+			selected_place = place_id
+	return selected_place
+
+static func _has_open_shipment(world: WorldState, origin_id: StringName, destination_id: StringName, commodity_id: StringName) -> bool:
+	for shipment in world.shipments.values():
+		if StringName(shipment.get("origin_id", "")) != origin_id or StringName(shipment.get("destination_id", "")) != destination_id or StringName(shipment.get("commodity_id", "")) != commodity_id:
+			continue
+		if String(shipment.get("status", "")) in ["in_transit", "arrived", "held", "awaiting_origin"]:
+			return true
+	return false
+
 static func resolve_remote_dispatch(world: WorldState, form_data: Dictionary, verdict: StringName) -> Dictionary:
 	var shipment_id := StringName(form_data.get("shipment_id", ""))
 	if world == null or shipment_id == &"" or not world.shipments.has(shipment_id):
