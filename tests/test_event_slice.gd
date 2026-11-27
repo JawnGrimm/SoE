@@ -605,7 +605,10 @@ func _run() -> void:
 	var eanna_members: Array = creation_world.institutions[&"eanna_household"].members
 	_check(eanna_members.has(creation_actor.id), "Confirmed player should join Eanna institutional household")
 	_check(creation_actor.pronouns == &"they", "Pronouns should be committed to PersonEntity")
-	_check(creation_actor.institutional_designation == "marsh-born", "Origin should compile to an institutional designation")
+	var identity_save := SaveCodec.decode_save(SaveCodec.encode_world(creation_world))
+	var identity_loaded: PersonEntity = identity_save.world.get_player() if bool(identity_save.get("success", false)) else null
+	_check(identity_loaded != null and identity_loaded.pronouns == &"they" and identity_loaded.institutional_designation == "of the marsh-fringe", "Pronouns and designation should survive save/load")
+	_check(creation_actor.institutional_designation == "of the marsh-fringe", "Origin should compile to an institutional designation")
 	_check(creation_actor.has_flag(&"path_civil", creation_world.current_period_index()), "Civic orientation should set its canonical path flag")
 	_check(not creation_actor.has_flag(&"path_merchant", creation_world.current_period_index()), "Revised path should not leave the abandoned path flag")
 	_check(creation_actor.memory.size() == 3, "Both formative memories and compiled biography should persist through EventEffect")
