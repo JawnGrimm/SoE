@@ -7,6 +7,7 @@ extends Resource
 ## Settlement archetype: metropolis, rival_city, sacred_center, river_colony, trade_enclave, highland_partner.
 @export var place_type: StringName = &"metropolis"
 @export var region: StringName = &"lower_mesopotamia"
+@export var parent_place_id: StringName = &""
 ## Baseline framing only; runtime diplomacy belongs to WorldState.
 @export var political_relation: StringName = &"autonomous_peer"
 @export var exports: Array[StringName] = []
