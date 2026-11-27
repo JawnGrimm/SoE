@@ -857,6 +857,9 @@ func _show_character_creation_screen(screen: int) -> void:
 		var trait_fragment := String(identity_answer.get("biography", ""))
 		if not trait_fragment.is_empty():
 			dossier.text += "\n\nIDENTITY\n" + trait_fragment
+		var clerk_comments := CharacterCreationResolver.build_collision_comments(creation_catalog, creation_selections)
+		if not clerk_comments.is_empty():
+			dossier.text += "\n\nCLERK'S NOTES\n" + "\n".join(clerk_comments)
 		dossier.text += "\n\n" + String(creation_catalog.get("creation_narration", ""))
 		if not bool(validation.get("valid", false)):
 			dossier.text += "\n\nBEFORE CONFIRMING\n" + "\n".join(validation.get("errors", []))
