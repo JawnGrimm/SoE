@@ -44,6 +44,7 @@ func _run() -> void:
 	_check(ur_mes != null and _has_form_from(world, &"bailiff_requisition", ur_mes.id), "Canal BT generates Ur-Mes's requisition")
 	var requisition := _find_form(world, &"bailiff_requisition", &"umma")
 	_check(StringName(requisition.get("target_institution_id", "")) == &"umma_granary", "Requisition targets regional granary")
+	world.period = 6 # Advance the BCE calendar index; periods_elapsed alone does not age created_period.
 	world.periods_elapsed = 6
 	simulator._simulate_people(world)
 	requisition = _find_form(world, &"bailiff_requisition", &"umma")
