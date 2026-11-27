@@ -312,6 +312,51 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 				return {"success": false, "message": "The source form has already changed or been resolved."}
 			if not regional_form:
 				result_text = "The %s is entered as %s. The underlying matter remains subject to future world conditions." % [_form_title(form_type), disposition]
+
+		&"regional_work":
+			var work_data: Dictionary = record.get("source_data", {})
+			var work_type := StringName(work_data.get("work_type", ""))
+			var commodity_id := StringName(work_data.get("commodity_id", ""))
+			var quantity := int(work_data.get("quantity", 0))
+			var source_institution_id := StringName(work_data.get("source_institution_id", work_data.get("institution_id", "")))
+			if work_type in [&"dispatch_export", &"request_import"]:
+				var shipment_verdict := verdict in [&"dispatch", &"authorize"]
+				if not shipment_verdict:
+					accurate = false
+					result_text = "The proposed movement is held. No goods leave either institution; the opportunity remains available to the world."
+				else:
+					if not world.modify_resource(commodity_id, -quantity, "institution", "", source_institution_id):
+						return {"success": false, "message": "The source institution no longer has the proposed quantity."}
+					var origin_id := StringName(work_data.get("origin_id", ""))
+					var destination_id := StringName(work_data.get("destination_id", ""))
+					var sender_id := &"enki_ili" if origin_id == &"habuba_kabira" else &"geme_inana"
+					var launched := RegionalWorldSystem.launch_shipment(world, {
+						"origin_id": origin_id, "destination_id": destination_id,
+						"commodity_id": commodity_id, "quantity": quantity,
+						"seal_id": "%s_trade_seal_%d" % [String(origin_id), world.current_period_index()],
+					"sender_id": sender_id,
+					"destination_institution_id": StringName(work_data.get("destination_institution_id", ""))
+				})
+					if not bool(launched.get("success", false)):
+						world.modify_resource(commodity_id, quantity, "institution", "", source_institution_id)
+					return {"success": false, "message": String(launched.get("error", "The shipment could not be launched."))}
+					result_text = "A sealed shipment of %d %s departs %s for %s. The world will carry it along the route; the destination must still account for what arrives." % [quantity, String(commodity_id).replace("_", " "), _place_name(world, origin_id), _place_name(world, destination_id)]
+					work_details = "Shipment %s launched. Quantity %d. Route periods %d." % [String(launched.get("shipment_id", "")), quantity, int(launched.get("travel_periods", 0))]
+			elif work_type == &"route_provisions":
+				if verdict != &"issue":
+					accurate = false
+					result_text = "The beer remains in reserve. The route receives no new provision this period."
+				else:
+					var route_id := StringName(work_data.get("route_id", ""))
+					if not world.modify_resource(&"beer", -quantity, "institution", "", source_institution_id):
+						return {"success": false, "message": "The institution cannot spare the proposed beer allocation."}
+					if not RegionalWorldSystem.provision_route(world, route_id, 8, 3):
+						world.modify_resource(&"beer", quantity, "institution", "", source_institution_id)
+					return {"success": false, "message": "The route cannot accept provisions at this time."}
+					result_text = "%d beer are committed to the route. Exposure is reduced for the next three periods." % quantity
+					work_details = "Route %s provisioned through period %d." % [String(route_id), int(world.routes[route_id].get("risk_modifier_until", 0))]
+			else:
+				return {"success": false, "message": "Unsupported regional work type."}
 		&"hazard":
 			var hazard: Dictionary = record.get("source_data", {})
 			var place_id := StringName(hazard.get("place_id", ""))
@@ -425,6 +470,33 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 	var facts := ""
 	match action_id:
 
+		&"review_trade_manifest":
+			var source_institution_id := StringName(data.get("source_institution_id", data.get("institution_id", "")))
+			var source_institution: Dictionary = world.institutions.get(source_institution_id, {})
+			var source_stock: Dictionary = source_institution.get("stockpiles", {})
+			var route_ids := RegionalWorldSystem.find_route_path(world, StringName(data.get("origin_id", "")), StringName(data.get("destination_id", "")))
+			summary = "The trade manifest is reviewed against the named institution and connected route."
+			facts = "WORK: %s\nCOMMODITY: %s\nQUANTITY PROPOSED: %d\nSOURCE STOCK: %d\nROUTE TIME: %d PERIODS" % [String(data.get("work_type", "")).replace("_", " ").capitalize(), String(data.get("commodity_id", "")).replace("_", " "), int(data.get("quantity", 0)), int(source_stock.get(StringName(data.get("commodity_id", "")), 0)), RegionalWorldSystem.route_path_periods(world, route_ids)]
+		&"compare_trade_balance":
+			var balance_institution_id := StringName(data.get("source_institution_id", data.get("institution_id", "")))
+			var balance_institution: Dictionary = world.institutions.get(balance_institution_id, {})
+			var balance_stock: Dictionary = balance_institution.get("stockpiles", {})
+			var balance_available := int(balance_stock.get(StringName(data.get("commodity_id", "")), 0))
+			var proposed := int(data.get("quantity", 0))
+			summary = "The proposed movement is compared with the source institution's actual reserve."
+			facts = "AVAILABLE: %d\nPROPOSED: %d\n%s" % [balance_available, proposed, ("REMAINING AFTER MOVEMENT: %d" % (balance_available - proposed)) if skill_level >= 2 else ("RESERVE: %s" % ("sufficient" if balance_available >= proposed else "insufficient"))]
+		&"consult_local_factor":
+			var factor := world.get_person(StringName(record.get("employer_id", "")))
+			var factor_opinion := factor.get_opinion(actor.id) if factor != null else 0
+			summary = "The local factor explains the commercial purpose and accepts responsibility for the request."
+			facts = "FACTOR: %s\nPLACE: %s\nOPINION OF SCRIBE: %+d\nTESTIMONY: NOT A CARGO RECEIPT" % [factor.display_name if factor != null else "Local factor", _place_name(world, StringName(data.get("place_id", ""))), factor_opinion]
+		&"inspect_trade_goods":
+			var goods_institution_id := StringName(data.get("source_institution_id", data.get("institution_id", "")))
+			var goods_institution: Dictionary = world.institutions.get(goods_institution_id, {})
+			var goods_stock: Dictionary = goods_institution.get("stockpiles", {})
+			var commodity := StringName(data.get("commodity_id", ""))
+			summary = "The goods are checked against the source institution's current reserve."
+			facts = "INSTITUTION: %s\nCOMMODITY: %s\nON HAND: %d\nPROPOSED: %d" % [String(goods_institution.get("name", goods_institution_id)), String(commodity).replace("_", " "), int(goods_stock.get(commodity, 0)), int(data.get("quantity", 0))]
 		&"inspect_seal":
 			var seal_id := String(data.get("seal_id", "unmarked"))
 			var seal_valid := bool(data.get("seal_valid", true))
