@@ -183,7 +183,7 @@ func _run() -> void:
 	_check(bool(ledger_result.get("success", false)) and assignment_world.cedar_desk_log.size() == 3 and String(assignment_world.cedar_desk_log.back().get("category", "")) == "ledger", "Every completed engagement should enter the persistent work log with its source category")
 	_check(String(assignment_world.cedar_desk_log.front().get("responsible_character_id", "")) == String(assignment_actor.id) and String(assignment_world.cedar_desk_log.front().get("employer_id", "")) == "ur_nanna" and String(assignment_world.cedar_desk_log.front().get("institution_id", "")) == "eanna_household", "Work log should retain the responsible scribe, employer, and institution")
 	_check(assignment_world.cases_settled == 3, "Completed world-driven engagements should enter the existing career settlement counters")
-	_check(registry.all_places().size() == 14, "DefinitionRegistry should load authored settlements, precincts, work areas, and regional landmarks")
+	_check(registry.all_places().size() == 20, "DefinitionRegistry should load authored settlements, precincts, work areas, and administrative form locations")
 	_check(registry.get_place(&"hacinebi") != null and registry.get_place(&"hacinebi").political_relation == &"foreign_enclave", "Typed place lookup should retain Hacinebi's autonomous local context")
 	var copper_vector := AssignmentGeneratorScript.get_geographic_vector(&"counterfeit_copper")
 	_check(copper_vector.origin_id == &"hacinebi" and copper_vector.destination_id == &"uruk" and copper_vector.commodity_id == &"copper", "Copper docket vector should use authored Hacinebi-to-Uruk geography")
@@ -339,7 +339,7 @@ func _run() -> void:
 	_check(uruk_a.master_seed == 987654321, "Uruk seeder should retain the campaign seed")
 	_check(uruk_a.year == -3200 and uruk_a.period == 0, "Uruk campaign should begin at its era start")
 	_check(uruk_a.people.size() == 17, "Uruk seeder should create the expanded seventeen-person roster")
-	_check(uruk_a.places.size() == 14, "Uruk seed should establish seven canonical settlements plus seven local and connected places")
+	_check(uruk_a.places.size() == 14, "Uruk seed should establish all authored settlements, local work areas, and form locations")
 	_check(uruk_a.institutions.size() == 4 and uruk_a.institutions.has(&"nippur_shrine"), "Uruk seed should establish three local institutions plus the Nippur shrine ledger")
 	_check(uruk_a.social_groups.size() == 5, "Uruk seed should establish five working and household groups")
 	var seeded_tie_count := 0
