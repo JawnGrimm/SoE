@@ -4,6 +4,7 @@ const AssignmentGeneratorScript = preload("res://systems/assignment_generator.gd
 const DevCommandRouterScript = preload("res://systems/dev_command_router.gd")
 const RouteNetworkScript = preload("res://systems/route_network.gd")
 const TravelServiceScript = preload("res://systems/travel_service.gd")
+const RegionalSurveyMapScript = preload("res://components/regional_survey_map.gd")
 const CAMPAIGN_SEED: int = 32003200
 const ROSTER_CAST: Array[StringName] = [&"shuruppak_ilu", &"utu_mansum", &"enlil_kisu", &"ur_nanna", &"nin_kasi", &"geme_inana", &"lu_nanshe"]
 const FACTION_LABELS := {
@@ -30,6 +31,8 @@ var scheduler: EventScheduler
 var world_simulator: WorldSimulator
 var route_network: RouteNetwork
 var travel_service: TravelService
+var survey_map: RegionalSurveyMap
+var survey_button: Button
 var world: WorldState
 var actor: PersonEntity
 var active_event: EventTemplate
@@ -175,11 +178,23 @@ func _build_interface() -> void:
 	desk_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	desk_box.add_theme_constant_override("separation", 3)
 	mat.add_child(desk_box)
+	var desk_toolbar := HBoxContainer.new()
+	desk_toolbar.add_theme_constant_override("separation", 8)
+	desk_box.add_child(desk_toolbar)
 	var desk_caption := Label.new()
 	desk_caption.text = "THE DESK  /  CEDAR AND REED"
+	desk_caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	desk_caption.add_theme_font_size_override("font_size", 10)
 	desk_caption.add_theme_color_override("font_color", Color("#a99570"))
-	desk_box.add_child(desk_caption)
+	desk_toolbar.add_child(desk_caption)
+	survey_button = Button.new()
+	survey_button.text = "UNROLL REGIONAL SURVEY"
+	survey_button.tooltip_text = "Unroll the regional river-and-road survey on the cedar desk."
+	survey_button.add_theme_font_size_override("font_size", 10)
+	survey_button.add_theme_stylebox_override("normal", _panel_style("#3a2b1d", "#80653b"))
+	survey_button.add_theme_stylebox_override("hover", _panel_style("#604326", "#d0ad70"))
+	survey_button.pressed.connect(_toggle_regional_survey)
+	desk_toolbar.add_child(survey_button)
 	var upper_workspace := VBoxContainer.new()
 	upper_workspace.custom_minimum_size.y = 0
 	upper_workspace.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -220,6 +235,12 @@ func _build_interface() -> void:
 	tablet_style.content_margin_bottom = 0.0
 	docket_overlay.add_theme_stylebox_override("panel", tablet_style)
 	docket_motion_layer.add_child(docket_overlay)
+	survey_map = RegionalSurveyMapScript.new()
+	survey_map.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	survey_map.visible = false
+	survey_map.travel_requested.connect(_on_survey_travel_requested)
+	survey_map.close_requested.connect(_close_regional_survey)
+	docket_motion_layer.add_child(survey_map)
 	var tablet_content := MarginContainer.new()
 	tablet_content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	tablet_content.add_theme_constant_override("margin_left", 74)
@@ -613,7 +634,7 @@ func _start_world() -> void:
 	_show_character_creation_screen(0)
 
 func can_save_game() -> bool:
-	return world != null and world.get_player() != null and phase in ["case", "opportunity_board", "world_engagement", "itinerary_docket"] and (active_event != null or not procedural_assignment.is_empty() or not assignment_opportunities.is_empty() or active_world_assignment_id != &"")
+	return world != null and world.get_player() != null and phase in ["case", "opportunity_board", "world_engagement"] and (active_event != null or not procedural_assignment.is_empty() or not assignment_opportunities.is_empty() or active_world_assignment_id != &"")
 
 func save_game() -> Dictionary:
 	if not can_save_game():
@@ -625,6 +646,7 @@ func save_game() -> Dictionary:
 		"assignment_opportunities": assignment_opportunities.duplicate(true),
 		"active_world_assignment_id": String(active_world_assignment_id),
 		"selected_path": String(selected_path),
+		"survey_open": survey_map != null and survey_map.visible,
 	}
 	var result := SaveManager.save_game(world, session)
 	status_label.text = "SAVE SEALED / CAMPAIGN RECORDED" if bool(result.get("success", false)) else "SAVE FAILED / " + String(result.get("error", "Unknown error"))
@@ -670,8 +692,6 @@ func load_game() -> Dictionary:
 	selected_path = StringName(session.get("selected_path", ""))
 	if active_world_assignment_id != &"":
 		_show_world_engagement()
-	elif String(session.get("phase", "")) == "itinerary_docket":
-		_show_itinerary_docket()
 	elif String(session.get("phase", "")) == "opportunity_board" and not assignment_opportunities.is_empty():
 		_show_assignment_board()
 	elif active_event == null and procedural_assignment.is_empty():
@@ -679,6 +699,8 @@ func load_game() -> Dictionary:
 	else:
 		_show_case()
 	_refresh_compound()
+	if bool(session.get("survey_open", false)):
+		_open_regional_survey()
 	status_label.text = "CAMPAIGN RESTORED / RECORD RESUMED"
 	return {"success": true}
 
@@ -720,10 +742,9 @@ func _schedule_next_case() -> void:
 		})
 		while assignment_opportunities.size() > 3:
 			assignment_opportunities.pop_back()
-	if assignment_opportunities.size() == 3:
+	if not assignment_opportunities.is_empty():
 		_show_assignment_board()
 	else:
-		push_warning("Main: assignment pipeline produced fewer than three opportunities (%d)" % assignment_opportunities.size())
 		_show_end_of_queue()
 
 func _show_character_creation_screen(screen: int) -> void:
@@ -1661,55 +1682,45 @@ func _location_header_text() -> String:
 	var place_name := place.display_name.to_upper() if place != null else String(world.current_location_id).to_upper()
 	return "SCRIBE OF ERAS  /  %s / REGIONAL COMPOUND" % place_name
 
-func _show_itinerary_docket() -> void:
-	if travel_service == null or world == null:
+func _toggle_regional_survey() -> void:
+	if survey_map == null or world == null or world.get_player() == null:
+		if status_label != null:
+			status_label.text = "THE SURVEY REQUIRES A CONFIRMED SCRIBE."
 		return
-	var destinations := travel_service.get_available_destinations(world)
-	_clear_choices()
-	_set_phase("itinerary_docket")
-	var choice_data: Array[Dictionary] = []
-	var callbacks: Array[Callable] = []
-	for destination in destinations:
-		var periods := int(destination.get("transit_periods", -1))
-		var available := periods > 0
-		var place_name := String(destination.get("destination_name", destination.get("destination_id", "Unknown")))
-		var route_type := String(destination.get("route_type", "route")).replace("_", " ").to_upper()
-		var status := String(destination.get("status", "unknown")).to_upper()
-		var label := "Depart for %s / %d period%s" % [place_name, periods, "" if periods == 1 else "s"] if available else "%s / %s" % [place_name, status]
-		choice_data.append({"label": label, "disabled": not available})
-		callbacks.append(Callable(self, "_depart_via_route").bind(StringName(destination.route_id), StringName(destination.destination_id)))
-	if choice_data.is_empty():
-		choice_data.append({"label": "No connected routes from this location", "disabled": true})
-	var current_place := route_network.get_place(world.current_location_id)
-	var current_name := current_place.display_name if current_place != null else String(world.current_location_id)
-	var payload := {
-		"title": "ITINERARY DOCKET",
-		"left_card": {
-			"title": "CURRENT LOCATION",
-			"speaker_id": &"",
-			"quote": "The travel authorization begins here.",
-			"facts": "%s\n%s / MONTH %d" % [current_name.to_upper(), CalendarFormatter.format_year(world.year), world.period + 1]
-		},
-		"right_card": {
-			"title": "CONNECTED DESTINATIONS",
-			"speaker_id": &"",
-			"quote": "Select a connected settlement. Every transit period advances the complete world simulation.",
-			"facts": "%d AUTHORIZED ROUTE(S)\nROUTE CONDITIONS ARE LIVE" % destinations.size()
-		},
-		"prompt": "Travel is recorded in elapsed periods. Hazards, institutions, economy, and autonomous NPC agendas continue while you are away.",
-		"choices": choice_data
-	}
-	_render_docket_payload(payload, callbacks)
-	_add_choice("Return to the Desk", _schedule_next_case)
-	_refresh_compound()
+	if survey_map.visible:
+		_close_regional_survey()
+		return
+	_open_regional_survey()
 
-func _depart_via_route(route_id: StringName, destination_id: StringName) -> void:
-	if phase != "itinerary_docket" or world == null or travel_service == null:
+func _open_regional_survey() -> void:
+	if survey_map == null or route_network == null or world == null:
+		return
+	if not survey_map.configure(route_network, world):
+		status_label.text = "SURVEY UNAVAILABLE / REGIONAL ROUTE DATA IS INCOMPLETE."
+		return
+	survey_map.visible = true
+	docket_overlay.visible = false
+	survey_button.text = "ROLL REGIONAL SURVEY"
+	AudioManager.play_docket_slide()
+
+func _close_regional_survey() -> void:
+	if survey_map == null:
+		return
+	survey_map.visible = false
+	if docket_overlay != null:
+		docket_overlay.visible = true
+	if survey_button != null:
+		survey_button.text = "UNROLL REGIONAL SURVEY"
+	AudioManager.play_docket_slide()
+
+func _on_survey_travel_requested(route_id: StringName, destination_id: StringName) -> void:
+	if phase in ["character_creation", "era_complete"] or travel_service == null or world == null:
 		return
 	var result := travel_service.travel(world, route_id, destination_id)
 	if not bool(result.get("success", false)):
 		status_label.text = "DEPARTURE REFUSED / " + String(result.get("error", "Route unavailable")).to_upper()
 		return
+	_close_regional_survey()
 	active_event = null
 	procedural_assignment.clear()
 	assignment_opportunities.clear()
@@ -1728,6 +1739,8 @@ func _refresh_compound() -> void:
 		return
 	if location_label != null:
 		location_label.text = _location_header_text()
+	if survey_button != null:
+		survey_button.disabled = world.get_player() == null
 	var mentor_trait := "unmarked"
 	for trait_id in actor.traits:
 		if trait_id in [&"exacting", &"stubborn", &"protective", &"diplomatic"]:
