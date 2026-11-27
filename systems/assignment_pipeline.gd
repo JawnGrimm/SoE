@@ -89,6 +89,7 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 		if not bool(epic.get("active", false)) or bool(epic.get("completed", false)):
 			continue
 		world.ensure_epic_review_state(StringName(epic_id))
+		epic = world.epics[epic_id]
 		if not bool(epic.get("review_pending", false)):
 			continue
 		var sponsor_id := StringName(epic.get("sponsor_institution", &"eanna_household"))
@@ -99,7 +100,7 @@ static func generate_opportunities(world: WorldState, actor: PersonEntity, selec
 		var progress := int(epic.get("progress", world.get_resource(StringName(epic.get("progress_resource", "")))))
 		var target := int(epic.get("target", 100))
 		var review_stage := int(epic.get("review_stage", world.get_epic_stage_index(progress, target)))
-		var stage_label := world.get_epic_stage_label(review_stage)
+		var stage_label := String(epic.get("review_stage_label", world.get_epic_stage_label(review_stage)))
 		candidates.append({
 			"id": StringName("epic:%s:s%d" % [epic_id, review_stage]),
 			"kind": &"project_review",
