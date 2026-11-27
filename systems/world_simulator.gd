@@ -20,6 +20,7 @@ func advance_period(world: WorldState) -> void:
 	_simulate_institutions(world)
 	_simulate_epics(world)
 	_simulate_people(world)
+	RegionalWorldSystem.simulate_regional_flows(world)
 	_generate_forms(world)
 
 func _get_definition_registry() -> DefinitionRegistry:
