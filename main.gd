@@ -2,6 +2,9 @@ extends Control
 
 const AssignmentGeneratorScript = preload("res://systems/assignment_generator.gd")
 const DevCommandRouterScript = preload("res://systems/dev_command_router.gd")
+const RouteNetworkScript = preload("res://systems/route_network.gd")
+const NIPPUR_AUDIT_ID: StringName = &"nippur_shrine_offerings_audit"
+const RIVER_ROUTE_ID: StringName = &"river_uruk_nippur"
 const CAMPAIGN_SEED: int = 32003200
 const ROSTER_CAST: Array[StringName] = [&"shuruppak_ilu", &"utu_mansum", &"enlil_kisu", &"ur_nanna", &"nin_kasi", &"geme_inana", &"lu_nanshe"]
 const FACTION_LABELS := {
@@ -26,6 +29,7 @@ class CylinderSealProp extends Control:
 var runner: EventRunner
 var scheduler: EventScheduler
 var world_simulator: WorldSimulator
+var route_network: RouteNetwork
 var world: WorldState
 var actor: PersonEntity
 var active_event: EventTemplate
@@ -46,6 +50,7 @@ var active_right_speaker_id: StringName = &""
 var dev_command_router
 
 var year_label: Label
+var location_label: Label
 var case_heading: Label
 var dossier: RichTextLabel
 var prompt_label: Label
@@ -128,7 +133,8 @@ func _build_interface() -> void:
 	var header := HBoxContainer.new()
 	root.add_child(header)
 	var title := Label.new()
-	title.text = "SCRIBE OF ERAS  /  THE SCRIBE’S DESK"
+	title.text = "URUK / EANNA STOREHOUSE"
+	location_label = title
 	title.add_theme_font_size_override("font_size", 23)
 	title.add_theme_color_override("font_color", Color("#e5d2a8"))
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -595,6 +601,7 @@ func _start_world() -> void:
 	world_simulator = WorldSimulator.new()
 	world = WorldState.new()
 	actor = UrukSeeder.seed_campaign(world, CAMPAIGN_SEED, false)
+	_configure_route_network()
 	creation_catalog = CharacterCreationResolver.load_catalog("res://data/character_creation/era_1_uruk.json")
 	current_era = Registry.get_era(&"uruk_storehouse")
 	context = EventContext.new()
@@ -634,6 +641,7 @@ func load_game() -> Dictionary:
 		return {"success": false, "error": "The save has no current player."}
 	world = restored_world
 	actor = restored_actor
+	_configure_route_network()
 	current_era = Registry.get_era_for_year(world.year)
 	context = EventContext.new()
 	context.world = world
@@ -681,6 +689,9 @@ func _schedule_next_case() -> void:
 	context.year = world.year
 	current_era = Registry.get_era_for_year(world.year)
 	context.era = current_era
+	if world.current_location_id == &"nippur":
+		_show_nippur_assignment_board()
+		return
 	if world.epic_summon_pending and not world.epic_summon_issued:
 		active_event = null
 		procedural_assignment = AssignmentGeneratorScript.create_epic_summons()
@@ -909,6 +920,8 @@ func _show_assignment_board() -> void:
 	}
 	_render_docket_payload(payload, callbacks)
 	_add_choice("Pass / End Period", _decline_opportunities)
+	if world.current_location_id == &"uruk":
+		_add_choice("Itinerary Docket / Travel", _show_itinerary_docket)
 	_refresh_compound()
 
 func _select_assignment_opportunity(index: int) -> void:
@@ -1002,7 +1015,10 @@ func _resolve_world_assignment(verdict: StringName) -> void:
 		return
 	active_world_assignment_id = &""
 	procedural_assignment.clear()
-	_show_procedural_result("ASSESSMENT SEALED", String(result.get("message", "The work is entered into the record.")))
+	if world.current_location_id == &"nippur":
+		_show_nippur_itinerary_ready("ASSESSMENT SEALED", String(result.get("message", "The work is entered into the record.")))
+	else:
+		_show_procedural_result("ASSESSMENT SEALED", String(result.get("message", "The work is entered into the record.")))
 
 func _abandon_world_assignment() -> void:
 	if active_world_assignment_id == &"" or not world.assignments.has(active_world_assignment_id):
@@ -1011,7 +1027,10 @@ func _abandon_world_assignment() -> void:
 	record["status"] = "abandoned"
 	world.assignments[active_world_assignment_id] = record
 	active_world_assignment_id = &""
-	_show_procedural_result("WORK SET ASIDE", "The matter remains in the world. No penalty is recorded for declining it.")
+	if world.current_location_id == &"nippur":
+		_show_nippur_itinerary_ready("AUDIT CLOSED", "The offering audit is closed without certification. The local docket is retained in the archive.")
+	else:
+		_show_procedural_result("WORK SET ASIDE", "The matter remains in the world. No penalty is recorded for declining it.")
 
 func _decline_opportunities() -> void:
 	if phase != "opportunity_board":
@@ -1634,9 +1653,151 @@ func _apply_faction_opinion(faction_id: StringName, amount: int, _reason: String
 	last_opinion_deltas[faction_id] = amount
 
 
+
+func _configure_route_network() -> void:
+	route_network = RouteNetworkScript.new()
+	if not route_network.configure(world, Registry.all_places(), Registry.all_routes()):
+		push_error("Main: regional route network could not be configured.")
+
+func _location_header_text() -> String:
+	if world != null and world.current_location_id == &"nippur":
+		return "SCRIBE OF ERAS  /  NIPPUR / PROVINCIAL COMPOUND"
+	return "SCRIBE OF ERAS  /  URUK / EANNA STOREHOUSE"
+
+func _show_nippur_assignment_board() -> void:
+	var existing: Dictionary = world.assignments.get(NIPPUR_AUDIT_ID, {})
+	var status := String(existing.get("status", ""))
+	if status in ["completed", "abandoned"]:
+		_show_nippur_itinerary_ready("NIPPUR DOCKET CLOSED", "The shrine-offerings matter has been closed. You may now return downriver to Uruk.")
+		return
+	if status == "active":
+		active_world_assignment_id = NIPPUR_AUDIT_ID
+		_show_world_engagement()
+		return
+	var shrine: Dictionary = world.institutions.get(&"nippur_shrine", {})
+	if shrine.is_empty():
+		push_error("Main: Nippur shrine institution is missing from the seeded world.")
+		return
+	assignment_opportunities = [{
+		"id": NIPPUR_AUDIT_ID,
+		"kind": &"ledger",
+		"source_id": &"nippur_shrine",
+		"title": "Audit Nippur Shrine Offerings",
+		"summary": "Reconcile the shrine's offering register against the stores held in the provincial compound.",
+		"priority": 100,
+		"employer_id": &"",
+		"source_data": {
+			"institution_id": &"nippur_shrine",
+			"place_id": &"nippur",
+			"member_count": shrine.get("members", []).size(),
+			"activity_count": int(shrine.get("activity_count", 0))
+		},
+		"path_id": selected_path
+	}]
+	_clear_stamp_history()
+	_clear_choices()
+	_set_phase("opportunity_board")
+	var payload := {
+		"title": "NIPPUR / PROVINCIAL COMPOUND",
+		"left_card": {
+			"title": "SHRINE OFFERINGS REGISTER",
+			"speaker_id": &"",
+			"quote": "The shrine's offering roll has arrived for review. The provincial compound requests a clean account before the next river dispatch.",
+			"facts": "LOCATION: NIPPUR\nRECORDED OFFERINGS: %d\nACTIVITY ENTRIES: %d" % [
+				int(shrine.get("stockpiles", {}).get(&"offerings", 0)),
+				int(shrine.get("activity_count", 0))
+			]
+		},
+		"right_card": {
+			"title": "LOCAL ASSIGNMENT",
+			"speaker_id": &"",
+			"quote": "This is the one matter currently requiring a visiting scribe's attention.",
+			"facts": "AUDIT THE OFFERING REGISTER\nCompare the written account with the shrine's current stores."
+		},
+		"prompt": "A local docket has been placed on the cedar desk.",
+		"choices": [{"label": "Open / Audit Nippur Shrine Offerings"}]
+	}
+	_render_docket_payload(payload, [Callable(self, "_select_assignment_opportunity").bind(0)])
+	_refresh_compound()
+
+func _show_nippur_itinerary_ready(result_title: String, result_text: String) -> void:
+	_clear_choices()
+	_set_phase("result")
+	case_heading.text = "𒂍  " + result_title.to_upper()
+	dossier.visible = false
+	dossier.text = ""
+	_set_evidence_facts("", "")
+	_set_evidence_tension(0, 0)
+	prompt_label.text = result_text
+	_add_choice("Open Itinerary Docket / Return to Uruk", _show_itinerary_docket)
+	_refresh_compound()
+
+func _show_itinerary_docket() -> void:
+	if route_network == null or world == null:
+		return
+	var origin := world.current_location_id
+	var destination: StringName = &"nippur" if origin == &"uruk" else &"uruk" if origin == &"nippur" else &""
+	if destination == &"":
+		status_label.text = "NO ITINERARY IS AUTHORIZED FROM THIS LOCATION."
+		return
+	var transit_periods := route_network.get_transit_periods(RIVER_ROUTE_ID, origin, destination)
+	_clear_choices()
+	_set_phase("itinerary_docket")
+	var direction := "UPSTREAM" if destination == &"nippur" else "DOWNSTREAM"
+	var destination_name := "NIPPUR / PROVINCIAL COMPOUND" if destination == &"nippur" else "URUK / EANNA STOREHOUSE"
+	var travel_label := "Depart %s / %d period%s" % [direction, transit_periods, "" if transit_periods == 1 else "s"]
+	var prompt := "The river passage is open. Transit advances the world period by period; hazards, stores, and NPC agendas continue to operate." if transit_periods > 0 else "The river route is closed or unavailable. No departure can be made."
+	var payload := {
+		"title": "ITINERARY DOCKET / %s" % direction,
+		"left_card": {
+			"title": "CURRENT LOCATION",
+			"speaker_id": &"",
+			"quote": "The travel authorization begins here.",
+			"facts": String(origin).to_upper() + "\n" + CalendarFormatter.format_year(world.year) + " / MONTH %d" % (world.period + 1)
+		},
+		"right_card": {
+			"title": "AUTHORIZED DESTINATION",
+			"speaker_id": &"",
+			"quote": "No caravan animation is required. The passage is recorded in elapsed periods.",
+			"facts": destination_name + "\nRIVER ROUTE: %s\nTRANSIT: %d PERIOD(S)" % [String(route_network.get_route_status(RIVER_ROUTE_ID)).to_upper(), maxi(0, transit_periods)]
+		},
+		"prompt": prompt,
+		"choices": [{"label": travel_label, "disabled": transit_periods < 1}]
+	}
+	var callbacks: Array[Callable] = []
+	callbacks.append(Callable(self, "_depart_via_river").bind(destination))
+	_render_docket_payload(payload, callbacks)
+	_add_choice("Return to the Desk", _schedule_next_case)
+	_refresh_compound()
+
+func _depart_via_river(destination: StringName) -> void:
+	if phase != "itinerary_docket" or world == null or world_simulator == null or route_network == null:
+		return
+	var origin := world.current_location_id
+	var transit_periods := route_network.get_transit_periods(RIVER_ROUTE_ID, origin, destination)
+	if transit_periods < 1:
+		status_label.text = "DEPARTURE REFUSED / THE RIVER ROUTE IS UNAVAILABLE."
+		return
+	for _period_index in range(transit_periods):
+		world_simulator.advance_period(world)
+	world.current_location_id = destination
+	assignment_opportunities.clear()
+	active_world_assignment_id = &""
+	context.year = world.year
+	current_era = Registry.get_era_for_year(world.year)
+	context.era = current_era
+	context.world = world
+	context.actor = world.get_player()
+	actor = world.get_player()
+	_refresh_compound()
+	_schedule_next_case()
+
+
 func _refresh_compound() -> void:
 	if world == null:
 		return
+	if location_label != null:
+		location_label.text = _location_header_text()
 	var mentor_trait := "unmarked"
 	for trait_id in actor.traits:
 		if trait_id in [&"exacting", &"stubborn", &"protective", &"diplomatic"]:
