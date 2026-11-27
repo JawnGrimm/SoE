@@ -66,3 +66,31 @@ General project rules:
 - Compound information is scoped to `WorldState.current_location_id`. Uruk factions and Eanna content must not leak into Umma or Nippur; show local institutions and seated officials.
 - `WorldSimulator` and `TravelService` record categorized changes in `WorldState.last_period_deltas`. Clear at the start of each simulation period, persist via `SaveCodec`, and render only the latest four in `SINCE LAST PERIOD`. UI must not infer causal events from resource snapshots.
 - Cuneiform fonts belong under `res://assets/fonts/`; preserve license/provenance text when moving existing assets.
+
+
+## Living office agenda invariants
+
+- `WorldSimulator._simulate_people()` iterates institution members and invokes one generic `OfficeRunner`; no named-character dispatch or per-office decision logic belongs there.
+- `OfficeRunner` selects a LimboAI `.tres` by office ID, seeds Blackboard with `actor`, `institution`, and `world` (plus institution ID), and ticks manually once per period.
+- BT resources own decision flow. Shared condition/action tasks read Blackboard; one `OfficeAgendaResolver` validates and commits typed mutations. Never create per-office agent or resolver classes.
+- Grain-clerk and granary-clerk tokens share the grain BT. Umma granary and canal office are separate institutions. Nin-Enlil is seated only in `umma_granary`; Ur-Mes only in `umma_canal_bailiff`.
+- The Umma canal institution declares both `canal_bailiff` and `granary_clerk` in its staffed-office roles; the actual named seats remain distinct: Ur-Mes holds `canal_bailiff` in the canal institution, and Nin-Enlil holds `granary_clerk` in the granary. Do not double-list Nin-Enlil as a canal member.
+- Runtime membership and office maps rebuild from living valid members. Vacancies may be filled by eligible unseated people in the institution's place or parent settlement; do not retain orphan pointers.
+- Office cooldowns use the absolute calendar index, which is negative in BCE. Treat a missing prior timestamp as first-use-ready; do not use a small negative sentinel such as `-100` for elapsed-time comparisons.
+- `umma_granary` is registry-loaded from a Resource, uses a child place under Umma, and owns local stockpiles. Definitions remain immutable.
+- Bailiff forms retain issuing/target institution IDs and `created_period`; local canal requisitions carry priority 7 so they survive the four-slot board, and requests older than four periods escalate through the existing dispatch circuit. A requisition that becomes a dispatch while remote keeps its dispatch flag/tag/priority on arrival, but the travel gate clears once the player is local. Archive and foreman consequences name the acting official and use existing debt/opinion/period-delta/Epic state.
+- Office agendas, seats, pending forms, and local state round-trip through `SaveCodec`.
+
+## Living office acceptance commands
+
+Run these headlessly with the pinned Godot 4.7.2 and LimboAI 1.8.1 GDExtension installed:
+
+```sh
+godot --headless --path . -s tests/test_living_offices.gd
+godot --headless --path . -s tests/test_evidence_and_compound_context.gd
+godot --headless --path . -s tests/test_travel_circuit.gd
+godot --headless --path . -s tests/test_epics_and_challenges_circuit.gd
+godot --headless --editor --path . --quit
+```
+
+The office regression must exercise actual seeded seating and BT execution, not manually assigning the named officials' office IDs in the test fixture.

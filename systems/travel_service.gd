@@ -94,6 +94,7 @@ func execute_selected_journey(world: WorldState, actor: PersonEntity, destinatio
 	# The authoritative simulator owns every elapsed period; UI only presents arrival.
 	for _period_index in range(periods):
 		simulator.advance_period(world)
+	_mark_arriving_dispatches(world, destination_id)
 	world.current_location_id = destination_id
 	world.last_period_deltas.append({"category": "travel", "text": "Arrived at %s (%s)" % [destination_name, "-1 silver fare paid" if fare_paid > 0 else "passage fee entered as debt"]})
 	while world.last_period_deltas.size() > 12:
@@ -120,3 +121,23 @@ func execute_selected_journey(world: WorldState, actor: PersonEntity, destinatio
 
 func _failure(reason: String) -> Dictionary:
 	return {"success": false, "error": reason}
+
+
+func _mark_arriving_dispatches(world: WorldState, destination_id: StringName) -> void:
+	for index in range(world.pending_forms.size()):
+		var form: Dictionary = world.pending_forms[index]
+		var form_type := StringName(form.get("form_type", ""))
+		var is_requisition := bool(form.get("is_requisition", false)) or String(form_type).to_lower().contains("requisition")
+		if not is_requisition or bool(form.get("dispatch", false)):
+			continue
+		var institution_id := StringName(form.get("institution_id", ""))
+		var institution: Dictionary = world.institutions.get(institution_id, {})
+		var form_place := StringName(institution.get("place_id", form.get("place_id", form.get("subject_id", ""))))
+		if form_place != destination_id:
+			continue
+		var created_period := int(form.get("created_period", world.current_period_index()))
+		if world.current_period_index() - created_period <= 4:
+			continue
+		form["dispatch"] = true
+		form["dispatch_destination_id"] = destination_id
+		world.pending_forms[index] = form

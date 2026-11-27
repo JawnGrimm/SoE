@@ -9,8 +9,7 @@ const CANAL_CASES_REQUIRED := 8
 
 const MIN_STOCK := 0
 const FORM_COOLDOWN_PERIODS := 3
-const GrainClerkAgendaTree = preload("res://data/behavior_trees/bt_grain_clerk_agenda.tres")
-const GrainClerkAgentScript = preload("res://systems/ai/grain_clerk_agent.gd")
+const OfficeRunnerScript = preload("res://systems/ai/office_runner.gd")
 
 var definition_registry: DefinitionRegistry
 
@@ -22,73 +21,43 @@ func advance_period(world: WorldState) -> void:
 		return
 	world.last_period_deltas.clear()
 	world.advance_period()
-	_deliver_grain_clerk_dockets(world)
+	_deliver_office_dockets(world)
 	_simulate_economy(world)
 	_simulate_institutions(world)
 	_simulate_epics(world)
 	_simulate_personal_upkeep(world)
-	_tick_audit_reprimands(world)
 	_simulate_people(world)
-	_tick_grain_clerk_agenda(world)
 	_generate_forms(world)
 
-func _deliver_grain_clerk_dockets(world: WorldState) -> void:
-	var institution: Dictionary = world.institutions.get(&"eanna_household", {})
-	if institution.is_empty():
-		return
-	var queue: Array = institution.get("npc_docket_queue", []).duplicate(true)
-	if queue.is_empty():
-		return
-	var remaining: Array = []
-	var now := world.current_period_index()
-	for docket in queue:
-		var npc_evidence: Dictionary = docket.get("npc_evidence", {})
-		if int(docket.get("due_period", now + 1)) > now:
-			remaining.append(docket)
+func _deliver_office_dockets(world: WorldState) -> void:
+	for institution_id in world.institutions.keys():
+		var institution: Dictionary = world.institutions[institution_id]
+		var queue: Array = institution.get("npc_docket_queue", []).duplicate(true)
+		if queue.is_empty():
 			continue
-		var form_type := StringName(docket.get("form_type", &"held_barley"))
-		var subject_id := StringName(docket.get("subject_id", &"north_bay"))
-		world.enqueue_form({
-			"id": StringName("ur_nanna_grain_docket_%d" % now),
-			"form_type": form_type,
-			"subject_id": subject_id,
-			"urgency": int(docket.get("urgency", 4)),
-			"year": world.year,
-			"generated_by": &"ur_nanna",
-			"generation_reason": &"autonomous_grain_clerk_action",
-			"npc_intent_id": StringName(docket.get("intent_id", "")),
-			"npc_evidence": npc_evidence.duplicate(true),
-		})
-	institution["npc_docket_queue"] = remaining
-	world.institutions[&"eanna_household"] = institution
-
-func _tick_grain_clerk_agenda(world: WorldState) -> void:
-	var clerk := world.get_person(&"ur_nanna")
-	if clerk == null or clerk.office_id != &"grain_clerk":
-		return
-	var institution: Dictionary = world.institutions.get(&"eanna_household", {})
-	institution["agenda_evaluation_count"] = int(institution.get("agenda_evaluation_count", 0)) + 1
-	world.institutions[&"eanna_household"] = institution
-	var main_loop := Engine.get_main_loop()
-	if not (main_loop is SceneTree):
-		push_warning("WorldSimulator: cannot tick Ur-Nanna's LimboAI agenda without a SceneTree")
-		return
-	var scene_tree := main_loop as SceneTree
-	var agent: Node = GrainClerkAgentScript.new()
-	agent.set("world", world)
-	agent.set("clerk", clerk)
-	scene_tree.root.add_child(agent)
-	var bt_player := BTPlayer.new()
-	bt_player.set_active(false)
-	bt_player.set_update_mode(BTPlayer.MANUAL) # Exactly one explicit update per world period.
-	bt_player.set_agent_node(NodePath(".."))
-	bt_player.set_scene_root_hint(agent)
-	bt_player.set_behavior_tree(GrainClerkAgendaTree)
-	agent.add_child(bt_player)
-	bt_player.set_active(true)
-	bt_player.update(0.0)
-	bt_player.set_active(false)
-	agent.free()
+		var remaining: Array = []
+		var now := world.current_period_index()
+		for docket in queue:
+			if int(docket.get("due_period", now + 1)) > now:
+				remaining.append(docket)
+				continue
+			var clerk_id := StringName(docket.get("clerk_id", docket.get("generated_by", "")))
+			var form_type := StringName(docket.get("form_type", "held_barley"))
+			var subject_id := StringName(docket.get("subject_id", institution.get("place_id", "")))
+			world.enqueue_form({
+				"id": StringName("office_docket_%s_%d" % [String(clerk_id), now]),
+				"form_type": form_type,
+				"subject_id": subject_id,
+				"urgency": int(docket.get("urgency", 4)),
+				"year": world.year,
+				"generated_by": clerk_id,
+				"generation_reason": &"autonomous_office_action",
+				"npc_intent_id": StringName(docket.get("intent_id", "")),
+				"npc_evidence": docket.get("npc_evidence", {}).duplicate(true),
+				"institution_id": StringName(institution_id)
+			})
+		institution["npc_docket_queue"] = remaining
+		world.institutions[institution_id] = institution
 
 func _get_definition_registry() -> DefinitionRegistry:
 	if definition_registry != null:
@@ -277,33 +246,14 @@ func _simulate_personal_upkeep(world: WorldState) -> void:
 	else:
 		player.flags[&"unpaid_upkeep"] = int(player.flags.get(&"unpaid_upkeep", 0)) + 2 - silver
 		player.resources[&"silver"] = 0
-		var senior := world.get_person(&"shuruppak_ilu")
-		if senior != null:
-			senior.change_opinion(player.id, -1, "The apprentice's household account fell into arrears.", world.year)
+		for official_value in world.people.values():
+			var official: PersonEntity = official_value
+			if official != null and official.office_id == &"archive_keeper":
+				official.change_opinion(player.id, -1, "The apprentice's household account fell into arrears.", world.year)
+				break
 		world.cedar_desk_log.append({"year": world.year, "period": world.period, "title": "UPKEEP IN ARREARS", "summary": "The household could not pay its two-silver seasonal account. Debt is recorded; work remains available."})
 		_record_period_delta(world, "arrears", "Upkeep in arrears: %d silver held (%d debt accrued)" % [silver, 2 - silver])
 
-func _tick_audit_reprimands(world: WorldState) -> void:
-	if world.periods_elapsed <= 0 or world.periods_elapsed % 6 != 0:
-		return
-	var player := world.get_player()
-	if player == null:
-		return
-	var exposure := int(player.flags.get(&"audit_exposure", 0))
-	if exposure <= 0:
-		return
-	player.flags[&"audit_exposure"] = exposure - 1
-	var silver := int(player.resources.get(&"silver", 0))
-	if silver >= 2:
-		player.resources[&"silver"] = silver - 2
-	else:
-		player.flags[&"audit_debt"] = int(player.flags.get(&"audit_debt", 0)) + 2 - silver
-		player.resources[&"silver"] = 0
-	var archivist := world.get_person(&"shuruppak_ilu")
-	if archivist != null:
-		archivist.change_opinion(player.id, -2, "A concealed account was found in the archive audit.", world.year)
-	world.cedar_desk_log.append({"year": world.year, "period": world.period, "title": "ARCHIVE REPRIMAND", "summary": "Shuruppak-ilu found a concealed account. Two silver were fined or entered as debt."})
-	_record_period_delta(world, "audit", "Archive reprimand: -2 silver debt to Shuruppak-ilu" if silver < 2 else "Archive reprimand: -2 silver fine to Shuruppak-ilu")
 
 func _simulate_economy(world: WorldState) -> void:
 	var p := world.period
@@ -423,26 +373,23 @@ func _simulate_institutions(world: WorldState) -> void:
 		world.institutions[institution_id] = institution
 
 func _simulate_people(world: WorldState) -> void:
-	# People respond to actual institutional scarcity, not random opinion jitter.
-	var grain_clerk := world.get_person(&"ur_nanna")
-	var foreman := world.get_person(&"enlil_kisu")
-	var senior := world.get_person(&"shuruppak_ilu")
-	var player_id := world.player_id
-	if player_id == &"" or world.get_player() == null:
+	if world == null:
 		return
-	var now := world.current_period_index()
-	if grain_clerk != null and foreman != null:
-		var labor := world.get_resource(&"labor")
-		if labor < 8 and not world.has_flag(&"sim_labor_shortage_reaction", now):
-			foreman.change_opinion(player_id, -1, "The storehouse labor pool fell below the crew's workable minimum", world.year)
-			grain_clerk.change_opinion(player_id, -1, "Labor shortage increased pressure on the grain office", world.year)
-			world.set_flag(&"sim_labor_shortage_reaction", now + 6)
-		elif labor >= 24 and world.get_resource(&"barley") >= 220 and world.has_flag(&"sim_labor_shortage_reaction", now):
-			foreman.change_opinion(player_id, 1, "The stores and labor pool recovered enough to support the crew", world.year)
-			world.clear_flag(&"sim_labor_shortage_reaction")
-	if senior != null and world.get_resource(&"barley") < 100 and not world.has_flag(&"sim_provisioning_reaction", now):
-		senior.change_opinion(player_id, -1, "The archive's provisioning concerns reached the storehouse", world.year)
-		world.set_flag(&"sim_provisioning_reaction", now + 6)
+	var institution_ids: Array[StringName] = []
+	for value in world.institutions.keys():
+		institution_ids.append(StringName(value))
+	institution_ids.sort()
+	var simulated_officials: Dictionary = {}
+	for institution_id in institution_ids:
+		var institution: Dictionary = world.institutions.get(institution_id, {})
+		for member_value in institution.get("members", []):
+			var official := world.get_person(StringName(member_value))
+			if official == null or official.office_id == &"" or bool(official.flags.get(&"dead", false)):
+				continue
+			if simulated_officials.has(official.id):
+				continue
+			simulated_officials[official.id] = true
+			OfficeRunnerScript.tick_official(world, official, institution_id)
 
 func _generate_forms(world: WorldState) -> void:
 	var barley := world.get_resource(&"barley")
@@ -489,19 +436,6 @@ func _generate_forms(world: WorldState) -> void:
 	if barley >= 40 and barley < 180 and labor <= 16:
 		_offer_if_ready(world, &"load_claim", &"south_court_storehouse", 2, &"reserve_transport_allocation_conflict")
 
-	for institution_id in world.institutions.keys():
-		var institution: Dictionary = world.institutions[institution_id]
-		var place_id := StringName(institution.get("place_id", ""))
-		if place_id == &"" or _place_is_uruk(world, place_id):
-			continue
-		var stock: Dictionary = institution.get("stockpiles", {})
-		var thresholds: Dictionary = institution.get("pressure_thresholds", {})
-		var barley_warn := int(thresholds.get(&"barley_warn", 105))
-		var labor_warn := int(thresholds.get(&"labor_warn", 8))
-		var textiles_warn := int(thresholds.get(&"textiles_warn", 3))
-		var shortage := (stock.has(&"barley") and int(stock.get(&"barley", 0)) < barley_warn) or (stock.has(&"labor") and int(stock.get(&"labor", 0)) < labor_warn) or (stock.has(&"textiles") and int(stock.get(&"textiles", 0)) < textiles_warn)
-		if shortage:
-			_offer_if_ready(world, &"bailiff_requisition", place_id, 2, &"local_institution_shortage", StringName(institution_id))
 
 func _offer_if_ready(world: WorldState, form_type: StringName, subject_id: StringName, urgency: int, reason: StringName, institution_id: StringName = &"") -> void:
 	if world.has_pending_form(form_type, subject_id):

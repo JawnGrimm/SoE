@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="InstitutionDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/definitions/institution_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"umma_granary"
+display_name = "Umma Provincial Granary"
+institution_type = &"granary"
+place_id = &"umma_granary_yard"
+era_id = &"uruk_storehouse"
+members = Array[StringName]([])
+interests = Array[StringName]([&"barley", &"labor", &"grain"])
+staffed_offices = Array[StringName]([&"granary_clerk"])
+starting_stockpiles = {&"barley": 100, &"labor": 10}
+periodic_deltas = {&"barley": -6, &"labor": -1}
+harvest_deltas = {&"barley": 20, &"labor": 2}
+pressure_thresholds = {&"barley_warn": 95, &"barley_crit": 65, &"labor_warn": 7, &"labor_crit": 5}
+starting_activity_count = 0
+ledger_work_title = "Reconcile Umma Granary Deliveries"
+ledger_work_summary = "Reconcile the provincial barley bins, delivery tallies, and labor allotment."
+ledger_work_priority = 2

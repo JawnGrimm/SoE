@@ -88,6 +88,9 @@ jobs:
       - name: Run periodic grain clerk agenda tests
         run: godot --headless --path . --script res://tests/test_grain_clerk_agenda.gd
 
+      - name: Run living office agenda and succession tests
+        run: godot --headless --path . --script res://tests/test_living_offices.gd
+
       - name: Run developer command router tests
         run: godot --headless --path . --script res://tests/test_dev_command_router.gd
 

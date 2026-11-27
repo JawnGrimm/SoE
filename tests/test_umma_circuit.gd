@@ -22,8 +22,15 @@ func _run() -> void:
 	var umma: Dictionary = world.institutions.get(&"umma_canal_bailiff", {})
 	_check(not umma.is_empty() and StringName(umma.get("place_id", "")) == &"umma", "Registry seeding creates Umma's canal bailiff institution")
 	var office_map: Dictionary = umma.get("offices", {})
+	var staffed_offices: Array = umma.get("staffed_offices", [])
+	_check(staffed_offices.has(&"canal_bailiff") and staffed_offices.has(&"granary_clerk"), "Umma canal institution declares both canal_bailiff and granary_clerk office roles")	
+	var nin_enlil := world.get_person(&"character_0012")
+	var ur_mes := world.get_person(&"character_0013")
+	var granary: Dictionary = world.institutions.get(&"umma_granary", {})
+	_check(nin_enlil != null and nin_enlil.office_id == &"granary_clerk" and nin_enlil.id in granary.get("members", []) and nin_enlil.id not in umma.get("members", []), "Nin-Enlil is seated as granary_clerk only in the Umma granary")
+	_check(ur_mes != null and ur_mes.office_id == &"canal_bailiff" and ur_mes.id in umma.get("members", []) and StringName(office_map.get(&"canal_bailiff", "")) == ur_mes.id, "Ur-Mes is seated as canal_bailiff in the Umma canal institution")
 	var seated_ids: Array[StringName] = []
-	for office_id in [&"canal_bailiff", &"umma_granary_clerk"]:
+	for office_id in [&"canal_bailiff", &"granary_clerk"]:
 		var person_id := StringName(office_map.get(office_id, ""))
 		var person := world.get_person(person_id)
 		_check(person != null and person.location_id == &"umma" and person.office_id == office_id, "Umma office %s is held by a seated local Tier 2 resident" % office_id)
@@ -35,7 +42,7 @@ func _run() -> void:
 	SeederScript.seed_campaign(second_world, 32003200, true, registry)
 	var second_umma: Dictionary = second_world.institutions.get(&"umma_canal_bailiff", {})
 	var second_offices: Dictionary = second_umma.get("offices", {})
-	_check(StringName(second_offices.get(&"canal_bailiff", "")) == seated_ids[0] and StringName(second_offices.get(&"umma_granary_clerk", "")) == seated_ids[1], "Institutional seating is deterministic for an identical world seed")
+	_check(StringName(second_offices.get(&"canal_bailiff", "")) == seated_ids[0] and StringName(second_offices.get(&"granary_clerk", "")) == seated_ids[1], "Institutional seating is deterministic for an identical world seed")
 
 	var network := NetworkScript.new()
 	_check(network.configure(world, registry.all_places(), registry.all_routes(), &"uruk_storehouse"), "Regional route graph configures for Umma")
@@ -73,6 +80,9 @@ func _run() -> void:
 			procedural = opportunity
 	_check(not umma_ledger.is_empty(), "Umma's institution-specific ledger is on the local board")
 	_check(not local_form.is_empty(), "Umma's own low labor stock generates a local bailiff requisition")
+	_check(int(local_form.get("priority", 0)) >= 7, "The local bailiff requisition keeps priority on the four-slot Umma board")
+	var canal_after_travel: Dictionary = world.institutions.get(&"umma_canal_bailiff", {})
+	_check(int(canal_after_travel.get("last_bailiff_requisition_period", -100)) == world.current_period_index() and int(canal_after_travel.get("office_agenda_evaluation_count", 0)) > 0, "The seeded canal bailiff agenda ticks and records Ur-Mes's requisition during travel")
 	_check(not local_pressure.is_empty(), "Umma pressure work is derived from Umma stockpiles")
 	for candidate in opportunities:
 		var candidate_source: Dictionary = candidate.get("source_data", {})

@@ -1,0 +1,29 @@
+[gd_resource type="BehaviorTree" format=3 load_steps=11]
+[ext_resource type="Script" path="res://systems/ai/tasks/bt_office_condition.gd" id="1_condition"]
+[ext_resource type="Script" path="res://systems/ai/tasks/bt_office_action.gd" id="2_action"]
+[sub_resource type="BlackboardPlan" id="Plan"]
+[sub_resource type="BTCondition" id="Cooldown"]
+script = ExtResource("1_condition")
+condition_id = &"foreman_reaction_cooldown_ready"
+[sub_resource type="BTCondition" id="Thirsty"]
+script = ExtResource("1_condition")
+condition_id = &"foreman_thirsty_diggers"
+[sub_resource type="BTCondition" id="Labor"]
+script = ExtResource("1_condition")
+condition_id = &"foreman_labor_below_warning"
+[sub_resource type="BTSelector" id="Shortage"]
+custom_name = "Thirst or Unworkable Labor"
+children = [SubResource("Thirsty"), SubResource("Labor")]
+[sub_resource type="BTAction" id="Disruption"]
+script = ExtResource("2_action")
+action_id = &"foreman_disrupt_crew"
+[sub_resource type="BTSequence" id="Unrest"]
+custom_name = "Report Crew Unrest"
+children = [SubResource("Cooldown"), SubResource("Shortage"), SubResource("Disruption")]
+[sub_resource type="BTSelector" id="Foreman"]
+custom_name = "Carrier Foreman Agenda"
+children = [SubResource("Unrest")]
+[resource]
+description = "Foreman BT reacts to thirsty diggers or local labor shortage; resolver applies existing canal/Epic disruption state."
+blackboard_plan = SubResource("Plan")
+root_task = SubResource("Foreman")

@@ -22,13 +22,13 @@ func _run() -> void:
 	var world := WorldState.new()
 	UrukSeederScript.seed_campaign(world, 32003200, true, registry)
 	_check(registry.validate_world_references(), "All authored settlement, parent-place, and institution references resolve")
-	_check(registry.all_places().size() == 20 and registry.all_institutions().size() == 5, "The registry loads authored regional geography and institution definitions")
+	_check(registry.all_places().size() == 21 and registry.all_institutions().size() == 6, "The registry loads authored regional geography and institution definitions")
 	_check(world.places.get(&"north_bay", {}).get("parent", &"") == &"eanna_precinct" and world.places.get(&"eanna_precinct", {}).get("parent", &"") == &"uruk", "Work-area geography preserves its authored settlement hierarchy")
 	var simulator := WorldSimulatorScript.new(registry)
 	var network := RouteNetworkScript.new()
 	var travel := TravelServiceScript.new()
 	_check(world.current_location_id == &"uruk", "A new campaign begins in Uruk")
-	_check(network.configure(world, registry.all_places(), registry.all_routes(), &"uruk_storehouse") and network.places.size() == 20 and network.routes.size() == 2, "The route network configures from the complete registered regional data set")
+	_check(network.configure(world, registry.all_places(), registry.all_routes(), &"uruk_storehouse") and network.places.size() == 21 and network.routes.size() == 2, "The route network configures from the complete registered regional data set")
 	_check(travel.configure(network, simulator), "TravelService configures with the route graph and authoritative world simulator")
 	var initial_total_periods := world.total_periods
 	var invalid_journey := travel.travel(world, &"river_uruk_nippur", &"umma")
@@ -193,7 +193,7 @@ func _run() -> void:
 		if StringName(candidate.get("source_id", "")) == dispatch_form_id:
 			arrived_dispatch = candidate
 			break
-	_check(not arrived_dispatch.is_empty() and not bool(arrived_dispatch.get("requires_travel", true)), "The Umma requisition becomes a local assignment after arrival")
+	_check(not arrived_dispatch.is_empty() and bool(arrived_dispatch.get("dispatch", false)) and not bool(arrived_dispatch.get("requires_travel", true)) and StringName("DISPATCH FROM UMMA") in arrived_dispatch.get("tags", []), "The aged Umma requisition keeps dispatch priority and tag but becomes local after arrival")
 	_check(AssignmentPipelineScript.begin(world, arrived_dispatch, dispatch_actor), "The player can open form_000005 after disembarking in Umma")
 
 	print("Nippur and Umma travel circuits: %d checks, %d failures" % [checks, failures.size()])

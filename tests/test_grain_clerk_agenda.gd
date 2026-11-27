@@ -142,7 +142,7 @@ func _run() -> void:
 	routine_world.repair_hazard(&"north_bay", &"roof_leak")
 	var routine_institution: Dictionary = routine_world.institutions[&"eanna_household"]
 	var routine_stock: Dictionary = routine_institution.get("stockpiles", {})
-	routine_stock[&"barley"] = 100
+	routine_stock[&"barley"] = 150
 	routine_stock[&"silver"] = 10
 	routine_institution["stockpiles"] = routine_stock
 	routine_world.institutions[&"eanna_household"] = routine_institution
