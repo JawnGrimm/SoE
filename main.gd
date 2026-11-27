@@ -752,11 +752,18 @@ func _schedule_next_case() -> void:
 			"priority": 100
 		})
 		while assignment_opportunities.size() > AssignmentPipeline.BOARD_SIZE:
-			var remove_index := assignment_opportunities.size() - 1
-			for candidate_index in range(assignment_opportunities.size() - 1, 0, -1):
-				if StringName(assignment_opportunities[candidate_index].get("kind", "")) != &"procedural_docket":
+			var remove_index := -1
+			var lowest_priority := 2147483647
+			for candidate_index in range(1, assignment_opportunities.size()):
+				var candidate: Dictionary = assignment_opportunities[candidate_index]
+				if StringName(candidate.get("kind", "")) in [&"event", &"procedural_docket"]:
+					continue
+				var candidate_priority := int(candidate.get("priority", 0))
+				if candidate_priority <= lowest_priority:
+					lowest_priority = candidate_priority
 					remove_index = candidate_index
-					break
+			if remove_index < 0:
+				remove_index = assignment_opportunities.size() - 1
 			assignment_opportunities.remove_at(remove_index)
 	if not assignment_opportunities.is_empty():
 		_show_assignment_board()
@@ -1055,7 +1062,7 @@ func _show_world_engagement() -> void:
 	var payload := {
 		"title": String(record.get("title", "ASSIGNMENT")),
 		"left_card": {"title": "WORLD SITUATION / %s" % String(record.get("kind", "work")).to_upper(), "speaker_id": &"", "quote": left_quote, "facts": "OPENED: %s / PERIOD %d" % [CalendarFormatter.format_year(world.year), world.period + 1]},
-		"right_card": {"title": "RESPONSIBLE OFFICE", "speaker_id": employer.id if employer != null else &"", "quote": right_quote, "facts": "Marks upon the docket: %d of four.\n\n%s" % [actions.size(), "\n\n".join(evidence_lines)]},
+		"right_card": {"title": "RESPONSIBLE OFFICE", "speaker_id": employer.id if employer != null else &"", "quote": right_quote, "facts": "%d / %d inquiries spent — choose your disposition%s\n\n%s" % [actions.size(), AssignmentPipeline.MAX_INVESTIGATION_ACTIONS, " — enter judgment" if actions.size() >= AssignmentPipeline.MAX_INVESTIGATION_ACTIONS else "", "\n\n".join(evidence_lines)]},
 		"prompt": "Investigate the situation. Your skills affect what you can establish; your judgment determines what is entered.",
 		"choices": []
 	}
@@ -1065,7 +1072,7 @@ func _show_world_engagement() -> void:
 		var done := actions.has(action_id)
 		payload.choices.append({"label": String(action.label)})
 		callbacks.append(_world_assignment_action.bind(action_id))
-		payload.choices.back()["disabled"] = done
+		payload.choices.back()["disabled"] = done or actions.size() >= AssignmentPipeline.MAX_INVESTIGATION_ACTIONS
 	_render_docket_payload(payload, callbacks)
 	if not latest_investigation_scene.is_empty():
 		dossier.visible = true
