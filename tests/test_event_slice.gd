@@ -135,8 +135,14 @@ func _run() -> void:
 	var assignment_world := WorldState.new()
 	var assignment_actor := UrukSeeder.seed_campaign(assignment_world, 44004400)
 	_check(assignment_actor.skills.levels.values().all(func(level: int) -> bool: return level >= 1), "All six core skills should begin at level one")
+	var rng_before_board := assignment_world.rng_narrative.state
 	var opportunities := AssignmentPipeline.generate_opportunities(assignment_world, assignment_actor, &"path_civil")
+	var first_preview := opportunities.duplicate(true)
+	var second_preview := AssignmentPipeline.generate_opportunities(assignment_world, assignment_actor, &"path_civil")
 	_check(opportunities.size() == 4, "AssignmentPipeline should present three world opportunities and one career-path docket")
+	_check(assignment_world.rng_narrative.state == rng_before_board, "Building the opportunity board must not advance narrative RNG")
+	_check(assignment_world.recent_archetypes.is_empty() and assignment_world.recent_npc_pairs.is_empty(), "Board previews must not commit docket rotation history")
+	_check(first_preview == second_preview, "Repeated board generation in the same period should produce the same procedural preview")
 	var opportunity_kinds: Array[StringName] = []
 	for opportunity in opportunities:
 		opportunity_kinds.append(StringName(opportunity.get("kind", "")))
@@ -146,7 +152,68 @@ func _run() -> void:
 		if StringName(opportunity.get("kind", "")) == &"procedural_docket": career_docket = opportunity
 	var career_payload: Dictionary = career_docket.get("source_data", {})
 	_check(StringName(career_payload.get("path_id", "")) == &"path_civil" and String(career_payload.get("docket_kind", "")) == "local_path", "The normal assignment board should carry a docket authored for the selected career path")
-	_check(assignment_world.recent_archetypes.size() == 1 and assignment_world.recent_npc_pairs.size() == 1, "Generating a career docket should record its archetype and NPC pair for saveable diversity history")
+	AssignmentGeneratorScript.record_selection(assignment_world, career_payload)
+	_check(assignment_world.recent_archetypes.size() == 1 and assignment_world.recent_npc_pairs.size() == 1, "Opening a career docket should record its archetype and NPC pair for saveable diversity history")
+	# Abandoning a period-keyed opportunity removes it from this period's board.
+	var abandoned_form_opportunity: Dictionary = {}
+	for candidate in opportunities:
+		if StringName(candidate.get("kind", "")) == &"form":
+			abandoned_form_opportunity = candidate
+			break
+	if not abandoned_form_opportunity.is_empty():
+		_check(AssignmentPipeline.begin(assignment_world, abandoned_form_opportunity, assignment_actor), "A board form should begin")
+		var abandoned_id := StringName(abandoned_form_opportunity.get("id", ""))
+		var abandoned_record: Dictionary = assignment_world.assignments[abandoned_id]
+		abandoned_record["status"] = "abandoned"
+		assignment_world.assignments[abandoned_id] = abandoned_record
+		var after_abandon := AssignmentPipeline.generate_opportunities(assignment_world, assignment_actor, &"path_civil")
+		var abandoned_reappeared := false
+		for candidate in after_abandon:
+			if StringName(candidate.get("id", "")) == abandoned_id:
+				abandoned_reappeared = true
+		_check(not abandoned_reappeared, "An abandoned same-period opportunity must not reappear and become unopenable")
+		assignment_world.assignments.erase(abandoned_id)
+
+	# Sponsor institution resolves to its place: a Uruk Epic review is not local in Nippur.
+	var regional_board_world := WorldState.new()
+	regional_board_world.current_location_id = &"nippur"
+	regional_board_world.places[&"uruk"] = {"name": "Uruk", "parent": &""}
+	regional_board_world.places[&"nippur"] = {"name": "Nippur", "parent": &""}
+	regional_board_world.institutions[&"eanna_household"] = {"place_id": &"uruk", "name": "Eanna"}
+	regional_board_world.epics[&"great_canal_cut"] = {"active": true, "completed": false, "progress": 10, "progress_resource": &"canal_progress", "target": 100, "sponsor_institution": &"eanna_household", "stage": "survey", "review_cycle": 0}
+	var regional_board := AssignmentPipeline.generate_opportunities(regional_board_world, assignment_actor, &"path_civil")
+	var remote_review_found := false
+	for candidate in regional_board:
+		if StringName(candidate.get("kind", "")) == &"project_review":
+			remote_review_found = true
+	_check(not remote_review_found, "Uruk Epic review must be hidden while the player is in Nippur")
+
+	# A non-Uruk career docket uses residents at the current settlement as its speakers.
+	var local_docket_world := WorldState.new()
+	local_docket_world.current_location_id = &"umma"
+	for resident_id in [&"umma_resident_a", &"umma_resident_b"]:
+		var resident := PersonEntity.new()
+		resident.id = resident_id
+		resident.display_name = String(resident_id).replace("_", " ").capitalize()
+		resident.location_id = &"umma"
+		local_docket_world.people[resident_id] = resident
+	var local_docket := AssignmentGeneratorScript.generate(local_docket_world, assignment_actor, &"path_civil", false)
+	var local_left: Dictionary = local_docket.get("left_card", {})
+	var local_right: Dictionary = local_docket.get("right_card", {})
+	var local_speakers := [StringName(local_left.get("speaker_id", "")), StringName(local_right.get("speaker_id", ""))]
+	_check(StringName(local_docket.get("place_id", "")) == &"umma" and String(local_docket.get("docket_kind", "")) == "regional_local", "Regional procedural docket should be located at the current settlement")
+	_check(local_speakers.has(&"umma_resident_a") and local_speakers.has(&"umma_resident_b"), "Regional procedural docket should use local residents as its speakers")
+	var local_choices: Array = local_docket.get("choices", [])
+	var local_epic_progress := int(local_choices[0].get("effects", {}).get("epic_progress", -1)) if not local_choices.is_empty() else -1
+	_check(local_epic_progress == 0, "Regional local docket must not advance Uruk's Epic")
+	var healthy_canal := {"kind": &"project_review", "source_id": &"great_canal_cut", "source_data": {"stage": "cutting", "progress": 40, "target": 100, "stalled": false, "active_problem": "", "history_notes": []}}
+	var narrated_healthy_canal := AssignmentNarratorScript.translate_opportunity(healthy_canal)
+	_check(String(narrated_healthy_canal.get("title", "")) == "THE CANAL CUT", "Healthy canal milestone should use stage-appropriate narration")
+	var stalled_canal := healthy_canal.duplicate(true)
+	stalled_canal.source_data.stalled = true
+	var narrated_stalled_canal := AssignmentNarratorScript.translate_opportunity(stalled_canal)
+	_check(String(narrated_stalled_canal.get("title", "")) == "THE UPPER EMBANKMENT STALLED", "Stalled canal review should retain the crisis narration")
+
 	var review_baseline := {"stage": "survey", "last_reviewed_progress": 40, "last_reviewed_stage": "survey"}
 	_check(not AssignmentPipeline._project_review_due(assignment_world, &"great_canal_cut", review_baseline, 40), "A project review should not recur without material change")
 	_check(AssignmentPipeline._project_review_due(assignment_world, &"great_canal_cut", review_baseline, 60), "A project review may recur after twenty points of progress")
@@ -160,6 +227,7 @@ func _run() -> void:
 	for opportunity in martial_opportunities:
 		if StringName(opportunity.get("kind", "")) == &"procedural_docket": martial_docket = opportunity
 	var martial_payload: Dictionary = martial_docket.get("source_data", {})
+	AssignmentGeneratorScript.record_selection(assignment_world, martial_payload)
 	_check(StringName(martial_payload.get("path_id", "")) == &"path_martial", "A changed career orientation should generate a matching martial docket on the ordinary board")
 	_check(assignment_world.recent_npc_pairs.size() == 2 and assignment_world.recent_npc_pairs[0] != assignment_world.recent_npc_pairs[1] and assignment_world.recent_archetypes[0] != assignment_world.recent_archetypes[1], "Recent docket history should rotate NPC pairs and archetypes")
 	var civil_hazard_priority := 0

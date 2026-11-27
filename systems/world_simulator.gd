@@ -113,6 +113,7 @@ func _simulate_epics(world: WorldState) -> void:
 				"progress_resource": definition.progress_resource,
 				"target": definition.target,
 				"title": definition.title,
+				"sponsor_institution": definition.sponsor_institution,
 				"era_id": definition.era_id,
 				"initial_stage": definition.initial_stage,
 				"stage": definition.initial_stage,
@@ -132,6 +133,7 @@ func _simulate_epics(world: WorldState) -> void:
 		state["progress_resource"] = definition.progress_resource
 		state["target"] = definition.target
 		state["title"] = definition.title
+		state["sponsor_institution"] = definition.sponsor_institution
 		state["era_id"] = definition.era_id
 		state["initial_stage"] = definition.initial_stage
 		if not era_matches:
@@ -147,6 +149,8 @@ func _simulate_epic(world: WorldState, definition: EpicDef, state: Dictionary) -
 	var progress := clampi(world.get_resource(resource_id), 0, definition.target)
 	if bool(state.get("completed", false)):
 		state["progress"] = progress
+		state["stalled"] = false
+		state["active_problem"] = ""
 		world.epics[definition.id] = state
 		return
 
@@ -168,6 +172,8 @@ func _simulate_epic(world: WorldState, definition: EpicDef, state: Dictionary) -
 	var note := ""
 	var inundation := world.period >= definition.inundation_period_min and world.period <= definition.inundation_period_max
 	var work_stalled := disruption or labor < definition.regression_labor_below or barley < definition.partial_barley
+	state["stalled"] = work_stalled
+	state["active_problem"] = "disruption" if disruption else ("labor_shortage" if labor < definition.regression_labor_below else ("barley_shortage" if barley < definition.partial_barley else ""))
 	if inundation and work_stalled:
 		progress = maxi(0, progress - definition.regression_amount)
 		if disruption:
