@@ -18,7 +18,8 @@ static func evaluate(world: WorldState, actor: PersonEntity) -> Dictionary:
 	var debt := maxi(0, int(actor.resources.get(&"debt", actor.flags.get(&"debt", 0))))
 	var unpaid_upkeep := maxi(0, int(actor.flags.get(&"unpaid_upkeep", 0)))
 	var corruption_flags := [&"phantom_barley_measure", &"entangled_brewery_accounts", &"complicit"]
-	var corruption := int(world.world_flags.get(&"audit_exposure", 0)) * 8
+	var audit_exposure := maxi(int(world.world_flags.get(&"audit_exposure", 0)), int(actor.flags.get(&"audit_exposure", 0)))
+	var corruption := audit_exposure * 8
 	if &"pliable" in actor.traits:
 		corruption += 15
 	for flag in corruption_flags:
@@ -68,13 +69,14 @@ static func evaluate(world: WorldState, actor: PersonEntity) -> Dictionary:
 		"integrity_score": integrity,
 		"honest_corrections": corrections,
 		"exposure_clears": exposure_clears,
-		"audit_exposure": int(world.world_flags.get(&"audit_exposure", 0)),
+		"audit_exposure": audit_exposure,
 		"law": law_level,
 		"literacy": literacy_level,
 		"arithmetic": actor.skills.get_level(&"arithmetic"),
 		"mentor_trust": mentor_trust,
 		"archivist_trust": archivist_trust,
 		"primary_legacy_faction": String(FACTION_LABELS.get(primary_faction, String(primary_faction).replace("_", " ").capitalize())),
+		"character_standings": _character_standings(world, actor),
 		"faction_standings": faction_scores,
 		"canal_progress": progress,
 		"canal_target": target,
@@ -117,9 +119,19 @@ static func _labor_outcome(world: WorldState, epic: Dictionary) -> String:
 		return "forced drafts"
 	if world.world_flags.has(&"canal_worker_strike") or world.world_flags.has(&"canal_crew_slowdown"):
 		return "worker strikes"
-	if bool(epic.get("completed", false)) or int(epic.get("progress", 0)) >= int(epic.get("target", 100)):
+	if int(epic.get("progress", world.get_resource(&"canal_progress"))) >= int(epic.get("target", 100)):
 		return "full rations"
 	return "unfinished works"
+
+static func _character_standings(world: WorldState, actor: PersonEntity) -> Dictionary:
+	var result := {}
+	for person_id in [&"ur_nanna", &"shuruppak_ilu", &"ur_mes", &"character_0012"]:
+		var person := world.get_person(person_id)
+		if person != null:
+			result[person.display_name] = actor.get_opinion(person.id)
+	var boatmen := int(world.faction_standings.get(&"boatmens_guild", 0))
+	result["Boatmen"] = boatmen
+	return result
 
 static func _buried_scandals(world: WorldState) -> int:
 	var count := 0
