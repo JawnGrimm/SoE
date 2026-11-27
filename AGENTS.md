@@ -62,6 +62,7 @@ General project rules:
 
 - Evidence is player-facing prose, never a debug console. Strip capability diagnostics, raw action tokens, internal form IDs, and raw hazard keys. Translate known document types and site issues into authored labels.
 - Evidence inventories include only resources actually tracked by the institution. Empty inventories read `COMMODITY BALANCES: None on record`; do not fabricate zero barley, labor, or textiles.
+- Render each recorded stock resource with a readable title-case label (for example, `Clay: 4` and `Labor: 2`), preserving arbitrary resource IDs and their actual recorded quantities.
 - Compound information is scoped to `WorldState.current_location_id`. Uruk factions and Eanna content must not leak into Umma or Nippur; show local institutions and seated officials.
 - `WorldSimulator` and `TravelService` record categorized changes in `WorldState.last_period_deltas`. Clear at the start of each simulation period, persist via `SaveCodec`, and render only the latest four in `SINCE LAST PERIOD`. UI must not infer causal events from resource snapshots.
 - Cuneiform fonts belong under `res://assets/fonts/`; preserve license/provenance text when moving existing assets.
