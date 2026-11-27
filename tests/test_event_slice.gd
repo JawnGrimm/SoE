@@ -1193,13 +1193,18 @@ func _run() -> void:
 	_check(purse_actor.resources[&"silver"] == 1 and ownership_world.get_resource(&"silver", "institution", "", &"eanna_household") == 7, "Institutional spending must not alter the personal purse")
 
 	# The Great Canal Cut is dormant until the career milestone or an explicit summons.
+	var turn_one_seeded_world := WorldState.new()
+	UrukSeeder.seed_campaign(turn_one_seeded_world, 782000)
+	_check(not bool(turn_one_seeded_world.epics.get(&"great_canal_cut", {}).get("active", true)), "UrukSeeder seeds the Great Canal Cut dormant on Turn 1")
 	var gated_epic_world := WorldState.new()
 	gated_epic_world.year = -3200
+	gated_epic_world.period = 11
+	gated_epic_world.stockpiles[&"canal_progress"] = 8
 	gated_epic_world.institutions[&"eanna_household"] = {"members": [], "stockpiles": {&"barley": 128, &"labor": 10}}
 	var gated_simulator := WorldSimulator.new(registry)
 	gated_simulator._simulate_epics(gated_epic_world)
 	var dormant_canal: Dictionary = gated_epic_world.epics.get(&"great_canal_cut", {})
-	_check(not bool(dormant_canal.get("active", true)) and gated_epic_world.get_resource(&"canal_progress") == 0 and not bool(dormant_canal.get("review_pending", false)), "Turn-1 Great Canal remains dormant with no progress, erosion, or review")
+	_check(not bool(dormant_canal.get("active", true)) and gated_epic_world.get_resource(&"canal_progress") == 8 and not bool(dormant_canal.get("review_pending", false)), "Dormant Great Canal neither advances nor silts and requests no review")
 	gated_epic_world.year = -3199
 	gated_epic_world.cases_settled = 8
 	gated_simulator._simulate_epics(gated_epic_world)
@@ -1318,6 +1323,8 @@ func _run() -> void:
 	for passive_seed in range(passive_trials):
 		var passive_world := WorldState.new()
 		UrukSeeder.seed_campaign(passive_world, 700000 + passive_seed)
+		passive_world.year = -3199
+		passive_world.cases_settled = 8
 		var passive_simulator := WorldSimulator.new(registry)
 		for passive_period in range(120):
 			passive_simulator.advance_period(passive_world)
