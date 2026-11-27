@@ -116,7 +116,7 @@ func _run() -> void:
 	var audit_result := Pipeline.resolve(world, actor, audit_id, &"epic_audit")
 	_check(bool(audit_result.get("success", false)), "Epic audit verdict resolves")
 	_check(foreman.get_opinion(actor.id) == -3 and int(actor.flags.get(&"audit_exposure", 0)) == 0, "Epic audit applies foreman opinion and clears one exposure")
-	_check(int(actor.skills.xp.get(&"law", 0)) >= 15 and bool(world.epics.get(&"test_epic", {}).get("stalled", false)), "Epic audit awards law XP and halts the project")
+	_check(int(actor.skills.xp.get(&"law", 0)) >= 15 and bool(world.epics.get(&"test_epic", {}).get("stalled", false)) and int(world.epics.get(&"test_epic", {}).get("audit_hold_until_period", -1)) == world.current_period_index() + 1, "Epic audit awards law XP and schedules a bounded hold")
 
 	# The pliable certification branch produces its intended consequence chain.
 	epic_state = world.epics[&"test_epic"]
