@@ -31,7 +31,10 @@ static func evaluate(world: WorldState, actor: PersonEntity) -> Dictionary:
 		corruption += 18
 	var corrections := int(world.world_flags.get(&"honest_corrections", 0))
 	var exposure_clears := int(world.world_flags.get(&"exposure_clears", 0))
+	var mentor := world.get_person(&"shuruppak_ilu")
 	var mentor_trust := int(actor.relationships.get(&"shuruppak_ilu", {}).get("trust", 0))
+	if mentor != null:
+		mentor_trust = maxi(mentor_trust, int(mentor.relationships.get(actor.id, {}).get("trust", 0)))
 	var archivist_trust := maxi(mentor_trust, int(world.world_flags.get(&"archivist_trust", 0)))
 	var integrity := clampi(corrections * 12 + exposure_clears * 15 + archivist_trust * 4 + actor.skills.get_level(&"law") * 5 - corruption, 0, 100)
 	corruption = clampi(corruption, 0, 100)
@@ -41,7 +44,7 @@ static func evaluate(world: WorldState, actor: PersonEntity) -> Dictionary:
 	for temple_person_id in [&"ur_nanna", &"shuruppak_ilu"]:
 		var temple_person := world.get_person(temple_person_id)
 		if temple_person != null:
-			temple_opinions += actor.get_opinion(temple_person.id)
+			temple_opinions += temple_person.get_opinion(actor.id)
 			temple_count += 1
 	if temple_count > 0:
 		faction_scores[&"eanna_temple"] = maxi(int(faction_scores.get(&"eanna_temple", 0)), int(round(float(temple_opinions) / temple_count)))
@@ -49,7 +52,7 @@ static func evaluate(world: WorldState, actor: PersonEntity) -> Dictionary:
 	for provincial_person_id in [&"ur_mes", &"character_0012"]:
 		var provincial_person := world.get_person(provincial_person_id)
 		if provincial_person != null:
-			provincial_opinion = maxi(provincial_opinion, actor.get_opinion(provincial_person.id))
+			provincial_opinion = maxi(provincial_opinion, provincial_person.get_opinion(actor.id))
 	faction_scores[&"provincial_frontier"] = maxi(int(faction_scores.get(&"provincial_frontier", 0)), provincial_opinion)
 	for faction_id in [&"eanna_temple", &"council_of_elders", &"boatmens_guild", &"provincial_frontier"]:
 		if not faction_scores.has(faction_id):
@@ -152,7 +155,7 @@ static func _character_standings(world: WorldState, actor: PersonEntity) -> Dict
 	for person_id in [&"ur_nanna", &"shuruppak_ilu", &"ur_mes", &"character_0012"]:
 		var person := world.get_person(person_id)
 		if person != null:
-			result[person.display_name] = actor.get_opinion(person.id)
+			result[person.display_name] = person.get_opinion(actor.id)
 	var boatmen := int(world.faction_standings.get(&"boatmens_guild", 0))
 	result["Boatmen"] = boatmen
 	return result
