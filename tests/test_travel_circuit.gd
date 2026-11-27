@@ -48,21 +48,15 @@ func _run() -> void:
 	var institution: Dictionary = world.institutions.get(&"nippur_shrine", {})
 	_check(not institution.is_empty() and int(institution.get("stockpiles", {}).get(&"offerings", 0)) == 24, "Nippur's shrine offering ledger is available on arrival")
 
-	var opportunity := {
-		"id": &"nippur_shrine_offerings_audit",
-		"kind": &"ledger",
-		"source_id": &"nippur_shrine",
-		"title": "Audit Nippur Shrine Offerings",
-		"summary": "Reconcile the shrine's offering register against its current stores.",
-		"employer_id": &"",
-		"source_data": {
-			"institution_id": &"nippur_shrine",
-			"place_id": &"nippur",
-			"member_count": 0,
-			"activity_count": int(institution.get("activity_count", 0))
-		}
-	}
 	var player := world.get_player()
+	var local_opportunities := AssignmentPipelineScript.generate_opportunities(world, player)
+	var opportunity: Dictionary = {}
+	for candidate in local_opportunities:
+		if StringName(candidate.get("source_id", "")) == &"nippur_shrine" and StringName(candidate.get("kind", "")) == &"ledger":
+			opportunity = candidate
+			break
+	_check(not opportunity.is_empty(), "The location-aware assignment pipeline generates Nippur shrine ledger work from local world data")
+
 	var audit_id := StringName(opportunity.id)
 	_check(AssignmentPipelineScript.begin(world, opportunity, player), "The Nippur local audit opens through the existing assignment lifecycle")
 	var written := AssignmentPipelineScript.perform_action(world, player, audit_id, &"examine_records")
