@@ -83,6 +83,34 @@ static func route_path_periods(world: WorldState, route_ids: Array) -> int:
 		total += maxi(1, int(world.routes.get(StringName(route_id), {}).get("travel_periods", 1)))
 	return total
 
+
+static func get_destination_options(world: WorldState, origin_id: StringName) -> Array[Dictionary]:
+	var options: Array[Dictionary] = []
+	if world == null or origin_id == &"":
+		return options
+	for place_id in world.places.keys():
+		if StringName(place_id) == origin_id:
+			continue
+		var route_ids := find_route_path(world, origin_id, StringName(place_id))
+		if route_ids.is_empty():
+			continue
+		var total_risk := 0
+		for route_id in route_ids:
+			total_risk += int(world.routes.get(route_id, {}).get("loss_risk_percent", 0))
+		options.append({
+			"place_id": StringName(place_id),
+			"name": String(world.places[place_id].get("name", place_id)),
+			"route_ids": route_ids,
+			"travel_periods": route_path_periods(world, route_ids),
+			"route_risk_percent": total_risk
+		})
+	options.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if int(a.get("travel_periods", 0)) == int(b.get("travel_periods", 0)):
+			return String(a.get("name", "")) < String(b.get("name", ""))
+		return int(a.get("travel_periods", 0)) < int(b.get("travel_periods", 0))
+	)
+	return options
+
 static func launch_shipment(world: WorldState, details: Dictionary) -> Dictionary:
 	if world == null:
 		return {"success": false, "error": "World is unavailable."}
