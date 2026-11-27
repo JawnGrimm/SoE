@@ -2255,6 +2255,8 @@ func _refresh_archive_stack() -> void:
 		if text_value.to_upper().contains("DISPATCH"):
 			urgent_kind = "DISPATCH"
 	archive_stack.set_queue_status(assignment_opportunities.size(), urgent_kind)
+	if work_queue_button != null:
+		work_queue_button.text = "OPEN WORK QUEUE (%d)" % assignment_opportunities.size() if phase == "opportunity_board" else "ARCHIVE / QUEUE"
 
 func _local_institution_ids() -> Array[StringName]:
 	return CompoundContextScript.institution_ids(world, world.current_location_id)
