@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://bu4blvj5mpryh"
+
+[deps]
+
+files=["res://data/tables/era1_sumerian_names.culture.translation", "res://data/tables/era1_sumerian_names.era.translation", "res://data/tables/era1_sumerian_names.gender.translation", "res://data/tables/era1_sumerian_names.provenance.translation", "res://data/tables/era1_sumerian_names.source.translation"]
+
+source_file="res://data/tables/era1_sumerian_names.csv"
+dest_files=["res://data/tables/era1_sumerian_names.culture.translation", "res://data/tables/era1_sumerian_names.era.translation", "res://data/tables/era1_sumerian_names.gender.translation", "res://data/tables/era1_sumerian_names.provenance.translation", "res://data/tables/era1_sumerian_names.source.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true
