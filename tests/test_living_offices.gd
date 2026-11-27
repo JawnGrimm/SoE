@@ -86,7 +86,7 @@ func _run() -> void:
 	var epic: Dictionary = world.epics.get(&"great_canal_cut", {})
 	epic["active"] = true
 	world.epics[&"great_canal_cut"] = epic
-	world.set_flag(&"thirsty_diggers", world.current_period_index())
+	world.set_flag(&"thirsty_diggers", world.current_period_index() + 2) # Expiry is exclusive; keep it active through the next simulated period.
 	simulator.advance_period(world)
 	_check(world.has_flag(&"canal_crew_slowdown", world.current_period_index()), "Thirsty diggers trigger canal crew slowdown")
 	epic = world.epics.get(&"great_canal_cut", {})
