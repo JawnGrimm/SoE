@@ -2,6 +2,15 @@ class_name CedarDeskHeader
 extends HBoxContainer
 ## Presentation-only status strip. Reads live WorldState and PersonEntity values.
 
+static func format_purse(silver: int, currency: String) -> String:
+	return "PURSE: %d %s" % [silver, currency.to_upper()]
+
+static func format_arrears(debt: int, unpaid_upkeep: int) -> String:
+	return "ARREARS: %d DEBT%s" % [maxi(0, debt), (" · UPKEEP %d" % unpaid_upkeep) if unpaid_upkeep > 0 else ""]
+
+static func format_exposure(exposure: int) -> String:
+	return "EXPOSURE: %d" % maxi(0, exposure)
+
 var place_label: Label
 var office_label: Label
 var purse_label: Label
@@ -49,11 +58,11 @@ func update_status(world: WorldState, actor: PersonEntity, era: EraDef) -> void:
 	date_label.text = CalendarFormatter.format_year(world.year)
 	var currency := String(era.currency_name) if era != null else "silver"
 	var silver := int(actor.resources.get(&"silver", 0))
-	purse_label.text = "PURSE: %d %s" % [silver, currency.to_upper()]
+	purse_label.text = format_purse(silver, currency)
 	var debt := maxi(0, int(actor.resources.get(&"debt", maxi(0, -silver))))
 	var unpaid := int(actor.resources.get(&"unpaid_upkeep", 0))
 	arrears_label.visible = debt > 0 or unpaid > 0
-	arrears_label.text = "ARREARS: %d DEBT%s" % [debt, (" · UPKEEP %d" % unpaid) if unpaid > 0 else ""]
+	arrears_label.text = format_arrears(debt, unpaid)
 	var exposure := int(world.world_flags.get(&"audit_exposure", world.world_flags.get(&"grain_scandal", 0)))
 	exposure_label.visible = exposure > 0
-	exposure_label.text = "EXPOSURE: %d" % exposure
+	exposure_label.text = format_exposure(exposure)
