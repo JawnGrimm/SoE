@@ -1,28 +1,38 @@
-[gd_resource type="BehaviorTree" format=3 load_steps=11]
-[ext_resource type="Script" path="res://systems/ai/tasks/bt_office_condition.gd" id="1_condition"]
-[ext_resource type="Script" path="res://systems/ai/tasks/bt_office_action.gd" id="2_action"]
+[gd_resource type="BehaviorTree" format=3 uid="uid://cee2jl23cuhm5"]
+
+[ext_resource type="Script" uid="uid://dmqiduha4hgnv" path="res://systems/ai/tasks/bt_office_condition.gd" id="1_condition"]
+[ext_resource type="Script" uid="uid://b8es0feikcmmk" path="res://systems/ai/tasks/bt_office_action.gd" id="2_action"]
+
 [sub_resource type="BlackboardPlan" id="Plan"]
+
 [sub_resource type="BTCondition" id="Pressure"]
 script = ExtResource("1_condition")
 condition_id = &"canal_pressure_present"
+
 [sub_resource type="BTCondition" id="Labor"]
 script = ExtResource("1_condition")
 condition_id = &"canal_labor_below_warning"
+
 [sub_resource type="BTCondition" id="Silt"]
 script = ExtResource("1_condition")
 condition_id = &"canal_silt_hazard_active"
+
 [sub_resource type="BTSelector" id="Need"]
 custom_name = "Pressure, Labor, or Silt"
 children = [SubResource("Pressure"), SubResource("Labor"), SubResource("Silt")]
+
 [sub_resource type="BTAction" id="Requisition"]
 script = ExtResource("2_action")
 action_id = &"canal_request_requisition"
+
 [sub_resource type="BTSequence" id="Request"]
 custom_name = "Petition for Provincial Supplies"
 children = [SubResource("Need"), SubResource("Requisition")]
+
 [sub_resource type="BTSelector" id="Bailiff"]
 custom_name = "Canal Bailiff Agenda"
 children = [SubResource("Request")]
+
 [resource]
 description = "BT evaluates local canal pressure, labor, and silt before the shared resolver creates or escalates a requisition."
 blackboard_plan = SubResource("Plan")

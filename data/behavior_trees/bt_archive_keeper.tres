@@ -1,22 +1,30 @@
-[gd_resource type="BehaviorTree" format=3 load_steps=9]
-[ext_resource type="Script" path="res://systems/ai/tasks/bt_office_condition.gd" id="1_condition"]
-[ext_resource type="Script" path="res://systems/ai/tasks/bt_office_action.gd" id="2_action"]
+[gd_resource type="BehaviorTree" format=3 uid="uid://j7u6oh6fvijf"]
+
+[ext_resource type="Script" uid="uid://dmqiduha4hgnv" path="res://systems/ai/tasks/bt_office_condition.gd" id="1_condition"]
+[ext_resource type="Script" uid="uid://b8es0feikcmmk" path="res://systems/ai/tasks/bt_office_action.gd" id="2_action"]
+
 [sub_resource type="BlackboardPlan" id="Plan"]
+
 [sub_resource type="BTCondition" id="Due"]
 script = ExtResource("1_condition")
 condition_id = &"archive_audit_period_due"
+
 [sub_resource type="BTCondition" id="Trigger"]
 script = ExtResource("1_condition")
 condition_id = &"archive_audit_trigger_present"
+
 [sub_resource type="BTAction" id="Reprimand"]
 script = ExtResource("2_action")
 action_id = &"archive_issue_reprimand"
+
 [sub_resource type="BTSequence" id="Audit"]
 custom_name = "Audit Apprentice Accounts"
 children = [SubResource("Due"), SubResource("Trigger"), SubResource("Reprimand")]
+
 [sub_resource type="BTSelector" id="Archive"]
 custom_name = "Archive Keeper Agenda"
 children = [SubResource("Audit")]
+
 [resource]
 description = "Archive BT audits at the six-period cadence when exposure, pliability, or a falsification flag warrants scrutiny."
 blackboard_plan = SubResource("Plan")
