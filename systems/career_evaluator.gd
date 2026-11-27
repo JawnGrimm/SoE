@@ -39,7 +39,8 @@ static func evaluate(world: WorldState, actor: PersonEntity) -> Dictionary:
 	if mentor != null:
 		mentor_trust = maxi(mentor_trust, int(mentor.relationships.get(actor.id, {}).get("trust", 0)))
 	var archivist_trust := maxi(mentor_trust, int(world.world_flags.get(&"archivist_trust", 0)))
-	var integrity := clampi(corrections * 12 + exposure_clears * 15 + archivist_trust * 4 + actor.skills.get_level(&"law") * 5 - corruption, 0, 100)
+	var labor_honesty := 15 if world.world_flags.has(&"canal_honest_legacy") else 0
+	var integrity := clampi(corrections * 12 + exposure_clears * 15 + archivist_trust * 4 + actor.skills.get_level(&"law") * 5 + labor_honesty - corruption, 0, 100)
 	corruption = clampi(corruption, 0, 100)
 	var faction_scores: Dictionary = world.faction_standings.duplicate(true)
 	var temple_opinions := 0
@@ -84,7 +85,8 @@ static func evaluate(world: WorldState, actor: PersonEntity) -> Dictionary:
 			orientation_label = String(orientation_labels[path_id])
 	var law_level := actor.skills.get_level(&"law")
 	var literacy_level := actor.skills.get_level(&"literacy")
-	var epitaph := _epitaph(integrity, corruption, silver - debt - unpaid_upkeep, law_level, labor_outcome, primary_faction, actor)
+	var labor_hero := world.world_flags.has(&"canal_crew_legacy") or actor.traits.has(&"protective_of_crew")
+	var epitaph := _epitaph(integrity, corruption, silver - debt - unpaid_upkeep, law_level, labor_outcome, primary_faction, actor, labor_hero)
 	return {
 		"character_name": actor.display_name,
 		"final_office": String(actor.office_id).replace("_", " ").capitalize() if actor.office_id != &"" else "No office held",
@@ -142,7 +144,7 @@ static func generate_export_text(summary: Dictionary) -> String:
 	])
 	return "\n".join(lines)
 
-static func _epitaph(integrity: int, corruption: int, net_worth: int, law: int, labor_outcome: String, faction: StringName, actor: PersonEntity) -> String:
+static func _epitaph(integrity: int, corruption: int, net_worth: int, law: int, labor_outcome: String, faction: StringName, actor: PersonEntity, labor_hero: bool) -> String:
 	if actor.flags.has(&"name_on_monument"):
 		return "The Name Cut into the Sluice Stone"
 	if integrity >= 65 and law >= 2:
@@ -151,7 +153,7 @@ static func _epitaph(integrity: int, corruption: int, net_worth: int, law: int, 
 		return "The Silver-Handed Operator of Eanna"
 	if net_worth < 0 and faction in [&"provincial_frontier", &"umma", &"nippur"]:
 		return "The Indentured Scribe of the Umma Reeds"
-	if labor_outcome == "full rations" or actor.traits.has(&"protective_of_crew") or actor.traits.has(&"honors_labor"):
+	if labor_outcome == "full rations" or labor_hero:
 		return "The Reed-Friend of the Ditch Crews"
 	return "The Diligent Keeper of the Daybook"
 
@@ -166,7 +168,7 @@ static func _labor_outcome(world: WorldState, epic: Dictionary) -> String:
 
 static func _character_standings(world: WorldState, actor: PersonEntity) -> Dictionary:
 	var result := {}
-	for person_id in [&"ur_nanna", &"shuruppak_ilu", &"ur_mes", &"character_0012"]:
+	for person_id in [&"ur_nanna", &"shuruppak_ilu", &"ur_mes", &"character_0012", &"enlil_kisu"]:
 		var person := world.get_person(person_id)
 		if person != null:
 			result[person.display_name] = person.get_opinion(actor.id)
