@@ -85,6 +85,13 @@ func _test_dedication_choices() -> void:
 	assert(not Dedication.apply_choice(world, actor, &"honor_crews"))
 
 func _test_event_definition_and_fresh_world() -> void:
+	var terminal_actor := PersonEntity.new()
+	assert(not Evaluator.is_terminal_failure(terminal_actor))
+	terminal_actor.flags[&"dead"] = -1
+	assert(Evaluator.is_terminal_failure(terminal_actor))
+	terminal_actor.flags[&"dead"] = 0
+	terminal_actor.flags[&"bankrupt"] = -1
+	assert(Evaluator.is_terminal_failure(terminal_actor))
 	assert(DedicationEvent.id == &"epic_canal_dedication")
 	assert(DedicationEvent.once_per_world)
 	assert(DedicationEvent.outcomes.size() == 3)
