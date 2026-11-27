@@ -7,6 +7,7 @@ const RegistryScript = preload("res://systems/definition_registry.gd")
 const UrukSeederScript = preload("res://systems/uruk_seeder.gd")
 const WorldSimulatorScript = preload("res://systems/world_simulator.gd")
 const RouteNetworkScript = preload("res://systems/route_network.gd")
+const TravelServiceScript = preload("res://systems/travel_service.gd")
 const AssignmentPipelineScript = preload("res://systems/assignment_pipeline.gd")
 const SaveCodecScript = preload("res://systems/save_codec.gd")
 const CalendarFormatterScript = preload("res://systems/calendar_formatter.gd")
@@ -26,8 +27,10 @@ func _run() -> void:
 	UrukSeederScript.seed_campaign(world, 32003200)
 	var simulator := WorldSimulatorScript.new(registry)
 	var network := RouteNetworkScript.new()
+	var travel := TravelServiceScript.new()
 	_check(world.current_location_id == &"uruk", "A new campaign begins in Uruk")
 	_check(network.configure(world, [URUK, NIPPUR, UMMA], [RIVER, LAND]), "The existing three-place route network configures for the campaign")
+	_check(travel.configure(network, simulator), "TravelService configures with the route graph and authoritative world simulator")
 
 	var baseline_barley := world.get_resource(&"barley", "institution", "", &"eanna_household")
 	_check(baseline_barley > 0 and world.has_active_hazard(&"north_bay", &"roof_leak"), "Baseline Eanna barley stores and active North-Bay leak are present")
@@ -35,9 +38,8 @@ func _run() -> void:
 
 	var upstream_periods := network.get_transit_periods(&"river_uruk_nippur", &"uruk", &"nippur")
 	_check(upstream_periods == 2, "Uruk-to-Nippur river passage is two periods")
-	for _period_index in range(upstream_periods):
-		simulator.advance_period(world)
-	world.current_location_id = &"nippur"
+	var upstream_result := travel.travel(world, &"river_uruk_nippur", &"nippur")
+	_check(bool(upstream_result.get("success", false)) and int(upstream_result.get("transit_periods", 0)) == upstream_periods, "TravelService executes the complete upstream journey")
 	_check(world.current_location_id == &"nippur", "Arrival updates the persistent current location to Nippur")
 	_check(world.year == -3200 and world.period == 2, "Two transit periods arrive in Month 3 of 3201 BCE")
 	var month_three := CalendarFormatterScript.format_date(registry.get_era(&"uruk_storehouse"), world.year, world.period)
@@ -71,9 +73,8 @@ func _run() -> void:
 
 	var downstream_periods := network.get_transit_periods(&"river_uruk_nippur", &"nippur", &"uruk")
 	_check(downstream_periods == 1, "Nippur-to-Uruk downstream river passage is one period")
-	for _period_index in range(downstream_periods):
-		simulator.advance_period(world)
-	world.current_location_id = &"uruk"
+	var downstream_result := travel.travel(world, &"river_uruk_nippur", &"uruk")
+	_check(bool(downstream_result.get("success", false)) and int(downstream_result.get("transit_periods", 0)) == downstream_periods, "TravelService executes the complete downstream journey")
 	_check(world.current_location_id == &"uruk", "Return arrival restores the current location to Uruk")
 	_check(world.year == -3200 and world.period == 3, "The return passage arrives in Month 4 of 3201 BCE")
 	var month_four := CalendarFormatterScript.format_date(registry.get_era(&"uruk_storehouse"), world.year, world.period)
