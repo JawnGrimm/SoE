@@ -134,11 +134,13 @@ func _process_hazards() -> void:
 		var resource_id := StringName(hazard.get("resource", ""))
 		if rate <= 0 or resource_id == &"":
 			continue
-		var available := maxi(0, get_resource(resource_id, "institution", "", &"eanna_household"))
+		var institution_id := StringName(hazard.get("institution_id", &"eanna_household"))
+		var resource_scope := String(hazard.get("resource_scope", "institution"))
+		var available := maxi(0, get_resource(resource_id, resource_scope, "", institution_id))
 		var lost := mini(available, rate)
 		if lost <= 0:
 			continue
-		modify_resource(resource_id, -lost, "institution", "", &"eanna_household")
+		modify_resource(resource_id, -lost, resource_scope, "", institution_id)
 		hazard["total_lost"] = int(hazard.get("total_lost", 0)) + lost
 		hazards[index] = hazard
 
