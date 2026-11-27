@@ -16,6 +16,9 @@ General project rules:
 - Keep era-specific content in data rather than hardcoding era numbers or era-specific branches into generic systems.
 - Preserve deterministic RNG stream boundaries and versioned save compatibility.
 - Add tests for behavior and regression boundaries; do not claim visual verification from headless tests.
+- Read `ACCESSIBILITY.md` before UI work and verify contrast, keyboard focus, scaling, and reduced-motion behavior against it.
+- Keep presentation/UI orchestration in `ui/`; simulation, assignment generation/resolution, and world mutation remain in `systems/`. UI must not bypass pipeline or SaveManager APIs.
+- Keep modular UI components presentation-only where possible; do not serialize transient UI state or change save schema for UI redesigns.
 
 
 ## Era I Slice A gameplay guardrails
