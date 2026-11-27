@@ -235,22 +235,33 @@ static func resolve(world: WorldState, actor: PersonEntity, assignment_id: Strin
 	match kind:
 		&"form":
 			var form_data: Dictionary = record.get("source_data", {})
+			var form_type := StringName(form_data.get("form_type", ""))
+			var regional_form := form_type in [&"remote_dispatch", &"remote_origin_reply"]
 			var disposition := "certified"
-			if verdict == &"refer":
-				disposition = "referred"
-				accurate = false
-			elif verdict == &"defer":
-				disposition = "deferred"
-				accurate = false
+			if regional_form:
+				var regional_result := RegionalWorldSystem.resolve_remote_dispatch(world, form_data, verdict)
+				if not bool(regional_result.get("success", false)):
+					return regional_result
+				result_text = String(regional_result.get("message", "Regional dispatch assessed."))
+				work_details = "Shipment: %s. Origin: %s. Destination: %s. Declared: %d. Received: %d." % [String(form_data.get("shipment_id", "")), _place_name(world, StringName(form_data.get("origin_id", ""))), _place_name(world, StringName(form_data.get("destination_id", ""))), int(form_data.get("declared_quantity", 0)), int(form_data.get("received_quantity", 0))]
+				accurate = verdict == &"certify"
+			else:
+				if verdict == &"refer":
+					disposition = "referred"
+					accurate = false
+				elif verdict == &"defer":
+					disposition = "deferred"
+					accurate = false
 			var resolved := world.resolve_form({
-				"form_id": String(source_id),
-				"assessment": disposition,
-				"disposition": disposition,
-				"notes": "Assessment by %s after %d investigative actions." % [actor.display_name, actions.size()]
-			}, world.year)
+					"form_id": String(source_id),
+					"assessment": String(verdict) if regional_form else disposition,
+					"disposition": String(verdict) if regional_form else disposition,
+					"notes": "Assessment by %s after %d work actions." % [actor.display_name, actions.size()]
+				}, world.year)
 			if not resolved:
 				return {"success": false, "message": "The source form has already changed or been resolved."}
-			result_text = "The %s is entered as %s. The underlying matter remains subject to future world conditions." % [_form_title(StringName(form_data.get("form_type", ""))), disposition]
+			if not regional_form:
+				result_text = "The %s is entered as %s. The underlying matter remains subject to future world conditions." % [_form_title(form_type), disposition]
 		&"hazard":
 			var hazard: Dictionary = record.get("source_data", {})
 			var place_id := StringName(hazard.get("place_id", ""))
