@@ -55,12 +55,12 @@ static func from_record(record: Dictionary, world: WorldState) -> AssignmentDial
 		var reason_labels: Dictionary = _get_dialogue_copy("generation_reasons")
 		var subject_id := StringName(source.get("subject_id", source.get("place_id", "")))
 		var subject_name := str(world.places.get(subject_id, {}).get("name", str(subject_id).replace("_", " ").capitalize())) if world != null else str(subject_id)
-		var summary_template := String(_get_dialogue_copy("record_entry_summary"))
+		var summary_template := str(_get_dialogue_copy("record_entry_summary"))
 		context.record_response = _format_dialogue_copy(summary_template, {
-			"form_title": String(form_titles.get(form_type, "")),
+			"form_title": str(form_titles.get(form_type, "")),
 			"place_name": subject_name,
 			"generated_by": official.display_name if official != null else context.official_name,
-			"generation_reason": String(reason_labels.get(str(source.get("generation_reason", "")), "")),
+			"generation_reason": str(reason_labels.get(str(source.get("generation_reason", "")), "")),
 			"urgency": str(source.get("urgency", ""))
 		})
 	else:
@@ -85,7 +85,7 @@ static func from_record(record: Dictionary, world: WorldState) -> AssignmentDial
 		context.requested_result = requested
 	else:
 		var demands: Dictionary = _get_dialogue_copy("form_demands")
-		context.requested_result = String(demands.get(String(source.get("form_type", "")), _get_dialogue_copy("no_separate_demand")))
+		context.requested_result = str(demands.get(str(source.get("form_type", "")), _get_dialogue_copy("no_separate_demand")))
 	return context
 
 static func from_procedural_docket(source: Dictionary, world: WorldState) -> AssignmentDialogueContext:
@@ -95,15 +95,15 @@ static func from_procedural_docket(source: Dictionary, world: WorldState) -> Ass
 	var client: PersonEntity = world.get_person(StringName(left.get("speaker_id", ""))) if world != null else null
 	var opposing: PersonEntity = world.get_person(StringName(right.get("speaker_id", ""))) if world != null else null
 	if client == null or opposing == null:
-		push_error("AssignmentDialogueContext: procedural docket '%s' is missing a named party." % String(source.get("archetype", "")))
+		push_error("AssignmentDialogueContext: procedural docket '%s' is missing a named party." % str(source.get("archetype", "")))
 		return context
 	context.client_name = client.display_name
 	context.opposing_name = opposing.display_name
-	context.client_statement = String(left.get("quote", ""))
-	context.opposing_statement = String(right.get("quote", ""))
-	context.client_record = String(left.get("facts", ""))
-	context.opposing_record = String(right.get("facts", ""))
-	context.requested_result = String(source.get("prompt", ""))
+	context.client_statement = str(left.get("quote", ""))
+	context.opposing_statement = str(right.get("quote", ""))
+	context.client_record = str(left.get("facts", ""))
+	context.opposing_record = str(right.get("facts", ""))
+	context.requested_result = str(source.get("prompt", ""))
 	return context
 
 
@@ -114,7 +114,7 @@ static func _format_dialogue_copy(template: String, values: Dictionary) -> Strin
 		if str(values[key]).strip_edges().is_empty():
 			push_error("AssignmentDialogueContext: missing value '%s' for authored interview copy." % str(key))
 			return ""
-		result = result.replace("{%s}" % String(key), str(values[key]))
+		result = result.replace("{%s}" % str(key), str(values[key]))
 	var unresolved := RegEx.new()
 	unresolved.compile("\\{[a-zA-Z0-9_]+\\}")
 	if unresolved.search(result) != null or result.strip_edges().is_empty():
@@ -134,7 +134,7 @@ static func _get_dialogue_copy(key: String) -> Variant:
 			return ""
 		_dialogue_copy = parsed
 	var value: Variant = _dialogue_copy.get(key, "")
-	if value is String and String(value).is_empty():
+	if value is String and str(value).is_empty():
 		push_error("AssignmentDialogueContext: missing authored interview response '%s'." % key)
 	return value
 
