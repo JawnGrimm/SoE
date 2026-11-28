@@ -10,6 +10,80 @@ func _initialize() -> void:
 	call_deferred("_run")
 
 func _run() -> void:
+	var docket_file := FileAccess.open("res://data/assignments/path_dockets.json", FileAccess.READ)
+	_check(docket_file != null, "Career-path docket definitions must be readable")
+	if docket_file != null:
+		var docket_data: Variant = JSON.parse_string(docket_file.get_as_text())
+		_check(docket_data is Dictionary, "Career-path docket definitions must parse as a dictionary")
+		if docket_data is Dictionary:
+			var docket_paths: Dictionary = docket_data.get("dockets", {})
+			for path_id in docket_paths:
+				for docket_value in docket_paths[path_id]:
+					var docket: Dictionary = docket_value
+					var docket_id := String(docket.get("id", ""))
+					_check(not String(docket.get("left", "")).strip_edges().is_empty(), "%s must have a client claim" % docket_id)
+					_check(not String(docket.get("right", "")).strip_edges().is_empty(), "%s must have an opposing claim" % docket_id)
+					_check(not String(docket.get("prompt", "")).strip_edges().is_empty(), "%s must state the question for the scribe" % docket_id)
+					var investigation_actions: Dictionary = docket.get("investigation_actions", {})
+					for action_id in ["examine_records", "reconcile_accounts", "consult_official", "inspect_source"]:
+						_check(not String(investigation_actions.get(action_id, "")).strip_edges().is_empty(), "%s is missing investigation prompt %s" % [docket_id, action_id])
+					var dispositions: Array = docket.get("choices", [])
+					_check(dispositions.size() >= 2, "%s must author at least two dispositions" % docket_id)
+					var seen_labels: Dictionary = {}
+					for disposition_value in dispositions:
+						var disposition: Dictionary = disposition_value
+						var label := String(disposition.get("label", "")).strip_edges()
+						_check(not label.is_empty(), "%s has a disposition without a label" % docket_id)
+						_check(not String(disposition.get("result_title", "")).strip_edges().is_empty(), "%s / %s has no result title" % [docket_id, label])
+						_check(not String(disposition.get("result_text", "")).strip_edges().is_empty(), "%s / %s has no result explanation" % [docket_id, label])
+						_check(disposition.get("effects", {}) is Dictionary and not disposition.get("effects", {}).is_empty(), "%s / %s has no effects" % [docket_id, label])
+						_check(not seen_labels.has(label.to_lower()), "%s repeats disposition label '%s'" % [docket_id, label])
+						seen_labels[label.to_lower()] = true
+			var procedural: Dictionary = docket_data.get("procedural_archetypes", {})
+			for archetype_id in procedural:
+				var archetype: Dictionary = procedural[archetype_id]
+				var archetype_prompts: Dictionary = archetype.get("investigation_actions", {})
+				for action_id in ["examine_records", "reconcile_accounts", "consult_official", "inspect_source"]:
+					_check(not String(archetype_prompts.get(action_id, "")).strip_edges().is_empty(), "%s is missing investigation prompt %s" % [String(archetype_id), action_id])
+				var archetype_choices: Array = archetype.get("choices", [])
+				_check(archetype_choices.size() >= 2, "%s must author at least two dispositions" % String(archetype_id))
+				for choice_value in archetype_choices:
+					var choice: Dictionary = choice_value
+					_check(not String(choice.get("label", "")).strip_edges().is_empty(), "%s has an unlabeled disposition" % String(archetype_id))
+					_check(not String(choice.get("result_title", "")).strip_edges().is_empty(), "%s has a disposition without an authored result title" % String(archetype_id))
+					_check(not String(choice.get("result_text", "")).strip_edges().is_empty(), "%s has a disposition without an authored result explanation" % String(archetype_id))
+					_check(choice.get("skill", "") != "" and int(choice.get("xp", 0)) > 0, "%s disposition must author its skill and experience effect" % String(archetype_id))
+	var official_dialogue_file := FileAccess.open("res://data/dialogue/assignment_official.dialogue", FileAccess.READ)
+	_check(official_dialogue_file != null, "Official interview dialogue must be readable")
+	if official_dialogue_file != null:
+		var official_dialogue := official_dialogue_file.get_as_text()
+		_check(not official_dialogue.contains("Is there another question?"), "Official interview must not use conversational filler")
+		_check(official_dialogue.contains("assignment_context.record_response"), "Official interview must answer from the record context")
+		_check(official_dialogue.contains("assignment_context.witness_response"), "Official interview must answer from witness context")
+		_check(official_dialogue.contains("assignment_context.requested_result"), "Official interview must answer the office's requested result")
+	var stance_file := FileAccess.open("res://data/dialogue/official_stances.json", FileAccess.READ)
+	_check(stance_file != null, "Official stance dialogue data must be readable")
+	if stance_file != null:
+		var stances: Variant = JSON.parse_string(stance_file.get_as_text())
+		_check(stances is Dictionary, "Official stance dialogue data must parse")
+		for stance_id in ["grain_clerk_conflict", "other_office_conflict", "canal_bailiff_requisition", "other_office_requisition", "archive_keeper", "trusted_complicit", "hostile_exacting", "general_office"]:
+			_check(not String(stances.get(stance_id, "")).strip_edges().is_empty(), "Official stance data is missing %s" % stance_id)
+	var prompt_file := FileAccess.open("res://data/assignments/investigation_prompts.json", FileAccess.READ)
+	_check(prompt_file != null, "Investigation prompt data must be readable")
+	if prompt_file != null:
+		var prompt_data: Variant = JSON.parse_string(prompt_file.get_as_text())
+		_check(prompt_data is Dictionary, "Investigation prompt data must parse")
+		if prompt_data is Dictionary:
+			for profile_id in prompt_data:
+				var profile: Dictionary = prompt_data[profile_id]
+				if String(profile_id) == "forms":
+					for form_type in profile:
+						var form_profile: Dictionary = profile[form_type]
+						for action_id in ["examine_records", "reconcile_accounts", "consult_official", "inspect_source"]:
+							_check(not String(form_profile.get(action_id, "")).strip_edges().is_empty(), "%s is missing investigation prompt %s" % [String(form_type), action_id])
+				else:
+					for action_id in ["examine_records", "reconcile_accounts", "consult_official", "inspect_source"]:
+						_check(not String(profile.get(action_id, "")).strip_edges().is_empty(), "%s is missing investigation prompt %s" % [String(profile_id), action_id])
 	var candidates: Array[Dictionary] = [
 		{"id": &"review_canal", "kind": &"project_review", "source_id": &"great_canal_cut"},
 		{"id": &"review_temple", "kind": &"project_review"},
