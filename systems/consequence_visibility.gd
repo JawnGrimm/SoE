@@ -3,8 +3,8 @@ extends RefCounted
 ## Presentation-safe consequence summaries. Does not mutate WorldState or save data.
 
 const SKILL_LABELS := {
-	&"literacy": "Literacy", &"arithmetic": "Arithmetic", &"law": "Law",
-	&"rhetoric": "Rhetoric", &"intrigue": "Intrigue", &"stewardship": "Stewardship"
+	"literacy": "Literacy", "arithmetic": "Arithmetic", "law": "Law",
+	"rhetoric": "Rhetoric", "intrigue": "Intrigue", "stewardship": "Stewardship"
 }
 
 static func format_ledger(message: String, consequences: Array) -> String:
