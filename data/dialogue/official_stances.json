@@ -1,8 +1,8 @@
 {
 	"grain_clerk_conflict": "I entered {dispatch_record}. The independent threshold tally now reads: {threshold_tally}. The roof was poor, not my measure; certify the tablet and let the household keep its reserve.",
 	"other_office_conflict": "The dispatch docket states: {dispatch_record}. The independent threshold tally records: {threshold_tally}. I ask you to preserve the office's standing—and name who bears the loss.",
-	"canal_bailiff_requisition": "The requisition was entered because the canal work needs hands. Our account shows {labor} labor and {barley} barley at {institution_name}; those totals do not tell you how many hands can leave their posts. I ask you to authorize the allotment, not mistake the stock ledger for a muster.",
-	"other_office_requisition": "The requisition names {form_title} for {place_name}. The institution records {labor} labor and {barley} barley, but the roll does not show which hands can be spared. Certify the request or write whose stores must be reassigned.",
+	"canal_bailiff_requisition": "The requisition was entered because the canal work needs hands. Our account shows {labor} labor and {barley} barley at {institution_name}; those are stock figures, not available labor; the stock total does not tell you how many hands can leave their posts. I ask you to authorize the allotment, not mistake the stock ledger for a muster.",
+	"other_office_requisition": "The requisition names {form_title} for {place_name}. The institution records {labor} labor and {barley} barley, but those are stock figures, not available labor; the roll does not show which hands can be spared. Certify the request or write whose stores must be reassigned.",
 	"archive_keeper": "Do not make a patron's seal into evidence. Enter the source, and let the record name the responsible office.",
 	"trusted_complicit": "{official_name}: We have kept one another's accounts before, {scribe_name}. A clean seal now will be remembered in your favor.",
 	"hostile_exacting": "{official_name}: Do not ask me to soften a figure, {scribe_name}. Show the source and state plainly who carries the consequence.",
