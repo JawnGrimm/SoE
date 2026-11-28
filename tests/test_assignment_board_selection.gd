@@ -55,6 +55,13 @@ func _run() -> void:
 		_check(official_dialogue.contains("assignment_context.record_response"), "Official interview must answer from the record context")
 		_check(official_dialogue.contains("assignment_context.witness_response"), "Official interview must answer from witness context")
 		_check(official_dialogue.contains("assignment_context.requested_result"), "Official interview must answer the office's requested result")
+	var stance_file := FileAccess.open("res://data/dialogue/official_stances.json", FileAccess.READ)
+	_check(stance_file != null, "Official stance dialogue data must be readable")
+	if stance_file != null:
+		var stances: Variant = JSON.parse_string(stance_file.get_as_text())
+		_check(stances is Dictionary, "Official stance dialogue data must parse")
+		for stance_id in ["grain_clerk_conflict", "other_office_conflict", "canal_bailiff_requisition", "other_office_requisition", "archive_keeper", "trusted_complicit", "hostile_exacting", "general_office"]:
+			_check(not String(stances.get(stance_id, "")).strip_edges().is_empty(), "Official stance data is missing %s" % stance_id)
 	var candidates: Array[Dictionary] = [
 		{"id": &"review_canal", "kind": &"project_review", "source_id": &"great_canal_cut"},
 		{"id": &"review_temple", "kind": &"project_review"},
