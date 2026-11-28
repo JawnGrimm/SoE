@@ -9,6 +9,7 @@ const ConsequenceVisibilityScript = preload("res://systems/consequence_visibilit
 
 const AssignmentGeneratorScript = preload("res://systems/assignment_generator.gd")
 const AssignmentNarratorScript = preload("res://systems/assignment_narrator.gd")
+const AssignmentDialogueContextScript = preload("res://systems/assignment_dialogue_context.gd")
 const DevCommandRouterScript = preload("res://systems/dev_command_router.gd")
 const RouteNetworkScript = preload("res://systems/route_network.gd")
 const TravelServiceScript = preload("res://systems/travel_service.gd")
@@ -1251,11 +1252,21 @@ func _world_assignment_action(action_id: StringName) -> void:
 	AudioManager.play_stylus_mark()
 	if clay_docket != null:
 		clay_docket.stamp_inquiry(action_id)
+	var record := AssignmentPipeline.get_record(world, active_world_assignment_id)
+	var evidence: Dictionary = result.get("evidence", {})
 	if action_id == &"examine_records":
-		var record := AssignmentPipeline.get_record(world, active_world_assignment_id)
-		var evidence: Dictionary = result.get("evidence", {})
 		latest_investigation_scene = AssignmentNarratorScript.narrate_record_examination(record, actor, world, evidence)
 	_show_world_engagement()
+	if action_id == &"consult_official":
+		_open_assignment_official_dialogue(record)
+
+func _open_assignment_official_dialogue(record: Dictionary) -> void:
+	var context = AssignmentDialogueContextScript.from_record(record, world)
+	var dialogue_resource: DialogueResource = load("res://data/dialogue/assignment_official.dialogue") as DialogueResource
+	if dialogue_resource == null:
+		push_error("Assignment official dialogue could not be loaded.")
+		return
+	DialogueManager.show_dialogue_balloon(dialogue_resource, "start", [{"assignment_context": context}])
 
 func _format_investigation_scene(scene: Dictionary) -> String:
 	var lines := PackedStringArray()
