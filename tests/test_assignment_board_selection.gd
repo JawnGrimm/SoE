@@ -92,6 +92,13 @@ func _run() -> void:
 				else:
 					for action_id in ["examine_records", "reconcile_accounts", "consult_official", "inspect_source"]:
 						_check(not String(profile.get(action_id, "")).strip_edges().is_empty(), "%s is missing investigation prompt %s" % [String(profile_id), action_id])
+	var reading_file := FileAccess.open("res://data/assignments/record_readings.json", FileAccess.READ)
+	_check(reading_file != null, "Scribe record-reading data must be readable")
+	if reading_file != null:
+		var readings: Variant = JSON.parse_string(reading_file.get_as_text())
+		_check(readings is Dictionary, "Scribe record-reading data must parse")
+		for form_type in ["grain_levy", "bailiff_requisition", "pension_roll", "consignment_receipt", "held_barley", "travel_pass", "succession_claim"]:
+			_check(not String(readings.get(form_type, "")).strip_edges().is_empty(), "%s has no authored scribe reading" % form_type)
 	var interview_world := WorldState.new()
 	var official := PersonEntity.new()
 	official.id = &"official_test"
