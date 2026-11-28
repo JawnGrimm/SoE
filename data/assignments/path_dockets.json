@@ -288,5 +288,279 @@
 		"city_garrison": "City Garrison",
 		"council_of_elders": "Council of Elders",
 		"agricultural_households": "Agricultural Households"
+	},
+	"procedural_archetypes": {
+		"delivery_mismatch": {
+			"title": "DELIVERY TALLY MISMATCH",
+			"left_quote": "{left_name} dispatched {dispatched} measures of {good_name} from {place_name}.",
+			"left_facts": "DISPATCHED: {dispatched}\nLOADING WITNESS: {witness}",
+			"right_quote": "{right_name} received {received}. The missing measure is disputed.",
+			"right_facts": "RECEIVED: {received}\nUNASSIGNED DIFFERENCE: {difference}",
+			"prompt": "Which entry will carry the unassigned difference?",
+			"choices": [
+				{
+					"label": "Record discrepancy",
+					"result_text": "The unassigned difference is entered.",
+					"resource": "{good}",
+					"amount": -1,
+					"left_opinion": 1,
+					"right_opinion": 1,
+					"skill": "arithmetic",
+					"xp": 12,
+					"trait": "",
+					"epic_progress": 1
+				},
+				{
+					"label": "Force acceptance on paper",
+					"result_text": "The docket balances; the missing goods do not.",
+					"resource": "{good}",
+					"amount": 2,
+					"left_opinion": 2,
+					"right_opinion": -2,
+					"skill": "law",
+					"xp": 8,
+					"trait": "complicit",
+					"epic_progress": 2
+				},
+				{
+					"label": "Dock the carrier",
+					"result_text": "The carrier bears the shortage pending review.",
+					"resource": "{good}",
+					"amount": 1,
+					"left_opinion": 2,
+					"right_opinion": -2,
+					"skill": "stewardship",
+					"xp": 10,
+					"trait": "severe",
+					"epic_progress": 1
+				}
+			]
+		},
+		"damaged_consignment": {
+			"title": "DAMAGED CONSIGNMENT",
+			"left_quote": "{left_name} reports {good_name} stored at {place_name}.",
+			"left_facts": "STOCK ON HAND: {amount}\nAFFECTED SHARE: {damaged}",
+			"right_quote": "{right_name} found cracked seals or damp stains on the outer bundles.",
+			"right_facts": "CAUSE NOT CERTIFIED\nINSPECTION REQUIRED",
+			"prompt": "Do you quarantine, release, or return the damaged consignment?",
+			"choices": [
+				{
+					"label": "Quarantine damaged share",
+					"result_text": "The affected share is held.",
+					"resource": "{good}",
+					"amount": 0,
+					"amount_key": "damaged",
+					"amount_sign": -1,
+					"left_opinion": 1,
+					"right_opinion": 1,
+					"skill": "stewardship",
+					"xp": 12,
+					"trait": "",
+					"epic_progress": 1
+				},
+				{
+					"label": "Release all goods",
+					"result_text": "The full load is released despite the damage.",
+					"resource": "{good}",
+					"amount": 0,
+					"amount_key": "damaged",
+					"amount_sign": -1,
+					"left_opinion": 2,
+					"right_opinion": -1,
+					"skill": "law",
+					"xp": 6,
+					"trait": "pliable",
+					"epic_progress": 2
+				},
+				{
+					"label": "Turn away at gate",
+					"result_text": "The shipment returns without entry.",
+					"resource": "{good}",
+					"amount": 0,
+					"left_opinion": -2,
+					"right_opinion": 2,
+					"skill": "law",
+					"xp": 10,
+					"trait": "severe",
+					"epic_progress": 1
+				}
+			]
+		},
+		"subtotal_claim": {
+			"title": "ACCOUNT SUBTOTAL / CROSS-HOUSE CLAIM",
+			"left_quote": "{left_name} submits three lines for {place_name}.",
+			"left_facts": "LINE I: {line_a}\nLINE II: {line_b}\nLINE III: {line_c}\nWRITTEN TOTAL: {written_total}",
+			"right_quote": "{right_name} claims the extra {discrepancy} belongs to another household roll.",
+			"right_facts": "CALCULATED TOTAL: {calculated_total}\nCLAIM NOT ON THIS ROLL",
+			"prompt": "Will you correct the sum, transfer the claim, or hold both rolls?",
+			"choices": [
+				{
+					"label": "Correct math; hold the line",
+					"result_text": "The sum is corrected and the claim held.",
+					"resource": "{good}",
+					"amount": 0,
+					"left_opinion": -1,
+					"right_opinion": 2,
+					"skill": "arithmetic",
+					"xp": 14,
+					"trait": "",
+					"epic_progress": 1
+				},
+				{
+					"label": "Quietly transfer the difference",
+					"result_text": "The claim is paid without proper entry.",
+					"resource": "{good}",
+					"amount": 0,
+					"amount_key": "discrepancy",
+					"amount_sign": -1,
+					"left_opinion": 2,
+					"right_opinion": 1,
+					"skill": "stewardship",
+					"xp": 7,
+					"trait": "complicit",
+					"epic_progress": 2
+				},
+				{
+					"label": "Impound for adjudication",
+					"result_text": "Both rolls are held for a senior ruling.",
+					"resource": "{good}",
+					"amount": 0,
+					"left_opinion": -1,
+					"right_opinion": -1,
+					"skill": "law",
+					"xp": 12,
+					"trait": "severe",
+					"epic_progress": 1
+				}
+			]
+		},
+		"goods_unreturned": {
+			"title": "GOODS OUT, UNRETURNED",
+			"left_quote": "{left_name} took {sent} measures of {good_name} from {place_name}.",
+			"left_facts": "DISPATCHED: {sent} {good_name}\nRETURNED: {returned} {returned_good}",
+			"right_quote": "{right_name} recalls a spoken promise to settle after the next landing.",
+			"right_facts": "WRITTEN PROMISE: NONE\nSPOKEN CLAIM: DISPUTED",
+			"prompt": "Will the balance remain open, be credited, or block the next dispatch?",
+			"choices": [
+				{
+					"label": "Separate writing from claim",
+					"result_text": "The written balance stays open; testimony is attached.",
+					"resource": "{good}",
+					"amount": 0,
+					"left_opinion": 1,
+					"right_opinion": 1,
+					"skill": "law",
+					"xp": 12,
+					"trait": "",
+					"epic_progress": 1
+				},
+				{
+					"label": "Credit the carrier anyway",
+					"result_text": "The spoken promise is accepted as settlement.",
+					"resource": "{good}",
+					"amount": 0,
+					"amount_formula": "returned_minus_sent",
+					"left_opinion": 2,
+					"right_opinion": -2,
+					"skill": "stewardship",
+					"xp": 7,
+					"trait": "pliable",
+					"epic_progress": 2
+				},
+				{
+					"label": "Freeze next dispatch",
+					"result_text": "No goods leave until the balance is answered.",
+					"resource": "{good}",
+					"amount": 0,
+					"left_opinion": -1,
+					"right_opinion": -2,
+					"skill": "arithmetic",
+					"xp": 10,
+					"trait": "severe",
+					"epic_progress": 1
+				}
+			]
+		},
+		"hazard_check_preventive": {
+			"title": "HAZARD / MAINTENANCE CHECK",
+			"left_quote": "{left_name} requests preventive maintenance at {place_name}.",
+			"left_facts": "LABOR: {labor}\nSILVER: {silver}",
+			"right_quote": "{right_name} says a crew can be assigned if the storehouse authorizes it.",
+			"right_facts": "NO ACTIVE HAZARD\nPREVENTIVE WORK",
+			"prompt": "Will you commit labor, issue silver, or record and defer maintenance?",
+			"choices": [
+				{
+					"label": "Assign labor",
+					"result_text": "Labor is committed to maintenance.",
+					"resource": "labor",
+					"amount": -2,
+					"left_opinion": 1,
+					"right_opinion": 1,
+					"skill": "stewardship",
+					"xp": 12,
+					"trait": "",
+					"epic_progress": 0
+				},
+				{
+					"label": "Issue silver",
+					"result_text": "Silver is issued for repair materials.",
+					"resource": "silver",
+					"amount": -2,
+					"left_opinion": 1,
+					"right_opinion": 1,
+					"skill": "law",
+					"xp": 10,
+					"trait": "",
+					"epic_progress": 0
+				},
+				{
+					"label": "Record and defer",
+					"result_text": "Maintenance is recorded without allocation.",
+					"resource": "{good}",
+					"amount": 0,
+					"left_opinion": -1,
+					"right_opinion": -1,
+					"skill": "arithmetic",
+					"xp": 5,
+					"trait": "",
+					"epic_progress": 0
+				}
+			]
+		},
+		"hazard_check_active": {
+			"title": "HAZARD / MAINTENANCE CHECK",
+			"left_quote": "{left_name} reports active {hazard_name} at {hazard_place_name}.",
+			"left_facts": "ONGOING LOSS: {hazard_rate} {hazard_resource} / PERIOD",
+			"right_quote": "{right_name} can provide a crew if labor or silver is assigned.",
+			"right_facts": "LABOR: {labor}\nSILVER: {silver}",
+			"prompt": "Will you repair the hazard now or record the loss and defer?",
+			"choices": [
+				{
+					"label": "Allocate {repair_resource} and repair",
+					"result_text": "The hazard is repaired and its ongoing loss stops.",
+					"resource": "{repair_resource}",
+					"amount": -3,
+					"left_opinion": 2,
+					"right_opinion": 2,
+					"skill": "stewardship",
+					"xp": 15,
+					"trait": "",
+					"epic_progress": 0,
+					"repair": true
+				},
+				{
+					"label": "Record loss; defer repair",
+					"result_text": "The hazard remains active; loss continues.",
+					"resource": "{good}",
+					"amount": 0,
+					"left_opinion": -1,
+					"right_opinion": -1,
+					"skill": "arithmetic",
+					"xp": 5,
+					"trait": "",
+					"epic_progress": 1
+				}
+			]
+		}
 	}
 }
