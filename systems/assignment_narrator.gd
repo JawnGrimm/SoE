@@ -127,13 +127,23 @@ static func _extract_fact(facts: String, label: String) -> String:
 			return line.strip_edges().substr(prefix.length()).strip_edges().trim_prefix("“").trim_suffix("”").strip_edges()
 	return ""
 
+static var _form_title_data: Dictionary = {}
+
 static func _form_display(form_type: String) -> String:
-	match form_type:
-		"pension_roll": return "Pension Ledger"
-		"grain_levy": return "Grain Levy"
-		"travel_pass": return "Travel Pass"
-		"succession_claim": return "Succession Claim"
-		_: return form_type.replace("_", " ").capitalize()
+	if _form_title_data.is_empty():
+		var file := FileAccess.open("res://data/dialogue/official_stances.json", FileAccess.READ)
+		if file == null:
+			push_error("AssignmentNarrator: authored form title data is missing.")
+			return ""
+		var parsed: Variant = JSON.parse_string(file.get_as_text())
+		if not parsed is Dictionary:
+			push_error("AssignmentNarrator: authored form title data is invalid.")
+			return ""
+		_form_title_data = parsed.get("form_titles", {})
+	var title := String(_form_title_data.get(form_type, ""))
+	if title.is_empty():
+		push_error("AssignmentNarrator: no authored title for form type '%s'." % form_type)
+	return title
 
 static func _clean_display(value: String, field_path: String) -> String:
 	var lines := PackedStringArray()
@@ -144,7 +154,9 @@ static func _clean_display(value: String, field_path: String) -> String:
 	var cleaned := "\n".join(lines)
 	var form_pattern := RegEx.new()
 	form_pattern.compile("form_[0-9]+")
-	cleaned = form_pattern.sub(cleaned, "the pending record", true)
+	if form_pattern.search(cleaned) != null:
+		push_error("AssignmentNarrator: internal form identifier reached player-facing field: %s" % field_path)
+		return ""
 	var form_label_pattern := RegEx.new()
 	form_label_pattern.compile("(?i)FORM:\\s*([a-z_]+)")
 	var form_matches := form_label_pattern.search_all(cleaned)
