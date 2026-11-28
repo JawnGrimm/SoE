@@ -843,7 +843,7 @@ static func _official_stance(world: WorldState, _actor: PersonEntity, official: 
 	var institution: Dictionary = world.institutions.get(institution_id, {})
 	var records: Dictionary = institution.get("stock_records", {})
 	var npc_evidence: Dictionary = data.get("npc_evidence", {})
-	var stance_id := "general_office"
+	var stance_id := "office_profile"
 	if not npc_evidence.is_empty() or bool(records.get("concealed_spoilage", false)):
 		stance_id = "grain_clerk_conflict" if official.office_id == &"grain_clerk" else "other_office_conflict"
 	elif form_type in [&"bailiff_requisition", &"pension_roll"]:
@@ -855,8 +855,11 @@ static func _official_stance(world: WorldState, _actor: PersonEntity, official: 
 	elif opinion <= -5 or &"severe" in official.traits or &"exacting" in official.traits:
 		stance_id = "hostile_exacting"
 	var statement := String(_official_stance_data.get(stance_id, ""))
+	if stance_id == "office_profile":
+		var office_profiles: Dictionary = _official_stance_data.get("office_profiles", {})
+		statement = String(office_profiles.get(String(official.office_id), ""))
 	if statement.is_empty():
-		push_error("AssignmentPipeline: missing official stance data '%s'." % stance_id)
+		push_error("AssignmentPipeline: missing official stance data '%s' for office '%s'." % [stance_id, String(official.office_id)])
 		return ""
 	var stock: Dictionary = institution.get("stockpiles", {})
 	var place_id := StringName(data.get("place_id", data.get("subject_id", "")))
