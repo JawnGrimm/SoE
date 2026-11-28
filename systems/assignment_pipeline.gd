@@ -857,6 +857,29 @@ static func _official_stance(world: WorldState, _actor: PersonEntity, official: 
 	var statement := String(_official_stance_data.get(stance_id, ""))
 	if statement.is_empty():
 		push_error("AssignmentPipeline: missing official stance data '%s'." % stance_id)
+		return ""
+	var stock: Dictionary = institution.get("stockpiles", {})
+	var place_id := StringName(data.get("place_id", data.get("subject_id", "")))
+	var form_titles: Dictionary = _official_stance_data.get("form_titles", {})
+	var values := {
+		"official_name": official.display_name,
+		"scribe_name": world.get_player().display_name if world.get_player() != null else "",
+		"office_name": String(official.office_id).replace("_", " ").capitalize(),
+		"institution_name": String(institution.get("name", "")),
+		"place_name": _place_name(world, place_id),
+		"form_title": String(form_titles.get(String(form_type), "")),
+		"labor": str(int(stock.get(&"labor", 0))),
+		"barley": str(int(stock.get(&"barley", 0))),
+		"dispatch_record": String(npc_evidence.get("dispatch_record", "No dispatch docket is attached.")),
+		"threshold_tally": String(npc_evidence.get("threshold_tally", "No independent threshold tally is attached."))
+	}
+	for key in values:
+		statement = statement.replace("{%s}" % String(key), String(values[key]))
+	var unresolved := RegEx.new()
+	unresolved.compile("\\{[a-zA-Z0-9_]+\\}")
+	if unresolved.search(statement) != null:
+		push_error("AssignmentPipeline: unresolved substitution in official stance '%s'." % stance_id)
+		return ""
 	return statement
 
 static func _preferred_office(form_type: StringName) -> StringName:
