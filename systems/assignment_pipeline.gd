@@ -670,10 +670,10 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 			var institution: Dictionary = world.institutions.get(institution_id, {})
 			var stock: Dictionary = institution.get("stockpiles", {})
 			if kind == &"form":
-				summary = "The form is checked against the institution's current recorded position."
+				summary = "%s at %s: %s" % [String(institution.get("name", institution_id)), _place_name(world, StringName(data.get("place_id", data.get("subject_id", "")))), _live_stock_facts(stock, institution)]
 				facts = "DOCUMENT: %s\nURGENCY: %d\n%s" % [_form_title(StringName(data.get("form_type", ""))), int(data.get("urgency", 0)), _live_stock_facts(stock, institution)]
 			else:
-				summary = "The institution's current stock records are reconciled. No discrepancy is presumed without a separate expected balance."
+				summary = "%s: %s" % [String(institution.get("name", institution_id)), _live_stock_facts(stock, institution)]
 				facts = "INSTITUTION: %s\nMEMBERS: %d / ACTIVITY RECORDS: %d\n%s" % [String(institution.get("name", institution_id)), int(data.get("member_count", institution.get("members", []).size())), int(data.get("activity_count", institution.get("activity_count", 0))), _live_stock_facts(stock, institution)]
 			if stock.has(&"barley") or institution.get("stock_records", {}).has("barley_recorded"):
 				facts += "\nTABLET / STOREHOUSE: recorded barley %d; live barley %d; quantity gap %d." % [int(institution.get("stock_records", {}).get("barley_recorded", stock.get(&"barley", 0))), int(stock.get(&"barley", 0)), int(stock.get(&"barley", 0)) - int(institution.get("stock_records", {}).get("barley_recorded", stock.get(&"barley", 0)))]
@@ -683,22 +683,23 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 			facts += "\n" + _stock_detail(stock, skill_level, "ARITHMETIC")
 		&"examine_records":
 			if kind == &"form":
-				summary = "The form's origin and urgency are confirmed against the pending register."
+				summary = "%s for %s; entered by %s at urgency %d." % [_form_title(StringName(data.get("form_type", ""))), _place_name(world, StringName(data.get("subject_id", ""))), employer_name_for_record(world, record), int(data.get("urgency", 0))]
 				facts = "DOCUMENT: %s\nSUBJECT: %s\nURGENCY: %d\nENTERED BY: %s\nOFFICE NOTE: %s" % [_form_title(StringName(data.get("form_type", ""))), _place_name(world, StringName(data.get("subject_id", ""))), int(data.get("urgency", 0)), String(data.get("generated_by", "the office")).replace("_", " ").capitalize(), String(data.get("generation_reason", "routine office request")).replace("_", " ")]
 			else:
 				summary = "The written record is examined. The current account can be compared with the live institution state."
-				facts = "SOURCE: %s\nPERIOD: %d\nSKILL: %s %d" % [String(record.get("source_id", "")), world.current_period_index(), "Literacy", skill_level]
+				facts = "RECORD: %s\nPERIOD: %d" % [String(record.get("title", "")), world.current_period_index()]
+				summary = String(record.get("summary", record.get("title", "")))
 		&"consult_official":
 			var employer := world.get_person(StringName(record.get("employer_id", "")))
 			var opinion := employer.get_opinion(actor.id) if employer != null else 0
-			summary = "The responsible official gives a position and a demand. It is testimony, not proof."
+			summary = "%s states: %s" % [employer.display_name if employer != null else "", stance]
 			var stance := _official_stance(world, actor, employer, data, opinion)
 			facts = "OFFICIAL: %s\nOPINION OF SCRIBE: %d\nOFFICE: %s\nSTANCE: “%s”" % [employer.display_name if employer != null else "No named official", opinion, String(employer.office_id) if employer != null else "Unassigned", stance]
 		&"inspect_source":
 			if kind == &"hazard":
 				var hazard: Dictionary = record.get("source_data", {})
 				facts = "SITE: %s\nHAZARD: %s\nLOSS / PERIOD: %d %s\nTOTAL RECORDED LOSS: %d" % [_place_name(world, StringName(hazard.get("place_id", ""))), String(hazard.get("id", "")), int(hazard.get("rate", 0)), String(hazard.get("resource", "")), int(hazard.get("total_lost", 0))]
-				summary = "The active hazard is physically inspected. The recorded loss is checked against the current site condition."
+				summary = "%s at %s: %d %s lost each period; %d recorded in total." % [String(hazard.get("id", "")).replace("_", " "), _place_name(world, StringName(hazard.get("place_id", ""))), int(hazard.get("rate", 0)), String(hazard.get("resource", "")).replace("_", " "), int(hazard.get("total_lost", 0))]
 			else:
 				var institution_id := StringName(record.get("sponsor_institution", record.get("source_data", {}).get("sponsor_institution", data.get("institution_id", _institution_for_location(world, StringName(data.get("place_id", data.get("subject_id", ""))))))))
 				var institution: Dictionary = world.institutions.get(institution_id, {})
@@ -707,7 +708,7 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 				var physical_records: Dictionary = institution.get("stock_records", {})
 				if bool(physical_records.get("concealed_spoilage", false)):
 					facts += "\nPHYSICAL FINDING: damp or mold-marked barley contradicts the prime seed-corn declaration."
-				summary = "The physical site is inspected. These are the current recorded quantities, not a clerk's tablet claim."
+				summary = "%s at %s: %s" % [String(institution.get("name", institution_id)), _place_name(world, StringName(data.get("subject_id", data.get("place_id", "")))), _live_stock_facts(stock, institution)]
 	var evidence_place := StringName(data.get("subject_id", data.get("place_id", "")))
 	for hazard in world.hazards:
 		if bool(hazard.get("active", false)) and StringName(hazard.get("place_id", "")) == evidence_place:
@@ -715,10 +716,13 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 	var npc_evidence: Dictionary = data.get("npc_evidence", {})
 	if not npc_evidence.is_empty():
 		facts += "\nAUTONOMOUS RECORDS"
-		facts += "\nDISPATCH DOCKET: %s" % String(npc_evidence.get("dispatch_record", "No dispatch text recorded."))
-		facts += "\nTHRESHOLD TALLY: %s" % String(npc_evidence.get("threshold_tally", "No threshold text recorded."))
-		facts += "\nDISCREPANCY: %s" % String(npc_evidence.get("discrepancy", "No discrepancy description recorded."))
-		summary += " The pending docket includes conflicting records generated by an autonomous grain-office action."
+		if not String(npc_evidence.get("dispatch_record", "")).is_empty():
+			facts += "\nDISPATCH DOCKET: %s" % String(npc_evidence.get("dispatch_record", ""))
+		if not String(npc_evidence.get("threshold_tally", "")).is_empty():
+			facts += "\nTHRESHOLD TALLY: %s" % String(npc_evidence.get("threshold_tally", ""))
+		if not String(npc_evidence.get("discrepancy", "")).is_empty():
+			facts += "\nDISCREPANCY: %s" % String(npc_evidence.get("discrepancy", ""))
+
 	if action_id == &"examine_records" and skill_level >= 2:
 		facts += "\nThe source note records: %s." % String(data.get("generation_reason", "not recorded")).replace("_", " ")
 	elif action_id == &"consult_official" and skill_level >= 2:
@@ -726,11 +730,15 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 		if consulted != null:
 			var tie: Dictionary = consulted.relationships.get(actor.id, {})
 			facts += "\nRECORDED TRUST: %d / RELATIONSHIP: %s" % [int(tie.get("trust", 0)), String(tie.get("type", "unknown"))]
-	var action_label: String = String({&"examine_records": "Written record", &"reconcile_accounts": "Account reconciliation", &"consult_official": "Official testimony", &"inspect_source": "Physical inspection"}.get(action_id, "Investigation"))
-	facts += "\n%s finding reflects your skill level %d." % [action_label, skill_level]
+
 	facts = _sanitize_evidence_text(facts)
 	summary = _sanitize_evidence_text(summary)
 	return {"summary": summary, "facts": facts, "skill_level": skill_level}
+
+
+static func employer_name_for_record(world: WorldState, record: Dictionary) -> String:
+	var employer := world.get_person(StringName(record.get("employer_id", ""))) if world != null else null
+	return employer.display_name if employer != null else "unassigned office"
 
 static func _sanitize_evidence_text(value: String) -> String:
 	var kept := PackedStringArray()
