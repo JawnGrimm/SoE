@@ -168,8 +168,6 @@ static func _clean_display(value: String, field_path: String) -> String:
 			push_error("AssignmentNarrator: authored player-facing term data is invalid.")
 			return ""
 		_player_term_data = terms_parsed
-	for raw_term in _player_term_data:
-		cleaned = cleaned.replace(String(raw_term), String(_player_term_data[raw_term]))
 	var form_label_pattern := RegEx.new()
 	form_label_pattern.compile("(?i)FORM:\\s*([a-z_]+)")
 	var form_matches := form_label_pattern.search_all(cleaned)
@@ -179,6 +177,8 @@ static func _clean_display(value: String, field_path: String) -> String:
 		if display_title.is_empty():
 			return ""
 		cleaned = cleaned.replace(form_match.get_string(0), "RECORD TYPE: " + display_title)
+	for raw_term in _player_term_data:
+		cleaned = cleaned.replace(String(raw_term), String(_player_term_data[raw_term]))
 	if cleaned.strip_edges().is_empty():
 		push_error("AssignmentNarrator: required player-facing field is empty: %s" % field_path)
 		return ""
