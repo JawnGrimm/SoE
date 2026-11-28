@@ -916,7 +916,8 @@
 					"skill": "arithmetic",
 					"xp": 12,
 					"trait": "",
-					"epic_progress": 1
+					"epic_progress": 1,
+					"result_title": "SHORTAGE ENTERED"
 				},
 				{
 					"label": "Force acceptance on paper",
@@ -928,7 +929,8 @@
 					"skill": "law",
 					"xp": 8,
 					"trait": "complicit",
-					"epic_progress": 2
+					"epic_progress": 2,
+					"result_title": "PAPER ACCEPTANCE SEALED"
 				},
 				{
 					"label": "Dock the carrier",
@@ -940,7 +942,8 @@
 					"skill": "stewardship",
 					"xp": 10,
 					"trait": "severe",
-					"epic_progress": 1
+					"epic_progress": 1,
+					"result_title": "CARRIER DEBITED"
 				}
 			]
 		},
@@ -964,7 +967,8 @@
 					"skill": "stewardship",
 					"xp": 12,
 					"trait": "",
-					"epic_progress": 1
+					"epic_progress": 1,
+					"result_title": "DAMAGED SHARE QUARANTINED"
 				},
 				{
 					"label": "Release all goods",
@@ -978,7 +982,8 @@
 					"skill": "law",
 					"xp": 6,
 					"trait": "pliable",
-					"epic_progress": 2
+					"epic_progress": 2,
+					"result_title": "LOAD RELEASED"
 				},
 				{
 					"label": "Turn away at gate",
@@ -990,7 +995,8 @@
 					"skill": "law",
 					"xp": 10,
 					"trait": "severe",
-					"epic_progress": 1
+					"epic_progress": 1,
+					"result_title": "SHIPMENT RETURNED"
 				}
 			]
 		},
@@ -1012,7 +1018,8 @@
 					"skill": "arithmetic",
 					"xp": 14,
 					"trait": "",
-					"epic_progress": 1
+					"epic_progress": 1,
+					"result_title": "SUM CORRECTED"
 				},
 				{
 					"label": "Quietly transfer the difference",
@@ -1026,7 +1033,8 @@
 					"skill": "stewardship",
 					"xp": 7,
 					"trait": "complicit",
-					"epic_progress": 2
+					"epic_progress": 2,
+					"result_title": "UNRECORDED TRANSFER ENTERED"
 				},
 				{
 					"label": "Impound for adjudication",
@@ -1038,7 +1046,8 @@
 					"skill": "law",
 					"xp": 12,
 					"trait": "severe",
-					"epic_progress": 1
+					"epic_progress": 1,
+					"result_title": "ROLLS IMPOUNDED"
 				}
 			]
 		},
@@ -1060,7 +1069,8 @@
 					"skill": "law",
 					"xp": 12,
 					"trait": "",
-					"epic_progress": 1
+					"epic_progress": 1,
+					"result_title": "WRITTEN BALANCE RETAINED"
 				},
 				{
 					"label": "Credit the carrier anyway",
@@ -1073,7 +1083,8 @@
 					"skill": "stewardship",
 					"xp": 7,
 					"trait": "pliable",
-					"epic_progress": 2
+					"epic_progress": 2,
+					"result_title": "CARRIER CREDITED"
 				},
 				{
 					"label": "Freeze next dispatch",
@@ -1085,7 +1096,8 @@
 					"skill": "arithmetic",
 					"xp": 10,
 					"trait": "severe",
-					"epic_progress": 1
+					"epic_progress": 1,
+					"result_title": "NEXT DISPATCH FROZEN"
 				}
 			]
 		},
@@ -1107,7 +1119,8 @@
 					"skill": "stewardship",
 					"xp": 12,
 					"trait": "",
-					"epic_progress": 0
+					"epic_progress": 0,
+					"result_title": "LABOR ALLOCATED"
 				},
 				{
 					"label": "Issue silver",
@@ -1119,7 +1132,8 @@
 					"skill": "law",
 					"xp": 10,
 					"trait": "",
-					"epic_progress": 0
+					"epic_progress": 0,
+					"result_title": "REPAIR SILVER ISSUED"
 				},
 				{
 					"label": "Record and defer",
@@ -1131,7 +1145,8 @@
 					"skill": "arithmetic",
 					"xp": 5,
 					"trait": "",
-					"epic_progress": 0
+					"epic_progress": 0,
+					"result_title": "MAINTENANCE DEFERRED"
 				}
 			]
 		},
@@ -1154,7 +1169,8 @@
 					"xp": 15,
 					"trait": "",
 					"epic_progress": 0,
-					"repair": true
+					"repair": true,
+					"result_title": "HAZARD REPAIRED"
 				},
 				{
 					"label": "Record loss; defer repair",
@@ -1166,7 +1182,8 @@
 					"skill": "arithmetic",
 					"xp": 5,
 					"trait": "",
-					"epic_progress": 1
+					"epic_progress": 1,
+					"result_title": "LOSS RECORDED AND DEFERRED"
 				}
 			]
 		}
