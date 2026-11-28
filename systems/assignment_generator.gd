@@ -6,72 +6,37 @@ const DAMAGED_GOODS: Array[StringName] = [&"beer", &"wool", &"textiles"]
 const ARCHETYPES: Array[StringName] = [&"delivery_mismatch", &"damaged_consignment", &"subtotal_claim", &"goods_unreturned", &"hazard_check"]
 
 
-const PATH_FACTION_MEMBERS := {
-	&"eanna_household": [&"shuruppak_ilu", &"ur_nanna", &"lu_nanshe"],
-	&"boatmens_guild": [&"enlil_kisu", &"enki_ili", &"geme_inana"],
-	&"city_garrison": [&"utu_mansum", &"ur_amas"],
-	&"council_of_elders": [&"shuruppak_ilu", &"lu_nanshe"],
-	&"agricultural_households": [&"ama_edin", &"geme_tur", &"ur_gula"]
-}
-const PATH_FACTION_DISPLAY_NAMES := {
-	&"eanna_household": "Eanna Temple",
-	&"boatmens_guild": "Landing Boatmen & Guilds",
-	&"city_garrison": "City Garrison",
-	&"council_of_elders": "Council of Elders",
-	&"agricultural_households": "Agricultural Households"
-}
-const PATH_DOCKET_DATA := {
-	&"path_merchant": [
-		{"id":"timber_grade_dispute","title":"TIMBER GRADES / REJECTED LOAD","client":"boatmens_guild","opposing":"council_of_elders","left":"The timber was accepted at the landing by grade. The tablet now calls it inferior.","left_facts":"GRADE AT LANDING: ACCEPTED\nREVISED GRADE: DISPUTED","right":"The council's builder says the beams will not hold the cut's retaining frame.","right_facts":"STRUCTURAL USE: RETAINING FRAME\nREJECTION: REQUESTED","prompt":"Does the grade mark stand, or does the load return?"},
-		{"id":"boat_demurrage","title":"BOAT DEMURRAGE / DELAYED UNLOADING","client":"boatmens_guild","opposing":"eanna_household","left":"Our boat waited three periods for the unloading crew. The charge is not charity; it is time spent tied to your quay.","left_facts":"WAIT: 3 PERIODS\nDEMURRAGE: UNSETTLED","right":"The household claims the boat arrived outside its assigned landing window.","right_facts":"LANDING WINDOW: DISPUTED\nCREW RECORD: INCOMPLETE","prompt":"Which account will carry the delay?"},
-		{"id":"counterfeit_copper","title":"COPPER INGOTS / FALSE WEIGHT","client":"boatmens_guild","opposing":"council_of_elders","left":"These ingots passed the market balance yesterday. Today the council calls them light and counterfeit.","left_facts":"MARK: PRESENT\nWEIGHT: CHALLENGED","right":"The council asks that the entire batch be held until the source is named.","right_facts":"BATCH: 12 INGOTS\nSOURCE: UNVERIFIED","prompt":"Do you certify the mark, impound the batch, or split the risk?"},
-		{"id":"missing_quay_sacks","title":"QUAYSIDE GRAIN / MISSING SACKS","client":"eanna_household","opposing":"boatmens_guild","left":"The storehouse tally records forty sacks sent to the quay. Only thirty-six were entered on the boat.","left_facts":"DISPATCHED: 40\nLOADED: 36","right":"The boatmen insist four sacks were moved to a second craft without a witness tablet.","right_facts":"SECOND CRAFT: UNWITNESSED\nSHORTAGE: 4 SACKS","prompt":"Do you charge the landing, amend the tally, or demand a second witness?"}
-	],
-	&"path_martial": [
-		{"id":"ditch_guard_rations","title":"DITCH GUARD / RATION SHORTFALL","client":"city_garrison","opposing":"eanna_household","left":"The ditch guards received half their barley. They will not keep watch on empty stomachs.","left_facts":"RATION ISSUE: HALF\nWATCH: AT RISK","right":"The storehouse says the guard roll contains names not present at the ditch.","right_facts":"ROLL: DISPUTED\nMUSTER: NOT ATTACHED","prompt":"Do you certify the shortage, challenge the roll, or guarantee the watch?"},
-		{"id":"spear_requisition","title":"SPEAR REQUISITION / UNMATCHED COUNT","client":"city_garrison","opposing":"council_of_elders","left":"The captain requisitioned twenty spearheads. The workshop delivered fourteen and claims the rest were never authorized.","left_facts":"REQUESTED: 20\nDELIVERED: 14","right":"The council's tablet bears a smaller order, but its seal impression is incomplete.","right_facts":"ORDER: 14 OR 20\nSEAL: INCOMPLETE","prompt":"Which requisition becomes the record?"},
-		{"id":"watchtower_supply","title":"WATCHTOWER / SUPPLY GAP","client":"city_garrison","opposing":"boatmens_guild","left":"The tower has no lamp oil or rope. The captain says the supply boat never arrived.","left_facts":"OIL: MISSING\nROPE: MISSING","right":"The boatman has a receipt for delivery at the lower landing, not the tower.","right_facts":"LOWER LANDING: RECEIPT\nTOWER: NO ACKNOWLEDGMENT","prompt":"Do you hold the carrier, reroute the supply, or certify the receipt?"},
-		{"id":"conscription_exemption","title":"CONSCRIPTION EXEMPTION / HOUSEHOLD CLAIM","client":"city_garrison","opposing":"council_of_elders","left":"The captain says this household's exemption was never entered on the muster tablet.","left_facts":"EXEMPTION: CLAIMED\nMUSTER: ACTIVE","right":"The council elder says the exemption was witnessed and the tablet misplaced.","right_facts":"WITNESS: NAMED\nENTRY: MISSING","prompt":"Does the missing entry cancel the exemption?"}
-	],
-	&"path_civil": [
-		{"id":"boundary_stones","title":"BOUNDARY STONES / FARMER DISPUTE","client":"council_of_elders","opposing":"agricultural_households","left":"The boundary stone stands where the elder's copy places it. The household says it was moved after the flood.","left_facts":"STONE POSITION: DISPUTED\nOLDER COPY: PRESENT","right":"The household's field marks show a narrower strip than the council's levy map.","right_facts":"FIELD MARKS: PRESENT\nLEVY MAP: WIDER","prompt":"Which boundary does your seal recognize?"},
-		{"id":"canal_water_sharing","title":"CANAL WATER / SHARED ALLOCATION","client":"council_of_elders","opposing":"agricultural_households","left":"The upper fields received three turns of water. The lower households say their turn was skipped.","left_facts":"UPPER: 3 TURNS\nLOWER: 0 RECORDED","right":"The canal keeper claims the lower gate was blocked with silt and could not be opened.","right_facts":"GATE: SILTED\nWATER TURN: UNSETTLED","prompt":"Do you assign a lost turn, a debt, or a new schedule?"},
-		{"id":"inheritance_tablets","title":"INHERITANCE TABLETS / DOUBLE CLAIM","client":"council_of_elders","opposing":"eanna_household","left":"Two tablets name the same field allotment. One bears the father's seal; the other the household's later mark.","left_facts":"CLAIM A: OLDER SEAL\nCLAIM B: LATER MARK","right":"The household says the later mark records a settlement made before the father's death.","right_facts":"SETTLEMENT: ORAL\nWITNESS: NOT LISTED","prompt":"Which claim receives provisional recognition?"},
-		{"id":"market_vendor_fine","title":"MARKET VENDOR / FINE APPEAL","client":"council_of_elders","opposing":"boatmens_guild","left":"The council imposed a fine for occupying the quay path. The vendor says the boatmen blocked the proper stall.","left_facts":"FINE: 2 SHEKELS\nOBSTRUCTION: CLAIMED","right":"The landing guild says the vendor's baskets narrowed the unloading lane.","right_facts":"LANE: OBSTRUCTED\nPRIOR WARNING: DISPUTED","prompt":"Do you uphold the fine, reduce it, or return the matter for witness? "}
-	],
-	&"path_religious": [
-		{"id":"sacrificial_sheep","title":"SACRIFICIAL SHEEP / COUNT VARIANCE","client":"eanna_household","opposing":"agricultural_households","left":"The offering roll lists twelve sheep. The shepherd delivered ten and says two were rejected as unfit.","left_facts":"ROLL: 12\nDELIVERED: 10","right":"The household says no rejection mark was made at the gate.","right_facts":"REJECTION MARK: ABSENT\nDELIVERY WITNESS: DISPUTED","prompt":"Do you certify the rejection, charge the shortage, or require a witness?"},
-		{"id":"ritual_beer","title":"RITUAL BEER / ALLOCATION DISPUTE","client":"eanna_household","opposing":"boatmens_guild","left":"The ritual brewer received less beer than the allocation tablet promised.","left_facts":"PROMISED: 8 JARS\nISSUED: 5 JARS","right":"The carrier claims three jars broke during unloading and were entered as loss.","right_facts":"BREAKAGE: CLAIMED\nLOSS TABLET: MISSING","prompt":"Does the loss stand against the carrier or the allocation?"},
-		{"id":"storehouse_seal","title":"STOREHOUSE SEAL / INSPECTION","client":"eanna_household","opposing":"council_of_elders","left":"The seal on the offering storehouse is intact, but its clay impression does not match the archive copy.","left_facts":"SEAL: INTACT\nIMPRESSION: VARIANT","right":"The council asks whether the seal was replaced during the last inspection.","right_facts":"LAST INSPECTION: UNDATED\nREPLACEMENT: UNRECORDED","prompt":"Do you accept the seal, order a re-impression, or open an inquiry?"},
-		{"id":"festival_tithes","title":"FESTIVAL TITHES / UNRECORDED SHARE","client":"eanna_household","opposing":"council_of_elders","left":"The festival tithe is short by one basket. The temple steward says the share was promised to the musicians.","left_facts":"EXPECTED: 9 BASKETS\nENTERED: 8","right":"The council says a promise is not a recorded exemption.","right_facts":"EXEMPTION: NONE\nPROMISE: ORAL","prompt":"Do you honor the promise, recover the tithe, or amend the next roll?"}
-	]
-}
+static var _path_docket_data_cache: Dictionary = {}
 
-const GEOGRAPHIC_VECTORS := {
-	&"timber_grade_dispute": {"origin_id": &"habuba_kabira", "destination_id": &"uruk", "route_id": &"upper_euphrates_river_raft", "commodity_id": &"timber", "route_mode": "river raft", "transit_periods": 2},
-	&"counterfeit_copper": {"origin_id": &"hacinebi", "destination_id": &"uruk", "route_id": &"hacinebi_overland_caravan", "commodity_id": &"copper", "route_mode": "overland caravan", "transit_periods": 3},
-	&"canal_water_sharing": {"origin_id": &"umma", "destination_id": &"uruk", "route_id": &"umma_shared_canal", "commodity_id": &"water_rights", "route_mode": "shared canal", "transit_periods": 1},
-	&"boat_demurrage": {"origin_id": &"ur", "destination_id": &"uruk", "route_id": &"lower_river_landing", "commodity_id": &"boat_service", "route_mode": "river barge", "transit_periods": 1},
-	&"missing_quay_sacks": {"origin_id": &"uruk", "destination_id": &"uruk", "route_id": &"uruk_quay_transfer", "commodity_id": &"grain", "route_mode": "quayside transfer", "transit_periods": 0},
-	&"festival_tithes": {"origin_id": &"nippur", "destination_id": &"uruk", "route_id": &"nippur_temple_road", "commodity_id": &"offerings", "route_mode": "temple road", "transit_periods": 2}
-}
-const PLACE_LABELS := {
-	&"uruk": "Uruk", &"ur": "Ur", &"umma": "Umma", &"nippur": "Nippur",
-	&"habuba_kabira": "Habuba Kabira", &"hacinebi": "Hacinebi", &"susa": "Susa"
-}
-const DOCKET_COMMODITIES := {
-	&"ditch_guard_rations": &"barley", &"spear_requisition": &"copper",
-	&"watchtower_supply": &"lamp_oil", &"conscription_exemption": &"manpower",
-	&"boundary_stones": &"land_claim", &"inheritance_tablets": &"land_claim",
-	&"market_vendor_fine": &"silver", &"sacrificial_sheep": &"sheep",
-	&"ritual_beer": &"beer", &"storehouse_seal": &"seal",
-	&"administrative_record": &"administrative_record"
-}
+static func _get_path_docket_data() -> Dictionary:
+	if not _path_docket_data_cache.is_empty():
+		return _path_docket_data_cache
+	var file := FileAccess.open("res://data/assignments/path_dockets.json", FileAccess.READ)
+	if file == null:
+		push_error("AssignmentGenerator: path docket content could not be opened.")
+		return {}
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	if parsed is Dictionary:
+		_path_docket_data_cache = parsed
+	else:
+		push_error("AssignmentGenerator: path docket content is invalid JSON.")
+	return _path_docket_data_cache
+
 
 static func get_geographic_vector(docket_id: StringName) -> Dictionary:
-	if GEOGRAPHIC_VECTORS.has(docket_id):
-		return (GEOGRAPHIC_VECTORS[docket_id] as Dictionary).duplicate(true)
-	return {"origin_id": &"uruk", "destination_id": &"uruk", "route_id": &"uruk_internal", "commodity_id": DOCKET_COMMODITIES.get(docket_id, &"administrative_record"), "route_mode": "within Uruk"}
+	var content: Dictionary = _get_path_docket_data()
+	var vectors: Dictionary = content.get("geographic_vectors", {})
+	var key := String(docket_id)
+	var vector: Dictionary
+	if vectors.has(key):
+		vector = (vectors[key] as Dictionary).duplicate(true)
+	else:
+		var commodities: Dictionary = content.get("docket_commodities", {})
+		vector = {"origin_id": &"uruk", "destination_id": &"uruk", "route_id": &"uruk_internal", "commodity_id": StringName(commodities.get(key, "administrative_record")), "route_mode": "within Uruk"}
+	for field in ["origin_id", "destination_id", "route_id", "commodity_id"]:
+		if vector.has(field):
+			vector[field] = StringName(vector[field])
+	return vector
 
 static func generate(world: WorldState, actor: PersonEntity, selected_path: StringName = &"", record_history: bool = true) -> Dictionary:
 	if world == null or actor == null:
@@ -82,7 +47,7 @@ static func generate(world: WorldState, actor: PersonEntity, selected_path: Stri
 			if actor.flags.has(candidate):
 				path_id = candidate
 				break
-	if PATH_DOCKET_DATA.has(path_id):
+	if (_get_path_docket_data().get("dockets", {}) as Dictionary).has(String(path_id)):
 		return _generate_path_docket(world, actor, path_id, record_history)
 	var archetypes: Array[StringName] = []
 	for item in ARCHETYPES:
@@ -183,71 +148,81 @@ static func generate(world: WorldState, actor: PersonEntity, selected_path: Stri
 		"right_card": {"title": "CLAIM / WITNESS", "speaker_id": right.id, "quote": "", "facts": ""},
 		"prompt": "What mark will you leave?", "choices": []
 	}
-	match archetype:
-		&"delivery_mismatch":
-			payload.title = "DELIVERY TALLY MISMATCH"
-			payload.left_card.quote = "%s dispatched %d measures of %s from %s." % [left.display_name, dispatched, good_name, place_name]
-			payload.left_card.facts = "DISPATCHED: %d\nLOADING WITNESS: %s" % [dispatched, "PRESENT" if world.rng_narrative.randf() < 0.5 else "NONE RECORDED"]
-			payload.right_card.quote = "%s received %d. The missing measure is disputed." % [right.display_name, received]
-			payload.right_card.facts = "RECEIVED: %d\nUNASSIGNED DIFFERENCE: %d" % [received, dispatched - received]
-			payload.choices = [_choice("Record discrepancy", "The unassigned difference is entered.", good, -1, 1, 1, "arithmetic", 12, "", 1), _choice("Force acceptance on paper", "The docket balances; the missing goods do not.", good, 2, -2, 2, "law", 8, "complicit", 2), _choice("Dock the carrier", "The carrier bears the shortage pending review.", good, 1, 2, -2, "stewardship", 10, "severe", 1)]
-		&"damaged_consignment":
-			good = DAMAGED_GOODS[world.rng_narrative.randi_range(0, DAMAGED_GOODS.size() - 1)]
-			good_name = String(good).replace("_", " ")
-			amount = maxi(1, world.get_resource(good))
-			payload.resource_id = good
-			payload.amount = amount
-			var damaged := maxi(1, int(round(float(amount) * 0.2)))
-			payload.title = "DAMAGED CONSIGNMENT"
-			payload.left_card.quote = "%s reports %s stored at %s." % [left.display_name, good_name, place_name]
-			payload.left_card.facts = "STOCK ON HAND: %d\nAFFECTED SHARE: %d" % [amount, damaged]
-			payload.right_card.quote = "%s found cracked seals or damp stains on the outer bundles." % right.display_name
-			payload.right_card.facts = "CAUSE NOT CERTIFIED\nINSPECTION REQUIRED"
-			payload.choices = [_choice("Quarantine damaged share", "The affected share is held.", good, -damaged, 1, 1, "stewardship", 12, "", 1), _choice("Release all goods", "The full load is released despite the damage.", good, -damaged, 2, -1, "law", 6, "pliable", 2), _choice("Turn away at gate", "The shipment returns without entry.", good, 0, -2, 2, "law", 10, "severe", 1)]
-		&"subtotal_claim":
-			payload.title = "ACCOUNT SUBTOTAL / CROSS-HOUSE CLAIM"
-			payload.left_card.quote = "%s submits three lines for %s." % [left.display_name, place_name]
-			payload.left_card.facts = "LINE I: %d\nLINE II: %d\nLINE III: %d\nWRITTEN TOTAL: %d" % [line_a, line_b, line_c, line_a + line_b + line_c + discrepancy]
-			payload.right_card.quote = "%s claims the extra %d belongs to another household roll." % [right.display_name, discrepancy]
-			payload.right_card.facts = "CALCULATED TOTAL: %d\nCLAIM NOT ON THIS ROLL" % [line_a + line_b + line_c]
-			payload.choices = [_choice("Correct math; hold the line", "The sum is corrected and the claim held.", good, 0, -1, 2, "arithmetic", 14, "", 1), _choice("Quietly transfer the difference", "The claim is paid without proper entry.", good, -discrepancy, 2, 1, "stewardship", 7, "complicit", 2), _choice("Impound for adjudication", "Both rolls are held for a senior ruling.", good, 0, -1, -1, "law", 12, "severe", 1)]
-		&"goods_unreturned":
-			payload.title = "GOODS OUT, UNRETURNED"
-			payload.left_card.quote = "%s took %d measures of %s from %s." % [left.display_name, sent, good_name, place_name]
-			payload.left_card.facts = "DISPATCHED: %d %s\nRETURNED: %d %s" % [sent, good_name, returned, String(GOODS[(GOODS.find(good) + 1) % GOODS.size()]).replace("_", " ")]
-			payload.right_card.quote = "%s recalls a spoken promise to settle after the next landing." % right.display_name
-			payload.right_card.facts = "WRITTEN PROMISE: NONE\nSPOKEN CLAIM: DISPUTED"
-			payload.choices = [_choice("Separate writing from claim", "The written balance stays open; testimony is attached.", good, 0, 1, 1, "law", 12, "", 1), _choice("Credit the carrier anyway", "The spoken promise is accepted as settlement.", good, returned - sent, 2, -2, "stewardship", 7, "pliable", 2), _choice("Freeze next dispatch", "No goods leave until the balance is answered.", good, 0, -1, -2, "arithmetic", 10, "severe", 1)]
-		&"hazard_check":
-			var hazard: Dictionary = {}
-			for candidate in world.hazards:
-				if bool(candidate.get("active", false)):
-					hazard = candidate
-					break
-			if hazard.is_empty():
-				payload.title = "HAZARD / MAINTENANCE CHECK"
-				payload.left_card.quote = "%s requests preventive maintenance at %s." % [left.display_name, place_name]
-				payload.left_card.facts = "LABOR: %d\nSILVER: %d" % [world.get_resource(&"labor"), world.get_resource(&"silver")]
-				payload.right_card.quote = "%s says a crew can be assigned if the storehouse authorizes it." % right.display_name
-				payload.right_card.facts = "NO ACTIVE HAZARD\nPREVENTIVE WORK"
-				payload.choices = [_choice("Assign labor", "Labor is committed to maintenance.", &"labor", -2, 1, 1, "stewardship", 12, "", 2), _choice("Issue silver", "Silver is issued for repair materials.", &"silver", -2, 1, 1, "law", 10, "", 1), _choice("Record and defer", "Maintenance is recorded without allocation.", good, 0, -1, -1, "arithmetic", 5, "", 0)]
-			else:
-				var hz_place := StringName(hazard.get("place_id", ""))
-				var hz_id := StringName(hazard.get("id", ""))
-				payload.place_id = hz_place
-				payload.hazard_id = hz_id
-				payload.title = "HAZARD / MAINTENANCE CHECK"
-				payload.left_card.quote = "%s reports active %s at %s." % [left.display_name, String(hz_id).replace("_", " "), String(world.places.get(hz_place, {}).get("name", hz_place))]
-				payload.left_card.facts = "ONGOING LOSS: %d %s / PERIOD" % [int(hazard.get("rate", 0)), String(hazard.get("resource", "stock"))]
-				payload.right_card.quote = "%s can provide a crew if labor or silver is assigned." % right.display_name
-				payload.right_card.facts = "LABOR: %d\nSILVER: %d" % [world.get_resource(&"labor"), world.get_resource(&"silver")]
-				var repair_resource: StringName = &"labor" if world.get_resource(&"labor") >= 3 else &"silver"
-				var repair_cost := 3
-				payload.choices = [_choice("Allocate %s and repair" % repair_resource, "The hazard is repaired and its ongoing loss stops.", repair_resource, -repair_cost, 2, 2, "stewardship", 15, "", 2, true), _choice("Record loss; defer repair", "The hazard remains active; loss continues.", good, 0, -1, -1, "arithmetic", 5, "", 1)]
+	var active_hazard: Dictionary = {}
+	if archetype == &"damaged_consignment":
+		good = DAMAGED_GOODS[world.rng_narrative.randi_range(0, DAMAGED_GOODS.size() - 1)]
+		good_name = String(good).replace("_", " ")
+		amount = maxi(1, world.get_resource(good))
+		payload.resource_id = good
+		payload.amount = amount
+	if archetype == &"hazard_check":
+		for candidate in world.hazards:
+			if bool(candidate.get("active", false)):
+				active_hazard = candidate
+				break
+
+	var hazard_place := StringName(active_hazard.get("place_id", ""))
+	var hazard_id := StringName(active_hazard.get("id", ""))
+	var repair_resource: StringName = &"labor" if world.get_resource(&"labor") >= 3 else &"silver"
+	var loading_witness := ""
+	if archetype == &"delivery_mismatch":
+		loading_witness = "PRESENT" if world.rng_narrative.randf() < 0.5 else "NONE RECORDED"
+	var damaged := maxi(1, int(round(float(amount) * 0.2)))
+	var context := {
+		"left_name": left.display_name,
+		"right_name": right.display_name,
+		"good": String(good),
+		"good_name": good_name,
+		"place_name": place_name,
+		"amount": amount,
+		"dispatched": dispatched,
+		"received": received,
+		"difference": dispatched - received,
+		"witness": loading_witness,
+		"line_a": line_a,
+		"line_b": line_b,
+		"line_c": line_c,
+		"discrepancy": discrepancy,
+		"written_total": line_a + line_b + line_c + discrepancy,
+		"calculated_total": line_a + line_b + line_c,
+		"sent": sent,
+		"returned": returned,
+		"returned_good": String(GOODS[(GOODS.find(good) + 1) % GOODS.size()]).replace("_", " "),
+		"damaged": damaged,
+		"labor": world.get_resource(&"labor"),
+		"silver": world.get_resource(&"silver"),
+		"hazard_name": String(hazard_id).replace("_", " "),
+		"hazard_place_name": String(world.places.get(hazard_place, {}).get("name", String(hazard_place).replace("_", " "))),
+		"hazard_rate": int(active_hazard.get("rate", 0)),
+		"hazard_resource": String(active_hazard.get("resource", "stock")).replace("_", " "),
+		"repair_resource": String(repair_resource)
+	}
+	var data_key := String(archetype)
+	if archetype == &"hazard_check":
+		if active_hazard.is_empty():
+			data_key = "hazard_check_preventive"
+		else:
+			data_key = "hazard_check_active"
+			payload.place_id = hazard_place
+			payload.hazard_id = hazard_id
+	var definitions: Dictionary = _get_path_docket_data().get("procedural_archetypes", {})
+	var definition: Dictionary = definitions.get(data_key, {})
+	if definition.is_empty():
+		push_error("AssignmentGenerator: missing procedural archetype content '%s'." % data_key)
+		return {}
+	payload.title = _format_narrative(String(definition.get("title", "")), context)
+	payload.left_card.quote = _format_narrative(String(definition.get("left_quote", "")), context)
+	payload.left_card.facts = _format_narrative(String(definition.get("left_facts", "")), context)
+	payload.right_card.quote = _format_narrative(String(definition.get("right_quote", "")), context)
+	payload.right_card.facts = _format_narrative(String(definition.get("right_facts", "")), context)
+	payload.prompt = _format_narrative(String(definition.get("prompt", "")), context)
+	payload.choices = _build_narrative_choices(definition.get("choices", []), context)
+
 	return payload
 
 static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_id: StringName, record_history: bool = true) -> Dictionary:
-	var templates: Array = PATH_DOCKET_DATA.get(path_id, [])
+	var path_data: Dictionary = _get_path_docket_data()
+	var templates: Array = (path_data.get("dockets", {}) as Dictionary).get(String(path_id), [])
 	if templates.is_empty():
 		return {}
 	var eligible: Array = []
@@ -276,8 +251,8 @@ static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_
 			client_members.append(local_person.id)
 			opposing_members.append(local_person.id)
 	else:
-		client_members = PATH_FACTION_MEMBERS.get(client_faction, [])
-		opposing_members = PATH_FACTION_MEMBERS.get(opposing_faction, [])
+		client_members = (path_data.get("faction_members", {}) as Dictionary).get(String(client_faction), [])
+		opposing_members = (path_data.get("faction_members", {}) as Dictionary).get(String(opposing_faction), [])
 	if client_members.is_empty() or opposing_members.is_empty():
 		push_warning("AssignmentGenerator: path docket has unresolved faction members: %s / %s" % [client_faction, opposing_faction])
 		return {}
@@ -317,8 +292,8 @@ static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_
 		world.recent_archetypes.append(archetype_id)
 		while world.recent_archetypes.size() > 6:
 			world.recent_archetypes.pop_front()
-	var client_name := "LOCAL CLAIMANT" if local_mode else String(PATH_FACTION_DISPLAY_NAMES.get(client_faction, String(client_faction).replace("_", " ").capitalize()))
-	var opposing_name := "LOCAL WITNESS" if local_mode else String(PATH_FACTION_DISPLAY_NAMES.get(opposing_faction, String(opposing_faction).replace("_", " ").capitalize()))
+	var client_name := "LOCAL CLAIMANT" if local_mode else String((path_data.get("faction_display_names", {}) as Dictionary).get(String(client_faction), String(client_faction).replace("_", " ").capitalize()))
+	var opposing_name := "LOCAL WITNESS" if local_mode else String((path_data.get("faction_display_names", {}) as Dictionary).get(String(opposing_faction), String(opposing_faction).replace("_", " ").capitalize()))
 	var title := String(template.get("title", "LOCAL DOCKET"))
 	var payload := {
 		"title": title, "archetype": archetype_id, "docket_kind": "regional_local" if local_mode else "local_path",
@@ -345,14 +320,14 @@ static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_
 			"origin_id": world.current_location_id,
 			"destination_id": world.current_location_id,
 			"route_id": StringName("%s_local" % world.current_location_id),
-			"commodity_id": DOCKET_COMMODITIES.get(StringName(template.get("id", "")), &"administrative_record"),
+			"commodity_id": StringName((path_data.get("docket_commodities", {}) as Dictionary).get(String(template.get("id", "")), "administrative_record")),
 			"route_mode": "local",
 			"transit_periods": 0,
 		}
 		payload["place_id"] = world.current_location_id
 	payload.merge(geography, true)
-	var origin_name := String(PLACE_LABELS.get(geography.origin_id, String(geography.origin_id).replace("_", " ").capitalize()))
-	var destination_name := String(PLACE_LABELS.get(geography.destination_id, String(geography.destination_id).replace("_", " ").capitalize()))
+	var origin_name := String((path_data.get("place_labels", {}) as Dictionary).get(String(geography.origin_id), String(geography.origin_id).replace("_", " ").capitalize()))
+	var destination_name := String((path_data.get("place_labels", {}) as Dictionary).get(String(geography.destination_id), String(geography.destination_id).replace("_", " ").capitalize()))
 	var route_line := "ORIGIN: %s  →  DESTINATION: %s" % [origin_name, destination_name]
 	route_line += "\nTRANSIT: %s" % String(geography.route_mode).capitalize()
 	if geography.has("transit_periods"):
@@ -377,29 +352,71 @@ static func record_selection(world: WorldState, payload: Dictionary) -> void:
 			world.recent_npc_pairs.pop_front()
 
 static func create_epic_summons() -> Dictionary:
-	return {
-		"title": "EMERGENCY REQUISITION / GREAT CANAL CUT",
-		"archetype": &"epic_summons", "docket_kind": "epic_summons",
-		"npc_pair": "ur_nanna|enlil_kisu",
-		"client_faction": &"eanna_household", "opposing_faction": &"boatmens_guild",
-		"client_name": "High Stewards of Eanna", "opposing_name": "Landing Boatmen & Guilds",
-		"left_card": {"title": "CLIENT / HIGH STEWARDS", "speaker_id": &"ur_nanna", "quote": "The canal cut has bogged down in the silt basin. The ditch crews are refusing to dig without fresh rations.", "facts": "WORK HALTED\nEMERGENCY ALLOCATION REQUESTED"},
-		"right_card": {"title": "OPPOSING PARTY / BOATMEN", "speaker_id": &"enlil_kisu", "quote": "The boatmen will not deliver stone until the ration promise is entered and the timber tally is answered.", "facts": "STONE DELIVERIES WITHHELD\nTIMBER BALANCE DISPUTED"},
-		"prompt": "Your seal has a reputation at the landing. Settle this.",
-		"choices": [
-			{"label": "Release emergency barley / bind the ration promise", "result_title": "RATION REQUISITION SEALED", "result_text": "Fresh rations reach the ditch crews. The boatmen resume stone deliveries under a witnessed promise.", "effects": {"resource": &"barley", "resource_amount": -20, "resource_scope": "institution", "resource_institution": &"eanna_household", "epic_progress": 22, "opinion_left": 3, "opinion_right": 4, "skill": "stewardship", "xp": 20}},
-			{"label": "Audit missing timber before authorizing delivery", "result_title": "TIMBER AUDIT ORDERED", "result_text": "The missing timber is entered as a disputed balance. Stone may move under a provisional tally.", "effects": {"resource": &"", "resource_amount": 0, "epic_progress": 16, "opinion_left": 2, "opinion_right": 2, "skill": "arithmetic", "xp": 18}},
-			{"label": "Guarantee the crews' terms and break the strike", "result_title": "CREW TERMS WITNESSED", "result_text": "The crews return to the cut. The guarantee is costly in reputation, but work resumes.", "effects": {"resource": &"", "resource_amount": 0, "epic_progress": 19, "opinion_left": -2, "opinion_right": 5, "skill": "rhetoric", "xp": 20, "trait": "diplomatic"}}
-		]
-	}
-
-
+	var file := FileAccess.open("res://data/assignments/epic_summons.json", FileAccess.READ)
+	if file == null:
+		push_error("AssignmentGenerator: Epic summons content could not be opened.")
+		return {}
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	if not parsed is Dictionary:
+		push_error("AssignmentGenerator: Epic summons content is invalid JSON.")
+		return {}
+	var payload: Dictionary = parsed
+	for field in ["archetype", "client_faction", "opposing_faction"]:
+		payload[field] = StringName(payload.get(field, ""))
+	for card_key in ["left_card", "right_card"]:
+		var card: Dictionary = payload.get(card_key, {})
+		card["speaker_id"] = StringName(card.get("speaker_id", ""))
+		payload[card_key] = card
+	var choices: Array = payload.get("choices", [])
+	for choice in choices:
+		if not choice is Dictionary:
+			continue
+		var effects: Dictionary = choice.get("effects", {})
+		effects["resource"] = StringName(effects.get("resource", ""))
+		effects["resource_institution"] = StringName(effects.get("resource_institution", ""))
+		choice["effects"] = effects
+	payload["choices"] = choices
+	return payload
 
 static func make_opinion_consequence(person: PersonEntity, delta: int, reason: String) -> Dictionary:
 	if person == null:
 		return {}
 	var title := String(person.office_id).replace("_", " ").capitalize() if person.office_id != &"" else "Official"
 	return {"type": "opinion", "target_name": person.display_name, "target_title": title, "delta": delta, "reason": reason}
+
+static func _format_narrative(template: String, context: Dictionary) -> String:
+	var result := template
+	for key in context:
+		result = result.replace("{%s}" % String(key), String(context[key]))
+	return result
+
+static func _build_narrative_choices(definitions: Array, context: Dictionary) -> Array:
+	var choices: Array = []
+	for choice_definition in definitions:
+		if not choice_definition is Dictionary:
+			continue
+		var resource_text := _format_narrative(String(choice_definition.get("resource", "")), context)
+		var amount := int(choice_definition.get("amount", 0))
+		if choice_definition.has("amount_key"):
+			amount = int(context.get(String(choice_definition.get("amount_key", "")), 0)) * int(choice_definition.get("amount_sign", 1))
+		elif String(choice_definition.get("amount_formula", "")) == "returned_minus_sent":
+			amount = int(context.get("returned", 0)) - int(context.get("sent", 0))
+		var label := _format_narrative(String(choice_definition.get("label", "Record disposition")), context)
+		var result_text := _format_narrative(String(choice_definition.get("result_text", "")), context)
+		choices.append(_choice(
+			label,
+			result_text,
+			StringName(resource_text),
+			amount,
+			int(choice_definition.get("left_opinion", 0)),
+			int(choice_definition.get("right_opinion", 0)),
+			String(choice_definition.get("skill", "law")),
+			int(choice_definition.get("xp", 0)),
+			String(choice_definition.get("trait", "")),
+			int(choice_definition.get("epic_progress", 0)),
+			bool(choice_definition.get("repair", false))
+		))
+	return choices
 
 static func _choice(label: String, result: String, resource: StringName, amount: int, left_opinion: int, right_opinion: int, skill: String, xp: int, trait_name: String, epic_progress: int = 0, repair: bool = false) -> Dictionary:
 	return {"label": label, "result_title": "MARK MADE", "result_text": result, "effects": {"resource": resource, "resource_amount": amount, "opinion_left": left_opinion, "opinion_right": right_opinion, "skill": skill, "xp": xp, "trait": trait_name, "epic_progress": epic_progress, "repair_hazard": repair}}

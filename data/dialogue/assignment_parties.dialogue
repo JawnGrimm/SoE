@@ -1,0 +1,21 @@
+~ start
+Clerk: The two claims are before you. Neither is yet your finding.
+- Hear the claimant's statement
+	Claimant: {{assignment_context.client_name}} states: {{assignment_context.client_statement}}
+	=> particulars
+- Hear the opposing party's statement
+	Opposing party: {{assignment_context.opposing_name}} states: {{assignment_context.opposing_statement}}
+	=> particulars
+- Read the claimant's particulars
+	Clerk: {{assignment_context.client_record}}
+	=> particulars
+- Read the opposing party's particulars
+	Clerk: {{assignment_context.opposing_record}}
+	=> particulars
+- Ask what question the docket puts to you
+	Clerk: {{assignment_context.requested_result}}
+	=> END
+
+~ particulars
+Clerk: These are the claims and particulars supplied with the docket. They remain claims until you enter a disposition.
+- Return to the docket => END

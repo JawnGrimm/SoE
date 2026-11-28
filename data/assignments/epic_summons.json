@@ -1,0 +1,70 @@
+{
+	"title": "EMERGENCY REQUISITION / GREAT CANAL CUT",
+	"archetype": "epic_summons",
+	"docket_kind": "epic_summons",
+	"npc_pair": "ur_nanna|enlil_kisu",
+	"client_faction": "eanna_household",
+	"opposing_faction": "boatmens_guild",
+	"client_name": "High Stewards of Eanna",
+	"opposing_name": "Landing Boatmen & Guilds",
+	"left_card": {
+		"title": "CLIENT / HIGH STEWARDS",
+		"speaker_id": "ur_nanna",
+		"quote": "The canal cut has bogged down in the silt basin. The ditch crews are refusing to dig without fresh rations.",
+		"facts": "WORK HALTED\nEMERGENCY ALLOCATION REQUESTED"
+	},
+	"right_card": {
+		"title": "OPPOSING PARTY / BOATMEN",
+		"speaker_id": "enlil_kisu",
+		"quote": "The boatmen will not deliver stone until the ration promise is entered and the timber tally is answered.",
+		"facts": "STONE DELIVERIES WITHHELD\nTIMBER BALANCE DISPUTED"
+	},
+	"prompt": "Your seal has a reputation at the landing. Settle this.",
+	"choices": [
+		{
+			"label": "Release emergency barley / bind the ration promise",
+			"result_title": "RATION REQUISITION SEALED",
+			"result_text": "Fresh rations reach the ditch crews. The boatmen resume stone deliveries under a witnessed promise.",
+			"effects": {
+				"resource": "barley",
+				"resource_amount": -20,
+				"resource_scope": "institution",
+				"resource_institution": "eanna_household",
+				"epic_progress": 22,
+				"opinion_left": 3,
+				"opinion_right": 4,
+				"skill": "stewardship",
+				"xp": 20
+			}
+		},
+		{
+			"label": "Audit missing timber before authorizing delivery",
+			"result_title": "TIMBER AUDIT ORDERED",
+			"result_text": "The missing timber is entered as a disputed balance. Stone may move under a provisional tally.",
+			"effects": {
+				"resource": "",
+				"resource_amount": 0,
+				"epic_progress": 16,
+				"opinion_left": 2,
+				"opinion_right": 2,
+				"skill": "arithmetic",
+				"xp": 18
+			}
+		},
+		{
+			"label": "Guarantee the crews' terms and break the strike",
+			"result_title": "CREW TERMS WITNESSED",
+			"result_text": "The crews return to the cut. The guarantee is costly in reputation, but work resumes.",
+			"effects": {
+				"resource": "",
+				"resource_amount": 0,
+				"epic_progress": 19,
+				"opinion_left": -2,
+				"opinion_right": 5,
+				"skill": "rhetoric",
+				"xp": 20,
+				"trait": "diplomatic"
+			}
+		}
+	]
+}

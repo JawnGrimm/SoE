@@ -9,6 +9,7 @@ const ConsequenceVisibilityScript = preload("res://systems/consequence_visibilit
 
 const AssignmentGeneratorScript = preload("res://systems/assignment_generator.gd")
 const AssignmentNarratorScript = preload("res://systems/assignment_narrator.gd")
+const AssignmentDialogueContextScript = preload("res://systems/assignment_dialogue_context.gd")
 const DevCommandRouterScript = preload("res://systems/dev_command_router.gd")
 const RouteNetworkScript = preload("res://systems/route_network.gd")
 const TravelServiceScript = preload("res://systems/travel_service.gd")
@@ -1198,7 +1199,7 @@ func _show_world_engagement() -> void:
 	var payload := {
 		"title": String(record.get("title", "ASSIGNMENT")),
 		"left_card": {"title": "WORLD SITUATION / %s" % String(record.get("kind", "work")).to_upper(), "speaker_id": &"", "quote": left_quote, "facts": "OPENED: %s / PERIOD %d" % [CalendarFormatter.format_year(world.year), world.period + 1]},
-		"right_card": {"title": "RESPONSIBLE OFFICE", "speaker_id": employer.id if employer != null else &"", "quote": right_quote, "facts": "%d / %d inquiries spent%s\n\n%s" % [actions.size(), AssignmentPipeline.MAX_INVESTIGATION_ACTIONS, " — enter judgment" if actions.size() >= AssignmentPipeline.MAX_INVESTIGATION_ACTIONS else "", "\n\n".join(evidence_lines)]},
+		"right_card": {"title": "RESPONSIBLE OFFICE", "speaker_id": employer.id if employer != null else &"", "quote": right_quote, "facts": "INQUIRIES: %d USED / %d REMAINING\nAt zero remaining, enter a disposition.\n\n%s" % [actions.size(), maxi(0, AssignmentPipeline.MAX_INVESTIGATION_ACTIONS - actions.size()), "\n\n".join(evidence_lines)]},
 		"prompt": "Investigate the situation. Your skills affect what you can establish; your judgment determines what is entered.",
 		"choices": []
 	}
@@ -1206,7 +1207,7 @@ func _show_world_engagement() -> void:
 	for action in AssignmentPipeline.INVESTIGATION_ACTIONS:
 		var action_id: StringName = action.id
 		var done := actions.has(action_id)
-		payload.choices.append({"label": String(action.label)})
+		payload.choices.append({"label": "%s\n%s" % [String(action.label), AssignmentNarratorScript.investigation_action_description(record, action_id)]})
 		callbacks.append(_world_assignment_action.bind(action_id))
 		payload.choices.back()["disabled"] = done or actions.size() >= AssignmentPipeline.MAX_INVESTIGATION_ACTIONS
 	_render_docket_payload(payload, callbacks)
@@ -1251,11 +1252,21 @@ func _world_assignment_action(action_id: StringName) -> void:
 	AudioManager.play_stylus_mark()
 	if clay_docket != null:
 		clay_docket.stamp_inquiry(action_id)
+	var record := AssignmentPipeline.get_record(world, active_world_assignment_id)
+	var evidence: Dictionary = result.get("evidence", {})
 	if action_id == &"examine_records":
-		var record := AssignmentPipeline.get_record(world, active_world_assignment_id)
-		var evidence: Dictionary = result.get("evidence", {})
 		latest_investigation_scene = AssignmentNarratorScript.narrate_record_examination(record, actor, world, evidence)
 	_show_world_engagement()
+	if action_id == &"consult_official":
+		_open_assignment_official_dialogue(record)
+
+func _open_assignment_official_dialogue(record: Dictionary) -> void:
+	var context = AssignmentDialogueContextScript.from_record(record, world)
+	var dialogue_resource: DialogueResource = load("res://data/dialogue/assignment_official.dialogue") as DialogueResource
+	if dialogue_resource == null:
+		push_error("Assignment official dialogue could not be loaded.")
+		return
+	DialogueManager.show_dialogue_balloon(dialogue_resource, "start", [{"assignment_context": context}])
 
 func _format_investigation_scene(scene: Dictionary) -> String:
 	var lines := PackedStringArray()
@@ -1317,6 +1328,18 @@ func _show_case() -> void:
 	_clear_choices()
 	_set_phase("case")
 	_render_docket_payload(AssignmentNarratorScript.translate_payload(_active_docket_payload()))
+	if not procedural_assignment.is_empty():
+		_add_choice("Hear the parties / review their particulars", _open_procedural_party_dialogue)
+
+func _open_procedural_party_dialogue() -> void:
+	if procedural_assignment.is_empty():
+		return
+	var context = AssignmentDialogueContextScript.from_procedural_docket(procedural_assignment)
+	var dialogue_resource: DialogueResource = load("res://data/dialogue/assignment_parties.dialogue") as DialogueResource
+	if dialogue_resource == null:
+		push_error("Procedural party dialogue could not be loaded.")
+		return
+	DialogueManager.show_dialogue_balloon(dialogue_resource, "start", [{"assignment_context": context}])
 
 func _render_docket_payload(payload: Dictionary, callbacks: Array = []) -> void:
 	if clay_docket != null:

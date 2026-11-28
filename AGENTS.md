@@ -52,3 +52,14 @@ Treat the following as acceptance criteria for the next focused desk polish pass
 - **Mentor trait clarity:** never show a trait such as “Pliable” as unexplained jargon. Pair the trait with a concise player-facing explanation of what it signals, how the player learned it, and what practical implication it has (without implying certainty where it is only a tendency).
 - **Music continuity:** avoid frequent music changes between adjacent desk/assignment states. Keep the current track across routine UI transitions; change music only on a meaningful scene/era/mood boundary, with explicit transition rules and no repeated restart when the same state is re-entered.
 
+
+
+## Assignment narrative consistency
+
+- Dialogue Manager is already installed and autoloaded. Do not add another dialogue/quest addon before auditing and using the existing integration.
+- Assignment content currently enters through multiple authored/generated paths (assignment generator, pipeline records, narrator templates, and desk orchestration). Keep a single player-facing information contract across them; do not make the player infer a new interaction grammar per assignment.
+- Every assignment presentation must clearly communicate: who requests the work and their stake; the immediate situation; what is established evidence versus allegation or unknown; available investigation actions and what each can reveal; the remaining investigation budget; and the disposition choices with their likely trade-offs.
+- Distinguish assignment gameplay by the question, evidence source, and decision trade-off—not by changing layout or disguising repeated generic text. Reused content must be intentional and authored through shared data, not duplicated aliases or post-hoc title substitutions.
+- Use Dialogue Manager for authored NPC conversation and dialogue branching where it improves situated information delivery. Dialogue conditions/actions must query or call the existing assignment/world pipeline; dialogue must not independently mutate WorldState, resolve assignments, or duplicate mechanics.
+- Implement the narrative contract across the playable assignment content; do not stop at a test assignment, sample, prototype, or one-off hardcoded presentation. Remove superseded presentation paths and migrate existing authored content as part of the implementation.
+- Keep procedural docket and archetype narrative/effect definitions in `data/assignments/path_dockets.json`; keep the Epic summons in `data/assignments/epic_summons.json`. `AssignmentGenerator` owns deterministic selection, context assembly, and effect construction—not assignment prose or authored choice copy. Author interviews in `data/dialogue/*.dialogue` and pass evidence-backed context through the read-only dialogue adapter.
