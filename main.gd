@@ -1334,7 +1334,7 @@ func _show_case() -> void:
 func _open_procedural_party_dialogue() -> void:
 	if procedural_assignment.is_empty():
 		return
-	var context = AssignmentDialogueContextScript.from_procedural_docket(procedural_assignment)
+	var context = AssignmentDialogueContextScript.from_procedural_docket(procedural_assignment, world)
 	var dialogue_resource: DialogueResource = load("res://data/dialogue/assignment_parties.dialogue") as DialogueResource
 	if dialogue_resource == null:
 		push_error("Procedural party dialogue could not be loaded.")
