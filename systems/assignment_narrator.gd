@@ -47,12 +47,36 @@ static func translate_record(source: Dictionary) -> Dictionary:
 	result["evidence"] = evidence
 	return result
 
+static var _investigation_prompt_data: Dictionary = {}
+
 static func investigation_action_description(record: Dictionary, action_id: StringName) -> String:
 	var source: Dictionary = record.get("source_data", {})
 	var prompts: Dictionary = source.get("investigation_actions", {})
 	var description := String(prompts.get(String(action_id), "")).strip_edges()
 	if description.is_empty():
-		push_error("AssignmentNarrator: assignment '%s' is missing investigation prompt '%s'." % [String(record.get("id", "")), String(action_id)])
+		if _investigation_prompt_data.is_empty():
+			var prompt_file := FileAccess.open("res://data/assignments/investigation_prompts.json", FileAccess.READ)
+			if prompt_file == null:
+				push_error("AssignmentNarrator: investigation prompt data is missing.")
+				return ""
+			var parsed: Variant = JSON.parse_string(prompt_file.get_as_text())
+			if not parsed is Dictionary:
+				push_error("AssignmentNarrator: investigation prompt data is invalid.")
+				return ""
+			_investigation_prompt_data = parsed
+		var profile_id := "forms" if StringName(record.get("kind", "")) == &"form" else String(record.get("kind", ""))
+		if profile_id == "forms":
+			var form_type := String(source.get("form_type", ""))
+			var form_profiles: Dictionary = _investigation_prompt_data.get("forms", {})
+			var form_profile: Dictionary = form_profiles.get(form_type, {})
+			description = String(form_profile.get(String(action_id), ""))
+		elif not source.get("npc_evidence", {}).is_empty():
+			description = String(_investigation_prompt_data.get("grain_conflict", {}).get(String(action_id), ""))
+		else:
+			description = String(_investigation_prompt_data.get(profile_id, {}).get(String(action_id), ""))
+	if description.strip_edges().is_empty():
+		push_error("AssignmentNarrator: assignment '%s' of kind '%s' has no authored investigation prompt '%s'." % [String(record.get("id", "")), String(record.get("kind", "")), String(action_id)])
+		return ""
 	return description
 
 static func narrate_record_examination(record: Dictionary, actor: PersonEntity, world: WorldState, evidence: Dictionary) -> Dictionary:
