@@ -28,9 +28,15 @@ static func translate_payload(source: Dictionary) -> Dictionary:
 		result[card_key] = card
 	result["prompt"] = _clean_display(String(result.get("prompt", "")), "prompt")
 	var choices: Array = result.get("choices", [])
-	for choice in choices:
-		if choice is Dictionary and choice.has("label"):
-			choice["label"] = _clean_display(String(choice["label"]), "choice.label")
+	for index in range(choices.size()):
+		if not choices[index] is Dictionary:
+			push_error("AssignmentNarrator: malformed disposition at index %d." % index)
+			continue
+		var choice: Dictionary = choices[index]
+		choice["label"] = _clean_display(String(choice.get("label", "")), "choices[%d].label" % index)
+		choice["result_title"] = _clean_display(String(choice.get("result_title", "")), "choices[%d].result_title" % index)
+		choice["result_text"] = _clean_display(String(choice.get("result_text", "")), "choices[%d].result_text" % index)
+		choices[index] = choice
 	result["choices"] = choices
 	return result
 
@@ -79,7 +85,7 @@ static func investigation_action_description(record: Dictionary, action_id: Stri
 		return ""
 	return description
 
-static func narrate_record_examination(record: Dictionary, actor: PersonEntity, world: WorldState, evidence: Dictionary) -> Dictionary:
+static func narrate_record_examination(record: Dictionary, _actor: PersonEntity, world: WorldState, evidence: Dictionary) -> Dictionary:
 	var source: Dictionary = record.get("source_data", {})
 	var npc_evidence: Dictionary = source.get("npc_evidence", {})
 	var record_evidence: Dictionary = record.get("evidence", {})
