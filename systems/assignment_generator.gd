@@ -302,18 +302,12 @@ static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_
 		"opposing_name": "OPPOSING PARTY / " + opposing_name,
 		"left_card": {"title": "CLIENT", "speaker_id": client_id, "quote": String(template.get("left", "")), "facts": String(template.get("left_facts", ""))},
 		"right_card": {"title": "OPPOSING PARTY", "speaker_id": opposing_id, "quote": String(template.get("right", "")), "facts": String(template.get("right_facts", ""))},
-		"prompt": String(template.get("prompt", "What mark will you leave?")),
-		"choices": [
-			{"label": "Certify the client's record", "result_title": "CLIENT RECORD CERTIFIED", "result_text": "The client's entry is certified; the opposing claim remains attached.", "effects": {"opinion_left": 3, "opinion_right": -2, "epic_progress": 1, "skill": "law", "xp": 12}},
-			{"label": "Hold both claims for corroboration", "result_title": "CLAIMS HELD", "result_text": "Neither claim is erased. A second witness is required before the record can be closed.", "effects": {"opinion_left": -1, "opinion_right": -1, "epic_progress": 0, "skill": "arithmetic", "xp": 10}},
-			{"label": "Accept the opposing party's account", "result_title": "OPPOSING ACCOUNT ACCEPTED", "result_text": "The opposing account is entered. The client may appeal the mark.", "effects": {"opinion_left": -2, "opinion_right": 3, "epic_progress": 2, "skill": "rhetoric", "xp": 12}}
-		]
+		"prompt": String(template.get("prompt", "")),
+		"choices": _build_path_docket_choices(template.get("choices", []), local_mode)
 	}
-	if local_mode:
-		for docket_choice in payload.get("choices", []):
-			var choice_effects: Dictionary = docket_choice.get("effects", {})
-			choice_effects["epic_progress"] = 0
-			docket_choice["effects"] = choice_effects
+	if payload.choices.is_empty():
+		push_error("AssignmentGenerator: docket '%s' has no authored disposition choices." % String(template.get("id", "")))
+		return {}
 	var geography := get_geographic_vector(StringName(template.get("id", "")))
 	if local_mode:
 		geography = {
@@ -335,6 +329,31 @@ static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_
 	payload.left_card.facts = route_line + "\n" + String(payload.left_card.facts)
 	payload.right_card.facts = route_line + "\n" + String(payload.right_card.facts)
 	return payload
+
+
+static func _build_path_docket_choices(definitions: Array, local_mode: bool) -> Array:
+	var choices: Array = []
+	for definition_value in definitions:
+		if not definition_value is Dictionary:
+			push_error("AssignmentGenerator: malformed authored docket disposition.")
+			return []
+		var definition: Dictionary = definition_value
+		var label := String(definition.get("label", "")).strip_edges()
+		var result_title := String(definition.get("result_title", "")).strip_edges()
+		var result_text := String(definition.get("result_text", "")).strip_edges()
+		var effects: Dictionary = definition.get("effects", {}).duplicate(true)
+		if label.is_empty() or result_title.is_empty() or result_text.is_empty() or effects.is_empty():
+			push_error("AssignmentGenerator: incomplete authored disposition '%s'." % label)
+			return []
+		if local_mode:
+			effects["epic_progress"] = 0
+		choices.append({
+			"label": label,
+			"result_title": result_title,
+			"result_text": result_text,
+			"effects": effects
+		})
+	return choices
 
 
 static func record_selection(world: WorldState, payload: Dictionary) -> void:
