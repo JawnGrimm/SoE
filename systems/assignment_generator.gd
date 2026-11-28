@@ -6,20 +6,6 @@ const DAMAGED_GOODS: Array[StringName] = [&"beer", &"wool", &"textiles"]
 const ARCHETYPES: Array[StringName] = [&"delivery_mismatch", &"damaged_consignment", &"subtotal_claim", &"goods_unreturned", &"hazard_check"]
 
 
-const PATH_FACTION_MEMBERS := {
-	&"eanna_household": [&"shuruppak_ilu", &"ur_nanna", &"lu_nanshe"],
-	&"boatmens_guild": [&"enlil_kisu", &"enki_ili", &"geme_inana"],
-	&"city_garrison": [&"utu_mansum", &"ur_amas"],
-	&"council_of_elders": [&"shuruppak_ilu", &"lu_nanshe"],
-	&"agricultural_households": [&"ama_edin", &"geme_tur", &"ur_gula"]
-}
-const PATH_FACTION_DISPLAY_NAMES := {
-	&"eanna_household": "Eanna Temple",
-	&"boatmens_guild": "Landing Boatmen & Guilds",
-	&"city_garrison": "City Garrison",
-	&"council_of_elders": "Council of Elders",
-	&"agricultural_households": "Agricultural Households"
-}
 static var _path_docket_data_cache: Dictionary = {}
 
 static func _get_path_docket_data() -> Dictionary:
@@ -36,31 +22,15 @@ static func _get_path_docket_data() -> Dictionary:
 		push_error("AssignmentGenerator: path docket content is invalid JSON.")
 	return _path_docket_data_cache
 
-const GEOGRAPHIC_VECTORS := {
-	&"timber_grade_dispute": {"origin_id": &"habuba_kabira", "destination_id": &"uruk", "route_id": &"upper_euphrates_river_raft", "commodity_id": &"timber", "route_mode": "river raft", "transit_periods": 2},
-	&"counterfeit_copper": {"origin_id": &"hacinebi", "destination_id": &"uruk", "route_id": &"hacinebi_overland_caravan", "commodity_id": &"copper", "route_mode": "overland caravan", "transit_periods": 3},
-	&"canal_water_sharing": {"origin_id": &"umma", "destination_id": &"uruk", "route_id": &"umma_shared_canal", "commodity_id": &"water_rights", "route_mode": "shared canal", "transit_periods": 1},
-	&"boat_demurrage": {"origin_id": &"ur", "destination_id": &"uruk", "route_id": &"lower_river_landing", "commodity_id": &"boat_service", "route_mode": "river barge", "transit_periods": 1},
-	&"missing_quay_sacks": {"origin_id": &"uruk", "destination_id": &"uruk", "route_id": &"uruk_quay_transfer", "commodity_id": &"grain", "route_mode": "quayside transfer", "transit_periods": 0},
-	&"festival_tithes": {"origin_id": &"nippur", "destination_id": &"uruk", "route_id": &"nippur_temple_road", "commodity_id": &"offerings", "route_mode": "temple road", "transit_periods": 2}
-}
-const PLACE_LABELS := {
-	&"uruk": "Uruk", &"ur": "Ur", &"umma": "Umma", &"nippur": "Nippur",
-	&"habuba_kabira": "Habuba Kabira", &"hacinebi": "Hacinebi", &"susa": "Susa"
-}
-const DOCKET_COMMODITIES := {
-	&"ditch_guard_rations": &"barley", &"spear_requisition": &"copper",
-	&"watchtower_supply": &"lamp_oil", &"conscription_exemption": &"manpower",
-	&"boundary_stones": &"land_claim", &"inheritance_tablets": &"land_claim",
-	&"market_vendor_fine": &"silver", &"sacrificial_sheep": &"sheep",
-	&"ritual_beer": &"beer", &"storehouse_seal": &"seal",
-	&"administrative_record": &"administrative_record"
-}
 
 static func get_geographic_vector(docket_id: StringName) -> Dictionary:
-	if GEOGRAPHIC_VECTORS.has(docket_id):
-		return (GEOGRAPHIC_VECTORS[docket_id] as Dictionary).duplicate(true)
-	return {"origin_id": &"uruk", "destination_id": &"uruk", "route_id": &"uruk_internal", "commodity_id": DOCKET_COMMODITIES.get(docket_id, &"administrative_record"), "route_mode": "within Uruk"}
+	var content: Dictionary = _get_path_docket_data()
+	var vectors: Dictionary = content.get("geographic_vectors", {})
+	var key := String(docket_id)
+	if vectors.has(key):
+		return (vectors[key] as Dictionary).duplicate(true)
+	var commodities: Dictionary = content.get("docket_commodities", {})
+	return {"origin_id": "uruk", "destination_id": "uruk", "route_id": "uruk_internal", "commodity_id": StringName(commodities.get(key, "administrative_record")), "route_mode": "within Uruk"}
 
 static func generate(world: WorldState, actor: PersonEntity, selected_path: StringName = &"", record_history: bool = true) -> Dictionary:
 	if world == null or actor == null:
@@ -71,7 +41,7 @@ static func generate(world: WorldState, actor: PersonEntity, selected_path: Stri
 			if actor.flags.has(candidate):
 				path_id = candidate
 				break
-	if _get_path_docket_data().has(String(path_id)):
+	if (_get_path_docket_data().get("dockets", {}) as Dictionary).has(String(path_id)):
 		return _generate_path_docket(world, actor, path_id, record_history)
 	var archetypes: Array[StringName] = []
 	for item in ARCHETYPES:
@@ -236,7 +206,7 @@ static func generate(world: WorldState, actor: PersonEntity, selected_path: Stri
 	return payload
 
 static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_id: StringName, record_history: bool = true) -> Dictionary:
-	var templates: Array = _get_path_docket_data().get(String(path_id), [])
+	var path_data: Dictionary = _get_path_docket_data()\n\tvar templates: Array = (path_data.get("dockets", {}) as Dictionary).get(String(path_id), [])
 	if templates.is_empty():
 		return {}
 	var eligible: Array = []
@@ -265,8 +235,8 @@ static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_
 			client_members.append(local_person.id)
 			opposing_members.append(local_person.id)
 	else:
-		client_members = PATH_FACTION_MEMBERS.get(client_faction, [])
-		opposing_members = PATH_FACTION_MEMBERS.get(opposing_faction, [])
+		client_members = (path_data.get("faction_members", {}) as Dictionary).get(String(client_faction), [])
+		opposing_members = (path_data.get("faction_members", {}) as Dictionary).get(String(opposing_faction), [])
 	if client_members.is_empty() or opposing_members.is_empty():
 		push_warning("AssignmentGenerator: path docket has unresolved faction members: %s / %s" % [client_faction, opposing_faction])
 		return {}
@@ -306,8 +276,8 @@ static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_
 		world.recent_archetypes.append(archetype_id)
 		while world.recent_archetypes.size() > 6:
 			world.recent_archetypes.pop_front()
-	var client_name := "LOCAL CLAIMANT" if local_mode else String(PATH_FACTION_DISPLAY_NAMES.get(client_faction, String(client_faction).replace("_", " ").capitalize()))
-	var opposing_name := "LOCAL WITNESS" if local_mode else String(PATH_FACTION_DISPLAY_NAMES.get(opposing_faction, String(opposing_faction).replace("_", " ").capitalize()))
+	var client_name := "LOCAL CLAIMANT" if local_mode else String((path_data.get("faction_display_names", {}) as Dictionary).get(String(client_faction), String(client_faction).replace("_", " ").capitalize()))
+	var opposing_name := "LOCAL WITNESS" if local_mode else String((path_data.get("faction_display_names", {}) as Dictionary).get(String(opposing_faction), String(opposing_faction).replace("_", " ").capitalize()))
 	var title := String(template.get("title", "LOCAL DOCKET"))
 	var payload := {
 		"title": title, "archetype": archetype_id, "docket_kind": "regional_local" if local_mode else "local_path",
@@ -334,14 +304,14 @@ static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_
 			"origin_id": world.current_location_id,
 			"destination_id": world.current_location_id,
 			"route_id": StringName("%s_local" % world.current_location_id),
-			"commodity_id": DOCKET_COMMODITIES.get(StringName(template.get("id", "")), &"administrative_record"),
+			"commodity_id": (path_data.get("docket_commodities", {}) as Dictionary).get(String(template.get("id", "")), "administrative_record"),
 			"route_mode": "local",
 			"transit_periods": 0,
 		}
 		payload["place_id"] = world.current_location_id
 	payload.merge(geography, true)
-	var origin_name := String(PLACE_LABELS.get(geography.origin_id, String(geography.origin_id).replace("_", " ").capitalize()))
-	var destination_name := String(PLACE_LABELS.get(geography.destination_id, String(geography.destination_id).replace("_", " ").capitalize()))
+	var origin_name := String((path_data.get("place_labels", {}) as Dictionary).get(String(geography.origin_id), String(geography.origin_id).replace("_", " ").capitalize()))
+	var destination_name := String((path_data.get("place_labels", {}) as Dictionary).get(String(geography.destination_id), String(geography.destination_id).replace("_", " ").capitalize()))
 	var route_line := "ORIGIN: %s  →  DESTINATION: %s" % [origin_name, destination_name]
 	route_line += "\nTRANSIT: %s" % String(geography.route_mode).capitalize()
 	if geography.has("transit_periods"):
