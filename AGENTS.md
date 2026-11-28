@@ -9,6 +9,7 @@ Accepted decision documents are architectural constraints, not optional suggesti
 General project rules:
 
 - Godot 4.7.x and GDScript.
+- When formatting values read from Dictionaries, JSON, or other Variant sources, use `str(value)` for generic conversion; do not assume `String(value)` accepts a runtime `StringName` or other Variant subtype.
 - Prefer composition over inheritance.
 - Definitions are custom Resources and must not hold mutable runtime state.
 - Keep logic in systems and values in data.
