@@ -828,29 +828,42 @@ static func _live_stock_facts(stock: Dictionary, institution: Dictionary) -> Str
 		lines.append("The stock record notes concealed spoilage; declared quality: %s." % String(records.get("barley_quality_declaration", "unrecorded")).replace("_", " "))
 	return "\n".join(lines)
 
+static var _official_stance_data: Dictionary = {}
+
 static func _official_stance(world: WorldState, actor: PersonEntity, official: PersonEntity, data: Dictionary, opinion: int) -> String:
 	if official == null:
-		return "No official will answer for this entry. Ask the archive to name the responsible hand."
+		push_error("AssignmentPipeline: cannot prepare an interview without a responsible official.")
+		return ""
+	if _official_stance_data.is_empty():
+		var stance_file := FileAccess.open("res://data/dialogue/official_stances.json", FileAccess.READ)
+		if stance_file == null:
+			push_error("AssignmentPipeline: authored official stance data is missing.")
+			return ""
+		var parsed: Variant = JSON.parse_string(stance_file.get_as_text())
+		if not parsed is Dictionary:
+			push_error("AssignmentPipeline: authored official stance data is invalid.")
+			return ""
+		_official_stance_data = parsed
 	var form_type := StringName(data.get("form_type", ""))
 	var institution_id := StringName(data.get("institution_id", _institution_for_location(world, StringName(data.get("place_id", data.get("subject_id", ""))))))
 	var institution: Dictionary = world.institutions.get(institution_id, {})
 	var records: Dictionary = institution.get("stock_records", {})
 	var npc_evidence: Dictionary = data.get("npc_evidence", {})
+	var stance_id := "general_office"
 	if not npc_evidence.is_empty() or bool(records.get("concealed_spoilage", false)):
-		if official.office_id == &"grain_clerk":
-			return "The seed-corn entry stands. The roof was poor, not my measure; certify the tablet and let the household keep its reserve."
-		return "This contradiction will reach the archive unless you refer it. I ask you to preserve the office's standing—and name who bears the loss."
-	if form_type in [&"bailiff_requisition", &"pension_roll"]:
-		if official.office_id == &"canal_bailiff":
-			return "The sluice is choked and the crew is short. Authorize labor now; the fields will pay for delay."
-		return "The roll is not a plea for favor. Certify the shortage and write whose stores must be reassigned."
-	if official.office_id == &"archive_keeper":
-		return "Do not make a patron's seal into evidence. Enter the source, and let the record name the responsible office."
-	if opinion >= 5 and (&"pliable" in official.traits or &"complicit" in official.traits):
-		return "We have kept one another's accounts before. A clean seal now will be remembered in your favor."
-	if opinion <= -5 or &"severe" in official.traits or &"exacting" in official.traits:
-		return "Do not ask me to soften a figure. Show the source and state plainly who carries the consequence."
-	return "The office asks for a clear finding: certify what the source supports, or refer what it cannot explain."
+		stance_id = "grain_clerk_conflict" if official.office_id == &"grain_clerk" else "other_office_conflict"
+	elif form_type in [&"bailiff_requisition", &"pension_roll"]:
+		stance_id = "canal_bailiff_requisition" if official.office_id == &"canal_bailiff" else "other_office_requisition"
+	elif official.office_id == &"archive_keeper":
+		stance_id = "archive_keeper"
+	elif opinion >= 5 and (&"pliable" in official.traits or &"complicit" in official.traits):
+		stance_id = "trusted_complicit"
+	elif opinion <= -5 or &"severe" in official.traits or &"exacting" in official.traits:
+		stance_id = "hostile_exacting"
+	var statement := String(_official_stance_data.get(stance_id, ""))
+	if statement.is_empty():
+		push_error("AssignmentPipeline: missing official stance data '%s'." % stance_id)
+	return statement
 
 static func _preferred_office(form_type: StringName) -> StringName:
 	match form_type:
