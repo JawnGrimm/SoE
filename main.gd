@@ -1132,7 +1132,7 @@ func _show_world_engagement() -> void:
 		var action_id: StringName = action.id
 		var done := actions.has(action_id)
 		var action_copy: Dictionary = AssignmentNarratorScript.investigation_action_copy(record, action_id, official_name)
-		var choice_label := "%s  /  %s\\n%s" % [String(action_copy.get("title", action.label)), String(action_copy.get("skill", "Relevant skill")), String(action_copy.get("explanation", ""))]
+		var choice_label := "%s  /  %s\n%s" % [String(action_copy.get("title", action.label)), String(action_copy.get("skill", "Relevant skill")), String(action_copy.get("explanation", ""))]
 		payload.choices.append({"label": choice_label})
 		callbacks.append(_world_assignment_action.bind(action_id))
 		payload.choices.back()["disabled"] = done or actions.size() >= AssignmentPipeline.MAX_INVESTIGATION_ACTIONS
