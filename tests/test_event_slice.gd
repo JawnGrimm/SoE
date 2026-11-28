@@ -1142,7 +1142,7 @@ func _run() -> void:
 		_check(path_docket.get("choices", []).size() == 3 and path_docket.get("choices", [])[0].get("effects", {}).has("opinion_left") and path_docket.get("choices", [])[0].get("effects", {}).has("opinion_right"), "Path docket choices should carry client/opposing standing shifts")
 		_check(path_docket.has("origin_id") and path_docket.has("destination_id") and path_docket.has("route_id") and path_docket.has("commodity_id"), "Every path docket should carry geographic references")
 		_check(String(path_docket.left_card.get("facts", "")).begins_with("ORIGIN: ") and String(path_docket.right_card.get("facts", "")).begins_with("ORIGIN: "), "Evidence cards should display docket origin, destination, and transit")
-		_check(AssignmentGeneratorScript.PATH_DOCKET_DATA.get(path_id, []).size() >= 4, "Each career path should have at least four authored Uruk docket subjects")
+		_check(((AssignmentGeneratorScript._get_path_docket_data().get("dockets", {}) as Dictionary).get(String(path_id), []) as Array).size() >= 4, "Each career path should have at least four authored Uruk docket subjects")
 	var faction_test_world := WorldState.new()
 	_check(faction_test_world.change_faction_standing(&"boatmens_guild", 6) == 6 and faction_test_world.change_faction_standing(&"boatmens_guild", -2) == 4, "Faction standings should track faction-level opinion independently of overlapping NPC membership")
 	_check(faction_test_world.change_faction_standing(&"boatmens_guild", 500) == 100, "Faction standing should clamp at the reputation ceiling")
