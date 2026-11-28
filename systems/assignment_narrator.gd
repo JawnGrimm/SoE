@@ -128,6 +128,7 @@ static func _extract_fact(facts: String, label: String) -> String:
 	return ""
 
 static var _form_title_data: Dictionary = {}
+static var _player_term_data: Dictionary = {}
 
 static func _form_display(form_type: String) -> String:
 	if _form_title_data.is_empty():
@@ -157,6 +158,18 @@ static func _clean_display(value: String, field_path: String) -> String:
 	if form_pattern.search(cleaned) != null:
 		push_error("AssignmentNarrator: internal form identifier reached player-facing field: %s" % field_path)
 		return ""
+	if _player_term_data.is_empty():
+		var terms_file := FileAccess.open("res://data/assignments/player_terms.json", FileAccess.READ)
+		if terms_file == null:
+			push_error("AssignmentNarrator: authored player-facing term data is missing.")
+			return ""
+		var terms_parsed: Variant = JSON.parse_string(terms_file.get_as_text())
+		if not terms_parsed is Dictionary:
+			push_error("AssignmentNarrator: authored player-facing term data is invalid.")
+			return ""
+		_player_term_data = terms_parsed
+	for raw_term in _player_term_data:
+		cleaned = cleaned.replace(String(raw_term), String(_player_term_data[raw_term]))
 	var form_label_pattern := RegEx.new()
 	form_label_pattern.compile("(?i)FORM:\\s*([a-z_]+)")
 	var form_matches := form_label_pattern.search_all(cleaned)
