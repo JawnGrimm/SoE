@@ -894,7 +894,11 @@ static func _official_stance(world: WorldState, _actor: PersonEntity, official: 
 		"threshold_tally": String(npc_evidence.get("threshold_tally", "No independent threshold tally is attached."))
 	}
 	for key in values:
-		statement = statement.replace("{%s}" % String(key), String(values[key]))
+		var token := "{%s}" % String(key)
+		if statement.contains(token) and String(values[key]).strip_edges().is_empty():
+			push_error("AssignmentPipeline: official stance '%s' requires missing context '%s'." % [stance_id, String(key)])
+			return ""
+		statement = statement.replace(token, String(values[key]))
 	var unresolved := RegEx.new()
 	unresolved.compile("\\{[a-zA-Z0-9_]+\\}")
 	if unresolved.search(statement) != null:
