@@ -30,14 +30,14 @@ static func from_record(record: Dictionary, world: WorldState) -> AssignmentDial
 	var npc_evidence: Dictionary = source.get("npc_evidence", {})
 	var evidence: Dictionary = record.get("evidence", {})
 	var official_entry: Dictionary = evidence.get(&"consult_official", {})
-	var official_facts := String(official_entry.get("facts", ""))
+	var official_facts := str(official_entry.get("facts", ""))
 	context.opening_line = _extract_fact(official_facts, "STANCE", "")
 
 	var record_entry: Dictionary = evidence.get(&"examine_records", {})
-	var record_facts := String(record_entry.get("facts", ""))
-	var dispatch := String(npc_evidence.get("dispatch_record", ""))
-	var tally := String(npc_evidence.get("threshold_tally", ""))
-	var discrepancy := String(npc_evidence.get("discrepancy", ""))
+	var record_facts := str(record_entry.get("facts", ""))
+	var dispatch := str(npc_evidence.get("dispatch_record", ""))
+	var tally := str(npc_evidence.get("threshold_tally", ""))
+	var discrepancy := str(npc_evidence.get("discrepancy", ""))
 	if not dispatch.is_empty() or not tally.is_empty():
 		var statements := PackedStringArray()
 		if not dispatch.is_empty():
@@ -50,29 +50,29 @@ static func from_record(record: Dictionary, world: WorldState) -> AssignmentDial
 	elif not record_facts.is_empty():
 		context.record_response = record_facts
 	elif source.has("form_type"):
-		var form_type := String(source.get("form_type", ""))
+		var form_type := str(source.get("form_type", ""))
 		var form_titles: Dictionary = _get_dialogue_copy("form_titles")
 		var reason_labels: Dictionary = _get_dialogue_copy("generation_reasons")
 		var subject_id := StringName(source.get("subject_id", source.get("place_id", "")))
-		var subject_name := String(world.places.get(subject_id, {}).get("name", String(subject_id).replace("_", " ").capitalize())) if world != null else String(subject_id)
+		var subject_name := str(world.places.get(subject_id, {}).get("name", str(subject_id).replace("_", " ").capitalize())) if world != null else str(subject_id)
 		var summary_template := String(_get_dialogue_copy("record_entry_summary"))
 		context.record_response = _format_dialogue_copy(summary_template, {
 			"form_title": String(form_titles.get(form_type, "")),
 			"place_name": subject_name,
 			"generated_by": official.display_name if official != null else context.official_name,
-			"generation_reason": String(reason_labels.get(String(source.get("generation_reason", "")), "")),
-			"urgency": String(source.get("urgency", ""))
+			"generation_reason": String(reason_labels.get(str(source.get("generation_reason", "")), "")),
+			"urgency": str(source.get("urgency", ""))
 		})
 	else:
-		context.record_response = String(record.get("summary", ""))
+		context.record_response = str(record.get("summary", ""))
 
-	var witness := String(npc_evidence.get("witness_statement", npc_evidence.get("witness", "")))
+	var witness := str(npc_evidence.get("witness_statement", npc_evidence.get("witness", "")))
 	if not witness.is_empty():
 		context.witness_response = witness
 	else:
 		for action_id in evidence:
 			var entry: Dictionary = evidence[action_id]
-			var facts := String(entry.get("facts", ""))
+			var facts := str(entry.get("facts", ""))
 			var witness_line := _extract_fact(facts, "WITNESS", "")
 			if not witness_line.is_empty():
 				context.witness_response = witness_line
@@ -80,7 +80,7 @@ static func from_record(record: Dictionary, world: WorldState) -> AssignmentDial
 	if context.witness_response.is_empty():
 		context.witness_response = _get_dialogue_copy("no_witness")
 
-	var requested := String(npc_evidence.get("official_demand", npc_evidence.get("requested_outcome", source.get("requested_outcome", ""))))
+	var requested := str(npc_evidence.get("official_demand", npc_evidence.get("requested_outcome", source.get("requested_outcome", ""))))
 	if not requested.is_empty():
 		context.requested_result = requested
 	else:
@@ -111,10 +111,10 @@ static func from_procedural_docket(source: Dictionary, world: WorldState) -> Ass
 static func _format_dialogue_copy(template: String, values: Dictionary) -> String:
 	var result := template
 	for key in values:
-		if String(values[key]).strip_edges().is_empty():
-			push_error("AssignmentDialogueContext: missing value '%s' for authored interview copy." % String(key))
+		if str(values[key]).strip_edges().is_empty():
+			push_error("AssignmentDialogueContext: missing value '%s' for authored interview copy." % str(key))
 			return ""
-		result = result.replace("{%s}" % String(key), String(values[key]))
+		result = result.replace("{%s}" % String(key), str(values[key]))
 	var unresolved := RegEx.new()
 	unresolved.compile("\\{[a-zA-Z0-9_]+\\}")
 	if unresolved.search(result) != null or result.strip_edges().is_empty():
