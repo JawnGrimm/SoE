@@ -16,16 +16,14 @@ static func format_ledger(message: String, consequences: Array) -> String:
 		if not entry_value is Dictionary:
 			continue
 		var entry: Dictionary = entry_value
+		var skill_key := str(entry.get("skill", "skill")).to_lower()
+		var skill_label := str(SKILL_LABELS.get(skill_key, skill_key.capitalize()))
 		match StringName(entry.get("type", "")):
 			&"opinion":
 				lines.append("• %s (%s): %+d Opinion — “%s”" % [String(entry.get("target_name", "Unknown official")), String(entry.get("target_title", "Official")), int(entry.get("delta", 0)), String(entry.get("reason", "Assessment recorded."))])
 			&"xp":
-				var skill_id := str(entry.get("skill", "skill")).to_lower()
-				var skill_label := str(SKILL_LABELS.get(skill_id, skill_id.capitalize()))
 				lines.append("• %s: +%d XP" % [skill_label, int(entry.get("delta", 0))])
 			&"level_up":
-				var skill_id := str(entry.get("skill", "skill")).to_lower()
-				var skill_label := str(SKILL_LABELS.get(skill_id, skill_id.to_upper()))
 				lines.append("★ PROMOTION: %s INCREASED TO LEVEL %d! ★" % [skill_label.to_upper(), int(entry.get("new_level", 1))])
 			&"silver":
 				lines.append("• Purse: %+d Silver" % int(entry.get("delta", 0)))
