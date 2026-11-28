@@ -6,7 +6,6 @@
 	"archive_keeper": "Do not make a patron's seal into evidence. Enter the source, and let the record name the responsible office.",
 	"trusted_complicit": "{official_name}: We have kept one another's accounts before, {scribe_name}. A clean seal now will be remembered in your favor.",
 	"hostile_exacting": "{official_name}: Do not ask me to soften a figure, {scribe_name}. Show the source and state plainly who carries the consequence.",
-	"general_office": "{office_name} asks for a clear finding: certify what the source supports, or refer what it cannot explain.",
 	"no_witness": "No witness is named in this docket; I cannot offer an account I did not see.",
 	"no_separate_demand": "No separate demand was entered by this office.",
 	"record_entry_summary": "The register identifies {form_title} for {place_name}, entered by {generated_by} for {generation_reason} at urgency {urgency}. This establishes the request's origin and stated reason; it does not prove the shortage.",
@@ -35,5 +34,26 @@
 		"autonomous_grain_clerk_action": "an independent grain-office action",
 		"surplus_levy": "a surplus levy",
 		"wool_backlog": "a wool backlog"
+	},
+	"office_profiles": {
+		"potter": "I can attest to the vessels shaped and counted at my workshop for {form_title}. I cannot certify what happened after they left my hands.",
+		"household_head": "I speak for the stores and obligations of this household at {place_name}. I cannot turn our account into proof of the other party's entry.",
+		"apprentice_scribe": "I entered the {form_title} brought to this desk. I can attest to the wording and date, not to events I did not witness.",
+		"umma_granary_clerk": "My tally records what the granary received at {place_name}. Dispatch totals and quality declarations must be compared with that count.",
+		"canal_bailiff": "I answer for the canal work rolls at {place_name}. The requisition names the work and requested allotment; the account alone cannot tell you which hands can leave their posts.",
+		"external_trader": "My account begins at the agreed handover of the {form_title}. I cannot attest to a load after it passed from my custody.",
+		"carrier_foreman": "I answer for my crew's count at loading and unloading at {place_name}. Any transfer without a witness remains disputed.",
+		"trader": "I can attest to the goods and terms offered at {place_name}. I cannot certify the other party's storehouse entry.",
+		"player_household": "I can speak to the obligations entered against my household. I cannot claim the register is wrong without a source to compare.",
+		"court_notary": "I can certify seals, dates, and claims entered before me for {place_name}. I cannot make an absent witness appear.",
+		"reed_cutter": "I can attest to the reeds cut and bundled for {place_name}. I cannot certify the storehouse's later count.",
+		"precinct_attendant": "I can attest to arrivals and departures entered at the gate of {place_name}. I cannot verify goods that were never entered there.",
+		"textile_worker": "I can attest to the bundles woven and handed over at {place_name}. I cannot verify their later grade or store count.",
+		"brewer": "I can attest to the jars filled and delivered from the brewery at {place_name}. I cannot account for breakage after receipt.",
+		"archive_keeper": "I can certify what the archive holds for {place_name}; an absent tablet or unmatched seal must remain an open question.",
+		"boat_operator": "I can attest to what was loaded onto my boat and what reached the landing at {place_name}. A second craft without a witness is not part of my receipt.",
+		"flock_manager": "I can attest to the animals counted at the pen for {place_name}. I cannot certify a rejection unless it was marked at the gate.",
+		"grain_clerk": "I can attest to the grain entered in the storehouse at {place_name}. A quality declaration must be compared with the physical tally.",
+		"tax_scribe": "I can attest to assessed amounts and exemptions recorded on the roll for {place_name}. I cannot certify payment without a receipt."
 	}
 }
