@@ -108,7 +108,7 @@ static func narrate_record_examination(record: Dictionary, actor: PersonEntity, 
 		thought = "The wording is deliberate. Separate the recorded statement from the fact it claims to describe."
 	beats.append({"kind": "internal_monologue", "speaker": actor.display_name if actor != null else "The scribe", "text": thought})
 	return {
-		"heading": "Record examination",
+		"heading": "A closer reading",
 		"beats": beats,
 		"closing": "The written record is one source. Compare it with the account, the official's testimony, and the physical matter before entering judgment."
 	}
