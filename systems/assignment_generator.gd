@@ -217,6 +217,7 @@ static func generate(world: WorldState, actor: PersonEntity, selected_path: Stri
 	payload.right_card.facts = _format_narrative(String(definition.get("right_facts", "")), context)
 	payload.prompt = _format_narrative(String(definition.get("prompt", "")), context)
 	payload.choices = _build_narrative_choices(definition.get("choices", []), context)
+	payload["investigation_actions"] = definition.get("investigation_actions", {}).duplicate(true)
 
 	return payload
 
@@ -303,7 +304,8 @@ static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_
 		"left_card": {"title": "CLIENT", "speaker_id": client_id, "quote": String(template.get("left", "")), "facts": String(template.get("left_facts", ""))},
 		"right_card": {"title": "OPPOSING PARTY", "speaker_id": opposing_id, "quote": String(template.get("right", "")), "facts": String(template.get("right_facts", ""))},
 		"prompt": String(template.get("prompt", "")),
-		"choices": _build_path_docket_choices(template.get("choices", []), local_mode)
+		"choices": _build_path_docket_choices(template.get("choices", []), local_mode),
+		"investigation_actions": template.get("investigation_actions", {}).duplicate(true)
 	}
 	if payload.choices.is_empty():
 		push_error("AssignmentGenerator: docket '%s' has no authored disposition choices." % String(template.get("id", "")))
