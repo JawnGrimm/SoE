@@ -1261,12 +1261,12 @@ func _world_assignment_action(action_id: StringName) -> void:
 		_open_assignment_official_dialogue(record)
 
 func _open_assignment_official_dialogue(record: Dictionary) -> void:
-	var context = AssignmentDialogueContextScript.from_record(record, world)
+	var dialogue_context = AssignmentDialogueContextScript.from_record(record, world)
 	var dialogue_resource: DialogueResource = load("res://data/dialogue/assignment_official.dialogue") as DialogueResource
 	if dialogue_resource == null:
 		push_error("Assignment official dialogue could not be loaded.")
 		return
-	DialogueManager.show_dialogue_balloon(dialogue_resource, "start", [{"assignment_context": context}])
+	DialogueManager.show_dialogue_balloon(dialogue_resource, "start", [{"assignment_context": dialogue_context}])
 
 func _format_investigation_scene(scene: Dictionary) -> String:
 	var lines := PackedStringArray()
@@ -1334,7 +1334,7 @@ func _show_case() -> void:
 func _open_procedural_party_dialogue() -> void:
 	if procedural_assignment.is_empty():
 		return
-	var context = AssignmentDialogueContextScript.from_procedural_docket(procedural_assignment)
+	var dialogue_context = AssignmentDialogueContextScript.from_procedural_docket(procedural_assignment)
 	var dialogue_resource: DialogueResource = load("res://data/dialogue/assignment_parties.dialogue") as DialogueResource
 	if dialogue_resource == null:
 		push_error("Procedural party dialogue could not be loaded.")
@@ -2309,11 +2309,11 @@ func _on_queue_opportunity_selected(index: int) -> void:
 	_select_assignment_opportunity(index)
 
 
-func _set_evidence_visible(is_visible: bool) -> void:
+func _set_evidence_visible(show_evidence: bool) -> void:
 	var map_open: bool = survey_map != null and survey_map.visible
 	var full_workspace: bool = phase == "character_creation" or map_open
 	
-	var visible_now := is_visible and CedarDeskLayoutScript.evidence_visible(phase, map_open)
+	var visible_now := show_evidence and CedarDeskLayoutScript.evidence_visible(phase, map_open)
 	if clay_docket != null:
 		clay_docket.visible = not full_workspace
 	if archive_stack != null:
@@ -2476,8 +2476,8 @@ func _refresh_compound() -> void:
 	var active_epic := Registry.get_epic(active_epic_id)
 	if active_epic == null and current_era != null:
 		for epic_definition in Registry.all_epics():
-			var epic_state: Dictionary = world.epics.get(epic_definition.id, {})
-			if epic_definition.era_id == current_era.id and bool(epic_state.get("active", false)):
+			var candidate_epic_state: Dictionary = world.epics.get(epic_definition.id, {})
+			if epic_definition.era_id == current_era.id and bool(candidate_epic_state.get("active", false)):
 				active_epic = epic_definition
 				active_epic_id = epic_definition.id
 				break
