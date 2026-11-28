@@ -6,15 +6,12 @@ const CANAL_SIDE_COORDINATION: AudioStreamMP3 = preload("res://assets/audio/Cana
 const BUREAUCRATIC_STASIS: AudioStreamMP3 = preload("res://assets/audio/Bureaucratic Stasis.mp3")
 const UNOBTRUSIVE_BACKGROUND: AudioStreamMP3 = preload("res://assets/audio/Unobtrusive Background.mp3")
 
+# Only deliberate scene boundaries select a new score. Routine desk phases
+# (investigation, disposition, result, queue, etc.) inherit the current track.
 const PHASE_TRACKS: Dictionary = {
 	"case": &"tigris_at_dawn",
-	"north_bay_activity": &"canal_side_coordination",
-	"north_bay_assessment": &"bureaucratic_stasis",
 	"character_creation": &"unobtrusive_background",
-	"north_bay_result": &"unobtrusive_background",
-	"result": &"unobtrusive_background",
 	"era_complete": &"unobtrusive_background",
-	"end_of_queue": &"unobtrusive_background",
 }
 
 var _tracks: Dictionary = {}
@@ -33,7 +30,9 @@ func _ready() -> void:
 	MusicController.fade_out_duration = 1.8
 
 func play_for_phase(game_phase: String) -> void:
-	var track_id: StringName = PHASE_TRACKS.get(game_phase, &"unobtrusive_background")
+	if not PHASE_TRACKS.has(game_phase):
+		return
+	var track_id: StringName = PHASE_TRACKS[game_phase]
 	play_track(track_id)
 
 func play_track(track_id: StringName) -> void:

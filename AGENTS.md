@@ -20,7 +20,6 @@ General project rules:
 - Keep presentation/UI orchestration in `ui/`; simulation, assignment generation/resolution, and world mutation remain in `systems/`. UI must not bypass pipeline or SaveManager APIs.
 - Keep modular UI components presentation-only where possible; do not serialize transient UI state or change save schema for UI redesigns.
 
-
 ## Era I Slice A gameplay guardrails
 
 - The Great Canal Cut begins dormant. It must not advance, erode, or request stage reviews until activated by its authored career milestone or an explicit summons. Keep launch thresholds centralized and test both dormant and launched states.
@@ -41,91 +40,15 @@ General project rules:
 - Hide evidence/character panels when a screen needs the full workspace (character creation, regional survey); restore them when returning to normal desk phases.
 - Verify contrast, focus order/restoration, resize behavior, and reduced motion manually in a running build. Headless tests do not establish visual accessibility.
 
+## Assignment and character-creation UX backlog
 
-## Locked career-work taxonomy and circuit
+Treat the following as acceptance criteria for the next focused desk polish pass; preserve the existing assignment action budget and simulation pipeline.
 
-- Layer 1 is **Assignments**: day-to-day forms, inspections, ledger work, and local disputes.
-- Layer 2 is **Challenges**: consequential crossroads triggered by persistent career/world conditions.
-- Layer 3 is **Epics**: macro-historical undertakings and milestone reviews. `Works` is deprecated terminology; legacy `kind: &"work"` records must be categorized as Epics during compatibility handling.
-- Event opportunities whose event ID begins `challenge_` or whose authored tags include `challenge` must be classified as Challenges before entering the desk queue. Do not classify all events as routine assignments.
-- Every Epic review and institutional-pressure assignment must expose a meaningful asymmetric disposition after the two-action investigation limit. Verdict costs must be validated and committed in `AssignmentPipeline.resolve()`; UI must not mutate simulation state.
-- Challenge conditions must be linked to world flags/resources produced by actual assignment verdicts. Resource-gated Challenge outcomes must validate affordability before effects/rewards. For Quayside, gate only the personal-silver outcome; keep its non-silver verdicts available to broke scribes.
-- An Epic audit verdict applies a bounded one-period audit hold through the existing Epic simulator. It must not create a permanent stall or a second project simulation.
-- Epic review assignment IDs must include both `review_cycle` and `review_stage`; completed review records are immutable history and must never block a later review of the same stage.
-- Epic `inspect_source` evidence must resolve the sponsor institution from the assignment record or its source snapshot before falling back to location inference; sponsor storehouse counts must reflect the actual bins.
-- Pending external requisitions older than four simulation periods become priority-8 provincial dispatches, carry a visible `DISPATCH FROM <PROVINCE>` tag, and remain on the board ahead of routine work. They may be opened only after the player travels to the issuing institution's place; enqueue timestamps must be persisted as `created_period`.
-- Regional journeys are executed exactly once by `TravelService` against the authoritative `WorldSimulator`, charging the passage fare or recording the existing unpaid-route-fee debt before arrival. The journey vignette blocks desk interaction until explicit disembark; only disembark refreshes the local assignment board. Never advance periods or mutate travel resources in UI code.
-- Keep these regressions covered by headless tests: queue routing, verdict stock/flags/progress/opinion/traits, Challenge eligibility, silver affordability, and save/load of active docket state.
-- Headless SceneTree tests must not preload `main.gd` merely to reach UI helpers: it depends on project autoload singletons that are absent in `--script` test runs. Extract reusable pure decision logic into a small `RefCounted` system/helper and test that directly.
+- **Formative choice completion:** after a player selects an answer, recompute completion/continue eligibility from the actual required-answer state. A choice must satisfy its requirement and unlock Continue immediately; no stale disabled state. Answers may legitimately remain unavailable until their prerequisite is met, so show the missing prerequisite in plain language.
+- **Character creation closeout:** use the established **“Take up the reed”** action as the single final confirmation. Remove redundant confirmation/summary screens that ask the player to affirm the same choices again.
+- **Skill-based NPC preview:** retain assignment choice hover previews that tint affected NPC cards red/green. Compute the preview from the relevant character skills and choice requirements/effects, not a fixed choice-to-color mapping. Color must be accompanied by a readable cue/icon or short explanation; preview on focus as well as hover.
+- **Contextual assignment actions:** replace generic NPC requests to perform four uncontextualized actions with assignment-specific, situated requests. Each request must explain what it would establish or change, consider the assignment's remaining inquiry-action budget, and never offer an action that exceeds the limit. At the limit, present disposition choices without another investigation affordance.
+- **Assignment choice density:** reduce screen jumping and unnecessary scrolling by keeping the assignment prompt, current evidence/context, available choices, and remaining action count together in the existing desk workspace. Prefer compact sections and inline expansion over navigating between screens; do not expand the overall desk layout.
+- **Mentor trait clarity:** never show a trait such as “Pliable” as unexplained jargon. Pair the trait with a concise player-facing explanation of what it signals, how the player learned it, and what practical implication it has (without implying certainty where it is only a tendency).
+- **Music continuity:** avoid frequent music changes between adjacent desk/assignment states. Keep the current track across routine UI transitions; change music only on a meaningful scene/era/mood boundary, with explicit transition rules and no repeated restart when the same state is re-entered.
 
-## Evidence, regional compound, and period-delta rules
-
-- Evidence is player-facing prose, never a debug console. Strip capability diagnostics, raw action tokens, internal form IDs, and raw hazard keys. Translate known document types and site issues into authored labels.
-- Evidence inventories include only resources actually tracked by the institution. Empty inventories read `COMMODITY BALANCES: None on record`; do not fabricate zero barley, labor, or textiles.
-- Render each recorded stock resource with a readable title-case label (for example, `Clay: 4` and `Labor: 2`), preserving arbitrary resource IDs and their actual recorded quantities.
-- Compound information is scoped to `WorldState.current_location_id`. Uruk factions and Eanna content must not leak into Umma or Nippur; show local institutions and seated officials.
-- `WorldSimulator` and `TravelService` record categorized changes in `WorldState.last_period_deltas`. Clear at the start of each simulation period, persist via `SaveCodec`, and render only the latest four in `SINCE LAST PERIOD`. UI must not infer causal events from resource snapshots.
-- Cuneiform fonts belong under `res://assets/fonts/`; preserve license/provenance text when moving existing assets.
-
-
-## Living office agenda invariants
-
-- `WorldSimulator._simulate_people()` iterates institution members and invokes one generic `OfficeRunner`; no named-character dispatch or per-office decision logic belongs there.
-- `OfficeRunner` selects a LimboAI `.tres` by office ID, seeds Blackboard with `actor`, `institution`, and `world` (plus institution ID), and ticks manually once per period.
-- BT resources own decision flow. Shared condition/action tasks read Blackboard; one `OfficeAgendaResolver` validates and commits typed mutations. Never create per-office agent or resolver classes.
-- Grain-clerk and granary-clerk tokens share the grain BT. Umma granary and canal office are separate institutions. Nin-Enlil is seated only in `umma_granary`; Ur-Mes only in `umma_canal_bailiff`.
-- The Umma canal institution declares both `canal_bailiff` and `granary_clerk` in its staffed-office roles; the actual named seats remain distinct: Ur-Mes holds `canal_bailiff` in the canal institution, and Nin-Enlil holds `granary_clerk` in the granary. Do not double-list Nin-Enlil as a canal member.
-- Runtime membership and office maps rebuild from living valid members. Vacancies may be filled by eligible unseated people in the institution's place or parent settlement; do not retain orphan pointers.
-- Office cooldowns use the absolute calendar index, which is negative in BCE. Treat a missing prior timestamp as first-use-ready; do not use a small negative sentinel such as `-100` for elapsed-time comparisons.
-- `umma_granary` is registry-loaded from a Resource, uses a child place under Umma, and owns local stockpiles. Definitions remain immutable.
-- Bailiff forms retain issuing/target institution IDs and `created_period`; local canal requisitions carry priority 7 so they survive the four-slot board, and requests older than four periods escalate through the existing dispatch circuit. A requisition that becomes a dispatch while remote keeps its dispatch flag/tag/priority on arrival, but the travel gate clears once the player is local. Archive and foreman consequences name the acting official and use existing debt/opinion/period-delta/Epic state.
-- Office agendas, seats, pending forms, and local state round-trip through `SaveCodec`.
-
-## Living office acceptance commands
-
-Run these headlessly with the pinned Godot 4.7.2 and LimboAI 1.8.1 GDExtension installed:
-
-```sh
-godot --headless --path . -s tests/test_living_offices.gd
-godot --headless --path . -s tests/test_evidence_and_compound_context.gd
-godot --headless --path . -s tests/test_travel_circuit.gd
-godot --headless --path . -s tests/test_epics_and_challenges_circuit.gd
-godot --headless --editor --path . --quit
-```
-
-The office regression must exercise actual seeded seating and BT execution, not manually assigning the named officials' office IDs in the test fixture.
-
-
-## Player consequence visibility invariants
-
-Run the focused regression with `godot --headless --path . -s tests/test_consequence_visibility.gd` before the existing Era I circuit checks.
-
-- Assignment and procedural docket resolution return a transient typed `consequences` array alongside authored result text. Include named NPC opinion changes with reason, skill XP and any level-up, personal silver/debt, audit exposure, acquired traits, and newly changed flags where applicable.
-- Result presentation shows the authored narrative first, then a readable consequence ledger. Do not replace choice-specific Epic result text with generic receipts.
-- Consequence presentation and remote courier text are derived views; they do not mutate `WorldState`, `SaveCodec`, or the versioned save schema.
-- The Great Canal Cut remains visible from Uruk as backdrop and sends an urgent capital dispatch to a remote player in Umma or Nippur while stalled, disrupted, or awaiting review. Do not expose raw internal problem keys in courier prose.
-- Pending Great Canal Cut reviews appear in the remote work queue with `[REQUIRES TRAVEL TO URUK]`; selecting one explains that passage must be booked on the regional survey map and must not open a remote verdict.
-- Period audit/arrears deltas must be surfaced as archive notices after the desk board refreshes, so routine HUD refreshes cannot immediately erase them.
-
-
-## Tactile Cedar Desk / Slice B invariants
-
-- The Cedar Desk uses a 58:42 upper evidence / lower action workspace split; the lower row is 62:22:16 action docket, clay prop, archive prop. Ratios are centralized in `ui/cedar_desk_layout.gd`.
-- Evidence panels expand with their workspace and use readable 64px portraits, 15px spoken quotes, and 13px facts. Hide the entire evidence workspace and desk props during character creation and while the regional survey is open; the intake/survey control expands into the full workspace width and height.
-- `CedarDeskHeader` is a presentation-only view of live player/world state. Purse, arrears, audit exposure, office, place, season/month, and year are derived; never store these values on the UI or serialize header state.
-- `ClayDocketProp` and `ArchiveStackProp` are transient presentation components. Cuneiform marks are paired with plain-language tooltip descriptions; inquiry marks map only the four supported investigation actions. Verdict seals stop further inquiry marks. UI prop state, open/closed drawers, animations, and notification badges must not enter SaveCodec.
-- Use the canonical font at `res://assets/fonts/NotoSansCuneiform-Regular.ttf`. Stylus/seal audio has visible state feedback and must respect the project's audio/reduced-motion behavior.
-- The archive stack is keyboard-operable and mirrors queue access with a named button. Queue categories remain Epics, Challenges, and Assignments; the props do not implement queue logic or mutate assignment state.
-- Root `main.tscn` remains a thin scene host; the desk hierarchy is composed in `main.gd`. Do not create a competing static scene layout.
-- Run `tests/test_cedar_desk_overhaul.gd` and the existing consequence, office, evidence, travel, and Epic/Challenge regressions plus editor import validation. Manually verify visual proportions, resize/scaling, focus restoration, contrast, and reduced motion in a running build; headless tests do not prove those.
-
-
-## Canal Dedication and Era I career epilogue invariants
-
-- The Great Canal Cut is a terminal Era I project. When its progress reaches its authored target, or the world reaches the 3160 BCE boundary, present the Dedication of the Sluice Gates exactly once. BCE year values increase toward the boundary: the start at 3200 BCE is represented by -3200, so the boundary test is `year >= -3160`, not `year <= -3160`.
-- Dedication never resets canal progress and never re-enters the Epic simulation loop. The terminal record is latched by `canal_dedication_concluded`; the Epic is marked inactive/dedicated after a valid final act. `WorldSimulator` must not relaunch a dedicated Great Canal Cut, and `WorldState.reset_epic_for_new_shift()` must preserve its terminal progress.
-- The three dedication acts are asymmetric and authored: honor work crews, credit Eanna alone, or apply the scribe's personal cylinder seal. The personal seal requires both Law 2 and Literacy 2. Resolve consequences through `systems/canal_dedication_service.gd`, not by mutating the world from the view.
-- `CareerEvaluator` is a pure `RefCounted` reader of `WorldState` and `PersonEntity`. It must not mutate either object or definitions. It returns the four legacy axes, final metrics, a deterministic epitaph, and clipboard-ready Markdown.
-- The memorial tablet is a derived presentation. It must not serialize UI state, alter career metrics, or become a second save system. Copy/export text comes from `CareerEvaluator.generate_export_text()`.
-- The terminal flow is reached both after canal progress completion and when the Era I calendar boundary is crossed. The first-workday mentor induction remains before ordinary assignments and explicitly introduces the Clay Docket, Archive Stack, reed stylus, cylinder seal, and two-silver starting purse.
-- Run `godot --headless --path . -s tests/test_career_epilogue_and_climax.gd`, `tests/test_cedar_desk_overhaul.gd`, `tests/test_consequence_visibility.gd`, `tests/test_living_offices.gd`, `tests/test_travel_circuit.gd`, and `tests/test_epics_and_challenges_circuit.gd`, followed by `godot --headless --editor --path . --quit`. Manually verify the tablet's contrast, scaling, focus order, clipboard action, and title/restart flow in a running build; headless tests do not establish visual accessibility.

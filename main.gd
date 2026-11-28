@@ -990,7 +990,7 @@ func _show_character_creation_screen(screen: int) -> void:
 		if not bool(validation.get("valid", false)):
 			dossier.text += "\n\nBEFORE CONFIRMING\n" + "\n".join(validation.get("errors", []))
 		else:
-			_add_choice("CONFIRM  /  BEGIN CAREER", _confirm_character_creation)
+			_add_choice("TAKE UP THE REED", _confirm_character_creation)
 		_add_creation_back_next()
 
 func _creation_question(question_id: StringName) -> Dictionary:
@@ -999,6 +999,14 @@ func _creation_question(question_id: StringName) -> Dictionary:
 			return question
 	return {}
 
+func _creation_answer_complete_or_unavailable(question_id: StringName) -> bool:
+	if creation_selections.get_answer(question_id) != &"":
+		return true
+	var question := _creation_question(question_id)
+	# Some formative prompts are absent/empty in a particular intake catalog.
+	# Do not trap the player behind a required answer that the catalog cannot offer.
+	return question.is_empty() or question.get("answers", []).is_empty()
+
 func _creation_step_complete(screen: int) -> bool:
 	match screen:
 		1:
@@ -1006,7 +1014,7 @@ func _creation_step_complete(screen: int) -> bool:
 		2:
 			return creation_selections.get_answer(&"responsibility") != &""
 		3:
-			return creation_selections.get_answer(&"formative_experience") != &"" and creation_selections.get_answer(&"formative_vulnerability") != &""
+			return _creation_answer_complete_or_unavailable(&"formative_experience") and _creation_answer_complete_or_unavailable(&"formative_vulnerability")
 		4:
 			return creation_selections.get_answer(&"entry_into_scribal_work") != &""
 		5:
@@ -2427,7 +2435,19 @@ func _refresh_compound() -> void:
 	for trait_id in actor.traits:
 		if trait_id in [&"exacting", &"stubborn", &"protective", &"diplomatic", &"pliable", &"severe", &"cautious"]:
 			mentor_trait = String(trait_id)
-	heirloom_label.text = "MENTOR MARK: %s" % mentor_trait.to_upper()
+	var mentor_mark_explanations := {
+		"unmarked": "No mentor tendency has been recorded yet.",
+		"exacting": "Notices errors and expects careful, precise work.",
+		"stubborn": "Holds to a position under pressure; may resist compromise.",
+		"protective": "Looks out for people in their care and may shield them.",
+		"diplomatic": "Tries to preserve relationships and find workable agreements.",
+		"pliable": "Tends to accommodate authority or adapt to others' demands. This is a tendency, not a guarantee.",
+		"severe": "Values discipline and may favor strict consequences.",
+		"cautious": "Avoids unnecessary risk and prefers evidence before acting."
+	}
+	var mentor_mark_text: String = mentor_mark_explanations.get(mentor_trait, "A tendency observed in the mentor's conduct.")
+	heirloom_label.text = "MENTOR MARK: %s\n%s" % [mentor_trait.to_upper(), mentor_mark_text]
+	heirloom_label.tooltip_text = "MENTOR MARK / %s\n%s" % [mentor_trait.to_upper(), mentor_mark_text]
 	dossier_label.text = _build_dossier_text()
 	var active_epic_id := world.get_active_epic_id()
 	var active_epic := Registry.get_epic(active_epic_id)
