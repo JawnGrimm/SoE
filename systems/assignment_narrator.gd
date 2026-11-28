@@ -65,13 +65,13 @@ static func investigation_action_description(record: Dictionary, action_id: Stri
 				return ""
 			_investigation_prompt_data = parsed
 		var profile_id := "forms" if StringName(record.get("kind", "")) == &"form" else String(record.get("kind", ""))
-		if profile_id == "forms":
+		if not source.get("npc_evidence", {}).is_empty():
+			description = String(_investigation_prompt_data.get("grain_conflict", {}).get(String(action_id), ""))
+		elif profile_id == "forms":
 			var form_type := String(source.get("form_type", ""))
 			var form_profiles: Dictionary = _investigation_prompt_data.get("forms", {})
 			var form_profile: Dictionary = form_profiles.get(form_type, {})
 			description = String(form_profile.get(String(action_id), ""))
-		elif not source.get("npc_evidence", {}).is_empty():
-			description = String(_investigation_prompt_data.get("grain_conflict", {}).get(String(action_id), ""))
 		else:
 			description = String(_investigation_prompt_data.get(profile_id, {}).get(String(action_id), ""))
 	if description.strip_edges().is_empty():
