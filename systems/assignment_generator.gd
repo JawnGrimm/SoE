@@ -27,10 +27,16 @@ static func get_geographic_vector(docket_id: StringName) -> Dictionary:
 	var content: Dictionary = _get_path_docket_data()
 	var vectors: Dictionary = content.get("geographic_vectors", {})
 	var key := String(docket_id)
+	var vector: Dictionary
 	if vectors.has(key):
-		return (vectors[key] as Dictionary).duplicate(true)
-	var commodities: Dictionary = content.get("docket_commodities", {})
-	return {"origin_id": "uruk", "destination_id": "uruk", "route_id": "uruk_internal", "commodity_id": StringName(commodities.get(key, "administrative_record")), "route_mode": "within Uruk"}
+		vector = (vectors[key] as Dictionary).duplicate(true)
+	else:
+		var commodities: Dictionary = content.get("docket_commodities", {})
+		vector = {"origin_id": &"uruk", "destination_id": &"uruk", "route_id": &"uruk_internal", "commodity_id": StringName(commodities.get(key, "administrative_record")), "route_mode": "within Uruk"}
+	for field in ["origin_id", "destination_id", "route_id", "commodity_id"]:
+		if vector.has(field):
+			vector[field] = StringName(vector[field])
+	return vector
 
 static func generate(world: WorldState, actor: PersonEntity, selected_path: StringName = &"", record_history: bool = true) -> Dictionary:
 	if world == null or actor == null:
@@ -305,7 +311,7 @@ static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_
 			"origin_id": world.current_location_id,
 			"destination_id": world.current_location_id,
 			"route_id": StringName("%s_local" % world.current_location_id),
-			"commodity_id": (path_data.get("docket_commodities", {}) as Dictionary).get(String(template.get("id", "")), "administrative_record"),
+			"commodity_id": StringName((path_data.get("docket_commodities", {}) as Dictionary).get(String(template.get("id", "")), "administrative_record")),
 			"route_mode": "local",
 			"transit_periods": 0,
 		}
