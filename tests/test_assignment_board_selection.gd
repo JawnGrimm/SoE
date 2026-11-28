@@ -36,6 +36,25 @@ func _run() -> void:
 						_check(disposition.get("effects", {}) is Dictionary and not disposition.get("effects", {}).is_empty(), "%s / %s has no effects" % [docket_id, label])
 						_check(not seen_labels.has(label.to_lower()), "%s repeats disposition label '%s'" % [docket_id, label])
 						seen_labels[label.to_lower()] = true
+			var procedural: Dictionary = docket_data.get("procedural_archetypes", {})
+			for archetype_id in procedural:
+				var archetype: Dictionary = procedural[archetype_id]
+				var archetype_choices: Array = archetype.get("choices", [])
+				_check(archetype_choices.size() >= 2, "%s must author at least two dispositions" % String(archetype_id))
+				for choice_value in archetype_choices:
+					var choice: Dictionary = choice_value
+					_check(not String(choice.get("label", "")).strip_edges().is_empty(), "%s has an unlabeled disposition" % String(archetype_id))
+					_check(not String(choice.get("result_title", "")).strip_edges().is_empty(), "%s has a disposition without an authored result title" % String(archetype_id))
+					_check(not String(choice.get("result_text", "")).strip_edges().is_empty(), "%s has a disposition without an authored result explanation" % String(archetype_id))
+					_check(choice.get("skill", "") != "" and int(choice.get("xp", 0)) > 0, "%s disposition must author its skill and experience effect" % String(archetype_id))
+	var official_dialogue_file := FileAccess.open("res://data/dialogue/assignment_official.dialogue", FileAccess.READ)
+	_check(official_dialogue_file != null, "Official interview dialogue must be readable")
+	if official_dialogue_file != null:
+		var official_dialogue := official_dialogue_file.get_as_text()
+		_check(not official_dialogue.contains("Is there another question?"), "Official interview must not use conversational filler")
+		_check(official_dialogue.contains("assignment_context.record_response"), "Official interview must answer from the record context")
+		_check(official_dialogue.contains("assignment_context.witness_response"), "Official interview must answer from witness context")
+		_check(official_dialogue.contains("assignment_context.requested_result"), "Official interview must answer the office's requested result")
 	var candidates: Array[Dictionary] = [
 		{"id": &"review_canal", "kind": &"project_review", "source_id": &"great_canal_cut"},
 		{"id": &"review_temple", "kind": &"project_review"},
