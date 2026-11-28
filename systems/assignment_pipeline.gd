@@ -855,17 +855,17 @@ static func _official_stance(world: WorldState, _actor: PersonEntity, official: 
 			push_error("AssignmentPipeline: authored official stance data is invalid.")
 			return ""
 		_official_stance_data = parsed
-	var form_type := StringName(data.get("form_type", ""))
+	var form_type := str(data.get("form_type", ""))
 	var institution_id := StringName(data.get("institution_id", _institution_for_location(world, StringName(data.get("place_id", data.get("subject_id", ""))))))
 	var institution: Dictionary = world.institutions.get(institution_id, {})
 	var records: Dictionary = institution.get("stock_records", {})
 	var npc_evidence: Dictionary = data.get("npc_evidence", {})
 	var stance_id := "office_profile"
 	if not npc_evidence.is_empty() or bool(records.get("concealed_spoilage", false)):
-		stance_id = "grain_clerk_conflict" if official.office_id == &"grain_clerk" else "other_office_conflict"
-	elif form_type in [&"bailiff_requisition", &"pension_roll"]:
-		stance_id = "canal_bailiff_requisition" if official.office_id == &"canal_bailiff" else "other_office_requisition"
-	elif official.office_id == &"archive_keeper":
+		stance_id = "grain_clerk_conflict" if str(official.office_id) == "grain_clerk" else "other_office_conflict"
+	elif form_type in ["bailiff_requisition", "pension_roll"]:
+		stance_id = "canal_bailiff_requisition" if str(official.office_id) == "canal_bailiff" else "other_office_requisition"
+	elif str(official.office_id) == "archive_keeper":
 		stance_id = "archive_keeper"
 	elif opinion >= 5 and (&"pliable" in official.traits or &"complicit" in official.traits):
 		stance_id = "trusted_complicit"
