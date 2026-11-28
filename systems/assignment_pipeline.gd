@@ -690,10 +690,15 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 				summary = String(record.get("summary", record.get("title", "")))
 		&"consult_official":
 			var employer := world.get_person(StringName(record.get("employer_id", "")))
-			var opinion := employer.get_opinion(actor.id) if employer != null else 0
+			if employer == null:
+				push_error("AssignmentPipeline: assignment '%s' has no responsible official to interview." % String(record.get("id", "")))
+				return {}
+			var opinion := employer.get_opinion(actor.id)
 			var stance := _official_stance(world, actor, employer, data, opinion)
-			summary = "%s states: %s" % [employer.display_name if employer != null else "", stance]
-			facts = "OFFICIAL: %s\nOPINION OF SCRIBE: %d\nOFFICE: %s\nSTANCE: “%s”" % [employer.display_name if employer != null else "No named official", opinion, String(employer.office_id) if employer != null else "Unassigned", stance]
+			if stance.is_empty():
+				return {}
+			summary = "%s states: %s" % [employer.display_name, stance]
+			facts = "OFFICIAL: %s\nOPINION OF SCRIBE: %d\nOFFICE: %s\nSTANCE: “%s”" % [employer.display_name, opinion, String(employer.office_id), stance]
 		&"inspect_source":
 			if kind == &"hazard":
 				var hazard: Dictionary = record.get("source_data", {})
@@ -735,7 +740,10 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 
 static func employer_name_for_record(world: WorldState, record: Dictionary) -> String:
 	var employer := world.get_person(StringName(record.get("employer_id", ""))) if world != null else null
-	return employer.display_name if employer != null else "unassigned office"
+	if employer == null:
+		push_error("AssignmentPipeline: assignment '%s' has no responsible official." % String(record.get("id", "")))
+		return ""
+	return employer.display_name
 
 static func _sanitize_evidence_text(value: String) -> String:
 	var kept := PackedStringArray()
