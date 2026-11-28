@@ -62,6 +62,22 @@ func _run() -> void:
 		_check(stances is Dictionary, "Official stance dialogue data must parse")
 		for stance_id in ["grain_clerk_conflict", "other_office_conflict", "canal_bailiff_requisition", "other_office_requisition", "archive_keeper", "trusted_complicit", "hostile_exacting", "general_office"]:
 			_check(not String(stances.get(stance_id, "")).strip_edges().is_empty(), "Official stance data is missing %s" % stance_id)
+	var prompt_file := FileAccess.open("res://data/assignments/investigation_prompts.json", FileAccess.READ)
+	_check(prompt_file != null, "Investigation prompt data must be readable")
+	if prompt_file != null:
+		var prompt_data: Variant = JSON.parse_string(prompt_file.get_as_text())
+		_check(prompt_data is Dictionary, "Investigation prompt data must parse")
+		if prompt_data is Dictionary:
+			for profile_id in prompt_data:
+				var profile: Dictionary = prompt_data[profile_id]
+				if String(profile_id) == "forms":
+					for form_type in profile:
+						var form_profile: Dictionary = profile[form_type]
+						for action_id in ["examine_records", "reconcile_accounts", "consult_official", "inspect_source"]:
+							_check(not String(form_profile.get(action_id, "")).strip_edges().is_empty(), "%s is missing investigation prompt %s" % [String(form_type), action_id])
+				else:
+					for action_id in ["examine_records", "reconcile_accounts", "consult_official", "inspect_source"]:
+						_check(not String(profile.get(action_id, "")).strip_edges().is_empty(), "%s is missing investigation prompt %s" % [String(profile_id), action_id])
 	var candidates: Array[Dictionary] = [
 		{"id": &"review_canal", "kind": &"project_review", "source_id": &"great_canal_cut"},
 		{"id": &"review_temple", "kind": &"project_review"},
