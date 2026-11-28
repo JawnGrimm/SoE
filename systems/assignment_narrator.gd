@@ -162,12 +162,20 @@ static func _clean_display(value: String, field_path: String) -> String:
 	var form_matches := form_label_pattern.search_all(cleaned)
 	for form_match in form_matches:
 		var form_type := form_match.get_string(1)
-		cleaned = cleaned.replace(form_match.get_string(0), "RECORD TYPE: " + _form_display(form_type))
+		var display_title := _form_display(form_type)
+		if display_title.is_empty():
+			return ""
+		cleaned = cleaned.replace(form_match.get_string(0), "RECORD TYPE: " + display_title)
 	if cleaned.strip_edges().is_empty():
 		push_error("AssignmentNarrator: required player-facing field is empty: %s" % field_path)
 		return ""
 	if _contains_raw_metric(cleaned):
 		push_error("AssignmentNarrator: internal simulation data reached player-facing field: %s" % field_path)
+		return ""
+	var unresolved := RegEx.new()
+	unresolved.compile("\\{[a-zA-Z0-9_]+\\}")
+	if unresolved.search(cleaned) != null:
+		push_error("AssignmentNarrator: unresolved authored substitution in player-facing field: %s" % field_path)
 		return ""
 	return cleaned
 
