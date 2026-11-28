@@ -144,8 +144,13 @@ static func _clean_display(value: String, fallback: String) -> String:
 	for form_match in form_matches:
 		var form_type := form_match.get_string(1)
 		cleaned = cleaned.replace(form_match.get_string(0), "RECORD TYPE: " + _form_display(form_type))
-	var lowered := cleaned.to_lower()
+	if _contains_raw_metric(cleaned):
+		return fallback
+	return fallback if cleaned.strip_edges().is_empty() else cleaned
+
+static func _contains_raw_metric(value: String) -> bool:
+	var lowered := value.to_lower()
 	for raw_label in RAW_METRIC_LABELS:
 		if lowered.contains(raw_label):
-			return fallback
-	return fallback if cleaned.strip_edges().is_empty() else cleaned
+			return true
+	return false
