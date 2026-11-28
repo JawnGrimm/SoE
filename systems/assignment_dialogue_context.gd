@@ -49,6 +49,20 @@ static func from_record(record: Dictionary, world: WorldState) -> AssignmentDial
 		context.record_response = "\n\n".join(statements)
 	elif not record_facts.is_empty():
 		context.record_response = record_facts
+	elif source.has("form_type"):
+		var form_type := String(source.get("form_type", ""))
+		var form_titles: Dictionary = _get_dialogue_copy("form_titles")
+		var reason_labels: Dictionary = _get_dialogue_copy("generation_reasons")
+		var subject_id := StringName(source.get("subject_id", source.get("place_id", "")))
+		var subject_name := String(world.places.get(subject_id, {}).get("name", String(subject_id).replace("_", " ").capitalize())) if world != null else String(subject_id)
+		var summary_template := String(_get_dialogue_copy("record_entry_summary"))
+		context.record_response = _format_dialogue_copy(summary_template, {
+			"form_title": String(form_titles.get(form_type, "")),
+			"place_name": subject_name,
+			"generated_by": official.display_name if official != null else context.official_name,
+			"generation_reason": String(reason_labels.get(String(source.get("generation_reason", "")), "")),
+			"urgency": String(source.get("urgency", ""))
+		})
 	else:
 		context.record_response = String(record.get("summary", ""))
 
@@ -69,8 +83,9 @@ static func from_record(record: Dictionary, world: WorldState) -> AssignmentDial
 	var requested := String(npc_evidence.get("official_demand", npc_evidence.get("requested_outcome", source.get("requested_outcome", ""))))
 	if not requested.is_empty():
 		context.requested_result = requested
-	elif not source.is_empty():
-		context.requested_result = _get_dialogue_copy("no_separate_demand")
+	else:
+		var demands: Dictionary = _get_dialogue_copy("form_demands")
+		context.requested_result = String(demands.get(String(source.get("form_type", "")), _get_dialogue_copy("no_separate_demand")))
 	return context
 
 static func from_procedural_docket(source: Dictionary, world: WorldState) -> AssignmentDialogueContext:
@@ -89,7 +104,19 @@ static func from_procedural_docket(source: Dictionary, world: WorldState) -> Ass
 	return context
 
 
-static func _get_dialogue_copy(key: String) -> String:
+
+static func _format_dialogue_copy(template: String, values: Dictionary) -> String:
+	var result := template
+	for key in values:
+		result = result.replace("{%s}" % String(key), String(values[key]))
+	var unresolved := RegEx.new()
+	unresolved.compile("\\{[a-zA-Z0-9_]+\\}")
+	if unresolved.search(result) != null or result.strip_edges().is_empty():
+		push_error("AssignmentDialogueContext: unresolved or empty authored interview copy.")
+		return ""
+	return result
+
+static func _get_dialogue_copy(key: String) -> Variant:
 	if _dialogue_copy.is_empty():
 		var file := FileAccess.open("res://data/dialogue/official_stances.json", FileAccess.READ)
 		if file == null:
@@ -100,8 +127,8 @@ static func _get_dialogue_copy(key: String) -> String:
 			push_error("AssignmentDialogueContext: official interview copy is invalid.")
 			return ""
 		_dialogue_copy = parsed
-	var value := String(_dialogue_copy.get(key, ""))
-	if value.is_empty():
+	var value: Variant = _dialogue_copy.get(key, "")
+	if value is String and String(value).is_empty():
 		push_error("AssignmentDialogueContext: missing authored interview response '%s'." % key)
 	return value
 
