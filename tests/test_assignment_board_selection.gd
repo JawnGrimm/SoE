@@ -37,7 +37,10 @@ func _run() -> void:
 						_check(not label.is_empty(), "%s has a disposition without a label" % docket_id)
 						_check(not String(disposition.get("result_title", "")).strip_edges().is_empty(), "%s / %s has no result title" % [docket_id, label])
 						_check(not String(disposition.get("result_text", "")).strip_edges().is_empty(), "%s / %s has no result explanation" % [docket_id, label])
-						_check(disposition.get("effects", {}) is Dictionary and not disposition.get("effects", {}).is_empty(), "%s / %s has no effects" % [docket_id, label])
+						var disposition_effects: Dictionary = disposition.get("effects", {})
+						_check(not disposition_effects.is_empty(), "%s / %s has no effects" % [docket_id, label])
+						for effect_key in ["opinion_left", "opinion_right", "epic_progress", "skill", "xp"]:
+							_check(disposition_effects.has(effect_key), "%s / %s is missing effect %s" % [docket_id, label, effect_key])
 						_check(not seen_labels.has(label.to_lower()), "%s repeats disposition label '%s'" % [docket_id, label])
 						seen_labels[label.to_lower()] = true
 			var procedural: Dictionary = docket_data.get("procedural_archetypes", {})
