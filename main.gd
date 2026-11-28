@@ -1328,6 +1328,18 @@ func _show_case() -> void:
 	_clear_choices()
 	_set_phase("case")
 	_render_docket_payload(AssignmentNarratorScript.translate_payload(_active_docket_payload()))
+	if not procedural_assignment.is_empty():
+		_add_choice("Hear the parties / review their particulars", _open_procedural_party_dialogue)
+
+func _open_procedural_party_dialogue() -> void:
+	if procedural_assignment.is_empty():
+		return
+	var context = AssignmentDialogueContextScript.from_procedural_docket(procedural_assignment)
+	var dialogue_resource: DialogueResource = load("res://data/dialogue/assignment_parties.dialogue") as DialogueResource
+	if dialogue_resource == null:
+		push_error("Procedural party dialogue could not be loaded.")
+		return
+	DialogueManager.show_dialogue_balloon(dialogue_resource, "start", [{"assignment_context": context}])
 
 func _render_docket_payload(payload: Dictionary, callbacks: Array = []) -> void:
 	if clay_docket != null:
