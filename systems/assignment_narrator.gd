@@ -85,7 +85,9 @@ static func investigation_action_description(record: Dictionary, action_id: Stri
 		return ""
 	return description
 
-static func narrate_record_examination(record: Dictionary, _actor: PersonEntity, world: WorldState, evidence: Dictionary) -> Dictionary:
+static var _record_reading_data: Dictionary = {}
+
+static func narrate_record_examination(record: Dictionary, actor: PersonEntity, world: WorldState, evidence: Dictionary) -> Dictionary:
 	var source: Dictionary = record.get("source_data", {})
 	var npc_evidence: Dictionary = source.get("npc_evidence", {})
 	var record_evidence: Dictionary = record.get("evidence", {})
@@ -104,18 +106,31 @@ static func narrate_record_examination(record: Dictionary, _actor: PersonEntity,
 	elif not record_facts.strip_edges().is_empty():
 		beats.append({"kind": "document", "speaker": "Written record", "text": record_facts})
 	else:
-		var summary := String(record.get("summary", "")).strip_edges()
-		if summary.is_empty():
-			push_error("AssignmentNarrator: assignment '%s' has no record examination content." % String(record.get("id", "")))
+		push_error("AssignmentNarrator: assignment '%s' has no written-record evidence." % String(record.get("id", "")))
+		return {}
+	if _record_reading_data.is_empty():
+		var reading_file := FileAccess.open("res://data/assignments/record_readings.json", FileAccess.READ)
+		if reading_file == null:
+			push_error("AssignmentNarrator: authored record-reading data is missing.")
 			return {}
-		beats.append({"kind": "document", "speaker": "Assignment record", "text": summary})
+		var parsed: Variant = JSON.parse_string(reading_file.get_as_text())
+		if not parsed is Dictionary:
+			push_error("AssignmentNarrator: authored record-reading data is invalid.")
+			return {}
+		_record_reading_data = parsed
+	var reading_key := "grain_conflict" if not npc_evidence.is_empty() else String(source.get("form_type", record.get("kind", "")))
+	var thought := String(_record_reading_data.get(reading_key, ""))
+	if thought.is_empty():
+		push_error("AssignmentNarrator: no authored scribe reading for '%s'." % reading_key)
+		return {}
+	beats.append({"kind": "internal_monologue", "speaker": actor.display_name if actor != null else "", "text": thought})
 	var official_entry: Dictionary = record_evidence.get(&"consult_official", {})
 	var stance := _extract_fact(String(official_entry.get("facts", "")), "STANCE")
 	if not stance.is_empty():
 		var official: PersonEntity = world.get_person(StringName(record.get("employer_id", ""))) if world != null else null
 		beats.append({"kind": "dialogue", "speaker": official.display_name if official != null else "", "text": stance})
 	return {
-		"heading": String(record.get("title", "")),
+		"heading": "A closer reading",
 		"beats": beats,
 		"closing": ""
 	}
