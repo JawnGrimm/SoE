@@ -2,6 +2,7 @@ extends SceneTree
 
 const Pipeline = preload("res://systems/assignment_pipeline.gd")
 const Narrator = preload("res://systems/assignment_narrator.gd")
+const DialogueContext = preload("res://systems/assignment_dialogue_context.gd")
 
 var _checks := 0
 var _failures: Array[String] = []
@@ -84,6 +85,43 @@ func _run() -> void:
 				else:
 					for action_id in ["examine_records", "reconcile_accounts", "consult_official", "inspect_source"]:
 						_check(not String(profile.get(action_id, "")).strip_edges().is_empty(), "%s is missing investigation prompt %s" % [String(profile_id), action_id])
+	var interview_world := WorldState.new()
+	var official := PersonEntity.new()
+	official.id = &"official_test"
+	official.display_name = "Ur-Mes"
+	official.office_id = &"canal_bailiff"
+	interview_world.people[official.id] = official
+	interview_world.places[&"umma"] = {"name": "Umma"}
+	interview_world.institutions[&"umma_canal_bailiff"] = {
+		"name": "Umma Canal Bailiff's Office",
+		"place_id": &"umma",
+		"stockpiles": {&"labor": 13, &"barley": 147}
+	}
+	var official_claim := Pipeline._official_stance(interview_world, null, official, {
+		"form_type": "bailiff_requisition",
+		"institution_id": &"umma_canal_bailiff",
+		"place_id": &"umma"
+	}, 0)
+	_check(official_claim.contains("13 labor") and official_claim.contains("147 barley"), "Official testimony must cite the actual institutional account")
+	_check(official_claim.contains("does not tell you how many hands can leave their posts"), "Official testimony must distinguish stock from available labor")
+	_check(not official_claim.contains("{"), "Official testimony must resolve every authored substitution")
+	var interview_context := DialogueContext.from_record({
+		"employer_id": &"official_test",
+		"summary": "A requisition awaits assessment.",
+		"source_data": {
+			"form_type": "bailiff_requisition",
+			"subject_id": &"umma",
+			"generated_by": "world_simulator",
+			"generation_reason": "local_institution_shortage",
+			"urgency": 2
+		},
+		"evidence": {"consult_official": {"facts": "STANCE: %s" % official_claim}}
+	}, interview_world)
+	_check(interview_context.official_name == "Ur-Mes", "Official interview must use the responsible person's name")
+	_check(interview_context.record_response.contains("Bailiff Requisition") and interview_context.record_response.contains("Umma"), "Record question must explain the actual form and subject")
+	_check(interview_context.record_response.contains("a reported shortage at the institution"), "Record question must explain why the requisition was entered")
+	_check(interview_context.requested_result.contains("labor allotment"), "Official must state the specific authorization requested")
+	_check(not interview_context.witness_response.is_empty(), "Interview must explicitly report when no witness is named")
 	var candidates: Array[Dictionary] = [
 		{"id": &"review_canal", "kind": &"project_review", "source_id": &"great_canal_cut"},
 		{"id": &"review_temple", "kind": &"project_review"},
