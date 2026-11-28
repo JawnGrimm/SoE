@@ -1,0 +1,25 @@
+~ start
+The responsible official: {{assignment_context.opening_line}}
+- Ask what the written record establishes
+	The responsible official: {{assignment_context.record_response}}
+	=> questions
+- Ask what was personally witnessed
+	The responsible official: {{assignment_context.witness_response}}
+	=> questions
+- Ask what result the official seeks
+	The responsible official: {{assignment_context.requested_result}}
+	=> questions
+- End the interview => END
+
+~ questions
+The responsible official: Is there another question?
+- What does the record establish?
+	The responsible official: {{assignment_context.record_response}}
+	=> questions
+- What did you personally witness?
+	The responsible official: {{assignment_context.witness_response}}
+	=> questions
+- What result do you seek?
+	The responsible official: {{assignment_context.requested_result}}
+	=> questions
+- End the interview => END
