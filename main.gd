@@ -1199,7 +1199,7 @@ func _show_world_engagement() -> void:
 	var payload := {
 		"title": String(record.get("title", "ASSIGNMENT")),
 		"left_card": {"title": "WORLD SITUATION / %s" % String(record.get("kind", "work")).to_upper(), "speaker_id": &"", "quote": left_quote, "facts": "OPENED: %s / PERIOD %d" % [CalendarFormatter.format_year(world.year), world.period + 1]},
-		"right_card": {"title": "RESPONSIBLE OFFICE", "speaker_id": employer.id if employer != null else &"", "quote": right_quote, "facts": "%d / %d inquiries spent%s\n\n%s" % [actions.size(), AssignmentPipeline.MAX_INVESTIGATION_ACTIONS, " — enter judgment" if actions.size() >= AssignmentPipeline.MAX_INVESTIGATION_ACTIONS else "", "\n\n".join(evidence_lines)]},
+		"right_card": {"title": "RESPONSIBLE OFFICE", "speaker_id": employer.id if employer != null else &"", "quote": right_quote, "facts": "INQUIRIES: %d USED / %d REMAINING\nAt zero remaining, enter a disposition.\n\n%s" % [actions.size(), maxi(0, AssignmentPipeline.MAX_INVESTIGATION_ACTIONS - actions.size()), "\n\n".join(evidence_lines)]},
 		"prompt": "Investigate the situation. Your skills affect what you can establish; your judgment determines what is entered.",
 		"choices": []
 	}
@@ -1207,7 +1207,7 @@ func _show_world_engagement() -> void:
 	for action in AssignmentPipeline.INVESTIGATION_ACTIONS:
 		var action_id: StringName = action.id
 		var done := actions.has(action_id)
-		payload.choices.append({"label": String(action.label)})
+		payload.choices.append({"label": "%s\n%s" % [String(action.label), AssignmentNarratorScript.investigation_action_description(record, action_id)]})
 		callbacks.append(_world_assignment_action.bind(action_id))
 		payload.choices.back()["disabled"] = done or actions.size() >= AssignmentPipeline.MAX_INVESTIGATION_ACTIONS
 	_render_docket_payload(payload, callbacks)
