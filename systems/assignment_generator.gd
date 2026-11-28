@@ -206,7 +206,8 @@ static func generate(world: WorldState, actor: PersonEntity, selected_path: Stri
 	return payload
 
 static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_id: StringName, record_history: bool = true) -> Dictionary:
-	var path_data: Dictionary = _get_path_docket_data()\n\tvar templates: Array = (path_data.get("dockets", {}) as Dictionary).get(String(path_id), [])
+	var path_data: Dictionary = _get_path_docket_data()
+	var templates: Array = (path_data.get("dockets", {}) as Dictionary).get(String(path_id), [])
 	if templates.is_empty():
 		return {}
 	var eligible: Array = []
