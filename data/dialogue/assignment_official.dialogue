@@ -1,5 +1,5 @@
 ~ start
-The responsible official: {{assignment_context.opening_line}}
+The responsible official: {{assignment_context.official_name}} states: {{assignment_context.opening_line}}
 - Ask what the written record establishes
 	The responsible official: {{assignment_context.record_response}}
 	=> questions
