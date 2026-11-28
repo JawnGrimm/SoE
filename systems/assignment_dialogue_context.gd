@@ -94,8 +94,11 @@ static func from_procedural_docket(source: Dictionary, world: WorldState) -> Ass
 	var right: Dictionary = source.get("right_card", {})
 	var client: PersonEntity = world.get_person(StringName(left.get("speaker_id", ""))) if world != null else null
 	var opposing: PersonEntity = world.get_person(StringName(right.get("speaker_id", ""))) if world != null else null
-	context.client_name = client.display_name if client != null else String(source.get("client_name", ""))
-	context.opposing_name = opposing.display_name if opposing != null else String(source.get("opposing_name", ""))
+	if client == null or opposing == null:
+		push_error("AssignmentDialogueContext: procedural docket '%s' is missing a named party." % String(source.get("archetype", "")))
+		return context
+	context.client_name = client.display_name
+	context.opposing_name = opposing.display_name
 	context.client_statement = String(left.get("quote", ""))
 	context.opposing_statement = String(right.get("quote", ""))
 	context.client_record = String(left.get("facts", ""))
