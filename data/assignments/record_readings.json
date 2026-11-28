@@ -10,5 +10,6 @@
 	"hazard": "The report records a location and rate of loss. Inspection must establish whether the damage remains active.",
 	"project_review": "The review records certified progress and outstanding obligations. It does not establish that unrecorded work is complete.",
 	"ledger": "The account records entered balances. Inspection determines whether those balances match the stores.",
-	"procedural_docket": "The docket preserves competing claims. Neither party's statement is a finding."
+	"procedural_docket": "The docket preserves competing claims. Neither party's statement is a finding.",
+	"pressure": "The pressure entry identifies an institutional obligation or shortage. The account and responsible office must establish what is actually preventing the work."
 }
