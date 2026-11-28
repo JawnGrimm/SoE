@@ -62,13 +62,13 @@ static func generate(world: WorldState, actor: PersonEntity, selected_path: Stri
 			archetypes = ARCHETYPES.duplicate()
 	var archetype: StringName = archetypes[world.rng_narrative.randi_range(0, archetypes.size() - 1)]
 	if archetype == &"hazard_check":
-		var active_hazard := false
+		var has_active_hazard := false
 		for hazard_record in world.hazards:
 			if bool(hazard_record.get("active", false)):
-				active_hazard = true
+				has_active_hazard = true
 				break
 		var shortage_pressure := world.get_resource(&"barley") < 100 or world.get_resource(&"labor") < 8
-		if not active_hazard and not shortage_pressure:
+		if not has_active_hazard and not shortage_pressure:
 			var fallback_archetypes: Array[StringName] = []
 			for fallback_id in archetypes:
 				if fallback_id != &"hazard_check" and (world.recent_archetypes.is_empty() or fallback_id != StringName(world.recent_archetypes.back())):
