@@ -17,5 +17,23 @@
 		"travel_pass": "I seek authorization of the journey and its stated terms.",
 		"succession_claim": "I seek a ruling on which succession entry may be recognized.",
 		"consignment_receipt": "I seek certification of the goods received against this consignment."
+	},
+	"form_titles": {
+		"bailiff_requisition": "Bailiff Requisition",
+		"pension_roll": "Pension Roll",
+		"grain_levy": "Grain Levy",
+		"travel_pass": "Travel Pass",
+		"succession_claim": "Succession Claim",
+		"consignment_receipt": "Consignment Receipt",
+		"held_barley": "Held-Barley Notice"
+	},
+	"generation_reasons": {
+		"local_institution_shortage": "a reported shortage at the institution",
+		"roof_leak_inspection": "a roof-leak inspection",
+		"canal_workforce_demand": "canal workforce demand",
+		"surplus_provisions": "surplus provisions",
+		"autonomous_grain_clerk_action": "an independent grain-office action",
+		"surplus_levy": "a surplus levy",
+		"wool_backlog": "a wool backlog"
 	}
 }
