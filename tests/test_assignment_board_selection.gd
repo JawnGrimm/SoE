@@ -70,8 +70,12 @@ func _run() -> void:
 	if stance_file != null:
 		var stances: Variant = JSON.parse_string(stance_file.get_as_text())
 		_check(stances is Dictionary, "Official stance dialogue data must parse")
-		for stance_id in ["grain_clerk_conflict", "other_office_conflict", "canal_bailiff_requisition", "other_office_requisition", "archive_keeper", "trusted_complicit", "hostile_exacting", "general_office", "no_witness", "no_separate_demand"]:
+		for stance_id in ["grain_clerk_conflict", "other_office_conflict", "canal_bailiff_requisition", "other_office_requisition", "archive_keeper", "trusted_complicit", "hostile_exacting", "no_witness", "no_separate_demand", "record_entry_summary"]:
 			_check(not String(stances.get(stance_id, "")).strip_edges().is_empty(), "Official stance data is missing %s" % stance_id)
+		var office_profiles: Dictionary = stances.get("office_profiles", {})
+		_check(office_profiles.size() >= 19, "Every seeded office role must have an authored knowledge profile")
+		for office_id in office_profiles:
+			_check(not String(office_profiles[office_id]).strip_edges().is_empty(), "Office %s has no authored knowledge profile" % String(office_id))
 	var prompt_file := FileAccess.open("res://data/assignments/investigation_prompts.json", FileAccess.READ)
 	_check(prompt_file != null, "Investigation prompt data must be readable")
 	if prompt_file != null:
