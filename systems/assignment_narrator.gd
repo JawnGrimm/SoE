@@ -73,7 +73,8 @@ static func narrate_record_examination(record: Dictionary, actor: PersonEntity, 
 	var beats: Array[Dictionary] = []
 	var form_type := String(source.get("form_type", ""))
 	var subject := String(source.get("subject_id", source.get("place_id", "the named place"))).replace("_", " ")
-	var record_evidence: Dictionary = record.get("evidence", {})\n\tvar record_entry: Dictionary = record_evidence.get(&"examine_records", evidence)
+	var record_evidence: Dictionary = record.get("evidence", {})
+	var record_entry: Dictionary = record_evidence.get(&"examine_records", evidence)
 	var record_facts := String(record_entry.get("facts", ""))
 	var official: PersonEntity = world.get_person(StringName(record.get("employer_id", ""))) if world != null else null
 	var official_name := official.display_name if official != null else "the responsible office"
