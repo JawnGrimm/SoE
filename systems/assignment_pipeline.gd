@@ -684,16 +684,15 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 		&"examine_records":
 			if kind == &"form":
 				summary = "%s for %s; entered by %s at urgency %d." % [_form_title(StringName(data.get("form_type", ""))), _place_name(world, StringName(data.get("subject_id", ""))), employer_name_for_record(world, record), int(data.get("urgency", 0))]
-				facts = "DOCUMENT: %s\nSUBJECT: %s\nURGENCY: %d\nENTERED BY: %s\nOFFICE NOTE: %s" % [_form_title(StringName(data.get("form_type", ""))), _place_name(world, StringName(data.get("subject_id", ""))), int(data.get("urgency", 0)), String(data.get("generated_by", "the office")).replace("_", " ").capitalize(), String(data.get("generation_reason", "routine office request")).replace("_", " ")]
+				facts = "DOCUMENT: %s\nSUBJECT: %s\nURGENCY: %d\nRESPONSIBLE OFFICIAL: %s" % [_form_title(StringName(data.get("form_type", ""))), _place_name(world, StringName(data.get("subject_id", ""))), int(data.get("urgency", 0)), employer_name_for_record(world, record)]
 			else:
-				summary = "The written record is examined. The current account can be compared with the live institution state."
 				facts = "RECORD: %s\nPERIOD: %d" % [String(record.get("title", "")), world.current_period_index()]
 				summary = String(record.get("summary", record.get("title", "")))
 		&"consult_official":
 			var employer := world.get_person(StringName(record.get("employer_id", "")))
 			var opinion := employer.get_opinion(actor.id) if employer != null else 0
-			summary = "%s states: %s" % [employer.display_name if employer != null else "", stance]
 			var stance := _official_stance(world, actor, employer, data, opinion)
+			summary = "%s states: %s" % [employer.display_name if employer != null else "", stance]
 			facts = "OFFICIAL: %s\nOPINION OF SCRIBE: %d\nOFFICE: %s\nSTANCE: “%s”" % [employer.display_name if employer != null else "No named official", opinion, String(employer.office_id) if employer != null else "Unassigned", stance]
 		&"inspect_source":
 			if kind == &"hazard":
@@ -723,8 +722,6 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 		if not String(npc_evidence.get("discrepancy", "")).is_empty():
 			facts += "\nDISCREPANCY: %s" % String(npc_evidence.get("discrepancy", ""))
 
-	if action_id == &"examine_records" and skill_level >= 2:
-		facts += "\nThe source note records: %s." % String(data.get("generation_reason", "not recorded")).replace("_", " ")
 	elif action_id == &"consult_official" and skill_level >= 2:
 		var consulted := world.get_person(StringName(record.get("employer_id", "")))
 		if consulted != null:
@@ -748,7 +745,9 @@ static func _sanitize_evidence_text(value: String) -> String:
 		var clean_line := line
 		var form_pattern := RegEx.new()
 		form_pattern.compile("form_[0-9]+")
-		clean_line = form_pattern.sub(clean_line, "the pending record", true)
+		if form_pattern.search(clean_line) != null:
+			push_error("AssignmentPipeline: internal form identifier reached evidence presentation.")
+			continue
 		var hazard_pattern := RegEx.new()
 		hazard_pattern.compile("hazard_id:\\s*([a-z0-9_]+)")
 		var hazard_match := hazard_pattern.search(clean_line)
@@ -770,17 +769,19 @@ static func _stock_detail(stock: Dictionary, skill_level: int, skill_label: Stri
 	)
 	var first: Dictionary = ranked[0]
 	var resource_name := String(first.id).replace("_", " ").capitalize()
-	var detail := ""
-	if skill_level < 1:
-		detail = "The records identify stored resources, but no reliable ranking is established."
-	elif skill_level == 1:
+	var detail := "Recorded quantities: %s." % _format_stockpile_list(stock)
+	if skill_level >= 1:
 		detail = "Largest recorded reserve: %s / %d." % [resource_name, int(first.amount)]
-	else:
-		detail = "LARGEST RECORDED RESERVE: %s / %d" % [resource_name, int(first.amount)]
 	if skill_level >= 3 and ranked.size() > 1:
 		var second: Dictionary = ranked[1]
-		detail += "\nNEXT RESERVE: %s / %d" % [String(second.id).replace("_", " ").capitalize(), int(second.amount)]
-	return "%s DETAIL / LEVEL %d\n%s" % [skill_label, skill_level, detail]
+		detail += "\nNext reserve: %s / %d." % [String(second.id).replace("_", " ").capitalize(), int(second.amount)]
+	return "%s: %s" % [skill_label.capitalize(), detail]
+
+static func _format_stockpile_list(stock: Dictionary) -> String:
+	var entries := PackedStringArray()
+	for resource_id in stock:
+		entries.append("%s %d" % [String(resource_id).replace("_", " "), int(stock[resource_id])])
+	return ", ".join(entries)
 
 static func _institution_for_location(world: WorldState, location_id: StringName) -> StringName:
 	if location_id == &"":
