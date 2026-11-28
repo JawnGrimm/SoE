@@ -37,6 +37,9 @@ DialogueManager="*uid://c3rodes2l3gxb"
 examples_paths=Array[String](["res://addons/maaacks_menus_template/examples/"])
 copy_path="res://"
 
+[dialogue_manager]
+runtime/balloon_path="res://ui/assignment_dialogue_balloon.tscn"
+
 [display]
 
 window/size/viewport_width=1600
