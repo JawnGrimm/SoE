@@ -30,6 +30,7 @@ AudioManager="*res://autoloads/audio_manager.gd"
 MusicController="*uid://r5t485lr3p7t"
 MusicDirector="*res://systems/music_director.gd"
 LimboConsole="*uid://dyxornv8vwibg"
+DialogueManager="*uid://c3rodes2l3gxb"
 
 [clean_copy_examples]
 
@@ -47,7 +48,7 @@ window/stretch/mode="canvas_items"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/godot-resource-database/plugin.cfg", "res://addons/limbo_console/plugin.cfg", "res://addons/maaacks_menus_template/plugin.cfg", "res://addons/maaacks_music_controller/plugin.cfg", "res://addons/plugin_updater/plugin.cfg", "res://addons/save_value_viewer/plugin.cfg", "res://addons/worldmap_builder/plugin.cfg")
+enabled=PackedStringArray("res://addons/dialogue_manager/plugin.cfg", "res://addons/godot-resource-database/plugin.cfg", "res://addons/limbo_console/plugin.cfg", "res://addons/maaacks_menus_template/plugin.cfg", "res://addons/maaacks_music_controller/plugin.cfg", "res://addons/plugin_updater/plugin.cfg", "res://addons/save_value_viewer/plugin.cfg", "res://addons/worldmap_builder/plugin.cfg")
 
 [input]
 
