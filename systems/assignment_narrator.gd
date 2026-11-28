@@ -36,7 +36,7 @@ static func translate_payload(source: Dictionary) -> Dictionary:
 
 static func translate_record(source: Dictionary) -> Dictionary:
 	var result := source.duplicate(true)
-	result["title"] = _clean_display(String(result.get("title", "")), "Assignment")
+	result["title"] = _clean_display(String(result.get("title", "")), "title")
 	result["summary"] = _clean_display(String(result.get("summary", "")), "summary")
 	var evidence: Dictionary = result.get("evidence", {})
 	for action_id in evidence:
@@ -80,19 +80,12 @@ static func investigation_action_description(record: Dictionary, action_id: Stri
 	return description
 
 static func narrate_record_examination(record: Dictionary, actor: PersonEntity, world: WorldState, evidence: Dictionary) -> Dictionary:
-	## Builds the first record-reading scene from facts already present on the assignment.
 	var source: Dictionary = record.get("source_data", {})
 	var npc_evidence: Dictionary = source.get("npc_evidence", {})
-	var beats: Array[Dictionary] = []
-	var form_type := String(source.get("form_type", ""))
-	var subject := String(source.get("subject_id", source.get("place_id", "the named place"))).replace("_", " ")
 	var record_evidence: Dictionary = record.get("evidence", {})
 	var record_entry: Dictionary = record_evidence.get(&"examine_records", evidence)
 	var record_facts := String(record_entry.get("facts", ""))
-	var official: PersonEntity = world.get_person(StringName(record.get("employer_id", ""))) if world != null else null
-	var official_name := official.display_name if official != null else "the responsible office"
-
-	beats.append({"kind": "description", "speaker": "", "text": "You read the record against the matter referred to your desk."})
+	var beats: Array[Dictionary] = []
 	if not npc_evidence.is_empty():
 		for field in [
 			{"key": "dispatch_record", "speaker": "Dispatch record"},
@@ -102,28 +95,23 @@ static func narrate_record_examination(record: Dictionary, actor: PersonEntity, 
 			var value := String(npc_evidence.get(field.key, ""))
 			if not value.is_empty():
 				beats.append({"kind": "document", "speaker": field.speaker, "text": value})
-	elif not record_facts.is_empty():
+	elif not record_facts.strip_edges().is_empty():
 		beats.append({"kind": "document", "speaker": "Written record", "text": record_facts})
-	elif not form_type.is_empty():
-		beats.append({"kind": "document", "speaker": "Pending register", "text": "%s concerns %s. The entry identifies its subject and urgency; it does not establish the disputed facts." % [_form_display(form_type), subject]})
 	else:
-		beats.append({"kind": "document", "speaker": "Written record", "text": String(record.get("summary", "The record identifies a matter requiring assessment."))})
-
+		var summary := String(record.get("summary", "")).strip_edges()
+		if summary.is_empty():
+			push_error("AssignmentNarrator: assignment '%s' has no record examination content." % String(record.get("id", "")))
+			return {}
+		beats.append({"kind": "document", "speaker": "Assignment record", "text": summary})
 	var official_entry: Dictionary = record_evidence.get(&"consult_official", {})
 	var stance := _extract_fact(String(official_entry.get("facts", "")), "STANCE")
 	if not stance.is_empty():
-		beats.append({"kind": "dialogue", "speaker": official_name, "text": stance})
-	else:
-		beats.append({"kind": "observation", "speaker": "", "text": "The responsible official has not yet given testimony. The written entry remains a claim, not a finding."})
-
-	var thought := "The record establishes what was entered. It does not establish why it was entered."
-	if actor != null and actor.skills != null and actor.skills.get_level(&"literacy") >= 2:
-		thought = "The wording is deliberate. Separate the recorded statement from the fact it claims to describe."
-	beats.append({"kind": "internal_monologue", "speaker": actor.display_name if actor != null else "The scribe", "text": thought})
+		var official: PersonEntity = world.get_person(StringName(record.get("employer_id", ""))) if world != null else null
+		beats.append({"kind": "dialogue", "speaker": official.display_name if official != null else "", "text": stance})
 	return {
-		"heading": "A closer reading",
+		"heading": String(record.get("title", "")),
 		"beats": beats,
-		"closing": "The written record is one source. Compare it with the account, the official's testimony, and the physical matter before entering judgment."
+		"closing": ""
 	}
 
 static func _extract_fact(facts: String, label: String) -> String:
