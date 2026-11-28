@@ -48,7 +48,13 @@
 							"xp": 12
 						}
 					}
-				]
+				],
+				"investigation_actions": {
+					"examine_records": "Compare the landing's accepted grade with the later rejection tablet and its seal.",
+					"reconcile_accounts": "Reconcile the accepted timber count with the beams the builder says are usable.",
+					"consult_official": "Ask the guild and council what each inspected and who authorized the grade change.",
+					"inspect_source": "Inspect the beams for splitting, rot, and load-bearing damage before certifying their grade."
+				}
 			},
 			{
 				"id": "boat_demurrage",
@@ -97,7 +103,13 @@
 							"xp": 12
 						}
 					}
-				]
+				],
+				"investigation_actions": {
+					"examine_records": "Read the boat's arrival mark against the quay's assigned unloading window.",
+					"reconcile_accounts": "Compare the demurrage period claimed with the crew's recorded unloading activity.",
+					"consult_official": "Ask the boatmaster when the boat arrived and the household who controlled the unloading crew.",
+					"inspect_source": "Inspect the landing marks and mooring place for evidence of when the boat could unload."
+				}
 			},
 			{
 				"id": "counterfeit_copper",
@@ -146,7 +158,13 @@
 							"xp": 12
 						}
 					}
-				]
+				],
+				"investigation_actions": {
+					"examine_records": "Compare yesterday's market balance mark with the council's challenged weight entry.",
+					"reconcile_accounts": "Weigh the twelve ingots against the market standard and record the measured shortfall, if any.",
+					"consult_official": "Ask the boatmen where the copper was acquired and the council who ordered the batch held.",
+					"inspect_source": "Inspect the ingots and their marks for casting differences or signs of substituted metal."
+				}
 			},
 			{
 				"id": "missing_quay_sacks",
@@ -195,7 +213,13 @@
 							"xp": 10
 						}
 					}
-				]
+				],
+				"investigation_actions": {
+					"examine_records": "Compare the storehouse dispatch of forty sacks with the boat's receipt for thirty-six.",
+					"reconcile_accounts": "Reconcile the four-sack difference against the storehouse stock and landing tally.",
+					"consult_official": "Ask the boatmen about the second craft and the storehouse who witnessed the loading.",
+					"inspect_source": "Inspect the quay and loading place for a second craft's marks or sacks left ashore."
+				}
 			}
 		],
 		"path_martial": [
@@ -246,7 +270,13 @@
 							"xp": 12
 						}
 					}
-				]
+				],
+				"investigation_actions": {
+					"examine_records": "Read the guard ration roll against the issue entry showing only half the barley.",
+					"reconcile_accounts": "Compare the names on the guard roll with the storehouse issue and current muster.",
+					"consult_official": "Ask the captain who was present at the ditch and the storehouse clerk who authorized the reduced issue.",
+					"inspect_source": "Inspect the guard post and muster location for signs of the listed watch being present."
+				}
 			},
 			{
 				"id": "spear_requisition",
@@ -295,7 +325,13 @@
 							"xp": 12
 						}
 					}
-				]
+				],
+				"investigation_actions": {
+					"examine_records": "Compare the captain's twenty-head order with the council copy bearing the incomplete seal.",
+					"reconcile_accounts": "Reconcile the workshop delivery of fourteen spearheads against both versions of the requisition.",
+					"consult_official": "Ask the captain who approved twenty and the council clerk who made the smaller copy.",
+					"inspect_source": "Inspect the workshop tally and seal impression for evidence of an altered or incomplete order."
+				}
 			},
 			{
 				"id": "watchtower_supply",
@@ -344,7 +380,13 @@
 							"xp": 10
 						}
 					}
-				]
+				],
+				"investigation_actions": {
+					"examine_records": "Read the carrier's lower-landing receipt beside the tower's missing acknowledgment.",
+					"reconcile_accounts": "Reconcile the carrier's delivered quantity with the tower inventory and lower-landing receipt.",
+					"consult_official": "Ask the captain who received supplies at the tower and the boatman where the load was unloaded.",
+					"inspect_source": "Inspect the lower landing and tower store for the missing oil and rope or signs of onward transfer."
+				}
 			},
 			{
 				"id": "conscription_exemption",
@@ -393,7 +435,13 @@
 							"xp": 12
 						}
 					}
-				]
+				],
+				"investigation_actions": {
+					"examine_records": "Search the muster tablet for the household's exemption and compare the council's copy.",
+					"reconcile_accounts": "Compare the active muster entry with the household's claimed exemption record.",
+					"consult_official": "Ask the elder who witnessed the exemption and the captain why the household remains on the muster.",
+					"inspect_source": "Inspect the archive and muster place for a displaced exemption tablet or witness mark."
+				}
 			}
 		],
 		"path_civil": [
@@ -444,7 +492,13 @@
 							"xp": 12
 						}
 					}
-				]
+				],
+				"investigation_actions": {
+					"examine_records": "Compare the elder's archived boundary copy with the household's later field marks.",
+					"reconcile_accounts": "Reconcile the levy map's wider strip with the narrower area marked by the household.",
+					"consult_official": "Ask the elder when the copy was made and the household when the stone allegedly moved after the flood.",
+					"inspect_source": "Inspect the standing boundary stone and field marks for evidence of movement or erosion."
+				}
 			},
 			{
 				"id": "canal_water_sharing",
@@ -493,7 +547,13 @@
 							"xp": 10
 						}
 					}
-				]
+				],
+				"investigation_actions": {
+					"examine_records": "Read the upper and lower water-turn entries against the canal schedule.",
+					"reconcile_accounts": "Compare three upper turns and zero lower turns with the water allocation roll.",
+					"consult_official": "Ask the canal keeper when the lower gate became blocked and the households when they last received water.",
+					"inspect_source": "Inspect the lower gate for silt blockage and evidence that water could not pass."
+				}
 			},
 			{
 				"id": "inheritance_tablets",
@@ -542,7 +602,13 @@
 							"xp": 10
 						}
 					}
-				]
+				],
+				"investigation_actions": {
+					"examine_records": "Compare the father's sealed allotment tablet with the household's later mark and date.",
+					"reconcile_accounts": "Reconcile the field allotment named on both tablets and identify the overlapping claim.",
+					"consult_official": "Ask the household who witnessed the oral settlement and the council who verified the older seal.",
+					"inspect_source": "Inspect the seals and tablet impressions for signs that either claim was altered."
+				}
 			},
 			{
 				"id": "market_vendor_fine",
@@ -591,7 +657,13 @@
 							"xp": 12
 						}
 					}
-				]
+				],
+				"investigation_actions": {
+					"examine_records": "Read the two-shekel fine beside the quay stall allocation and any prior warning.",
+					"reconcile_accounts": "Compare the vendor's stall position with the unloading lane recorded by the guild.",
+					"consult_official": "Ask the vendor who blocked the proper stall and the boatmen who witnessed the obstruction.",
+					"inspect_source": "Inspect the quay path and stall positions to establish whether baskets narrowed the unloading lane."
+				}
 			}
 		],
 		"path_religious": [
@@ -642,7 +714,13 @@
 							"xp": 10
 						}
 					}
-				]
+				],
+				"investigation_actions": {
+					"examine_records": "Compare the twelve-sheep offering roll with the delivery entry for ten and any rejection mark.",
+					"reconcile_accounts": "Reconcile the two missing sheep against the gate tally and the temple offering count.",
+					"consult_official": "Ask the shepherd why two sheep were rejected and the gate attendant whether a rejection was witnessed.",
+					"inspect_source": "Inspect the holding pen and gate marks for evidence of rejected animals or an incomplete delivery."
+				}
 			},
 			{
 				"id": "ritual_beer",
@@ -691,7 +769,13 @@
 							"xp": 12
 						}
 					}
-				]
+				],
+				"investigation_actions": {
+					"examine_records": "Read the promised beer allocation beside the brewer's received quantity and carrier's loss entry.",
+					"reconcile_accounts": "Compare the three jars claimed broken with the brewer's shortfall and the carrier's receipt.",
+					"consult_official": "Ask the brewer what quantity was received and the carrier where the jars broke during unloading.",
+					"inspect_source": "Inspect the unloading place for broken jar fragments or a recorded loss mark."
+				}
 			},
 			{
 				"id": "storehouse_seal",
@@ -740,7 +824,13 @@
 							"xp": 10
 						}
 					}
-				]
+				],
+				"investigation_actions": {
+					"examine_records": "Compare the intact seal's impression with the archive's authorized seal copy.",
+					"reconcile_accounts": "Reconcile the current seal impression with the last inspection entry and its recorded witness.",
+					"consult_official": "Ask the storehouse keeper who replaced or inspected the seal and the council who authorized the inspection.",
+					"inspect_source": "Inspect the seal and storehouse closure for tampering or a second impression."
+				}
 			},
 			{
 				"id": "festival_tithes",
@@ -789,7 +879,13 @@
 							"xp": 10
 						}
 					}
-				]
+				],
+				"investigation_actions": {
+					"examine_records": "Read the festival tithe roll beside the musician's claimed exemption and the steward's entry.",
+					"reconcile_accounts": "Compare the missing basket with the full tithe due and any prior exemption in the roll.",
+					"consult_official": "Ask the steward who promised the musicians' share and the council who authorized exemptions.",
+					"inspect_source": "Inspect the festival store and distribution marks for the missing basket or an unrecorded issue."
+				}
 			}
 		]
 	},
@@ -945,7 +1041,13 @@
 					"epic_progress": 1,
 					"result_title": "CARRIER DEBITED"
 				}
-			]
+			],
+			"investigation_actions": {
+				"examine_records": "Compare the dispatch docket's prime-seed claim with the threshold tally and its date.",
+				"reconcile_accounts": "Reconcile the dispatched and received measures; identify the quantity left unassigned.",
+				"consult_official": "Ask the dispatcher who sealed the load and the receiver who counted it at arrival.",
+				"inspect_source": "Inspect the storehouse and landing for the missing measures or evidence of a second transfer."
+			}
 		},
 		"damaged_consignment": {
 			"title": "DAMAGED CONSIGNMENT",
@@ -998,7 +1100,13 @@
 					"epic_progress": 1,
 					"result_title": "SHIPMENT RETURNED"
 				}
-			]
+			],
+			"investigation_actions": {
+				"examine_records": "Read the storage declaration beside the damage report and the last seal inspection.",
+				"reconcile_accounts": "Compare the recorded stock with the affected share before deciding what can be released.",
+				"consult_official": "Ask the storehouse official when the damage was first seen and who had custody of the bundles.",
+				"inspect_source": "Inspect the affected bundles and storage place for damp, mold, broken seals, or contamination."
+			}
 		},
 		"subtotal_claim": {
 			"title": "ACCOUNT SUBTOTAL / CROSS-HOUSE CLAIM",
@@ -1049,7 +1157,13 @@
 					"epic_progress": 1,
 					"result_title": "ROLLS IMPOUNDED"
 				}
-			]
+			],
+			"investigation_actions": {
+				"examine_records": "Read the three written line items and the submitted total as separate entries.",
+				"reconcile_accounts": "Recalculate the three lines and compare the result with the written total and disputed share.",
+				"consult_official": "Ask the submitting clerk how the total was calculated and the other household why it claims the difference.",
+				"inspect_source": "Inspect the source roll for a transfer or prior entry that could account for the extra amount."
+			}
 		},
 		"goods_unreturned": {
 			"title": "GOODS OUT, UNRETURNED",
@@ -1099,7 +1213,13 @@
 					"epic_progress": 1,
 					"result_title": "NEXT DISPATCH FROZEN"
 				}
-			]
+			],
+			"investigation_actions": {
+				"examine_records": "Compare the dispatch entry with the absence of a written settlement or return receipt.",
+				"reconcile_accounts": "Reconcile the quantity sent with the quantity returned and calculate the open balance.",
+				"consult_official": "Ask the carrier who heard the spoken promise and the storehouse clerk why no written settlement exists.",
+				"inspect_source": "Inspect the return store and landing records for goods received under another commodity or entry."
+			}
 		},
 		"hazard_check_preventive": {
 			"title": "HAZARD / MAINTENANCE CHECK",
@@ -1148,7 +1268,13 @@
 					"epic_progress": 0,
 					"result_title": "MAINTENANCE DEFERRED"
 				}
-			]
+			],
+			"investigation_actions": {
+				"examine_records": "Read the maintenance request and confirm the site and work it names.",
+				"reconcile_accounts": "Compare the proposed labor or silver allocation with current institutional stores.",
+				"consult_official": "Ask the requesting official what failure they expect and the crew what work can be completed.",
+				"inspect_source": "Inspect the named site for wear or damage that would justify preventive work."
+			}
 		},
 		"hazard_check_active": {
 			"title": "HAZARD / MAINTENANCE CHECK",
@@ -1185,7 +1311,13 @@
 					"epic_progress": 1,
 					"result_title": "LOSS RECORDED AND DEFERRED"
 				}
-			]
+			],
+			"investigation_actions": {
+				"examine_records": "Read the hazard report and the recorded rate and duration of loss.",
+				"reconcile_accounts": "Calculate the accumulated loss against the current stock and the repair allocation.",
+				"consult_official": "Ask the responsible official when the loss began and what resources will stop it.",
+				"inspect_source": "Inspect the affected site to verify the active damage before authorizing repair."
+			}
 		}
 	}
 }
