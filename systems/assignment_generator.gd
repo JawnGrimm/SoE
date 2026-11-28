@@ -146,7 +146,7 @@ static func generate(world: WorldState, actor: PersonEntity, selected_path: Stri
 		"resource_id": good, "amount": amount, "hazard_id": &"",
 		"left_card": {"title": "STOREHOUSE RECORD", "speaker_id": left.id, "quote": "", "facts": ""},
 		"right_card": {"title": "CLAIM / WITNESS", "speaker_id": right.id, "quote": "", "facts": ""},
-		"prompt": "What mark will you leave?", "choices": []
+		"prompt": "", "choices": []
 	}
 	var active_hazard: Dictionary = {}
 	if archetype == &"damaged_consignment":
@@ -217,6 +217,13 @@ static func generate(world: WorldState, actor: PersonEntity, selected_path: Stri
 	payload.right_card.facts = _format_narrative(String(definition.get("right_facts", "")), context)
 	payload.prompt = _format_narrative(String(definition.get("prompt", "")), context)
 	payload.choices = _build_narrative_choices(definition.get("choices", []), context)
+	payload["investigation_actions"] = definition.get("investigation_actions", {}).duplicate(true)
+	if payload.title.is_empty() or payload.left_card.quote.is_empty() or payload.left_card.facts.is_empty() or payload.right_card.quote.is_empty() or payload.right_card.facts.is_empty() or payload.prompt.is_empty():
+		push_error("AssignmentGenerator: procedural archetype '%s' is missing required authored narrative." % data_key)
+		return {}
+	if payload.investigation_actions.size() != 4:
+		push_error("AssignmentGenerator: procedural archetype '%s' is missing authored investigation prompts." % data_key)
+		return {}
 
 	return payload
 
@@ -294,7 +301,10 @@ static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_
 			world.recent_archetypes.pop_front()
 	var client_name := "LOCAL CLAIMANT" if local_mode else String((path_data.get("faction_display_names", {}) as Dictionary).get(String(client_faction), String(client_faction).replace("_", " ").capitalize()))
 	var opposing_name := "LOCAL WITNESS" if local_mode else String((path_data.get("faction_display_names", {}) as Dictionary).get(String(opposing_faction), String(opposing_faction).replace("_", " ").capitalize()))
-	var title := String(template.get("title", "LOCAL DOCKET"))
+	var title := String(template.get("title", "")).strip_edges()
+	if title.is_empty() or String(template.get("left", "")).strip_edges().is_empty() or String(template.get("right", "")).strip_edges().is_empty() or String(template.get("prompt", "")).strip_edges().is_empty():
+		push_error("AssignmentGenerator: docket '%s' is missing required authored narrative." % String(template.get("id", "")))
+		return {}
 	var payload := {
 		"title": title, "archetype": archetype_id, "docket_kind": "regional_local" if local_mode else "local_path",
 		"path_id": path_id, "npc_pair": pair, "client_faction": client_faction,
@@ -302,18 +312,14 @@ static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_
 		"opposing_name": "OPPOSING PARTY / " + opposing_name,
 		"left_card": {"title": "CLIENT", "speaker_id": client_id, "quote": String(template.get("left", "")), "facts": String(template.get("left_facts", ""))},
 		"right_card": {"title": "OPPOSING PARTY", "speaker_id": opposing_id, "quote": String(template.get("right", "")), "facts": String(template.get("right_facts", ""))},
-		"prompt": String(template.get("prompt", "What mark will you leave?")),
-		"choices": [
-			{"label": "Certify the client's record", "result_title": "CLIENT RECORD CERTIFIED", "result_text": "The client's entry is certified; the opposing claim remains attached.", "effects": {"opinion_left": 3, "opinion_right": -2, "epic_progress": 1, "skill": "law", "xp": 12}},
-			{"label": "Hold both claims for corroboration", "result_title": "CLAIMS HELD", "result_text": "Neither claim is erased. A second witness is required before the record can be closed.", "effects": {"opinion_left": -1, "opinion_right": -1, "epic_progress": 0, "skill": "arithmetic", "xp": 10}},
-			{"label": "Accept the opposing party's account", "result_title": "OPPOSING ACCOUNT ACCEPTED", "result_text": "The opposing account is entered. The client may appeal the mark.", "effects": {"opinion_left": -2, "opinion_right": 3, "epic_progress": 2, "skill": "rhetoric", "xp": 12}}
-		]
+		"prompt": String(template.get("prompt", "")),
+		"choices": _build_path_docket_choices(template.get("choices", []), local_mode),
+		"investigation_actions": template.get("investigation_actions", {}).duplicate(true)
 	}
-	if local_mode:
-		for docket_choice in payload.get("choices", []):
-			var choice_effects: Dictionary = docket_choice.get("effects", {})
-			choice_effects["epic_progress"] = 0
-			docket_choice["effects"] = choice_effects
+	if payload.choices.is_empty() or payload.investigation_actions.size() != 4:
+		push_error("AssignmentGenerator: docket '%s' is missing authored dispositions or investigation prompts." % String(template.get("id", "")))
+		return {}
+
 	var geography := get_geographic_vector(StringName(template.get("id", "")))
 	if local_mode:
 		geography = {
@@ -336,6 +342,37 @@ static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_
 	payload.right_card.facts = route_line + "\n" + String(payload.right_card.facts)
 	return payload
 
+
+static func _build_path_docket_choices(definitions: Array, local_mode: bool) -> Array:
+	var choices: Array = []
+	for definition_value in definitions:
+		if not definition_value is Dictionary:
+			push_error("AssignmentGenerator: malformed authored docket disposition.")
+			return []
+		var definition: Dictionary = definition_value
+		var label := String(definition.get("label", "")).strip_edges()
+		var result_title := String(definition.get("result_title", "")).strip_edges()
+		var result_text := String(definition.get("result_text", "")).strip_edges()
+		var effects: Dictionary = definition.get("effects", {}).duplicate(true)
+		if label.is_empty() or result_title.is_empty() or result_text.is_empty() or effects.is_empty():
+			push_error("AssignmentGenerator: incomplete authored disposition '%s'." % label)
+			return []
+		for required_effect in ["opinion_left", "opinion_right", "epic_progress", "skill", "xp"]:
+			if not effects.has(required_effect):
+				push_error("AssignmentGenerator: disposition '%s' is missing effect '%s'." % [label, required_effect])
+				return []
+		if String(effects.get("skill", "")).is_empty() or int(effects.get("xp", 0)) <= 0:
+			push_error("AssignmentGenerator: disposition '%s' has invalid skill experience." % label)
+			return []
+		if local_mode:
+			effects["epic_progress"] = 0
+		choices.append({
+			"label": label,
+			"result_title": result_title,
+			"result_text": result_text,
+			"effects": effects
+		})
+	return choices
 
 static func record_selection(world: WorldState, payload: Dictionary) -> void:
 	if world == null or payload.is_empty():
@@ -387,30 +424,44 @@ static func make_opinion_consequence(person: PersonEntity, delta: int, reason: S
 static func _format_narrative(template: String, context: Dictionary) -> String:
 	var result := template
 	for key in context:
-		result = result.replace("{%s}" % String(key), String(context[key]))
+		result = result.replace("{%s}" % String(key), str(context[key]))
+	var unresolved := RegEx.new()
+	unresolved.compile("\\{[a-zA-Z0-9_]+\\}")
+	if unresolved.search(result) != null:
+		push_error("AssignmentGenerator: unresolved narrative substitution in authored content: %s" % result)
+		return ""
 	return result
 
 static func _build_narrative_choices(definitions: Array, context: Dictionary) -> Array:
 	var choices: Array = []
 	for choice_definition in definitions:
 		if not choice_definition is Dictionary:
-			continue
+			push_error("AssignmentGenerator: malformed procedural disposition.")
+			return []
+		if not choice_definition.has("skill") or not choice_definition.has("xp") or String(choice_definition.get("skill", "")).is_empty() or int(choice_definition.get("xp", 0)) <= 0:
+			push_error("AssignmentGenerator: procedural disposition is missing its skill or experience effect.")
+			return []
 		var resource_text := _format_narrative(String(choice_definition.get("resource", "")), context)
 		var amount := int(choice_definition.get("amount", 0))
 		if choice_definition.has("amount_key"):
 			amount = int(context.get(String(choice_definition.get("amount_key", "")), 0)) * int(choice_definition.get("amount_sign", 1))
 		elif String(choice_definition.get("amount_formula", "")) == "returned_minus_sent":
 			amount = int(context.get("returned", 0)) - int(context.get("sent", 0))
-		var label := _format_narrative(String(choice_definition.get("label", "Record disposition")), context)
+		var label := _format_narrative(String(choice_definition.get("label", "")), context)
+		var result_title := _format_narrative(String(choice_definition.get("result_title", "")), context)
 		var result_text := _format_narrative(String(choice_definition.get("result_text", "")), context)
+		if label.is_empty() or result_title.is_empty() or result_text.is_empty():
+			push_error("AssignmentGenerator: incomplete procedural disposition in authored content.")
+			return []
 		choices.append(_choice(
 			label,
+			result_title,
 			result_text,
 			StringName(resource_text),
 			amount,
 			int(choice_definition.get("left_opinion", 0)),
 			int(choice_definition.get("right_opinion", 0)),
-			String(choice_definition.get("skill", "law")),
+			String(choice_definition.get("skill", "")),
 			int(choice_definition.get("xp", 0)),
 			String(choice_definition.get("trait", "")),
 			int(choice_definition.get("epic_progress", 0)),
@@ -418,5 +469,5 @@ static func _build_narrative_choices(definitions: Array, context: Dictionary) ->
 		))
 	return choices
 
-static func _choice(label: String, result: String, resource: StringName, amount: int, left_opinion: int, right_opinion: int, skill: String, xp: int, trait_name: String, epic_progress: int = 0, repair: bool = false) -> Dictionary:
-	return {"label": label, "result_title": "MARK MADE", "result_text": result, "effects": {"resource": resource, "resource_amount": amount, "opinion_left": left_opinion, "opinion_right": right_opinion, "skill": skill, "xp": xp, "trait": trait_name, "epic_progress": epic_progress, "repair_hazard": repair}}
+static func _choice(label: String, result_title: String, result: String, resource: StringName, amount: int, left_opinion: int, right_opinion: int, skill: String, xp: int, trait_name: String, epic_progress: int = 0, repair: bool = false) -> Dictionary:
+	return {"label": label, "result_title": result_title, "result_text": result, "effects": {"resource": resource, "resource_amount": amount, "opinion_left": left_opinion, "opinion_right": right_opinion, "skill": skill, "xp": xp, "trait": trait_name, "epic_progress": epic_progress, "repair_hazard": repair}}

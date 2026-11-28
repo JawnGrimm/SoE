@@ -1,0 +1,15 @@
+{
+	"grain_conflict": "The dispatch declares prime seed-corn while the independent threshold tally records damp, mold-marked barley. Those entries conflict; neither one proves who altered the record.",
+	"grain_levy": "The levy roll records an assessment made by the office. It does not prove that the listed grain was collected.",
+	"bailiff_requisition": "The requisition records a request for hands. It does not establish how many laborers can leave their current posts.",
+	"pension_roll": "The roll records proposed entitlements. It does not establish that every name remains eligible for payment.",
+	"consignment_receipt": "The receipt records a quantity acknowledged at handover. It does not establish what happened after the goods left the receiving party's custody.",
+	"held_barley": "The notice records a hold and its stated reason. The grain's condition must be established by inspecting the stock.",
+	"travel_pass": "The pass records an authorized journey and its stated terms. It does not establish that the traveler complied with them.",
+	"succession_claim": "The claim records a requested succession. It does not establish which competing seal or witness should govern.",
+	"hazard": "The report records a location and rate of loss. Inspection must establish whether the damage remains active.",
+	"project_review": "The review records certified progress and outstanding obligations. It does not establish that unrecorded work is complete.",
+	"ledger": "The account records entered balances. Inspection determines whether those balances match the stores.",
+	"procedural_docket": "The docket preserves competing claims. Neither party's statement is a finding.",
+	"pressure": "The pressure entry identifies an institutional obligation or shortage. The account and responsible office must establish what is actually preventing the work."
+}

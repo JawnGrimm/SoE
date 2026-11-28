@@ -3,8 +3,8 @@ extends RefCounted
 ## Presentation-safe consequence summaries. Does not mutate WorldState or save data.
 
 const SKILL_LABELS := {
-	&"literacy": "Literacy", &"arithmetic": "Arithmetic", &"law": "Law",
-	&"rhetoric": "Rhetoric", &"intrigue": "Intrigue", &"stewardship": "Stewardship"
+	"literacy": "Literacy", "arithmetic": "Arithmetic", "law": "Law",
+	"rhetoric": "Rhetoric", "intrigue": "Intrigue", "stewardship": "Stewardship"
 }
 
 static func format_ledger(message: String, consequences: Array) -> String:
@@ -16,13 +16,15 @@ static func format_ledger(message: String, consequences: Array) -> String:
 		if not entry_value is Dictionary:
 			continue
 		var entry: Dictionary = entry_value
+		var skill_key := str(entry.get("skill", "skill")).to_lower()
+		var skill_label := str(SKILL_LABELS.get(skill_key, skill_key.capitalize()))
 		match StringName(entry.get("type", "")):
 			&"opinion":
 				lines.append("• %s (%s): %+d Opinion — “%s”" % [String(entry.get("target_name", "Unknown official")), String(entry.get("target_title", "Official")), int(entry.get("delta", 0)), String(entry.get("reason", "Assessment recorded."))])
 			&"xp":
-				lines.append("• %s: +%d XP" % [String(SKILL_LABELS.get(StringName(entry.get("skill", "")), String(entry.get("skill", "Skill")).capitalize())), int(entry.get("delta", 0))])
+				lines.append("• %s: +%d XP" % [skill_label, int(entry.get("delta", 0))])
 			&"level_up":
-				lines.append("★ PROMOTION: %s INCREASED TO LEVEL %d! ★" % [String(SKILL_LABELS.get(StringName(entry.get("skill", "")), String(entry.get("skill", "Skill")).to_upper())), int(entry.get("new_level", 1))])
+				lines.append("★ PROMOTION: %s INCREASED TO LEVEL %d! ★" % [skill_label.to_upper(), int(entry.get("new_level", 1))])
 			&"silver":
 				lines.append("• Purse: %+d Silver" % int(entry.get("delta", 0)))
 			&"debt":
@@ -32,7 +34,10 @@ static func format_ledger(message: String, consequences: Array) -> String:
 			&"trait":
 				lines.append("• Acquired Trait: %s" % String(entry.get("name", "Unknown")))
 			&"flag":
-				lines.append("• World record: %s" % String(entry.get("name", "A new flag")).replace("_", " ").capitalize())
+				var flag_label := str(entry.get("name", "A new flag")).replace("_", " ").to_lower()
+				if not flag_label.is_empty():
+					flag_label = flag_label.left(1).to_upper() + flag_label.substr(1)
+				lines.append("• World record: %s" % flag_label)
 	return "\n".join(lines)
 
 static func remote_courier_text(epic: Dictionary, progress: int, target: int) -> String:

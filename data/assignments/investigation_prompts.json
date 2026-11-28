@@ -1,0 +1,76 @@
+{
+	"grain_conflict": {
+		"examine_records": "Compare the dispatch declaration of prime seed-corn with the threshold tally's damp-grain notation and the date of each entry.",
+		"reconcile_accounts": "Reconcile the tablet's barley quantity against the storehouse's live stock and its separate quality record.",
+		"consult_official": "Ask the grain clerk who certified the seed-corn declaration, what reserve they protected, and who bears the loss if the tally is right.",
+		"inspect_source": "Inspect the barley itself for damp, mold, and spoilage; compare its condition with the declared seed-corn quality."
+	},
+	"forms": {
+		"grain_levy": {
+			"examine_records": "Read the levy roll's named households, assessed quantity, and issuing office before accepting the demand.",
+			"reconcile_accounts": "Compare the levy quantity due with the institution's recorded grain and the amount already collected.",
+			"consult_official": "Ask the levy clerk which households were assessed, what exemptions were recognized, and where the shortfall arose.",
+			"inspect_source": "Inspect the named stores and collection point to compare the recorded grain with what is physically present."
+		},
+		"travel_pass": {
+			"examine_records": "Check the traveler's identity, destination, issuing seal, and stated purpose against the pass register.",
+			"reconcile_accounts": "Compare the requested passage fee and provisions with the institution's current travel allocation.",
+			"consult_official": "Ask the issuing officer who authorized the journey and what restriction or obligation accompanies the pass.",
+			"inspect_source": "Inspect the traveler's goods and departure point for items or conditions that conflict with the pass."
+		},
+		"succession_claim": {
+			"examine_records": "Compare the succession claim's named heirs, dates, seals, and prior entries in the household register.",
+			"reconcile_accounts": "Reconcile the claimed estate against existing land, stock, and obligation entries.",
+			"consult_official": "Ask the responsible clerk which claim was entered first and what witness or seal supports the disputed succession.",
+			"inspect_source": "Inspect the named property and its boundary or store marks for evidence relevant to the claimed inheritance."
+		},
+		"pension_roll": {
+			"examine_records": "Read the pension roll's names, service entries, and recorded entitlement before authorizing a payment.",
+			"reconcile_accounts": "Compare the pension total due with the institution's available silver and prior payments.",
+			"consult_official": "Ask the responsible official who verified the claimants and why the roll requires this payment now.",
+			"inspect_source": "Inspect the named household or office record for evidence that the claimant remains eligible."
+		},
+		"bailiff_requisition": {
+			"examine_records": "Read the requisition's issuing office, destination, requested labor, and period outstanding; distinguish the order from proof of need.",
+			"reconcile_accounts": "Compare the requested labor and provisions with the destination institution's current stores and available manpower.",
+			"consult_official": "Ask the bailiff what work is blocked, which crew is short, and what obligation the province promises in return.",
+			"inspect_source": "Inspect the named work site and stores to establish whether the reported obstruction and shortage are present."
+		},
+		"held_barley": {
+			"examine_records": "Read the hold order and identify who placed the barley under seal, when, and on what stated grounds.",
+			"reconcile_accounts": "Compare the held quantity with the institution's usable barley and the amount excluded from distribution.",
+			"consult_official": "Ask the grain clerk who ordered the hold and what evidence would permit the barley to be released.",
+			"inspect_source": "Inspect the held barley and its storage place for the condition cited in the hold order."
+		},
+		"consignment_receipt": {
+			"examine_records": "Read the consignment receipt's origin, destination, commodity, quantity, and receiving mark.",
+			"reconcile_accounts": "Compare the received quantity with the dispatch total and the institution's current stock entry.",
+			"consult_official": "Ask the receiving official who counted the consignment and whether any shortage or damage was recorded at arrival.",
+			"inspect_source": "Inspect the consignment and receiving place for damage, missing goods, or marks of an unrecorded transfer."
+		}
+	},
+	"hazard": {
+		"examine_records": "Read the hazard entry's location, reported cause, loss rate, and period first recorded.",
+		"reconcile_accounts": "Compare the accumulated loss with the current stock and the institution's repair resources.",
+		"consult_official": "Ask the responsible official when the damage began, what has been attempted, and what repair they request.",
+		"inspect_source": "Inspect the named site and affected stores to verify the reported damage and whether it remains active."
+	},
+	"pressure": {
+		"examine_records": "Read the institution's pressure entry and identify which recorded obligation or shortage raised it.",
+		"reconcile_accounts": "Compare the institution's stock, membership, and activity records to identify the current source of pressure.",
+		"consult_official": "Ask the office holder which obligation cannot be met and which resource or appointment would relieve it.",
+		"inspect_source": "Inspect the institution's stores and working place to compare the reported pressure with present conditions."
+	},
+	"project_review": {
+		"examine_records": "Read the current project stage, certified progress, outstanding obligation, and last review decision.",
+		"reconcile_accounts": "Compare labor, materials, and provisions committed with the project's recorded progress.",
+		"consult_official": "Ask the project officer what is preventing the next stage and which obligation they need the office to settle.",
+		"inspect_source": "Inspect the active work site and compare completed work with the last certified stage."
+	},
+	"ledger": {
+		"examine_records": "Read the institution's current membership, activity, and stock entries; note which records have no supporting source.",
+		"reconcile_accounts": "Reconcile each recorded stockpile with its live institutional balance and outstanding obligations.",
+		"consult_official": "Ask the office holder which entries they can personally attest to and which remain unverified.",
+		"inspect_source": "Inspect the institution's stores and work area to compare physical conditions with the ledger."
+	}
+}

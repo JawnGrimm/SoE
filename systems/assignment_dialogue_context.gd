@@ -5,17 +5,19 @@ extends RefCounted
 ## This object presents evidence already produced by AssignmentPipeline; it does not
 ## resolve actions or mutate WorldState.
 
-var official_name: String = "The responsible official"
-var opening_line: String = "The matter is entered. I will answer for my office."
-var record_response: String = "The written record establishes only what is entered on the tablet."
-var witness_response: String = "No witness statement is attached to the evidence currently entered."
-var requested_result: String = "The official has not stated a separate requested disposition."
-var client_name: String = "Claimant"
-var opposing_name: String = "Opposing party"
-var client_statement: String = "The claimant's statement is not recorded."
-var opposing_statement: String = "The opposing statement is not recorded."
-var client_record: String = "No particulars are attached to the claimant's entry."
-var opposing_record: String = "No particulars are attached to the opposing entry."
+var official_name: String = ""
+var opening_line: String = ""
+var record_response: String = ""
+var witness_response: String = ""
+var requested_result: String = ""
+var client_name: String = ""
+var opposing_name: String = ""
+var client_statement: String = ""
+var opposing_statement: String = ""
+var client_record: String = ""
+var opposing_record: String = ""
+
+static var _dialogue_copy: Dictionary = {}
 
 static func from_record(record: Dictionary, world: WorldState) -> AssignmentDialogueContext:
 	var context := AssignmentDialogueContext.new()
@@ -28,14 +30,14 @@ static func from_record(record: Dictionary, world: WorldState) -> AssignmentDial
 	var npc_evidence: Dictionary = source.get("npc_evidence", {})
 	var evidence: Dictionary = record.get("evidence", {})
 	var official_entry: Dictionary = evidence.get(&"consult_official", {})
-	var official_facts := String(official_entry.get("facts", ""))
-	context.opening_line = _extract_fact(official_facts, "STANCE", context.opening_line)
+	var official_facts := str(official_entry.get("facts", ""))
+	context.opening_line = _extract_fact(official_facts, "STANCE", "")
 
 	var record_entry: Dictionary = evidence.get(&"examine_records", {})
-	var record_facts := String(record_entry.get("facts", ""))
-	var dispatch := String(npc_evidence.get("dispatch_record", ""))
-	var tally := String(npc_evidence.get("threshold_tally", ""))
-	var discrepancy := String(npc_evidence.get("discrepancy", ""))
+	var record_facts := str(record_entry.get("facts", ""))
+	var dispatch := str(npc_evidence.get("dispatch_record", ""))
+	var tally := str(npc_evidence.get("threshold_tally", ""))
+	var discrepancy := str(npc_evidence.get("discrepancy", ""))
 	if not dispatch.is_empty() or not tally.is_empty():
 		var statements := PackedStringArray()
 		if not dispatch.is_empty():
@@ -47,40 +49,96 @@ static func from_record(record: Dictionary, world: WorldState) -> AssignmentDial
 		context.record_response = "\n\n".join(statements)
 	elif not record_facts.is_empty():
 		context.record_response = record_facts
+	elif source.has("form_type"):
+		var form_type := str(source.get("form_type", ""))
+		var form_titles: Dictionary = _get_dialogue_copy("form_titles")
+		var reason_labels: Dictionary = _get_dialogue_copy("generation_reasons")
+		var subject_id := StringName(source.get("subject_id", source.get("place_id", "")))
+		var subject_name := str(world.places.get(subject_id, {}).get("name", str(subject_id).replace("_", " ").capitalize())) if world != null else str(subject_id)
+		var summary_template := str(_get_dialogue_copy("record_entry_summary"))
+		context.record_response = _format_dialogue_copy(summary_template, {
+			"form_title": str(form_titles.get(form_type, "")),
+			"place_name": subject_name,
+			"generated_by": official.display_name if official != null else context.official_name,
+			"generation_reason": str(reason_labels.get(str(source.get("generation_reason", "")), "")),
+			"urgency": str(source.get("urgency", ""))
+		})
 	else:
-		context.record_response = String(record.get("summary", context.record_response))
+		context.record_response = str(record.get("summary", ""))
 
-	var witness := String(npc_evidence.get("witness_statement", npc_evidence.get("witness", "")))
+	var witness := str(npc_evidence.get("witness_statement", npc_evidence.get("witness", "")))
 	if not witness.is_empty():
 		context.witness_response = witness
 	else:
 		for action_id in evidence:
 			var entry: Dictionary = evidence[action_id]
-			var facts := String(entry.get("facts", ""))
+			var facts := str(entry.get("facts", ""))
 			var witness_line := _extract_fact(facts, "WITNESS", "")
 			if not witness_line.is_empty():
 				context.witness_response = witness_line
 				break
+	if context.witness_response.is_empty():
+		context.witness_response = _get_dialogue_copy("no_witness")
 
-	var requested := String(npc_evidence.get("official_demand", npc_evidence.get("requested_outcome", source.get("requested_outcome", ""))))
+	var requested := str(npc_evidence.get("official_demand", npc_evidence.get("requested_outcome", source.get("requested_outcome", ""))))
 	if not requested.is_empty():
 		context.requested_result = requested
+	else:
+		var demands: Dictionary = _get_dialogue_copy("form_demands")
+		context.requested_result = str(demands.get(str(source.get("form_type", "")), _get_dialogue_copy("no_separate_demand")))
 	return context
 
-static func from_procedural_docket(source: Dictionary) -> AssignmentDialogueContext:
+static func from_procedural_docket(source: Dictionary, world: WorldState) -> AssignmentDialogueContext:
 	var context := AssignmentDialogueContext.new()
 	var left: Dictionary = source.get("left_card", {})
 	var right: Dictionary = source.get("right_card", {})
-	context.client_name = String(source.get("client_name", left.get("title", "Claimant")))
-	context.opposing_name = String(source.get("opposing_name", right.get("title", "Opposing party")))
-	context.client_statement = String(left.get("quote", context.client_statement))
-	context.opposing_statement = String(right.get("quote", context.opposing_statement))
-	context.client_record = String(left.get("facts", context.client_record))
-	context.opposing_record = String(right.get("facts", context.opposing_record))
-	context.requested_result = String(source.get("prompt", "Which account will you enter?"))
+	var client: PersonEntity = world.get_person(StringName(left.get("speaker_id", ""))) if world != null else null
+	var opposing: PersonEntity = world.get_person(StringName(right.get("speaker_id", ""))) if world != null else null
+	if client == null or opposing == null:
+		push_error("AssignmentDialogueContext: procedural docket '%s' is missing a named party." % str(source.get("archetype", "")))
+		return context
+	context.client_name = client.display_name
+	context.opposing_name = opposing.display_name
+	context.client_statement = str(left.get("quote", ""))
+	context.opposing_statement = str(right.get("quote", ""))
+	context.client_record = str(left.get("facts", ""))
+	context.opposing_record = str(right.get("facts", ""))
+	context.requested_result = str(source.get("prompt", ""))
 	return context
 
-static func _extract_fact(facts: String, label: String, fallback: String) -> String:
+
+
+static func _format_dialogue_copy(template: String, values: Dictionary) -> String:
+	var result := template
+	for key in values:
+		if str(values[key]).strip_edges().is_empty():
+			push_error("AssignmentDialogueContext: missing value '%s' for authored interview copy." % str(key))
+			return ""
+		result = result.replace("{%s}" % str(key), str(values[key]))
+	var unresolved := RegEx.new()
+	unresolved.compile("\\{[a-zA-Z0-9_]+\\}")
+	if unresolved.search(result) != null or result.strip_edges().is_empty():
+		push_error("AssignmentDialogueContext: unresolved or empty authored interview copy.")
+		return ""
+	return result
+
+static func _get_dialogue_copy(key: String) -> Variant:
+	if _dialogue_copy.is_empty():
+		var file := FileAccess.open("res://data/dialogue/official_stances.json", FileAccess.READ)
+		if file == null:
+			push_error("AssignmentDialogueContext: official interview copy is missing.")
+			return ""
+		var parsed: Variant = JSON.parse_string(file.get_as_text())
+		if not parsed is Dictionary:
+			push_error("AssignmentDialogueContext: official interview copy is invalid.")
+			return ""
+		_dialogue_copy = parsed
+	var value: Variant = _dialogue_copy.get(key, "")
+	if value is String and str(value).is_empty():
+		push_error("AssignmentDialogueContext: missing authored interview response '%s'." % key)
+	return value
+
+static func _extract_fact(facts: String, label: String, fallback: String = "") -> String:
 	for line in facts.split("\n"):
 		var prefix := label + ":"
 		if line.strip_edges().to_upper().begins_with(prefix):

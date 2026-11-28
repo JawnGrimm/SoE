@@ -10,7 +10,51 @@
 				"left_facts": "GRADE AT LANDING: ACCEPTED\nREVISED GRADE: DISPUTED",
 				"right": "The council's builder says the beams will not hold the cut's retaining frame.",
 				"right_facts": "STRUCTURAL USE: RETAINING FRAME\nREJECTION: REQUESTED",
-				"prompt": "Does the grade mark stand, or does the load return?"
+				"prompt": "Does the grade mark stand, or does the load return?",
+				"choices": [
+					{
+						"label": "Certify the landing's accepted grade",
+						"result_title": "DISPOSITION ENTERED",
+						"result_text": "The accepted grade remains in force. The builder's structural objection is attached for later review.",
+						"effects": {
+							"opinion_left": 3,
+							"opinion_right": -2,
+							"epic_progress": 1,
+							"skill": "law",
+							"xp": 12
+						}
+					},
+					{
+						"label": "Hold the beams pending a load test",
+						"result_title": "CORROBORATION REQUIRED",
+						"result_text": "Neither grade is certified. The retaining frame waits for a test that can establish whether the beams will bear its load.",
+						"effects": {
+							"opinion_left": -1,
+							"opinion_right": -1,
+							"epic_progress": 0,
+							"skill": "arithmetic",
+							"xp": 10
+						}
+					},
+					{
+						"label": "Return the timber to the guild",
+						"result_title": "OPPOSING CLAIM ENTERED",
+						"result_text": "The load is refused and returned to the boatmen. The council receives the timber dispute without a certified grade.",
+						"effects": {
+							"opinion_left": -2,
+							"opinion_right": 3,
+							"epic_progress": 2,
+							"skill": "stewardship",
+							"xp": 12
+						}
+					}
+				],
+				"investigation_actions": {
+					"examine_records": "Compare the landing's accepted grade with the later rejection tablet and its seal.",
+					"reconcile_accounts": "Reconcile the accepted timber count with the beams the builder says are usable.",
+					"consult_official": "Ask the guild and council what each inspected and who authorized the grade change.",
+					"inspect_source": "Inspect the beams for splitting, rot, and load-bearing damage before certifying their grade."
+				}
 			},
 			{
 				"id": "boat_demurrage",
@@ -21,7 +65,51 @@
 				"left_facts": "WAIT: 3 PERIODS\nDEMURRAGE: UNSETTLED",
 				"right": "The household claims the boat arrived outside its assigned landing window.",
 				"right_facts": "LANDING WINDOW: DISPUTED\nCREW RECORD: INCOMPLETE",
-				"prompt": "Which account will carry the delay?"
+				"prompt": "Which account will carry the delay?",
+				"choices": [
+					{
+						"label": "Enter three periods of demurrage",
+						"result_title": "DISPOSITION ENTERED",
+						"result_text": "The boat's waiting time is entered as a charge against the quay. The household's disputed landing window remains attached.",
+						"effects": {
+							"opinion_left": 3,
+							"opinion_right": -2,
+							"epic_progress": 1,
+							"skill": "arithmetic",
+							"xp": 12
+						}
+					},
+					{
+						"label": "Suspend the charge until the landing window is checked",
+						"result_title": "CORROBORATION REQUIRED",
+						"result_text": "No demurrage is collected yet. The unloading crew's record and the assigned arrival window must be compared.",
+						"effects": {
+							"opinion_left": -1,
+							"opinion_right": -1,
+							"epic_progress": 0,
+							"skill": "law",
+							"xp": 10
+						}
+					},
+					{
+						"label": "Charge the delay to the boat",
+						"result_title": "OPPOSING CLAIM ENTERED",
+						"result_text": "The boat bears the delay because its arrival is not shown within the assigned window. The guild may contest that entry.",
+						"effects": {
+							"opinion_left": -2,
+							"opinion_right": 3,
+							"epic_progress": 2,
+							"skill": "rhetoric",
+							"xp": 12
+						}
+					}
+				],
+				"investigation_actions": {
+					"examine_records": "Read the boat's arrival mark against the quay's assigned unloading window.",
+					"reconcile_accounts": "Compare the demurrage period claimed with the crew's recorded unloading activity.",
+					"consult_official": "Ask the boatmaster when the boat arrived and the household who controlled the unloading crew.",
+					"inspect_source": "Inspect the landing marks and mooring place for evidence of when the boat could unload."
+				}
 			},
 			{
 				"id": "counterfeit_copper",
@@ -32,7 +120,51 @@
 				"left_facts": "MARK: PRESENT\nWEIGHT: CHALLENGED",
 				"right": "The council asks that the entire batch be held until the source is named.",
 				"right_facts": "BATCH: 12 INGOTS\nSOURCE: UNVERIFIED",
-				"prompt": "Do you certify the mark, impound the batch, or split the risk?"
+				"prompt": "Do you certify the mark, impound the batch, or split the risk?",
+				"choices": [
+					{
+						"label": "Certify yesterday's market mark",
+						"result_title": "DISPOSITION ENTERED",
+						"result_text": "The prior market mark is accepted for this batch. The council's weight objection remains recorded and the ingots may circulate.",
+						"effects": {
+							"opinion_left": 3,
+							"opinion_right": -2,
+							"epic_progress": 1,
+							"skill": "law",
+							"xp": 12
+						}
+					},
+					{
+						"label": "Impound all twelve ingots",
+						"result_title": "CORROBORATION REQUIRED",
+						"result_text": "The batch is held until its source and weight are established. Neither the prior mark nor the counterfeit allegation is treated as settled.",
+						"effects": {
+							"opinion_left": -1,
+							"opinion_right": -1,
+							"epic_progress": 0,
+							"skill": "stewardship",
+							"xp": 10
+						}
+					},
+					{
+						"label": "Accept the council's challenge",
+						"result_title": "OPPOSING CLAIM ENTERED",
+						"result_text": "The batch is entered as disputed and withheld from exchange. The boatmen must establish why yesterday's balance accepted it.",
+						"effects": {
+							"opinion_left": -2,
+							"opinion_right": 3,
+							"epic_progress": 2,
+							"skill": "arithmetic",
+							"xp": 12
+						}
+					}
+				],
+				"investigation_actions": {
+					"examine_records": "Compare yesterday's market balance mark with the council's challenged weight entry.",
+					"reconcile_accounts": "Weigh the twelve ingots against the market standard and record the measured shortfall, if any.",
+					"consult_official": "Ask the boatmen where the copper was acquired and the council who ordered the batch held.",
+					"inspect_source": "Inspect the ingots and their marks for casting differences or signs of substituted metal."
+				}
 			},
 			{
 				"id": "missing_quay_sacks",
@@ -43,7 +175,51 @@
 				"left_facts": "DISPATCHED: 40\nLOADED: 36",
 				"right": "The boatmen insist four sacks were moved to a second craft without a witness tablet.",
 				"right_facts": "SECOND CRAFT: UNWITNESSED\nSHORTAGE: 4 SACKS",
-				"prompt": "Do you charge the landing, amend the tally, or demand a second witness?"
+				"prompt": "Do you charge the landing, amend the tally, or demand a second witness?",
+				"choices": [
+					{
+						"label": "Charge the four sacks to the landing",
+						"result_title": "DISPOSITION ENTERED",
+						"result_text": "The four-sack difference is entered against the landing pending a witnessed explanation from the boatmen.",
+						"effects": {
+							"opinion_left": 3,
+							"opinion_right": -2,
+							"epic_progress": 1,
+							"skill": "arithmetic",
+							"xp": 12
+						}
+					},
+					{
+						"label": "Amend the storehouse tally to thirty-six",
+						"result_title": "CORROBORATION REQUIRED",
+						"result_text": "The quay receipt becomes the accepted quantity. The original dispatch of forty remains attached as an unresolved discrepancy.",
+						"effects": {
+							"opinion_left": -2,
+							"opinion_right": 3,
+							"epic_progress": 0,
+							"skill": "law",
+							"xp": 12
+						}
+					},
+					{
+						"label": "Hold the shortage for a second witness",
+						"result_title": "OPPOSING CLAIM ENTERED",
+						"result_text": "No party is charged yet. A second craft's witness tablet is required before the four sacks can be assigned.",
+						"effects": {
+							"opinion_left": -1,
+							"opinion_right": -1,
+							"epic_progress": 2,
+							"skill": "rhetoric",
+							"xp": 10
+						}
+					}
+				],
+				"investigation_actions": {
+					"examine_records": "Compare the storehouse dispatch of forty sacks with the boat's receipt for thirty-six.",
+					"reconcile_accounts": "Reconcile the four-sack difference against the storehouse stock and landing tally.",
+					"consult_official": "Ask the boatmen about the second craft and the storehouse who witnessed the loading.",
+					"inspect_source": "Inspect the quay and loading place for a second craft's marks or sacks left ashore."
+				}
 			}
 		],
 		"path_martial": [
@@ -56,7 +232,51 @@
 				"left_facts": "RATION ISSUE: HALF\nWATCH: AT RISK",
 				"right": "The storehouse says the guard roll contains names not present at the ditch.",
 				"right_facts": "ROLL: DISPUTED\nMUSTER: NOT ATTACHED",
-				"prompt": "Do you certify the shortage, challenge the roll, or guarantee the watch?"
+				"prompt": "Do you certify the shortage, challenge the roll, or guarantee the watch?",
+				"choices": [
+					{
+						"label": "Certify the guards' ration shortfall",
+						"result_title": "DISPOSITION ENTERED",
+						"result_text": "The half-issue is entered as a shortage owed to the ditch guards. The disputed names remain subject to muster.",
+						"effects": {
+							"opinion_left": 3,
+							"opinion_right": -2,
+							"epic_progress": 1,
+							"skill": "stewardship",
+							"xp": 12
+						}
+					},
+					{
+						"label": "Require a muster before issuing the balance",
+						"result_title": "CORROBORATION REQUIRED",
+						"result_text": "No additional barley is released until the guard roll is matched to those present at the ditch.",
+						"effects": {
+							"opinion_left": -1,
+							"opinion_right": -1,
+							"epic_progress": 0,
+							"skill": "arithmetic",
+							"xp": 10
+						}
+					},
+					{
+						"label": "Accept the storehouse roll and close the claim",
+						"result_title": "OPPOSING CLAIM ENTERED",
+						"result_text": "The names absent from the muster are excluded. The guards' claim for the missing ration is denied on the present record.",
+						"effects": {
+							"opinion_left": -2,
+							"opinion_right": 3,
+							"epic_progress": 2,
+							"skill": "law",
+							"xp": 12
+						}
+					}
+				],
+				"investigation_actions": {
+					"examine_records": "Read the guard ration roll against the issue entry showing only half the barley.",
+					"reconcile_accounts": "Compare the names on the guard roll with the storehouse issue and current muster.",
+					"consult_official": "Ask the captain who was present at the ditch and the storehouse clerk who authorized the reduced issue.",
+					"inspect_source": "Inspect the guard post and muster location for signs of the listed watch being present."
+				}
 			},
 			{
 				"id": "spear_requisition",
@@ -67,7 +287,51 @@
 				"left_facts": "REQUESTED: 20\nDELIVERED: 14",
 				"right": "The council's tablet bears a smaller order, but its seal impression is incomplete.",
 				"right_facts": "ORDER: 14 OR 20\nSEAL: INCOMPLETE",
-				"prompt": "Which requisition becomes the record?"
+				"prompt": "Which requisition becomes the record?",
+				"choices": [
+					{
+						"label": "Certify the captain's twenty-head requisition",
+						"result_title": "DISPOSITION ENTERED",
+						"result_text": "The larger requisition is entered and the workshop's fourteen-head delivery leaves a balance due.",
+						"effects": {
+							"opinion_left": 3,
+							"opinion_right": -2,
+							"epic_progress": 1,
+							"skill": "law",
+							"xp": 12
+						}
+					},
+					{
+						"label": "Recognize fourteen until the seal is verified",
+						"result_title": "CORROBORATION REQUIRED",
+						"result_text": "The smaller count governs provisionally. The incomplete seal impression must be examined before the larger order is recognized.",
+						"effects": {
+							"opinion_left": -1,
+							"opinion_right": -1,
+							"epic_progress": 0,
+							"skill": "arithmetic",
+							"xp": 10
+						}
+					},
+					{
+						"label": "Return the requisition for a fresh seal",
+						"result_title": "OPPOSING CLAIM ENTERED",
+						"result_text": "No count is certified. The captain and council must submit an order whose seal can be compared with the archive copy.",
+						"effects": {
+							"opinion_left": -2,
+							"opinion_right": 3,
+							"epic_progress": 2,
+							"skill": "rhetoric",
+							"xp": 12
+						}
+					}
+				],
+				"investigation_actions": {
+					"examine_records": "Compare the captain's twenty-head order with the council copy bearing the incomplete seal.",
+					"reconcile_accounts": "Reconcile the workshop delivery of fourteen spearheads against both versions of the requisition.",
+					"consult_official": "Ask the captain who approved twenty and the council clerk who made the smaller copy.",
+					"inspect_source": "Inspect the workshop tally and seal impression for evidence of an altered or incomplete order."
+				}
 			},
 			{
 				"id": "watchtower_supply",
@@ -78,7 +342,51 @@
 				"left_facts": "OIL: MISSING\nROPE: MISSING",
 				"right": "The boatman has a receipt for delivery at the lower landing, not the tower.",
 				"right_facts": "LOWER LANDING: RECEIPT\nTOWER: NO ACKNOWLEDGMENT",
-				"prompt": "Do you hold the carrier, reroute the supply, or certify the receipt?"
+				"prompt": "Do you hold the carrier, reroute the supply, or certify the receipt?",
+				"choices": [
+					{
+						"label": "Hold the carrier to the tower's missing receipt",
+						"result_title": "DISPOSITION ENTERED",
+						"result_text": "The supply is not accepted as delivered to the tower. The carrier must account for the gap between the lower landing and the garrison.",
+						"effects": {
+							"opinion_left": 3,
+							"opinion_right": -2,
+							"epic_progress": 1,
+							"skill": "law",
+							"xp": 12
+						}
+					},
+					{
+						"label": "Reroute the supply under a tower acknowledgment",
+						"result_title": "CORROBORATION REQUIRED",
+						"result_text": "A new delivery is required and must be acknowledged at the tower itself. The earlier lower-landing receipt remains valid only for that landing.",
+						"effects": {
+							"opinion_left": -1,
+							"opinion_right": 2,
+							"epic_progress": 0,
+							"skill": "stewardship",
+							"xp": 12
+						}
+					},
+					{
+						"label": "Certify delivery at the lower landing",
+						"result_title": "OPPOSING CLAIM ENTERED",
+						"result_text": "The carrier's receipt is accepted for the lower landing, not the tower. The garrison's missing supplies remain an open matter.",
+						"effects": {
+							"opinion_left": -2,
+							"opinion_right": 3,
+							"epic_progress": 2,
+							"skill": "arithmetic",
+							"xp": 10
+						}
+					}
+				],
+				"investigation_actions": {
+					"examine_records": "Read the carrier's lower-landing receipt beside the tower's missing acknowledgment.",
+					"reconcile_accounts": "Reconcile the carrier's delivered quantity with the tower inventory and lower-landing receipt.",
+					"consult_official": "Ask the captain who received supplies at the tower and the boatman where the load was unloaded.",
+					"inspect_source": "Inspect the lower landing and tower store for the missing oil and rope or signs of onward transfer."
+				}
 			},
 			{
 				"id": "conscription_exemption",
@@ -89,7 +397,51 @@
 				"left_facts": "EXEMPTION: CLAIMED\nMUSTER: ACTIVE",
 				"right": "The council elder says the exemption was witnessed and the tablet misplaced.",
 				"right_facts": "WITNESS: NAMED\nENTRY: MISSING",
-				"prompt": "Does the missing entry cancel the exemption?"
+				"prompt": "Does the missing entry cancel the exemption?",
+				"choices": [
+					{
+						"label": "Recognize the elder's witnessed exemption",
+						"result_title": "DISPOSITION ENTERED",
+						"result_text": "The household is provisionally exempted. The missing tablet entry is recorded as an archive failure requiring correction.",
+						"effects": {
+							"opinion_left": -2,
+							"opinion_right": 3,
+							"epic_progress": 1,
+							"skill": "law",
+							"xp": 12
+						}
+					},
+					{
+						"label": "Keep the muster active until a witness is named",
+						"result_title": "CORROBORATION REQUIRED",
+						"result_text": "The exemption is not recognized yet. The elder must identify a witness whose account can support the missing entry.",
+						"effects": {
+							"opinion_left": 3,
+							"opinion_right": -2,
+							"epic_progress": 0,
+							"skill": "rhetoric",
+							"xp": 10
+						}
+					},
+					{
+						"label": "Suspend the household's muster pending archive search",
+						"result_title": "OPPOSING CLAIM ENTERED",
+						"result_text": "No service is demanded while the tablets are searched, but the exemption itself is not certified.",
+						"effects": {
+							"opinion_left": -1,
+							"opinion_right": -1,
+							"epic_progress": 2,
+							"skill": "arithmetic",
+							"xp": 12
+						}
+					}
+				],
+				"investigation_actions": {
+					"examine_records": "Search the muster tablet for the household's exemption and compare the council's copy.",
+					"reconcile_accounts": "Compare the active muster entry with the household's claimed exemption record.",
+					"consult_official": "Ask the elder who witnessed the exemption and the captain why the household remains on the muster.",
+					"inspect_source": "Inspect the archive and muster place for a displaced exemption tablet or witness mark."
+				}
 			}
 		],
 		"path_civil": [
@@ -102,7 +454,51 @@
 				"left_facts": "STONE POSITION: DISPUTED\nOLDER COPY: PRESENT",
 				"right": "The household's field marks show a narrower strip than the council's levy map.",
 				"right_facts": "FIELD MARKS: PRESENT\nLEVY MAP: WIDER",
-				"prompt": "Which boundary does your seal recognize?"
+				"prompt": "Which boundary does your seal recognize?",
+				"choices": [
+					{
+						"label": "Recognize the older council copy",
+						"result_title": "DISPOSITION ENTERED",
+						"result_text": "The boundary follows the elder's archived copy. The household's flood-shift claim remains attached and may be reopened with older field evidence.",
+						"effects": {
+							"opinion_left": 3,
+							"opinion_right": -2,
+							"epic_progress": 1,
+							"skill": "law",
+							"xp": 12
+						}
+					},
+					{
+						"label": "Hold the boundary until the field marks are surveyed",
+						"result_title": "CORROBORATION REQUIRED",
+						"result_text": "Neither boundary is certified. A survey must compare the standing stone, household marks, and levy map.",
+						"effects": {
+							"opinion_left": -1,
+							"opinion_right": -1,
+							"epic_progress": 0,
+							"skill": "arithmetic",
+							"xp": 10
+						}
+					},
+					{
+						"label": "Accept the household's narrower field line",
+						"result_title": "OPPOSING CLAIM ENTERED",
+						"result_text": "The levy boundary is reduced to the household's field marks. The council's wider map remains on file as a disputed claim.",
+						"effects": {
+							"opinion_left": -2,
+							"opinion_right": 3,
+							"epic_progress": 2,
+							"skill": "rhetoric",
+							"xp": 12
+						}
+					}
+				],
+				"investigation_actions": {
+					"examine_records": "Compare the elder's archived boundary copy with the household's later field marks.",
+					"reconcile_accounts": "Reconcile the levy map's wider strip with the narrower area marked by the household.",
+					"consult_official": "Ask the elder when the copy was made and the household when the stone allegedly moved after the flood.",
+					"inspect_source": "Inspect the standing boundary stone and field marks for evidence of movement or erosion."
+				}
 			},
 			{
 				"id": "canal_water_sharing",
@@ -113,7 +509,51 @@
 				"left_facts": "UPPER: 3 TURNS\nLOWER: 0 RECORDED",
 				"right": "The canal keeper claims the lower gate was blocked with silt and could not be opened.",
 				"right_facts": "GATE: SILTED\nWATER TURN: UNSETTLED",
-				"prompt": "Do you assign a lost turn, a debt, or a new schedule?"
+				"prompt": "Do you assign a lost turn, a debt, or a new schedule?",
+				"choices": [
+					{
+						"label": "Enter one lost turn as a water debt",
+						"result_title": "DISPOSITION ENTERED",
+						"result_text": "The lower households receive a recorded claim for one missed turn. The silted gate remains a separate cause requiring labor.",
+						"effects": {
+							"opinion_left": -2,
+							"opinion_right": 3,
+							"epic_progress": 1,
+							"skill": "law",
+							"xp": 12
+						}
+					},
+					{
+						"label": "Order the gate cleared before assigning a debt",
+						"result_title": "CORROBORATION REQUIRED",
+						"result_text": "No water debt is entered until the canal gate is inspected and the blockage is confirmed.",
+						"effects": {
+							"opinion_left": -1,
+							"opinion_right": -1,
+							"epic_progress": 0,
+							"skill": "stewardship",
+							"xp": 12
+						}
+					},
+					{
+						"label": "Keep the upper allocation and deny the missed turn",
+						"result_title": "OPPOSING CLAIM ENTERED",
+						"result_text": "The existing three-turn allocation stands. The lower households' claim is denied on the current record.",
+						"effects": {
+							"opinion_left": 3,
+							"opinion_right": -2,
+							"epic_progress": 2,
+							"skill": "arithmetic",
+							"xp": 10
+						}
+					}
+				],
+				"investigation_actions": {
+					"examine_records": "Read the upper and lower water-turn entries against the canal schedule.",
+					"reconcile_accounts": "Compare three upper turns and zero lower turns with the water allocation roll.",
+					"consult_official": "Ask the canal keeper when the lower gate became blocked and the households when they last received water.",
+					"inspect_source": "Inspect the lower gate for silt blockage and evidence that water could not pass."
+				}
 			},
 			{
 				"id": "inheritance_tablets",
@@ -124,7 +564,51 @@
 				"left_facts": "CLAIM A: OLDER SEAL\nCLAIM B: LATER MARK",
 				"right": "The household says the later mark records a settlement made before the father's death.",
 				"right_facts": "SETTLEMENT: ORAL\nWITNESS: NOT LISTED",
-				"prompt": "Which claim receives provisional recognition?"
+				"prompt": "Which claim receives provisional recognition?",
+				"choices": [
+					{
+						"label": "Recognize the father's sealed tablet provisionally",
+						"result_title": "DISPOSITION ENTERED",
+						"result_text": "The older seal governs for now. The household's claim of a later oral settlement remains attached but lacks a named witness.",
+						"effects": {
+							"opinion_left": 3,
+							"opinion_right": -2,
+							"epic_progress": 1,
+							"skill": "law",
+							"xp": 12
+						}
+					},
+					{
+						"label": "Hold both allotments for witness testimony",
+						"result_title": "CORROBORATION REQUIRED",
+						"result_text": "Neither claimant receives final recognition. A witness to the alleged settlement must be heard before the field is assigned.",
+						"effects": {
+							"opinion_left": -1,
+							"opinion_right": -1,
+							"epic_progress": 0,
+							"skill": "rhetoric",
+							"xp": 12
+						}
+					},
+					{
+						"label": "Enter the household's later settlement claim",
+						"result_title": "OPPOSING CLAIM ENTERED",
+						"result_text": "The later household mark is accepted provisionally. The older sealed tablet remains in the archive as a competing claim.",
+						"effects": {
+							"opinion_left": -2,
+							"opinion_right": 3,
+							"epic_progress": 2,
+							"skill": "stewardship",
+							"xp": 10
+						}
+					}
+				],
+				"investigation_actions": {
+					"examine_records": "Compare the father's sealed allotment tablet with the household's later mark and date.",
+					"reconcile_accounts": "Reconcile the field allotment named on both tablets and identify the overlapping claim.",
+					"consult_official": "Ask the household who witnessed the oral settlement and the council who verified the older seal.",
+					"inspect_source": "Inspect the seals and tablet impressions for signs that either claim was altered."
+				}
 			},
 			{
 				"id": "market_vendor_fine",
@@ -135,7 +619,51 @@
 				"left_facts": "FINE: 2 SHEKELS\nOBSTRUCTION: CLAIMED",
 				"right": "The landing guild says the vendor's baskets narrowed the unloading lane.",
 				"right_facts": "LANE: OBSTRUCTED\nPRIOR WARNING: DISPUTED",
-				"prompt": "Do you uphold the fine, reduce it, or return the matter for witness? "
+				"prompt": "Do you uphold the fine, reduce it, or return the matter for witness? ",
+				"choices": [
+					{
+						"label": "Uphold the two-shekel fine",
+						"result_title": "DISPOSITION ENTERED",
+						"result_text": "The fine stands because the unloading lane is recorded as obstructed. The vendor's claim about the blocked stall remains attached.",
+						"effects": {
+							"opinion_left": 3,
+							"opinion_right": -2,
+							"epic_progress": 1,
+							"skill": "law",
+							"xp": 12
+						}
+					},
+					{
+						"label": "Reduce the fine pending a lane witness",
+						"result_title": "CORROBORATION REQUIRED",
+						"result_text": "The fine is reduced provisionally. Neither the obstruction nor the prior warning is treated as fully established.",
+						"effects": {
+							"opinion_left": -1,
+							"opinion_right": -1,
+							"epic_progress": 0,
+							"skill": "rhetoric",
+							"xp": 10
+						}
+					},
+					{
+						"label": "Return the appeal for a quay inspection",
+						"result_title": "OPPOSING CLAIM ENTERED",
+						"result_text": "The fine is suspended until the stall position and unloading lane can be inspected together.",
+						"effects": {
+							"opinion_left": -2,
+							"opinion_right": 3,
+							"epic_progress": 2,
+							"skill": "arithmetic",
+							"xp": 12
+						}
+					}
+				],
+				"investigation_actions": {
+					"examine_records": "Read the two-shekel fine beside the quay stall allocation and any prior warning.",
+					"reconcile_accounts": "Compare the vendor's stall position with the unloading lane recorded by the guild.",
+					"consult_official": "Ask the vendor who blocked the proper stall and the boatmen who witnessed the obstruction.",
+					"inspect_source": "Inspect the quay path and stall positions to establish whether baskets narrowed the unloading lane."
+				}
 			}
 		],
 		"path_religious": [
@@ -148,7 +676,51 @@
 				"left_facts": "ROLL: 12\nDELIVERED: 10",
 				"right": "The household says no rejection mark was made at the gate.",
 				"right_facts": "REJECTION MARK: ABSENT\nDELIVERY WITNESS: DISPUTED",
-				"prompt": "Do you certify the rejection, charge the shortage, or require a witness?"
+				"prompt": "Do you certify the rejection, charge the shortage, or require a witness?",
+				"choices": [
+					{
+						"label": "Accept the two rejected sheep as unfit",
+						"result_title": "DISPOSITION ENTERED",
+						"result_text": "The offering roll is reduced by two. The gate's missing rejection mark is recorded as an omission requiring explanation.",
+						"effects": {
+							"opinion_left": -2,
+							"opinion_right": 3,
+							"epic_progress": 1,
+							"skill": "stewardship",
+							"xp": 12
+						}
+					},
+					{
+						"label": "Charge the shepherd for the two missing sheep",
+						"result_title": "CORROBORATION REQUIRED",
+						"result_text": "The full twelve remain due because no rejection was entered at delivery. The shepherd may still produce a witness.",
+						"effects": {
+							"opinion_left": 3,
+							"opinion_right": -2,
+							"epic_progress": 0,
+							"skill": "law",
+							"xp": 12
+						}
+					},
+					{
+						"label": "Hold the offering count for a gate witness",
+						"result_title": "OPPOSING CLAIM ENTERED",
+						"result_text": "No shortage is charged and no rejection is certified until the gate attendant is heard.",
+						"effects": {
+							"opinion_left": -1,
+							"opinion_right": -1,
+							"epic_progress": 2,
+							"skill": "rhetoric",
+							"xp": 10
+						}
+					}
+				],
+				"investigation_actions": {
+					"examine_records": "Compare the twelve-sheep offering roll with the delivery entry for ten and any rejection mark.",
+					"reconcile_accounts": "Reconcile the two missing sheep against the gate tally and the temple offering count.",
+					"consult_official": "Ask the shepherd why two sheep were rejected and the gate attendant whether a rejection was witnessed.",
+					"inspect_source": "Inspect the holding pen and gate marks for evidence of rejected animals or an incomplete delivery."
+				}
 			},
 			{
 				"id": "ritual_beer",
@@ -159,7 +731,51 @@
 				"left_facts": "PROMISED: 8 JARS\nISSUED: 5 JARS",
 				"right": "The carrier claims three jars broke during unloading and were entered as loss.",
 				"right_facts": "BREAKAGE: CLAIMED\nLOSS TABLET: MISSING",
-				"prompt": "Does the loss stand against the carrier or the allocation?"
+				"prompt": "Does the loss stand against the carrier or the allocation?",
+				"choices": [
+					{
+						"label": "Enter three jars as carrier loss",
+						"result_title": "DISPOSITION ENTERED",
+						"result_text": "The brewer's allocation remains due, and the carrier bears the three jars reported broken during unloading.",
+						"effects": {
+							"opinion_left": 3,
+							"opinion_right": -2,
+							"epic_progress": 1,
+							"skill": "arithmetic",
+							"xp": 12
+						}
+					},
+					{
+						"label": "Accept the breakage claim and reduce the allocation",
+						"result_title": "CORROBORATION REQUIRED",
+						"result_text": "The ritual allocation is reduced by three jars. The carrier's account is accepted without a separate breakage witness.",
+						"effects": {
+							"opinion_left": -2,
+							"opinion_right": 3,
+							"epic_progress": 0,
+							"skill": "law",
+							"xp": 10
+						}
+					},
+					{
+						"label": "Hold the shortage until the unloading crew is heard",
+						"result_title": "OPPOSING CLAIM ENTERED",
+						"result_text": "Neither the brewer nor carrier is charged yet. The unloading crew must establish when and where the jars broke.",
+						"effects": {
+							"opinion_left": -1,
+							"opinion_right": -1,
+							"epic_progress": 2,
+							"skill": "rhetoric",
+							"xp": 12
+						}
+					}
+				],
+				"investigation_actions": {
+					"examine_records": "Read the promised beer allocation beside the brewer's received quantity and carrier's loss entry.",
+					"reconcile_accounts": "Compare the three jars claimed broken with the brewer's shortfall and the carrier's receipt.",
+					"consult_official": "Ask the brewer what quantity was received and the carrier where the jars broke during unloading.",
+					"inspect_source": "Inspect the unloading place for broken jar fragments or a recorded loss mark."
+				}
 			},
 			{
 				"id": "storehouse_seal",
@@ -170,7 +786,51 @@
 				"left_facts": "SEAL: INTACT\nIMPRESSION: VARIANT",
 				"right": "The council asks whether the seal was replaced during the last inspection.",
 				"right_facts": "LAST INSPECTION: UNDATED\nREPLACEMENT: UNRECORDED",
-				"prompt": "Do you accept the seal, order a re-impression, or open an inquiry?"
+				"prompt": "Do you accept the seal, order a re-impression, or open an inquiry?",
+				"choices": [
+					{
+						"label": "Accept the intact seal and note the archive mismatch",
+						"result_title": "DISPOSITION ENTERED",
+						"result_text": "The storehouse remains closed under its present seal. The unmatched impression is entered for later comparison.",
+						"effects": {
+							"opinion_left": 3,
+							"opinion_right": -2,
+							"epic_progress": 1,
+							"skill": "law",
+							"xp": 12
+						}
+					},
+					{
+						"label": "Order a new witnessed seal impression",
+						"result_title": "CORROBORATION REQUIRED",
+						"result_text": "The current seal is not accepted as verified. A fresh impression must be made before the storehouse is treated as certified.",
+						"effects": {
+							"opinion_left": -1,
+							"opinion_right": -1,
+							"epic_progress": 0,
+							"skill": "stewardship",
+							"xp": 12
+						}
+					},
+					{
+						"label": "Open an inquiry into the last inspection",
+						"result_title": "OPPOSING CLAIM ENTERED",
+						"result_text": "The seal's status remains unresolved while the prior inspection and its witnesses are examined.",
+						"effects": {
+							"opinion_left": -2,
+							"opinion_right": 3,
+							"epic_progress": 2,
+							"skill": "rhetoric",
+							"xp": 10
+						}
+					}
+				],
+				"investigation_actions": {
+					"examine_records": "Compare the intact seal's impression with the archive's authorized seal copy.",
+					"reconcile_accounts": "Reconcile the current seal impression with the last inspection entry and its recorded witness.",
+					"consult_official": "Ask the storehouse keeper who replaced or inspected the seal and the council who authorized the inspection.",
+					"inspect_source": "Inspect the seal and storehouse closure for tampering or a second impression."
+				}
 			},
 			{
 				"id": "festival_tithes",
@@ -181,7 +841,51 @@
 				"left_facts": "EXPECTED: 9 BASKETS\nENTERED: 8",
 				"right": "The council says a promise is not a recorded exemption.",
 				"right_facts": "EXEMPTION: NONE\nPROMISE: ORAL",
-				"prompt": "Do you honor the promise, recover the tithe, or amend the next roll?"
+				"prompt": "Do you honor the promise, recover the tithe, or amend the next roll?",
+				"choices": [
+					{
+						"label": "Honor the musicians' promised share",
+						"result_title": "DISPOSITION ENTERED",
+						"result_text": "One basket is recognized as an exemption for the musicians. The promise is entered, though the council's missing authorization remains visible.",
+						"effects": {
+							"opinion_left": -2,
+							"opinion_right": 3,
+							"epic_progress": 1,
+							"skill": "rhetoric",
+							"xp": 12
+						}
+					},
+					{
+						"label": "Recover the missing basket for the temple roll",
+						"result_title": "CORROBORATION REQUIRED",
+						"result_text": "The full tithe is required because no exemption was recorded. The musicians' claim is left as a separate petition.",
+						"effects": {
+							"opinion_left": 3,
+							"opinion_right": -2,
+							"epic_progress": 0,
+							"skill": "law",
+							"xp": 12
+						}
+					},
+					{
+						"label": "Amend the next roll after hearing the musicians",
+						"result_title": "OPPOSING CLAIM ENTERED",
+						"result_text": "The current shortage remains open. Any future exemption must be entered before the next festival allocation.",
+						"effects": {
+							"opinion_left": -1,
+							"opinion_right": -1,
+							"epic_progress": 2,
+							"skill": "arithmetic",
+							"xp": 10
+						}
+					}
+				],
+				"investigation_actions": {
+					"examine_records": "Read the festival tithe roll beside the musician's claimed exemption and the steward's entry.",
+					"reconcile_accounts": "Compare the missing basket with the full tithe due and any prior exemption in the roll.",
+					"consult_official": "Ask the steward who promised the musicians' share and the council who authorized exemptions.",
+					"inspect_source": "Inspect the festival store and distribution marks for the missing basket or an unrecorded issue."
+				}
 			}
 		]
 	},
@@ -308,7 +1012,8 @@
 					"skill": "arithmetic",
 					"xp": 12,
 					"trait": "",
-					"epic_progress": 1
+					"epic_progress": 1,
+					"result_title": "SHORTAGE ENTERED"
 				},
 				{
 					"label": "Force acceptance on paper",
@@ -320,7 +1025,8 @@
 					"skill": "law",
 					"xp": 8,
 					"trait": "complicit",
-					"epic_progress": 2
+					"epic_progress": 2,
+					"result_title": "PAPER ACCEPTANCE SEALED"
 				},
 				{
 					"label": "Dock the carrier",
@@ -332,9 +1038,16 @@
 					"skill": "stewardship",
 					"xp": 10,
 					"trait": "severe",
-					"epic_progress": 1
+					"epic_progress": 1,
+					"result_title": "CARRIER DEBITED"
 				}
-			]
+			],
+			"investigation_actions": {
+				"examine_records": "Compare the dispatch docket's prime-seed claim with the threshold tally and its date.",
+				"reconcile_accounts": "Reconcile the dispatched and received measures; identify the quantity left unassigned.",
+				"consult_official": "Ask the dispatcher who sealed the load and the receiver who counted it at arrival.",
+				"inspect_source": "Inspect the storehouse and landing for the missing measures or evidence of a second transfer."
+			}
 		},
 		"damaged_consignment": {
 			"title": "DAMAGED CONSIGNMENT",
@@ -356,7 +1069,8 @@
 					"skill": "stewardship",
 					"xp": 12,
 					"trait": "",
-					"epic_progress": 1
+					"epic_progress": 1,
+					"result_title": "DAMAGED SHARE QUARANTINED"
 				},
 				{
 					"label": "Release all goods",
@@ -370,7 +1084,8 @@
 					"skill": "law",
 					"xp": 6,
 					"trait": "pliable",
-					"epic_progress": 2
+					"epic_progress": 2,
+					"result_title": "LOAD RELEASED"
 				},
 				{
 					"label": "Turn away at gate",
@@ -382,9 +1097,16 @@
 					"skill": "law",
 					"xp": 10,
 					"trait": "severe",
-					"epic_progress": 1
+					"epic_progress": 1,
+					"result_title": "SHIPMENT RETURNED"
 				}
-			]
+			],
+			"investigation_actions": {
+				"examine_records": "Read the storage declaration beside the damage report and the last seal inspection.",
+				"reconcile_accounts": "Compare the recorded stock with the affected share before deciding what can be released.",
+				"consult_official": "Ask the storehouse official when the damage was first seen and who had custody of the bundles.",
+				"inspect_source": "Inspect the affected bundles and storage place for damp, mold, broken seals, or contamination."
+			}
 		},
 		"subtotal_claim": {
 			"title": "ACCOUNT SUBTOTAL / CROSS-HOUSE CLAIM",
@@ -404,7 +1126,8 @@
 					"skill": "arithmetic",
 					"xp": 14,
 					"trait": "",
-					"epic_progress": 1
+					"epic_progress": 1,
+					"result_title": "SUM CORRECTED"
 				},
 				{
 					"label": "Quietly transfer the difference",
@@ -418,7 +1141,8 @@
 					"skill": "stewardship",
 					"xp": 7,
 					"trait": "complicit",
-					"epic_progress": 2
+					"epic_progress": 2,
+					"result_title": "UNRECORDED TRANSFER ENTERED"
 				},
 				{
 					"label": "Impound for adjudication",
@@ -430,9 +1154,16 @@
 					"skill": "law",
 					"xp": 12,
 					"trait": "severe",
-					"epic_progress": 1
+					"epic_progress": 1,
+					"result_title": "ROLLS IMPOUNDED"
 				}
-			]
+			],
+			"investigation_actions": {
+				"examine_records": "Read the three written line items and the submitted total as separate entries.",
+				"reconcile_accounts": "Recalculate the three lines and compare the result with the written total and disputed share.",
+				"consult_official": "Ask the submitting clerk how the total was calculated and the other household why it claims the difference.",
+				"inspect_source": "Inspect the source roll for a transfer or prior entry that could account for the extra amount."
+			}
 		},
 		"goods_unreturned": {
 			"title": "GOODS OUT, UNRETURNED",
@@ -452,7 +1183,8 @@
 					"skill": "law",
 					"xp": 12,
 					"trait": "",
-					"epic_progress": 1
+					"epic_progress": 1,
+					"result_title": "WRITTEN BALANCE RETAINED"
 				},
 				{
 					"label": "Credit the carrier anyway",
@@ -465,7 +1197,8 @@
 					"skill": "stewardship",
 					"xp": 7,
 					"trait": "pliable",
-					"epic_progress": 2
+					"epic_progress": 2,
+					"result_title": "CARRIER CREDITED"
 				},
 				{
 					"label": "Freeze next dispatch",
@@ -477,9 +1210,16 @@
 					"skill": "arithmetic",
 					"xp": 10,
 					"trait": "severe",
-					"epic_progress": 1
+					"epic_progress": 1,
+					"result_title": "NEXT DISPATCH FROZEN"
 				}
-			]
+			],
+			"investigation_actions": {
+				"examine_records": "Compare the dispatch entry with the absence of a written settlement or return receipt.",
+				"reconcile_accounts": "Reconcile the quantity sent with the quantity returned and calculate the open balance.",
+				"consult_official": "Ask the carrier who heard the spoken promise and the storehouse clerk why no written settlement exists.",
+				"inspect_source": "Inspect the return store and landing records for goods received under another commodity or entry."
+			}
 		},
 		"hazard_check_preventive": {
 			"title": "HAZARD / MAINTENANCE CHECK",
@@ -499,7 +1239,8 @@
 					"skill": "stewardship",
 					"xp": 12,
 					"trait": "",
-					"epic_progress": 0
+					"epic_progress": 0,
+					"result_title": "LABOR ALLOCATED"
 				},
 				{
 					"label": "Issue silver",
@@ -511,7 +1252,8 @@
 					"skill": "law",
 					"xp": 10,
 					"trait": "",
-					"epic_progress": 0
+					"epic_progress": 0,
+					"result_title": "REPAIR SILVER ISSUED"
 				},
 				{
 					"label": "Record and defer",
@@ -523,9 +1265,16 @@
 					"skill": "arithmetic",
 					"xp": 5,
 					"trait": "",
-					"epic_progress": 0
+					"epic_progress": 0,
+					"result_title": "MAINTENANCE DEFERRED"
 				}
-			]
+			],
+			"investigation_actions": {
+				"examine_records": "Read the maintenance request and confirm the site and work it names.",
+				"reconcile_accounts": "Compare the proposed labor or silver allocation with current institutional stores.",
+				"consult_official": "Ask the requesting official what failure they expect and the crew what work can be completed.",
+				"inspect_source": "Inspect the named site for wear or damage that would justify preventive work."
+			}
 		},
 		"hazard_check_active": {
 			"title": "HAZARD / MAINTENANCE CHECK",
@@ -546,7 +1295,8 @@
 					"xp": 15,
 					"trait": "",
 					"epic_progress": 0,
-					"repair": true
+					"repair": true,
+					"result_title": "HAZARD REPAIRED"
 				},
 				{
 					"label": "Record loss; defer repair",
@@ -558,9 +1308,16 @@
 					"skill": "arithmetic",
 					"xp": 5,
 					"trait": "",
-					"epic_progress": 1
+					"epic_progress": 1,
+					"result_title": "LOSS RECORDED AND DEFERRED"
 				}
-			]
+			],
+			"investigation_actions": {
+				"examine_records": "Read the hazard report and the recorded rate and duration of loss.",
+				"reconcile_accounts": "Calculate the accumulated loss against the current stock and the repair allocation.",
+				"consult_official": "Ask the responsible official when the loss began and what resources will stop it.",
+				"inspect_source": "Inspect the affected site to verify the active damage before authorizing repair."
+			}
 		}
 	}
 }

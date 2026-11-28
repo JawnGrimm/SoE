@@ -670,10 +670,10 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 			var institution: Dictionary = world.institutions.get(institution_id, {})
 			var stock: Dictionary = institution.get("stockpiles", {})
 			if kind == &"form":
-				summary = "The form is checked against the institution's current recorded position."
+				summary = "%s at %s: %s" % [String(institution.get("name", institution_id)), _place_name(world, StringName(data.get("place_id", data.get("subject_id", "")))), _live_stock_facts(stock, institution)]
 				facts = "DOCUMENT: %s\nURGENCY: %d\n%s" % [_form_title(StringName(data.get("form_type", ""))), int(data.get("urgency", 0)), _live_stock_facts(stock, institution)]
 			else:
-				summary = "The institution's current stock records are reconciled. No discrepancy is presumed without a separate expected balance."
+				summary = "%s: %s" % [String(institution.get("name", institution_id)), _live_stock_facts(stock, institution)]
 				facts = "INSTITUTION: %s\nMEMBERS: %d / ACTIVITY RECORDS: %d\n%s" % [String(institution.get("name", institution_id)), int(data.get("member_count", institution.get("members", []).size())), int(data.get("activity_count", institution.get("activity_count", 0))), _live_stock_facts(stock, institution)]
 			if stock.has(&"barley") or institution.get("stock_records", {}).has("barley_recorded"):
 				facts += "\nTABLET / STOREHOUSE: recorded barley %d; live barley %d; quantity gap %d." % [int(institution.get("stock_records", {}).get("barley_recorded", stock.get(&"barley", 0))), int(stock.get(&"barley", 0)), int(stock.get(&"barley", 0)) - int(institution.get("stock_records", {}).get("barley_recorded", stock.get(&"barley", 0)))]
@@ -683,22 +683,27 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 			facts += "\n" + _stock_detail(stock, skill_level, "ARITHMETIC")
 		&"examine_records":
 			if kind == &"form":
-				summary = "The form's origin and urgency are confirmed against the pending register."
-				facts = "DOCUMENT: %s\nSUBJECT: %s\nURGENCY: %d\nENTERED BY: %s\nOFFICE NOTE: %s" % [_form_title(StringName(data.get("form_type", ""))), _place_name(world, StringName(data.get("subject_id", ""))), int(data.get("urgency", 0)), String(data.get("generated_by", "the office")).replace("_", " ").capitalize(), String(data.get("generation_reason", "routine office request")).replace("_", " ")]
+				summary = "%s for %s; entered by %s at urgency %d." % [_form_title(StringName(data.get("form_type", ""))), _place_name(world, StringName(data.get("subject_id", ""))), employer_name_for_record(world, record), int(data.get("urgency", 0))]
+				facts = "DOCUMENT: %s\nSUBJECT: %s\nURGENCY: %d\nRESPONSIBLE OFFICIAL: %s" % [_form_title(StringName(data.get("form_type", ""))), _place_name(world, StringName(data.get("subject_id", ""))), int(data.get("urgency", 0)), employer_name_for_record(world, record)]
 			else:
-				summary = "The written record is examined. The current account can be compared with the live institution state."
-				facts = "SOURCE: %s\nPERIOD: %d\nSKILL: %s %d" % [String(record.get("source_id", "")), world.current_period_index(), "Literacy", skill_level]
+				facts = "RECORD: %s\nPERIOD: %d" % [String(record.get("title", "")), world.current_period_index()]
+				summary = String(record.get("summary", record.get("title", "")))
 		&"consult_official":
 			var employer := world.get_person(StringName(record.get("employer_id", "")))
-			var opinion := employer.get_opinion(actor.id) if employer != null else 0
-			summary = "The responsible official gives a position and a demand. It is testimony, not proof."
+			if employer == null:
+				push_error("AssignmentPipeline: assignment '%s' has no responsible official to interview." % String(record.get("id", "")))
+				return {}
+			var opinion := employer.get_opinion(actor.id)
 			var stance := _official_stance(world, actor, employer, data, opinion)
-			facts = "OFFICIAL: %s\nOPINION OF SCRIBE: %d\nOFFICE: %s\nSTANCE: “%s”" % [employer.display_name if employer != null else "No named official", opinion, String(employer.office_id) if employer != null else "Unassigned", stance]
+			if stance.is_empty():
+				return {}
+			summary = "%s states: %s" % [employer.display_name, stance]
+			facts = "OFFICIAL: %s\nOPINION OF SCRIBE: %d\nOFFICE: %s\nSTANCE: “%s”" % [employer.display_name, opinion, String(employer.office_id), stance]
 		&"inspect_source":
 			if kind == &"hazard":
 				var hazard: Dictionary = record.get("source_data", {})
 				facts = "SITE: %s\nHAZARD: %s\nLOSS / PERIOD: %d %s\nTOTAL RECORDED LOSS: %d" % [_place_name(world, StringName(hazard.get("place_id", ""))), String(hazard.get("id", "")), int(hazard.get("rate", 0)), String(hazard.get("resource", "")), int(hazard.get("total_lost", 0))]
-				summary = "The active hazard is physically inspected. The recorded loss is checked against the current site condition."
+				summary = "%s at %s: %d %s lost each period; %d recorded in total." % [String(hazard.get("id", "")).replace("_", " "), _place_name(world, StringName(hazard.get("place_id", ""))), int(hazard.get("rate", 0)), String(hazard.get("resource", "")).replace("_", " "), int(hazard.get("total_lost", 0))]
 			else:
 				var institution_id := StringName(record.get("sponsor_institution", record.get("source_data", {}).get("sponsor_institution", data.get("institution_id", _institution_for_location(world, StringName(data.get("place_id", data.get("subject_id", ""))))))))
 				var institution: Dictionary = world.institutions.get(institution_id, {})
@@ -707,7 +712,7 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 				var physical_records: Dictionary = institution.get("stock_records", {})
 				if bool(physical_records.get("concealed_spoilage", false)):
 					facts += "\nPHYSICAL FINDING: damp or mold-marked barley contradicts the prime seed-corn declaration."
-				summary = "The physical site is inspected. These are the current recorded quantities, not a clerk's tablet claim."
+				summary = "%s at %s: %s" % [String(institution.get("name", institution_id)), _place_name(world, StringName(data.get("subject_id", data.get("place_id", "")))), _live_stock_facts(stock, institution)]
 	var evidence_place := StringName(data.get("subject_id", data.get("place_id", "")))
 	for hazard in world.hazards:
 		if bool(hazard.get("active", false)) and StringName(hazard.get("place_id", "")) == evidence_place:
@@ -715,22 +720,30 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 	var npc_evidence: Dictionary = data.get("npc_evidence", {})
 	if not npc_evidence.is_empty():
 		facts += "\nAUTONOMOUS RECORDS"
-		facts += "\nDISPATCH DOCKET: %s" % String(npc_evidence.get("dispatch_record", "No dispatch text recorded."))
-		facts += "\nTHRESHOLD TALLY: %s" % String(npc_evidence.get("threshold_tally", "No threshold text recorded."))
-		facts += "\nDISCREPANCY: %s" % String(npc_evidence.get("discrepancy", "No discrepancy description recorded."))
-		summary += " The pending docket includes conflicting records generated by an autonomous grain-office action."
-	if action_id == &"examine_records" and skill_level >= 2:
-		facts += "\nThe source note records: %s." % String(data.get("generation_reason", "not recorded")).replace("_", " ")
+		if not String(npc_evidence.get("dispatch_record", "")).is_empty():
+			facts += "\nDISPATCH DOCKET: %s" % String(npc_evidence.get("dispatch_record", ""))
+		if not String(npc_evidence.get("threshold_tally", "")).is_empty():
+			facts += "\nTHRESHOLD TALLY: %s" % String(npc_evidence.get("threshold_tally", ""))
+		if not String(npc_evidence.get("discrepancy", "")).is_empty():
+			facts += "\nDISCREPANCY: %s" % String(npc_evidence.get("discrepancy", ""))
+
 	elif action_id == &"consult_official" and skill_level >= 2:
 		var consulted := world.get_person(StringName(record.get("employer_id", "")))
 		if consulted != null:
 			var tie: Dictionary = consulted.relationships.get(actor.id, {})
 			facts += "\nRECORDED TRUST: %d / RELATIONSHIP: %s" % [int(tie.get("trust", 0)), String(tie.get("type", "unknown"))]
-	var action_label: String = String({&"examine_records": "Written record", &"reconcile_accounts": "Account reconciliation", &"consult_official": "Official testimony", &"inspect_source": "Physical inspection"}.get(action_id, "Investigation"))
-	facts += "\n%s finding reflects your skill level %d." % [action_label, skill_level]
+
 	facts = _sanitize_evidence_text(facts)
 	summary = _sanitize_evidence_text(summary)
 	return {"summary": summary, "facts": facts, "skill_level": skill_level}
+
+
+static func employer_name_for_record(world: WorldState, record: Dictionary) -> String:
+	var employer := world.get_person(StringName(record.get("employer_id", ""))) if world != null else null
+	if employer == null:
+		push_error("AssignmentPipeline: assignment '%s' has no responsible official." % String(record.get("id", "")))
+		return ""
+	return employer.display_name
 
 static func _sanitize_evidence_text(value: String) -> String:
 	var kept := PackedStringArray()
@@ -740,7 +753,9 @@ static func _sanitize_evidence_text(value: String) -> String:
 		var clean_line := line
 		var form_pattern := RegEx.new()
 		form_pattern.compile("form_[0-9]+")
-		clean_line = form_pattern.sub(clean_line, "the pending record", true)
+		if form_pattern.search(clean_line) != null:
+			push_error("AssignmentPipeline: internal form identifier reached evidence presentation.")
+			continue
 		var hazard_pattern := RegEx.new()
 		hazard_pattern.compile("hazard_id:\\s*([a-z0-9_]+)")
 		var hazard_match := hazard_pattern.search(clean_line)
@@ -762,17 +777,19 @@ static func _stock_detail(stock: Dictionary, skill_level: int, skill_label: Stri
 	)
 	var first: Dictionary = ranked[0]
 	var resource_name := String(first.id).replace("_", " ").capitalize()
-	var detail := ""
-	if skill_level < 1:
-		detail = "The records identify stored resources, but no reliable ranking is established."
-	elif skill_level == 1:
+	var detail := "Recorded quantities: %s." % _format_stockpile_list(stock)
+	if skill_level >= 1:
 		detail = "Largest recorded reserve: %s / %d." % [resource_name, int(first.amount)]
-	else:
-		detail = "LARGEST RECORDED RESERVE: %s / %d" % [resource_name, int(first.amount)]
 	if skill_level >= 3 and ranked.size() > 1:
 		var second: Dictionary = ranked[1]
-		detail += "\nNEXT RESERVE: %s / %d" % [String(second.id).replace("_", " ").capitalize(), int(second.amount)]
-	return "%s DETAIL / LEVEL %d\n%s" % [skill_label, skill_level, detail]
+		detail += "\nNext reserve: %s / %d." % [String(second.id).replace("_", " ").capitalize(), int(second.amount)]
+	return "%s: %s" % [skill_label.capitalize(), detail]
+
+static func _format_stockpile_list(stock: Dictionary) -> String:
+	var entries := PackedStringArray()
+	for resource_id in stock:
+		entries.append("%s %d" % [String(resource_id).replace("_", " "), int(stock[resource_id])])
+	return ", ".join(entries)
 
 static func _institution_for_location(world: WorldState, location_id: StringName) -> StringName:
 	if location_id == &"":
@@ -822,29 +839,72 @@ static func _live_stock_facts(stock: Dictionary, institution: Dictionary) -> Str
 		lines.append("The stock record notes concealed spoilage; declared quality: %s." % String(records.get("barley_quality_declaration", "unrecorded")).replace("_", " "))
 	return "\n".join(lines)
 
+static var _official_stance_data: Dictionary = {}
+
 static func _official_stance(world: WorldState, _actor: PersonEntity, official: PersonEntity, data: Dictionary, opinion: int) -> String:
 	if official == null:
-		return "No official will answer for this entry. Ask the archive to name the responsible hand."
-	var form_type := StringName(data.get("form_type", ""))
+		push_error("AssignmentPipeline: cannot prepare an interview without a responsible official.")
+		return ""
+	if _official_stance_data.is_empty():
+		var stance_file := FileAccess.open("res://data/dialogue/official_stances.json", FileAccess.READ)
+		if stance_file == null:
+			push_error("AssignmentPipeline: authored official stance data is missing.")
+			return ""
+		var parsed: Variant = JSON.parse_string(stance_file.get_as_text())
+		if not parsed is Dictionary:
+			push_error("AssignmentPipeline: authored official stance data is invalid.")
+			return ""
+		_official_stance_data = parsed
+	var form_type := str(data.get("form_type", ""))
 	var institution_id := StringName(data.get("institution_id", _institution_for_location(world, StringName(data.get("place_id", data.get("subject_id", ""))))))
 	var institution: Dictionary = world.institutions.get(institution_id, {})
 	var records: Dictionary = institution.get("stock_records", {})
 	var npc_evidence: Dictionary = data.get("npc_evidence", {})
+	var stance_id := "office_profile"
 	if not npc_evidence.is_empty() or bool(records.get("concealed_spoilage", false)):
-		if official.office_id == &"grain_clerk":
-			return "The seed-corn entry stands. The roof was poor, not my measure; certify the tablet and let the household keep its reserve."
-		return "This contradiction will reach the archive unless you refer it. I ask you to preserve the office's standing—and name who bears the loss."
-	if form_type in [&"bailiff_requisition", &"pension_roll"]:
-		if official.office_id == &"canal_bailiff":
-			return "The sluice is choked and the crew is short. Authorize labor now; the fields will pay for delay."
-		return "The roll is not a plea for favor. Certify the shortage and write whose stores must be reassigned."
-	if official.office_id == &"archive_keeper":
-		return "Do not make a patron's seal into evidence. Enter the source, and let the record name the responsible office."
-	if opinion >= 5 and (&"pliable" in official.traits or &"complicit" in official.traits):
-		return "We have kept one another's accounts before. A clean seal now will be remembered in your favor."
-	if opinion <= -5 or &"severe" in official.traits or &"exacting" in official.traits:
-		return "Do not ask me to soften a figure. Show the source and state plainly who carries the consequence."
-	return "The office asks for a clear finding: certify what the source supports, or refer what it cannot explain."
+		stance_id = "grain_clerk_conflict" if str(official.office_id) == "grain_clerk" else "other_office_conflict"
+	elif form_type in ["bailiff_requisition", "pension_roll"]:
+		stance_id = "canal_bailiff_requisition" if str(official.office_id) == "canal_bailiff" else "other_office_requisition"
+	elif str(official.office_id) == "archive_keeper":
+		stance_id = "archive_keeper"
+	elif opinion >= 5 and (&"pliable" in official.traits or &"complicit" in official.traits):
+		stance_id = "trusted_complicit"
+	elif opinion <= -5 or &"severe" in official.traits or &"exacting" in official.traits:
+		stance_id = "hostile_exacting"
+	var statement := String(_official_stance_data.get(stance_id, ""))
+	if stance_id == "office_profile":
+		var office_profiles: Dictionary = _official_stance_data.get("office_profiles", {})
+		statement = String(office_profiles.get(str(official.office_id), ""))
+	if statement.is_empty():
+		push_error("AssignmentPipeline: missing official stance data '%s' for office '%s'." % [stance_id, str(official.office_id)])
+		return ""
+	var stock: Dictionary = institution.get("stockpiles", {})
+	var place_id := StringName(data.get("place_id", data.get("subject_id", "")))
+	var form_titles: Dictionary = _official_stance_data.get("form_titles", {})
+	var values := {
+		"official_name": official.display_name,
+		"scribe_name": world.get_player().display_name if world.get_player() != null else "",
+		"office_name": str(official.office_id).replace("_", " ").capitalize(),
+		"institution_name": str(institution.get("name", "")),
+		"place_name": _place_name(world, place_id),
+		"form_title": str(form_titles.get(str(form_type), "")),
+		"labor": str(int(stock.get(&"labor", 0))),
+		"barley": str(int(stock.get(&"barley", 0))),
+		"dispatch_record": str(npc_evidence.get("dispatch_record", "No dispatch docket is attached.")),
+		"threshold_tally": str(npc_evidence.get("threshold_tally", "No independent threshold tally is attached."))
+	}
+	for key in values:
+		var token := "{%s}" % str(key)
+		if statement.contains(token) and str(values[key]).strip_edges().is_empty():
+			push_error("AssignmentPipeline: official stance '%s' requires missing context '%s'." % [stance_id, str(key)])
+			return ""
+		statement = statement.replace(token, str(values[key]))
+	var unresolved := RegEx.new()
+	unresolved.compile("\\{[a-zA-Z0-9_]+\\}")
+	if unresolved.search(statement) != null:
+		push_error("AssignmentPipeline: unresolved substitution in official stance '%s'." % stance_id)
+		return ""
+	return statement
 
 static func _preferred_office(form_type: StringName) -> StringName:
 	match form_type:
