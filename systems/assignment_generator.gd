@@ -146,7 +146,7 @@ static func generate(world: WorldState, actor: PersonEntity, selected_path: Stri
 		"resource_id": good, "amount": amount, "hazard_id": &"",
 		"left_card": {"title": "STOREHOUSE RECORD", "speaker_id": left.id, "quote": "", "facts": ""},
 		"right_card": {"title": "CLAIM / WITNESS", "speaker_id": right.id, "quote": "", "facts": ""},
-		"prompt": "What mark will you leave?", "choices": []
+		"prompt": "", "choices": []
 	}
 	var active_hazard: Dictionary = {}
 	if archetype == &"damaged_consignment":
@@ -218,6 +218,12 @@ static func generate(world: WorldState, actor: PersonEntity, selected_path: Stri
 	payload.prompt = _format_narrative(String(definition.get("prompt", "")), context)
 	payload.choices = _build_narrative_choices(definition.get("choices", []), context)
 	payload["investigation_actions"] = definition.get("investigation_actions", {}).duplicate(true)
+	if payload.title.is_empty() or payload.left_card.quote.is_empty() or payload.left_card.facts.is_empty() or payload.right_card.quote.is_empty() or payload.right_card.facts.is_empty() or payload.prompt.is_empty():
+		push_error("AssignmentGenerator: procedural archetype '%s' is missing required authored narrative." % data_key)
+		return {}
+	if payload.investigation_actions.size() != 4:
+		push_error("AssignmentGenerator: procedural archetype '%s' is missing authored investigation prompts." % data_key)
+		return {}
 
 	return payload
 
@@ -295,7 +301,10 @@ static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_
 			world.recent_archetypes.pop_front()
 	var client_name := "LOCAL CLAIMANT" if local_mode else String((path_data.get("faction_display_names", {}) as Dictionary).get(String(client_faction), String(client_faction).replace("_", " ").capitalize()))
 	var opposing_name := "LOCAL WITNESS" if local_mode else String((path_data.get("faction_display_names", {}) as Dictionary).get(String(opposing_faction), String(opposing_faction).replace("_", " ").capitalize()))
-	var title := String(template.get("title", "LOCAL DOCKET"))
+	var title := String(template.get("title", "")).strip_edges()
+	if title.is_empty() or String(template.get("left", "")).strip_edges().is_empty() or String(template.get("right", "")).strip_edges().is_empty() or String(template.get("prompt", "")).strip_edges().is_empty():
+		push_error("AssignmentGenerator: docket '%s' is missing required authored narrative." % String(template.get("id", "")))
+		return {}
 	var payload := {
 		"title": title, "archetype": archetype_id, "docket_kind": "regional_local" if local_mode else "local_path",
 		"path_id": path_id, "npc_pair": pair, "client_faction": client_faction,
