@@ -352,23 +352,31 @@ static func record_selection(world: WorldState, payload: Dictionary) -> void:
 			world.recent_npc_pairs.pop_front()
 
 static func create_epic_summons() -> Dictionary:
-	return {
-		"title": "EMERGENCY REQUISITION / GREAT CANAL CUT",
-		"archetype": &"epic_summons", "docket_kind": "epic_summons",
-		"npc_pair": "ur_nanna|enlil_kisu",
-		"client_faction": &"eanna_household", "opposing_faction": &"boatmens_guild",
-		"client_name": "High Stewards of Eanna", "opposing_name": "Landing Boatmen & Guilds",
-		"left_card": {"title": "CLIENT / HIGH STEWARDS", "speaker_id": &"ur_nanna", "quote": "The canal cut has bogged down in the silt basin. The ditch crews are refusing to dig without fresh rations.", "facts": "WORK HALTED\nEMERGENCY ALLOCATION REQUESTED"},
-		"right_card": {"title": "OPPOSING PARTY / BOATMEN", "speaker_id": &"enlil_kisu", "quote": "The boatmen will not deliver stone until the ration promise is entered and the timber tally is answered.", "facts": "STONE DELIVERIES WITHHELD\nTIMBER BALANCE DISPUTED"},
-		"prompt": "Your seal has a reputation at the landing. Settle this.",
-		"choices": [
-			{"label": "Release emergency barley / bind the ration promise", "result_title": "RATION REQUISITION SEALED", "result_text": "Fresh rations reach the ditch crews. The boatmen resume stone deliveries under a witnessed promise.", "effects": {"resource": &"barley", "resource_amount": -20, "resource_scope": "institution", "resource_institution": &"eanna_household", "epic_progress": 22, "opinion_left": 3, "opinion_right": 4, "skill": "stewardship", "xp": 20}},
-			{"label": "Audit missing timber before authorizing delivery", "result_title": "TIMBER AUDIT ORDERED", "result_text": "The missing timber is entered as a disputed balance. Stone may move under a provisional tally.", "effects": {"resource": &"", "resource_amount": 0, "epic_progress": 16, "opinion_left": 2, "opinion_right": 2, "skill": "arithmetic", "xp": 18}},
-			{"label": "Guarantee the crews' terms and break the strike", "result_title": "CREW TERMS WITNESSED", "result_text": "The crews return to the cut. The guarantee is costly in reputation, but work resumes.", "effects": {"resource": &"", "resource_amount": 0, "epic_progress": 19, "opinion_left": -2, "opinion_right": 5, "skill": "rhetoric", "xp": 20, "trait": "diplomatic"}}
-		]
-	}
-
-
+	var file := FileAccess.open("res://data/assignments/epic_summons.json", FileAccess.READ)
+	if file == null:
+		push_error("AssignmentGenerator: Epic summons content could not be opened.")
+		return {}
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	if not parsed is Dictionary:
+		push_error("AssignmentGenerator: Epic summons content is invalid JSON.")
+		return {}
+	var payload: Dictionary = parsed
+	for field in ["archetype", "client_faction", "opposing_faction"]:
+		payload[field] = StringName(payload.get(field, ""))
+	for card_key in ["left_card", "right_card"]:
+		var card: Dictionary = payload.get(card_key, {})
+		card["speaker_id"] = StringName(card.get("speaker_id", ""))
+		payload[card_key] = card
+	var choices: Array = payload.get("choices", [])
+	for choice in choices:
+		if not choice is Dictionary:
+			continue
+		var effects: Dictionary = choice.get("effects", {})
+		effects["resource"] = StringName(effects.get("resource", ""))
+		effects["resource_institution"] = StringName(effects.get("resource_institution", ""))
+		choice["effects"] = effects
+	payload["choices"] = choices
+	return payload
 
 static func make_opinion_consequence(person: PersonEntity, delta: int, reason: String) -> Dictionary:
 	if person == null:
