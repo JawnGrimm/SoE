@@ -61,10 +61,14 @@ static func from_record(record: Dictionary, world: WorldState) -> AssignmentDial
 			if not witness_line.is_empty():
 				context.witness_response = witness_line
 				break
+	if context.witness_response.is_empty():
+		context.witness_response = "No witness is named in the docket. I cannot offer a witness account."
 
 	var requested := String(npc_evidence.get("official_demand", npc_evidence.get("requested_outcome", source.get("requested_outcome", ""))))
 	if not requested.is_empty():
 		context.requested_result = requested
+	elif not source.is_empty():
+		context.requested_result = "The docket records no separate demand from this office."
 	return context
 
 static func from_procedural_docket(source: Dictionary, world: WorldState) -> AssignmentDialogueContext:
