@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://dpinds2ddpre5"
+path="res://.godot/imported/assignment_parties.dialogue-8024c9380d2d1e7074e9e1c1c86e1a0d.tres"
+
+[deps]
+
+source_file="res://data/dialogue/assignment_parties.dialogue"
+dest_files=["res://.godot/imported/assignment_parties.dialogue-8024c9380d2d1e7074e9e1c1c86e1a0d.tres"]
+
+[params]
+
+defaults=true
