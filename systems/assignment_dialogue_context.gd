@@ -17,6 +17,8 @@ var opposing_statement: String = ""
 var client_record: String = ""
 var opposing_record: String = ""
 
+static var _dialogue_copy: Dictionary = {}
+
 static func from_record(record: Dictionary, world: WorldState) -> AssignmentDialogueContext:
 	var context := AssignmentDialogueContext.new()
 	var official_id := StringName(record.get("employer_id", ""))
@@ -62,13 +64,13 @@ static func from_record(record: Dictionary, world: WorldState) -> AssignmentDial
 				context.witness_response = witness_line
 				break
 	if context.witness_response.is_empty():
-		context.witness_response = "No witness is named in the docket. I cannot offer a witness account."
+		context.witness_response = _get_dialogue_copy("no_witness")
 
 	var requested := String(npc_evidence.get("official_demand", npc_evidence.get("requested_outcome", source.get("requested_outcome", ""))))
 	if not requested.is_empty():
 		context.requested_result = requested
 	elif not source.is_empty():
-		context.requested_result = "The docket records no separate demand from this office."
+		context.requested_result = _get_dialogue_copy("no_separate_demand")
 	return context
 
 static func from_procedural_docket(source: Dictionary, world: WorldState) -> AssignmentDialogueContext:
@@ -85,6 +87,23 @@ static func from_procedural_docket(source: Dictionary, world: WorldState) -> Ass
 	context.opposing_record = String(right.get("facts", ""))
 	context.requested_result = String(source.get("prompt", ""))
 	return context
+
+
+static func _get_dialogue_copy(key: String) -> String:
+	if _dialogue_copy.is_empty():
+		var file := FileAccess.open("res://data/dialogue/official_stances.json", FileAccess.READ)
+		if file == null:
+			push_error("AssignmentDialogueContext: official interview copy is missing.")
+			return ""
+		var parsed: Variant = JSON.parse_string(file.get_as_text())
+		if not parsed is Dictionary:
+			push_error("AssignmentDialogueContext: official interview copy is invalid.")
+			return ""
+		_dialogue_copy = parsed
+	var value := String(_dialogue_copy.get(key, ""))
+	if value.is_empty():
+		push_error("AssignmentDialogueContext: missing authored interview response '%s'." % key)
+	return value
 
 static func _extract_fact(facts: String, label: String, fallback: String = "") -> String:
 	for line in facts.split("\n"):
