@@ -424,7 +424,7 @@ static func make_opinion_consequence(person: PersonEntity, delta: int, reason: S
 static func _format_narrative(template: String, context: Dictionary) -> String:
 	var result := template
 	for key in context:
-		result = result.replace("{%s}" % String(key), String(context[key]))
+		result = result.replace("{%s}" % String(key), str(context[key]))
 	var unresolved := RegEx.new()
 	unresolved.compile("\\{[a-zA-Z0-9_]+\\}")
 	if unresolved.search(result) != null:
