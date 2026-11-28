@@ -874,9 +874,9 @@ static func _official_stance(world: WorldState, _actor: PersonEntity, official: 
 	var statement := String(_official_stance_data.get(stance_id, ""))
 	if stance_id == "office_profile":
 		var office_profiles: Dictionary = _official_stance_data.get("office_profiles", {})
-		statement = String(office_profiles.get(String(official.office_id), ""))
+		statement = String(office_profiles.get(str(official.office_id), ""))
 	if statement.is_empty():
-		push_error("AssignmentPipeline: missing official stance data '%s' for office '%s'." % [stance_id, String(official.office_id)])
+		push_error("AssignmentPipeline: missing official stance data '%s' for office '%s'." % [stance_id, str(official.office_id)])
 		return ""
 	var stock: Dictionary = institution.get("stockpiles", {})
 	var place_id := StringName(data.get("place_id", data.get("subject_id", "")))
@@ -884,21 +884,21 @@ static func _official_stance(world: WorldState, _actor: PersonEntity, official: 
 	var values := {
 		"official_name": official.display_name,
 		"scribe_name": world.get_player().display_name if world.get_player() != null else "",
-		"office_name": String(official.office_id).replace("_", " ").capitalize(),
-		"institution_name": String(institution.get("name", "")),
+		"office_name": str(official.office_id).replace("_", " ").capitalize(),
+		"institution_name": str(institution.get("name", "")),
 		"place_name": _place_name(world, place_id),
-		"form_title": String(form_titles.get(String(form_type), "")),
+		"form_title": str(form_titles.get(str(form_type), "")),
 		"labor": str(int(stock.get(&"labor", 0))),
 		"barley": str(int(stock.get(&"barley", 0))),
-		"dispatch_record": String(npc_evidence.get("dispatch_record", "No dispatch docket is attached.")),
-		"threshold_tally": String(npc_evidence.get("threshold_tally", "No independent threshold tally is attached."))
+		"dispatch_record": str(npc_evidence.get("dispatch_record", "No dispatch docket is attached.")),
+		"threshold_tally": str(npc_evidence.get("threshold_tally", "No independent threshold tally is attached."))
 	}
 	for key in values:
-		var token := "{%s}" % String(key)
-		if statement.contains(token) and String(values[key]).strip_edges().is_empty():
-			push_error("AssignmentPipeline: official stance '%s' requires missing context '%s'." % [stance_id, String(key)])
+		var token := "{%s}" % str(key)
+		if statement.contains(token) and str(values[key]).strip_edges().is_empty():
+			push_error("AssignmentPipeline: official stance '%s' requires missing context '%s'." % [stance_id, str(key)])
 			return ""
-		statement = statement.replace(token, String(values[key]))
+		statement = statement.replace(token, str(values[key]))
 	var unresolved := RegEx.new()
 	unresolved.compile("\\{[a-zA-Z0-9_]+\\}")
 	if unresolved.search(statement) != null:
