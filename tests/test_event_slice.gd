@@ -28,12 +28,12 @@ func _run() -> void:
 	# must never become player-facing copy.
 	var grain_matter := {"id": "nippur_shrine_establishment", "title": "Nippur Shrine Establishment / Resource Pressure", "summary": "The institution reports a pressure_index of 1."}
 	var narrated_grain := AssignmentNarratorScript.translate_opportunity(grain_matter)
-	_check(String(narrated_grain.get("title", "")) == "THE NIPPUR SHRINE SHORTAGE", "Narrator should translate a Nippur shrine pressure matter into diegetic title")
+	_check(String(narrated_grain.get("title", "")) == String(grain_matter.get("title", "")), "Narrator should preserve the authored source title rather than infer a matter alias")
 	_check(not String(narrated_grain.get("summary", "")).contains("pressure_index"), "Narrated summary must not expose raw pressure metric key")
 	_check(String(grain_matter.get("summary", "")).contains("pressure_index"), "Narrator must leave the source simulation record untouched")
 	var canal_matter := {"id": "great_canal_cut", "title": "Great Canal Cut / Progress Review", "summary": "The active public work stands at 21 of 100."}
 	var narrated_canal := AssignmentNarratorScript.translate_opportunity(canal_matter)
-	_check(String(narrated_canal.get("title", "")) == "THE UPPER EMBANKMENT STALLED", "Narrator should translate canal progress matter into the authored docket voice")
+	_check(String(narrated_canal.get("title", "")) == String(canal_matter.get("title", "")), "Narrator should preserve source-authored project review titles")
 	var raw_payload := {"title": "Nippur Shrine Establishment / Resource Pressure", "prompt": "pressure_index = 1", "left_card": {"title": "RESOURCE PRESSURE", "quote": "pressure_index is 1", "facts": "pressure_index: 1"}, "right_card": {}, "choices": []}
 	var narrated_payload := AssignmentNarratorScript.translate_payload(raw_payload)
 	_check(not String(narrated_payload.get("prompt", "")).contains("pressure_index") and not String(narrated_payload.left_card.get("quote", "")).contains("pressure_index"), "Docket translation must remove raw metric keys from payload copy")
@@ -243,13 +243,13 @@ func _run() -> void:
 	var local_choices: Array = local_docket.get("choices", [])
 	var local_epic_progress := int(local_choices[0].get("effects", {}).get("epic_progress", -1)) if not local_choices.is_empty() else -1
 	_check(local_epic_progress == 0, "Regional local docket must not advance Uruk's Epic")
-	var healthy_canal := {"kind": &"project_review", "source_id": &"great_canal_cut", "source_data": {"stage": "cutting", "progress": 40, "target": 100, "stalled": false, "active_problem": "", "history_notes": []}}
+	var healthy_canal := {"kind": &"project_review", "source_id": &"great_canal_cut", "title": "Great Canal Cut — Cutting", "summary": "The stage review records the current cut.", "source_data": {"stage": "cutting", "progress": 40, "target": 100, "stalled": false, "active_problem": "", "history_notes": []}}
 	var narrated_healthy_canal := AssignmentNarratorScript.translate_opportunity(healthy_canal)
-	_check(String(narrated_healthy_canal.get("title", "")) == "THE CANAL CUT", "Healthy canal milestone should use stage-appropriate narration")
+	_check(String(narrated_healthy_canal.get("title", "")) == "Great Canal Cut — Cutting", "Narrator should preserve the pipeline-authored stage title")
 	var stalled_canal := healthy_canal.duplicate(true)
 	stalled_canal.source_data.stalled = true
 	var narrated_stalled_canal := AssignmentNarratorScript.translate_opportunity(stalled_canal)
-	_check(String(narrated_stalled_canal.get("title", "")) == "THE UPPER EMBANKMENT STALLED", "Stalled canal review should retain the crisis narration")
+	_check(String(narrated_stalled_canal.get("title", "")) == "Great Canal Cut — Cutting", "Narrator should not replace source-authored review titles based on presentation heuristics")
 
 	var review_baseline := {"stage": "survey", "last_reviewed_progress": 40, "last_reviewed_stage": "survey"}
 	_check(not AssignmentPipeline._project_review_due(assignment_world, &"great_canal_cut", review_baseline, 40), "A project review should not recur without material change")
@@ -298,9 +298,16 @@ func _run() -> void:
 	for beat in examination_scene.get("beats", []):
 		if String(beat.get("kind", "")) == "dialogue": has_dialogue = true
 		if String(beat.get("kind", "")) == "internal_monologue": has_thought = true
-	_check(has_dialogue and has_thought, "Record examination should narrate an official's dialogue and the scribe's internal thought")
+	_check(not has_dialogue and has_thought, "Record examination should preserve the scribe's thought without presenting unearned official testimony")
 	_check(String(examination_scene.get("heading", "")) == "A closer reading", "Record examination should return a scene for the tablet presenter")
-	_check(bool(AssignmentPipeline.perform_action(assignment_world, assignment_actor, form_assignment_id, &"consult_official").get("success", false)), "Assignment should allow consultation as a separate investigative action")
+	var consult_result := AssignmentPipeline.perform_action(assignment_world, assignment_actor, form_assignment_id, &"consult_official")
+	_check(bool(consult_result.get("success", false)), "Assignment should allow consultation as a separate investigative action")
+	var consulted_record := AssignmentPipeline.get_record(assignment_world, form_assignment_id)
+	var testimony_scene := AssignmentNarratorScript.narrate_record_examination(consulted_record, assignment_actor, assignment_world, consult_result.get("evidence", {}))
+	var has_testimony := false
+	for beat in testimony_scene.get("beats", []):
+		if String(beat.get("kind", "")) == "dialogue": has_testimony = true
+	_check(has_testimony, "Official testimony should appear only after the player spends an inquiry to consult the official")
 	_check(not bool(AssignmentPipeline.perform_action(assignment_world, assignment_actor, form_assignment_id, &"examine_records").get("success", false)), "An investigative action should not be recordable twice")
 	var form_resolution := AssignmentPipeline.resolve(assignment_world, assignment_actor, form_assignment_id, &"certify")
 	_check(bool(form_resolution.get("success", false)), "Two investigative actions should permit a supported form assessment")
