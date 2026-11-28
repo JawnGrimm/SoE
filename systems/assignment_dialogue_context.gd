@@ -20,7 +20,7 @@ var opposing_record: String = "No particulars are attached to the opposing entry
 static func from_record(record: Dictionary, world: WorldState) -> AssignmentDialogueContext:
 	var context := AssignmentDialogueContext.new()
 	var official_id := StringName(record.get("employer_id", ""))
-	var official := world.get_person(official_id) if world != null else null
+	var official: PersonEntity = world.get_person(official_id) if world != null else null
 	if official != null:
 		context.official_name = official.display_name
 
