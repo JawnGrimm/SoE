@@ -89,10 +89,10 @@ static func narrate_record_examination(record: Dictionary, actor: PersonEntity, 
 			var value := String(npc_evidence.get(field.key, ""))
 			if not value.is_empty():
 				beats.append({"kind": "document", "speaker": field.speaker, "text": value})
-	elif not form_type.is_empty():
-		beats.append({"kind": "document", "speaker": "Pending register", "text": "%s concerns %s. The entry identifies its subject and urgency; it does not establish the disputed facts." % [_form_display(form_type), subject]})
 	elif not record_facts.is_empty():
 		beats.append({"kind": "document", "speaker": "Written record", "text": record_facts})
+	elif not form_type.is_empty():
+		beats.append({"kind": "document", "speaker": "Pending register", "text": "%s concerns %s. The entry identifies its subject and urgency; it does not establish the disputed facts." % [_form_display(form_type), subject]})
 	else:
 		beats.append({"kind": "document", "speaker": "Written record", "text": String(record.get("summary", "The record identifies a matter requiring assessment."))})
 
