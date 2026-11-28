@@ -300,6 +300,12 @@ func _run() -> void:
 		if String(beat.get("kind", "")) == "internal_monologue": has_thought = true
 	_check(has_dialogue and has_thought, "Record examination should narrate an official's dialogue and the scribe's internal thought")
 	_check(String(examination_scene.get("heading", "")) == "A closer reading", "Record examination should return a scene for the tablet presenter")
+	var record_action_copy := AssignmentNarratorScript.investigation_action_copy(examined_record, &"examine_records", "Ur-Nanna")
+	var official_action_copy := AssignmentNarratorScript.investigation_action_copy(examined_record, &"consult_official", "Ur-Nanna")
+	var hazard_action_copy := AssignmentNarratorScript.investigation_action_copy({"kind": &"hazard", "source_data": {"place_name": "North Bay"}}, &"inspect_source")
+	_check(String(record_action_copy.get("explanation", "")).contains("originating form") and String(official_action_copy.get("explanation", "")).contains("Ur-Nanna"), "Investigation choices should explain the evidence target and name the responsible official")
+	_check(String(record_action_copy.get("skill", "")) == "Literacy" and String(official_action_copy.get("skill", "")) == "Rhetoric" and String(hazard_action_copy.get("explanation", "")).contains("damage itself"), "Investigation choice copy should show its relevant skill and contextualize physical inspection")
+	_check(String(AssignmentNarratorScript._official_stance(examined_record)).contains("form came to my office") and String(AssignmentNarratorScript._official_stance({"kind": &"hazard"})).contains("damage is plain"), "Official dialogue should vary with the assignment instead of repeating generic clerk boilerplate")
 	_check(bool(AssignmentPipeline.perform_action(assignment_world, assignment_actor, form_assignment_id, &"consult_official").get("success", false)), "Assignment should allow consultation as a separate investigative action")
 	_check(not bool(AssignmentPipeline.perform_action(assignment_world, assignment_actor, form_assignment_id, &"examine_records").get("success", false)), "An investigative action should not be recordable twice")
 	var form_resolution := AssignmentPipeline.resolve(assignment_world, assignment_actor, form_assignment_id, &"certify")

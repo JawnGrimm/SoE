@@ -95,6 +95,55 @@ static func translate_record(source: Dictionary) -> Dictionary:
 	result["evidence"] = evidence
 	return result
 
+static func investigation_action_copy(record: Dictionary, action_id: StringName, official_name: String = "") -> Dictionary:
+	## Player-facing investigation choice copy. Keeps mechanics in the pipeline and context in the presentation layer.
+	var source: Dictionary = record.get("source_data", {})
+	var kind := StringName(record.get("kind", ""))
+	var subject := _display_subject(source, record)
+	var action_title := ""
+	var explanation := ""
+	match action_id:
+		&"examine_records":
+			action_title = "Read the source tablet"
+			explanation = "Trace the claim to its written origin and see what the record actually says about %s." % subject
+		&"reconcile_accounts":
+			action_title = "Reconcile the figures"
+			explanation = "Compare the quantities entered for %s and establish where the account does not balance." % subject
+		&"consult_official":
+			action_title = "Question the responsible official"
+			var name := official_name if not official_name.is_empty() else "the office-holder"
+			explanation = "Ask %s what they witnessed, what their office can confirm, and what remains their claim." % name
+		&"inspect_source":
+			action_title = "Inspect the goods or site"
+			explanation = "Check %s directly for a physical count, damage, or condition the tablet may omit." % subject
+		_:
+			action_title = "Investigate the matter"
+			explanation = "Seek evidence that can support or challenge the current account."
+	if kind == &"hazard" and action_id == &"inspect_source":
+		explanation = "Inspect %s for the damage itself, then distinguish the visible loss from who must pay for repair." % subject
+	elif kind == &"form" and action_id == &"examine_records":
+		explanation = "Read the originating form for its named subject and urgency; the form explains why it arrived, not whether its claim is true." 
+	return {"title": action_title, "explanation": explanation, "skill": _action_skill_label(action_id)}
+
+static func _display_subject(source: Dictionary, record: Dictionary) -> String:
+	for key in ["subject_name", "place_name", "site_name", "institution_name"]:
+		var value := String(source.get(key, ""))
+		if not value.is_empty():
+			return value
+	for key in ["subject_id", "place_id", "institution_id", "source_id"]:
+		var value := String(source.get(key, record.get(key, "")))
+		if not value.is_empty():
+			return value.replace("_", " ").capitalize()
+	return String(record.get("title", "the matter")).to_lower()
+
+static func _action_skill_label(action_id: StringName) -> String:
+	match action_id:
+		&"examine_records": return "Literacy"
+		&"reconcile_accounts": return "Arithmetic"
+		&"consult_official": return "Rhetoric"
+		&"inspect_source": return "Stewardship"
+	return "Relevant skill"
+
 static func narrate_record_examination(record: Dictionary, actor: PersonEntity, world: WorldState, evidence: Dictionary) -> Dictionary:
 	## A first-person tablet scene for the first investigative action.
 	## This is presentation only; evidence and effects are resolved by AssignmentPipeline.
@@ -120,10 +169,11 @@ static func narrate_record_examination(record: Dictionary, actor: PersonEntity, 
 		beats.append({"kind": "document", "speaker": "The written record", "text": String(evidence.get("facts", "The source tablet carries the matter forward, but leaves its origin uncertain."))})
 		beats.append({"kind": "observation", "speaker": "", "text": "The figures are orderly. That is not the same thing as their being honest."})
 	if official != null:
-		beats.append({"kind": "dialogue", "speaker": official_name, "text": "The entry is in order. I have nothing further to add to what is written."})
-		beats.append({"kind": "observation", "speaker": "", "text": "He calls it an entry, not an account. You notice the distinction because he seems determined not to."})
+		var official_line := _official_stance(record)
+		beats.append({"kind": "dialogue", "speaker": official_name, "text": official_line})
+		beats.append({"kind": "observation", "speaker": "", "text": "The official answers for the office, not necessarily for every hand that touched the record."})
 	else:
-		beats.append({"kind": "observation", "speaker": "", "text": "No name stands beside the entry. The hand that made it has left no witness but the clay."})
+		beats.append({"kind": "observation", "speaker": "", "text": "No responsible name stands beside the entry. The hand that made it has left no witness but the clay."})
 	var thought := "A record can survive its maker. It can also survive the lie that its maker needed."
 	if actor != null and actor.skills != null and actor.skills.get_level(&"literacy") >= 2:
 		thought = "The hand is practiced; the wording is not. Whoever made this entry knew how to write around a question."
@@ -133,6 +183,23 @@ static func narrate_record_examination(record: Dictionary, actor: PersonEntity, 
 		"beats": beats,
 		"closing": "The tablet has yielded a contradiction, not a verdict. The next voice may explain it—or make it worse."
 	}
+
+static func _official_stance(record: Dictionary) -> String:
+	var source: Dictionary = record.get("source_data", {})
+	match StringName(record.get("kind", "")):
+		&"form":
+			var subject := _display_subject(source, record)
+			return "The form came to my office concerning %s. I can answer for its arrival; the claim itself came from elsewhere." % subject
+		&"hazard":
+			return "The damage is plain enough. What is less plain is whose stores should bear the repair, and whose account should carry the loss."
+		&"pressure":
+			return "Our stores are under strain. The tally shows what is short; it does not name who took the last share."
+		&"ledger":
+			return "These names and measures were entered for this period. If you doubt the count, show me which line fails."
+		&"project_review":
+			return "The work has reached its present stage. The figures record progress, but they do not record every promise made to the workers."
+		_:
+			return "I can tell you what reached my desk. I cannot swear that the tablet tells the whole story."
 
 static func _canal_review_template(record: Dictionary) -> Dictionary:
 	var epic: Dictionary = record.get("source_data", {})

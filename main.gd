@@ -1182,6 +1182,8 @@ func _show_world_engagement() -> void:
 	if latest_investigation_scene.is_empty() and evidence.has(&"examine_records"):
 		latest_investigation_scene = AssignmentNarratorScript.narrate_record_examination(record, actor, world, evidence[&"examine_records"])
 	var evidence_lines := PackedStringArray()
+	var employer := world.get_person(StringName(record.get("employer_id", "")))
+	var official_name := employer.display_name if employer != null else "the responsible official"
 	for action in AssignmentPipeline.INVESTIGATION_ACTIONS:
 		var action_id: StringName = action.id
 		if not evidence.has(action_id):
@@ -1189,24 +1191,26 @@ func _show_world_engagement() -> void:
 		var entry: Dictionary = evidence[action_id]
 		var finding := String(entry.get("summary", "Finding recorded."))
 		var facts := String(entry.get("facts", ""))
-		evidence_lines.append("%s\n%s\n%s" % [String(action.label).to_upper(), finding, facts])
+		var action_copy: Dictionary = AssignmentNarratorScript.investigation_action_copy(record, action_id, official_name)
+		evidence_lines.append("%s\n%s\n%s" % [String(action_copy.get("title", action.label)).to_upper(), finding, facts])
 	var left_quote := String(record.get("summary", "A matter requires professional attention."))
-	var employer := world.get_person(StringName(record.get("employer_id", "")))
-	var right_quote := "The record is incomplete. Read it, reconcile the figures, hear the responsible official, and inspect the source before making your assessment."
+	var right_quote := "The record is incomplete. Choose an inquiry to establish what the tablet, figures, official, or physical source can actually prove."
 	if not latest_investigation_scene.is_empty():
 		right_quote = "The seal preserves the entry. It does not preserve the truth."
 	var payload := {
 		"title": String(record.get("title", "ASSIGNMENT")),
 		"left_card": {"title": "WORLD SITUATION / %s" % String(record.get("kind", "work")).to_upper(), "speaker_id": &"", "quote": left_quote, "facts": "OPENED: %s / PERIOD %d" % [CalendarFormatter.format_year(world.year), world.period + 1]},
 		"right_card": {"title": "RESPONSIBLE OFFICE", "speaker_id": employer.id if employer != null else &"", "quote": right_quote, "facts": "%d / %d inquiries spent%s\n\n%s" % [actions.size(), AssignmentPipeline.MAX_INVESTIGATION_ACTIONS, " — enter judgment" if actions.size() >= AssignmentPipeline.MAX_INVESTIGATION_ACTIONS else "", "\n\n".join(evidence_lines)]},
-		"prompt": "Investigate the situation. Your skills affect what you can establish; your judgment determines what is entered.",
+		"prompt": "%d of %d inquiries used. Choose what you need to establish before you file the assessment." % [actions.size(), AssignmentPipeline.MAX_INVESTIGATION_ACTIONS],
 		"choices": []
 	}
 	var callbacks: Array[Callable] = []
 	for action in AssignmentPipeline.INVESTIGATION_ACTIONS:
 		var action_id: StringName = action.id
 		var done := actions.has(action_id)
-		payload.choices.append({"label": String(action.label)})
+		var action_copy: Dictionary = AssignmentNarratorScript.investigation_action_copy(record, action_id, official_name)
+		var choice_label := "%s  /  %s\n%s" % [String(action_copy.get("title", action.label)), String(action_copy.get("skill", "Relevant skill")), String(action_copy.get("explanation", ""))]
+		payload.choices.append({"label": choice_label})
 		callbacks.append(_world_assignment_action.bind(action_id))
 		payload.choices.back()["disabled"] = done or actions.size() >= AssignmentPipeline.MAX_INVESTIGATION_ACTIONS
 	_render_docket_payload(payload, callbacks)
