@@ -108,6 +108,9 @@ static func from_procedural_docket(source: Dictionary, world: WorldState) -> Ass
 static func _format_dialogue_copy(template: String, values: Dictionary) -> String:
 	var result := template
 	for key in values:
+		if String(values[key]).strip_edges().is_empty():
+			push_error("AssignmentDialogueContext: missing value '%s' for authored interview copy." % String(key))
+			return ""
 		result = result.replace("{%s}" % String(key), String(values[key]))
 	var unresolved := RegEx.new()
 	unresolved.compile("\\{[a-zA-Z0-9_]+\\}")
