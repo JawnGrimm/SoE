@@ -19,7 +19,7 @@ static func translate_opportunity(source: Dictionary) -> Dictionary:
 
 static func translate_payload(source: Dictionary) -> Dictionary:
 	var result := source.duplicate(true)
-	result["title"] = _clean_display(String(result.get("title", "")), "Assignment")
+	result["title"] = _clean_display(String(result.get("title", "")), "title")
 	for card_key in ["left_card", "right_card"]:
 		var card: Dictionary = result.get(card_key, {})
 		for field in ["title", "quote", "facts"]:
