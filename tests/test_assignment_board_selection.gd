@@ -24,6 +24,9 @@ func _run() -> void:
 					_check(not String(docket.get("left", "")).strip_edges().is_empty(), "%s must have a client claim" % docket_id)
 					_check(not String(docket.get("right", "")).strip_edges().is_empty(), "%s must have an opposing claim" % docket_id)
 					_check(not String(docket.get("prompt", "")).strip_edges().is_empty(), "%s must state the question for the scribe" % docket_id)
+					var investigation_actions: Dictionary = docket.get("investigation_actions", {})
+					for action_id in ["examine_records", "reconcile_accounts", "consult_official", "inspect_source"]:
+						_check(not String(investigation_actions.get(action_id, "")).strip_edges().is_empty(), "%s is missing investigation prompt %s" % [docket_id, action_id])
 					var dispositions: Array = docket.get("choices", [])
 					_check(dispositions.size() >= 2, "%s must author at least two dispositions" % docket_id)
 					var seen_labels: Dictionary = {}
@@ -39,6 +42,9 @@ func _run() -> void:
 			var procedural: Dictionary = docket_data.get("procedural_archetypes", {})
 			for archetype_id in procedural:
 				var archetype: Dictionary = procedural[archetype_id]
+				var archetype_prompts: Dictionary = archetype.get("investigation_actions", {})
+				for action_id in ["examine_records", "reconcile_accounts", "consult_official", "inspect_source"]:
+					_check(not String(archetype_prompts.get(action_id, "")).strip_edges().is_empty(), "%s is missing investigation prompt %s" % [String(archetype_id), action_id])
 				var archetype_choices: Array = archetype.get("choices", [])
 				_check(archetype_choices.size() >= 2, "%s must author at least two dispositions" % String(archetype_id))
 				for choice_value in archetype_choices:
