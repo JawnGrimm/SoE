@@ -316,8 +316,8 @@ static func _generate_path_docket(world: WorldState, _actor: PersonEntity, path_
 		"choices": _build_path_docket_choices(template.get("choices", []), local_mode),
 		"investigation_actions": template.get("investigation_actions", {}).duplicate(true)
 	}
-	if payload.choices.is_empty():
-		push_error("AssignmentGenerator: docket '%s' has no authored disposition choices." % String(template.get("id", "")))
+	if payload.choices.is_empty() or payload.investigation_actions.size() != 4:
+		push_error("AssignmentGenerator: docket '%s' is missing authored dispositions or investigation prompts." % String(template.get("id", "")))
 		return {}
 
 	var geography := get_geographic_vector(StringName(template.get("id", "")))
@@ -356,6 +356,13 @@ static func _build_path_docket_choices(definitions: Array, local_mode: bool) -> 
 		var effects: Dictionary = definition.get("effects", {}).duplicate(true)
 		if label.is_empty() or result_title.is_empty() or result_text.is_empty() or effects.is_empty():
 			push_error("AssignmentGenerator: incomplete authored disposition '%s'." % label)
+			return []
+		for required_effect in ["opinion_left", "opinion_right", "epic_progress", "skill", "xp"]:
+			if not effects.has(required_effect):
+				push_error("AssignmentGenerator: disposition '%s' is missing effect '%s'." % [label, required_effect])
+				return []
+		if String(effects.get("skill", "")).is_empty() or int(effects.get("xp", 0)) <= 0:
+			push_error("AssignmentGenerator: disposition '%s' has invalid skill experience." % label)
 			return []
 		if local_mode:
 			effects["epic_progress"] = 0
@@ -429,7 +436,11 @@ static func _build_narrative_choices(definitions: Array, context: Dictionary) ->
 	var choices: Array = []
 	for choice_definition in definitions:
 		if not choice_definition is Dictionary:
-			continue
+			push_error("AssignmentGenerator: malformed procedural disposition.")
+			return []
+		if not choice_definition.has("skill") or not choice_definition.has("xp") or String(choice_definition.get("skill", "")).is_empty() or int(choice_definition.get("xp", 0)) <= 0:
+			push_error("AssignmentGenerator: procedural disposition is missing its skill or experience effect.")
+			return []
 		var resource_text := _format_narrative(String(choice_definition.get("resource", "")), context)
 		var amount := int(choice_definition.get("amount", 0))
 		if choice_definition.has("amount_key"):
@@ -450,7 +461,7 @@ static func _build_narrative_choices(definitions: Array, context: Dictionary) ->
 			amount,
 			int(choice_definition.get("left_opinion", 0)),
 			int(choice_definition.get("right_opinion", 0)),
-			String(choice_definition.get("skill", "law")),
+			String(choice_definition.get("skill", "")),
 			int(choice_definition.get("xp", 0)),
 			String(choice_definition.get("trait", "")),
 			int(choice_definition.get("epic_progress", 0)),
