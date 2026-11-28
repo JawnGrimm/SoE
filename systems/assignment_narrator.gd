@@ -13,8 +13,8 @@ const RAW_METRIC_LABELS := [
 
 static func translate_opportunity(source: Dictionary) -> Dictionary:
 	var result := source.duplicate(true)
-	result["title"] = _clean_display(String(result.get("title", "")), "Assignment")
-	result["summary"] = _clean_display(String(result.get("summary", "")), "The office has referred a matter for your attention.")
+	result["title"] = _clean_display(String(result.get("title", "")), "title")
+	result["summary"] = _clean_display(String(result.get("summary", "")), "summary")
 	return result
 
 static func translate_payload(source: Dictionary) -> Dictionary:
@@ -24,25 +24,25 @@ static func translate_payload(source: Dictionary) -> Dictionary:
 		var card: Dictionary = result.get(card_key, {})
 		for field in ["title", "quote", "facts"]:
 			if card.has(field):
-				card[field] = _clean_display(String(card[field]), "The source record contains no legible entry.")
+				card[field] = _clean_display(String(card[field]), "%s.%s" % [card_key, field])
 		result[card_key] = card
-	result["prompt"] = _clean_display(String(result.get("prompt", "")), "What will you enter in the record?")
+	result["prompt"] = _clean_display(String(result.get("prompt", "")), "prompt")
 	var choices: Array = result.get("choices", [])
 	for choice in choices:
 		if choice is Dictionary and choice.has("label"):
-			choice["label"] = _clean_display(String(choice["label"]), "Record a disposition")
+			choice["label"] = _clean_display(String(choice["label"]), "choice.label")
 	result["choices"] = choices
 	return result
 
 static func translate_record(source: Dictionary) -> Dictionary:
 	var result := source.duplicate(true)
 	result["title"] = _clean_display(String(result.get("title", "")), "Assignment")
-	result["summary"] = _clean_display(String(result.get("summary", "")), "The matter requires an assessment.")
+	result["summary"] = _clean_display(String(result.get("summary", "")), "summary")
 	var evidence: Dictionary = result.get("evidence", {})
 	for action_id in evidence:
 		var entry: Dictionary = evidence[action_id]
-		entry["summary"] = _clean_display(String(entry.get("summary", "")), "Finding recorded.")
-		entry["facts"] = _clean_display(String(entry.get("facts", "")), "The source record contains no further legible detail.")
+		entry["summary"] = _clean_display(String(entry.get("summary", "")), "evidence.%s.summary" % String(action_id))
+		entry["facts"] = _clean_display(String(entry.get("facts", "")), "evidence.%s.facts" % String(action_id))
 		evidence[action_id] = entry
 	result["evidence"] = evidence
 	return result
@@ -128,7 +128,7 @@ static func _form_display(form_type: String) -> String:
 		"succession_claim": return "Succession Claim"
 		_: return form_type.replace("_", " ").capitalize()
 
-static func _clean_display(value: String, fallback: String) -> String:
+static func _clean_display(value: String, field_path: String) -> String:
 	var lines := PackedStringArray()
 	for line in value.split("\n"):
 		if line.strip_edges().begins_with("CAPABILITY APPLIED:"):
@@ -144,9 +144,13 @@ static func _clean_display(value: String, fallback: String) -> String:
 	for form_match in form_matches:
 		var form_type := form_match.get_string(1)
 		cleaned = cleaned.replace(form_match.get_string(0), "RECORD TYPE: " + _form_display(form_type))
+	if cleaned.strip_edges().is_empty():
+		push_error("AssignmentNarrator: required player-facing field is empty: %s" % field_path)
+		return ""
 	if _contains_raw_metric(cleaned):
-		return fallback
-	return fallback if cleaned.strip_edges().is_empty() else cleaned
+		push_error("AssignmentNarrator: internal simulation data reached player-facing field: %s" % field_path)
+		return ""
+	return cleaned
 
 static func _contains_raw_metric(value: String) -> bool:
 	var lowered := value.to_lower()
