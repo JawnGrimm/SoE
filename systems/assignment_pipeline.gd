@@ -669,9 +669,6 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 			var institution_id := StringName(data.get("institution_id", _institution_for_location(world, StringName(data.get("place_id", data.get("subject_id", ""))))))
 			var institution: Dictionary = world.institutions.get(institution_id, {})
 			var stock: Dictionary = institution.get("stockpiles", {})
-			var total := 0
-			for amount in stock.values():
-				total += int(amount)
 			if kind == &"form":
 				summary = "The form is checked against the institution's current recorded position."
 				facts = "DOCUMENT: %s\nURGENCY: %d\n%s" % [_form_title(StringName(data.get("form_type", ""))), int(data.get("urgency", 0)), _live_stock_facts(stock, institution)]
@@ -706,9 +703,6 @@ static func _build_evidence(world: WorldState, actor: PersonEntity, record: Dict
 				var institution_id := StringName(record.get("sponsor_institution", record.get("source_data", {}).get("sponsor_institution", data.get("institution_id", _institution_for_location(world, StringName(data.get("place_id", data.get("subject_id", ""))))))))
 				var institution: Dictionary = world.institutions.get(institution_id, {})
 				var stock: Dictionary = institution.get("stockpiles", {})
-				var total := 0
-				for amount in stock.values():
-					total += int(amount)
 				facts = "PHYSICAL SITE: %s\nINSTITUTION: %s\n%s" % [_place_name(world, StringName(data.get("subject_id", data.get("place_id", "")))), String(institution.get("name", institution_id)), _live_stock_facts(stock, institution)]
 				var physical_records: Dictionary = institution.get("stock_records", {})
 				if bool(physical_records.get("concealed_spoilage", false)):
@@ -828,7 +822,7 @@ static func _live_stock_facts(stock: Dictionary, institution: Dictionary) -> Str
 		lines.append("The stock record notes concealed spoilage; declared quality: %s." % String(records.get("barley_quality_declaration", "unrecorded")).replace("_", " "))
 	return "\n".join(lines)
 
-static func _official_stance(world: WorldState, actor: PersonEntity, official: PersonEntity, data: Dictionary, opinion: int) -> String:
+static func _official_stance(world: WorldState, _actor: PersonEntity, official: PersonEntity, data: Dictionary, opinion: int) -> String:
 	if official == null:
 		return "No official will answer for this entry. Ask the archive to name the responsible hand."
 	var form_type := StringName(data.get("form_type", ""))
@@ -976,9 +970,9 @@ static func _project_review_due(world: WorldState, epic_id: StringName, epic: Di
 		if int(active_assignment.get("review_cycle", active_source.get("review_cycle", 0))) == current_cycle and String(active_assignment.get("status", "")) == "active":
 			return false
 	if epic.has("last_reviewed_progress"):
-		var reviewed_progress := int(epic.get("last_reviewed_progress", -1))
-		var reviewed_stage := String(epic.get("last_reviewed_stage", ""))
-		return current_stage != reviewed_stage or progress >= reviewed_progress + 20
+		var last_reviewed_progress := int(epic.get("last_reviewed_progress", -1))
+		var last_reviewed_stage := String(epic.get("last_reviewed_stage", ""))
+		return current_stage != last_reviewed_stage or progress >= last_reviewed_progress + 20
 
 	# Migrate older saves from completed assignment records. Active reviews block
 	# another; completed reviews return after a stage change or twenty progress.
