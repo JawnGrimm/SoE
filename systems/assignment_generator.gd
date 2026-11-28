@@ -420,10 +420,15 @@ static func _build_narrative_choices(definitions: Array, context: Dictionary) ->
 			amount = int(context.get(String(choice_definition.get("amount_key", "")), 0)) * int(choice_definition.get("amount_sign", 1))
 		elif String(choice_definition.get("amount_formula", "")) == "returned_minus_sent":
 			amount = int(context.get("returned", 0)) - int(context.get("sent", 0))
-		var label := _format_narrative(String(choice_definition.get("label", "Record disposition")), context)
+		var label := _format_narrative(String(choice_definition.get("label", "")), context)
+		var result_title := _format_narrative(String(choice_definition.get("result_title", "")), context)
 		var result_text := _format_narrative(String(choice_definition.get("result_text", "")), context)
+		if label.is_empty() or result_title.is_empty() or result_text.is_empty():
+			push_error("AssignmentGenerator: incomplete procedural disposition in authored content.")
+			return []
 		choices.append(_choice(
 			label,
+			result_title,
 			result_text,
 			StringName(resource_text),
 			amount,
@@ -437,5 +442,5 @@ static func _build_narrative_choices(definitions: Array, context: Dictionary) ->
 		))
 	return choices
 
-static func _choice(label: String, result: String, resource: StringName, amount: int, left_opinion: int, right_opinion: int, skill: String, xp: int, trait_name: String, epic_progress: int = 0, repair: bool = false) -> Dictionary:
-	return {"label": label, "result_title": "MARK MADE", "result_text": result, "effects": {"resource": resource, "resource_amount": amount, "opinion_left": left_opinion, "opinion_right": right_opinion, "skill": skill, "xp": xp, "trait": trait_name, "epic_progress": epic_progress, "repair_hazard": repair}}
+static func _choice(label: String, result_title: String, result: String, resource: StringName, amount: int, left_opinion: int, right_opinion: int, skill: String, xp: int, trait_name: String, epic_progress: int = 0, repair: bool = false) -> Dictionary:
+	return {"label": label, "result_title": result_title, "result_text": result, "effects": {"resource": resource, "resource_amount": amount, "opinion_left": left_opinion, "opinion_right": right_opinion, "skill": skill, "xp": xp, "trait": trait_name, "epic_progress": epic_progress, "repair_hazard": repair}}
