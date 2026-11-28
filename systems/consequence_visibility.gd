@@ -34,7 +34,10 @@ static func format_ledger(message: String, consequences: Array) -> String:
 			&"trait":
 				lines.append("• Acquired Trait: %s" % String(entry.get("name", "Unknown")))
 			&"flag":
-				lines.append("• World record: %s" % String(entry.get("name", "A new flag")).replace("_", " ").capitalize())
+				var flag_label := str(entry.get("name", "A new flag")).replace("_", " ").to_lower()
+				if not flag_label.is_empty():
+					flag_label = flag_label.left(1).to_upper() + flag_label.substr(1)
+				lines.append("• World record: %s" % flag_label)
 	return "\n".join(lines)
 
 static func remote_courier_text(epic: Dictionary, progress: int, target: int) -> String:
