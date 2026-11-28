@@ -10,6 +10,32 @@ func _initialize() -> void:
 	call_deferred("_run")
 
 func _run() -> void:
+	var docket_file := FileAccess.open("res://data/assignments/path_dockets.json", FileAccess.READ)
+	_check(docket_file != null, "Career-path docket definitions must be readable")
+	if docket_file != null:
+		var docket_data: Variant = JSON.parse_string(docket_file.get_as_text())
+		_check(docket_data is Dictionary, "Career-path docket definitions must parse as a dictionary")
+		if docket_data is Dictionary:
+			var docket_paths: Dictionary = docket_data.get("dockets", {})
+			for path_id in docket_paths:
+				for docket_value in docket_paths[path_id]:
+					var docket: Dictionary = docket_value
+					var docket_id := String(docket.get("id", ""))
+					_check(not String(docket.get("left", "")).strip_edges().is_empty(), "%s must have a client claim" % docket_id)
+					_check(not String(docket.get("right", "")).strip_edges().is_empty(), "%s must have an opposing claim" % docket_id)
+					_check(not String(docket.get("prompt", "")).strip_edges().is_empty(), "%s must state the question for the scribe" % docket_id)
+					var dispositions: Array = docket.get("choices", [])
+					_check(dispositions.size() >= 2, "%s must author at least two dispositions" % docket_id)
+					var seen_labels: Dictionary = {}
+					for disposition_value in dispositions:
+						var disposition: Dictionary = disposition_value
+						var label := String(disposition.get("label", "")).strip_edges()
+						_check(not label.is_empty(), "%s has a disposition without a label" % docket_id)
+						_check(not String(disposition.get("result_title", "")).strip_edges().is_empty(), "%s / %s has no result title" % [docket_id, label])
+						_check(not String(disposition.get("result_text", "")).strip_edges().is_empty(), "%s / %s has no result explanation" % [docket_id, label])
+						_check(disposition.get("effects", {}) is Dictionary and not disposition.get("effects", {}).is_empty(), "%s / %s has no effects" % [docket_id, label])
+						_check(not seen_labels.has(label.to_lower()), "%s repeats disposition label '%s'" % [docket_id, label])
+						seen_labels[label.to_lower()] = true
 	var candidates: Array[Dictionary] = [
 		{"id": &"review_canal", "kind": &"project_review", "source_id": &"great_canal_cut"},
 		{"id": &"review_temple", "kind": &"project_review"},
