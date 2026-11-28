@@ -48,23 +48,12 @@ static func translate_record(source: Dictionary) -> Dictionary:
 	return result
 
 static func investigation_action_description(record: Dictionary, action_id: StringName) -> String:
-	var kind := StringName(record.get("kind", ""))
-	match action_id:
-		&"examine_records":
-			if kind == &"form":
-				return "Confirm the register's source, subject, urgency, and office note."
-			if kind == &"project_review":
-				return "Read the stage entry and the last certified progress."
-			return "Establish where the account came from and what it claims."
-		&"reconcile_accounts":
-			return "Compare entered quantities with the current institutional account."
-		&"consult_official":
-			return "Hear the responsible official's position. Testimony is not proof."
-		&"inspect_source":
-			if kind == &"hazard":
-				return "Inspect the site and compare recorded loss with current conditions."
-			return "Check the goods, stores, or site against the written claim."
-	return "Spend an inquiry to establish a specific part of the matter."
+	var source: Dictionary = record.get("source_data", {})
+	var prompts: Dictionary = source.get("investigation_actions", {})
+	var description := String(prompts.get(String(action_id), "")).strip_edges()
+	if description.is_empty():
+		push_error("AssignmentNarrator: assignment '%s' is missing investigation prompt '%s'." % [String(record.get("id", "")), String(action_id)])
+	return description
 
 static func narrate_record_examination(record: Dictionary, actor: PersonEntity, world: WorldState, evidence: Dictionary) -> Dictionary:
 	## Builds the first record-reading scene from facts already present on the assignment.
