@@ -407,6 +407,11 @@ static func _format_narrative(template: String, context: Dictionary) -> String:
 	var result := template
 	for key in context:
 		result = result.replace("{%s}" % String(key), String(context[key]))
+	var unresolved := RegEx.new()
+	unresolved.compile("\\{[a-zA-Z0-9_]+\\}")
+	if unresolved.search(result) != null:
+		push_error("AssignmentGenerator: unresolved narrative substitution in authored content: %s" % result)
+		return ""
 	return result
 
 static func _build_narrative_choices(definitions: Array, context: Dictionary) -> Array:
