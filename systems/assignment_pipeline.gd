@@ -830,7 +830,7 @@ static func _live_stock_facts(stock: Dictionary, institution: Dictionary) -> Str
 
 static var _official_stance_data: Dictionary = {}
 
-static func _official_stance(world: WorldState, actor: PersonEntity, official: PersonEntity, data: Dictionary, opinion: int) -> String:
+static func _official_stance(world: WorldState, _actor: PersonEntity, official: PersonEntity, data: Dictionary, opinion: int) -> String:
 	if official == null:
 		push_error("AssignmentPipeline: cannot prepare an interview without a responsible official.")
 		return ""
