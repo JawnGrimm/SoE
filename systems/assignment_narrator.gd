@@ -122,10 +122,10 @@ static func _extract_fact(facts: String, label: String) -> String:
 
 static func _form_display(form_type: String) -> String:
 	match form_type:
-		"pension_roll": return "Pension ledger"
-		"grain_levy": return "Grain levy"
-		"travel_pass": return "Travel pass"
-		"succession_claim": return "Succession claim"
+		"pension_roll": return "Pension Ledger"
+		"grain_levy": return "Grain Levy"
+		"travel_pass": return "Travel Pass"
+		"succession_claim": return "Succession Claim"
 		_: return form_type.replace("_", " ").capitalize()
 
 static func _clean_display(value: String, fallback: String) -> String:
@@ -138,6 +138,12 @@ static func _clean_display(value: String, fallback: String) -> String:
 	var form_pattern := RegEx.new()
 	form_pattern.compile("form_[0-9]+")
 	cleaned = form_pattern.sub(cleaned, "the pending record", true)
+	var form_label_pattern := RegEx.new()
+	form_label_pattern.compile("(?i)FORM:\\s*([a-z_]+)")
+	var form_matches := form_label_pattern.search_all(cleaned)
+	for form_match in form_matches:
+		var form_type := form_match.get_string(1)
+		cleaned = cleaned.replace(form_match.get_string(0), "RECORD TYPE: " + _form_display(form_type))
 	var lowered := cleaned.to_lower()
 	for raw_label in RAW_METRIC_LABELS:
 		if lowered.contains(raw_label):
