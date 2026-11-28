@@ -194,47 +194,94 @@ func _weighted_pick_template(templates: Array[CharacterTemplate], definitions: D
 func seat_institution_staff(world: WorldState, definitions: DefinitionRegistry) -> void:
 	if world == null or definitions == null:
 		return
+	var seated_people: Dictionary = {}
+	for existing_institution in world.institutions.values():
+		for existing_member in existing_institution.get("members", []):
+			var existing_person := world.get_person(StringName(existing_member))
+			if existing_person != null and existing_person.office_id != &"" and not bool(existing_person.flags.get(&"dead", false)):
+				seated_people[existing_person.id] = true
 	var institution_ids: Array[StringName] = []
 	for key in world.institutions.keys():
 		institution_ids.append(StringName(key))
 	institution_ids.sort()
 	for institution_id in institution_ids:
-		var institution: Dictionary = world.institutions.get(institution_id, {})
+		var institution: Dictionary = world.institutions.get(institution_id, {}).duplicate(true)
 		var place_id := StringName(institution.get("place_id", ""))
 		var offices: Array[StringName] = []
 		for office_value in institution.get("staffed_offices", []):
-			offices.append(StringName(office_value))
+			var canonical := _canonical_office_id(StringName(office_value))
+			if canonical != &"" and canonical not in offices:
+				offices.append(canonical)
 		offices.sort()
-		if place_id == &"" or offices.is_empty():
+		institution["staffed_offices"] = offices
+		if place_id == &"":
+			world.institutions[institution_id] = institution
 			continue
-		var members: Array = institution.get("members", []).duplicate()
-		var office_map: Dictionary = institution.get("offices", {}).duplicate(true)
+		var members: Array = []
+		var office_map: Dictionary = {}
+		# Normalize old saved seating and drop orphan/deceased references before
+		# deciding whether a seat is filled.
+		for member_value in institution.get("members", []):
+			var member_id := StringName(member_value)
+			var member := world.get_person(member_id)
+			if member == null or bool(member.flags.get(&"dead", false)):
+				if member != null:
+					member.office_id = &""
+				continue
+			var normalized_office := _canonical_office_id(member.office_id)
+			if normalized_office != &"":
+				member.office_id = normalized_office
+			if member_id not in members:
+				members.append(member_id)
+			if normalized_office != &"" and offices.has(normalized_office) and not office_map.has(normalized_office):
+				office_map[normalized_office] = member_id
+		# Keep only valid office mappings, rebuilding the authoritative map from
+		# actual seated people so no stale pointer survives a dismissal/death.
 		for office_id in offices:
-			var filled := false
-			for member_value in members:
-				var member := world.get_person(StringName(member_value))
-				if member != null and member.office_id == office_id:
-					filled = true
-					break
-			if filled:
+			if office_map.has(office_id):
 				continue
 			var candidates: Array[PersonEntity] = []
-			for person in world.people.values():
-				if person != null and person.location_id == place_id and person.office_id == &"" and person.generation_source == &"tier2":
+			for person_value in world.people.values():
+				var person: PersonEntity = person_value
+				if person != null and not bool(person.flags.get(&"dead", false)) and _is_local_to_institution(world, person, place_id) and not seated_people.has(person.id) and person.generation_source == &"tier2" and (person.office_id == &"" or _canonical_office_id(person.office_id) == office_id):
 					candidates.append(person)
 			candidates.sort_custom(func(a: PersonEntity, b: PersonEntity) -> bool:
-					var a_score := a.skills.get_level(&"stewardship") + a.skills.get_level(&"arithmetic")
-					var b_score := b.skills.get_level(&"stewardship") + b.skills.get_level(&"arithmetic")
-					if a_score == b_score:
-						return String(a.id) < String(b.id)
-					return a_score > b_score
+				var a_exact := _canonical_office_id(a.office_id) == office_id
+				var b_exact := _canonical_office_id(b.office_id) == office_id
+				if a_exact != b_exact:
+					return a_exact
+				var a_score := a.skills.get_level(&"stewardship") + a.skills.get_level(&"arithmetic") + a.skills.get_level(&"literacy") + a.skills.get_level(&"law")
+				var b_score := b.skills.get_level(&"stewardship") + b.skills.get_level(&"arithmetic") + b.skills.get_level(&"literacy") + b.skills.get_level(&"law")
+				if a_score == b_score:
+					return String(a.id) < String(b.id)
+				return a_score > b_score
 			)
 			if candidates.is_empty():
 				continue
 			var selected := candidates[0]
 			selected.office_id = office_id
-			members.append(selected.id)
+			if selected.id not in members:
+				members.append(selected.id)
 			office_map[office_id] = selected.id
+			seated_people[selected.id] = true
 		institution["members"] = members
 		institution["offices"] = office_map
 		world.institutions[institution_id] = institution
+
+static func _is_local_to_institution(world: WorldState, person: PersonEntity, place_id: StringName) -> bool:
+	if person.location_id == place_id:
+		return true
+	return person.location_id == StringName(world.places.get(place_id, {}).get("parent", ""))
+
+static func _canonical_office_id(office_id: StringName) -> StringName:
+	match office_id:
+		&"umma_granary_clerk", &"granary_clerk":
+			return &"granary_clerk"
+		&"grain_clerk":
+			return &"grain_clerk"
+		&"carrier_foreman":
+			return &"carrier_foreman"
+		&"canal_bailiff", &"archive_keeper", &"labor_foreman", &"tax_scribe", &"court_notary":
+			return office_id
+		_:
+			return office_id

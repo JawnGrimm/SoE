@@ -72,15 +72,24 @@ func _run() -> void:
 	reaction_player.id = &"successor_character"
 	var reaction_clerk := PersonEntity.new()
 	reaction_clerk.id = &"ur_nanna"
+	reaction_clerk.office_id = &"grain_clerk"
 	var reaction_foreman := PersonEntity.new()
 	reaction_foreman.id = &"enlil_kisu"
+	reaction_foreman.office_id = &"carrier_foreman"
 	var reaction_senior := PersonEntity.new()
 	reaction_senior.id = &"shuruppak_ilu"
+	reaction_senior.office_id = &"archive_keeper"
 	for reaction_person in [reaction_old_player, reaction_player, reaction_clerk, reaction_foreman, reaction_senior]:
 		reaction_world.people[reaction_person.id] = reaction_person
 	reaction_world.set_player(reaction_old_player)
 	reaction_world.set_player(reaction_player)
 	reaction_world.stockpiles[&"labor"] = 0
+	reaction_world.institutions[&"eanna_household"] = {
+		"place_id": &"eanna_precinct",
+		"members": [reaction_clerk.id, reaction_foreman.id, reaction_senior.id],
+		"stockpiles": {&"labor": 0},
+		"pressure_thresholds": {&"labor_warn": 8}
+	}
 	WorldSimulator.new(registry)._simulate_people(reaction_world)
 	_check(reaction_foreman.get_opinion(reaction_player.id) == -1 and reaction_foreman.get_opinion(reaction_old_player.id) == 0, "WorldSimulator reactions should follow the successor, not the former character")
 	var opinion_before_actor_effect := reaction_senior.get_opinion(reaction_player.id)
@@ -137,9 +146,9 @@ func _run() -> void:
 	var assignment_actor := UrukSeeder.seed_campaign(assignment_world, 44004400)
 	_check(assignment_actor.skills.levels.values().all(func(level: int) -> bool: return level >= 1), "All six core skills should begin at level one")
 	var rng_before_board := assignment_world.rng_narrative.state
-	var opportunities := AssignmentPipeline.generate_opportunities(assignment_world, assignment_actor, &"path_civil")
+	var opportunities := AssignmentPipelineScript.generate_opportunities(assignment_world, assignment_actor, &"path_civil")
 	var first_preview := opportunities.duplicate(true)
-	var second_preview := AssignmentPipeline.generate_opportunities(assignment_world, assignment_actor, &"path_civil")
+	var second_preview := AssignmentPipelineScript.generate_opportunities(assignment_world, assignment_actor, &"path_civil")
 	_check(opportunities.size() == 4, "AssignmentPipeline should present three world opportunities and one career-path docket")
 	_check(assignment_world.rng_narrative.state == rng_before_board, "Building the opportunity board must not advance narrative RNG")
 	_check(assignment_world.recent_archetypes.is_empty() and assignment_world.recent_npc_pairs.is_empty(), "Board previews must not commit docket rotation history")
@@ -161,7 +170,7 @@ func _run() -> void:
 	_check(routine_ledger_priority <= 3, "Routine institutional ledgers must not exceed priority three")
 	var coverup_form := {"id": &"ur_nanna_grain_docket_-38398", "form_type": &"grain_levy", "subject_id": &"south_court_storehouse", "urgency": 3, "status": "pending", "npc_evidence": {"dispatch_record": "Seed corn declared.", "threshold_tally": "Mold recorded.", "discrepancy": "Records contradict."}}
 	assignment_world.pending_forms.append(coverup_form)
-	var coverup_board := AssignmentPipeline.generate_opportunities(assignment_world, assignment_actor, &"")
+	var coverup_board := AssignmentPipelineScript.generate_opportunities(assignment_world, assignment_actor, &"")
 	var coverup_present := false
 	var coverup_priority := 0
 	for opportunity in coverup_board:
@@ -189,7 +198,7 @@ func _run() -> void:
 		var abandoned_record: Dictionary = assignment_world.assignments[abandoned_id]
 		abandoned_record["status"] = "abandoned"
 		assignment_world.assignments[abandoned_id] = abandoned_record
-		var after_abandon := AssignmentPipeline.generate_opportunities(assignment_world, assignment_actor, &"path_civil")
+		var after_abandon := AssignmentPipelineScript.generate_opportunities(assignment_world, assignment_actor, &"path_civil")
 		var abandoned_reappeared := false
 		for candidate in after_abandon:
 			if StringName(candidate.get("id", "")) == abandoned_id:
@@ -197,19 +206,24 @@ func _run() -> void:
 		_check(not abandoned_reappeared, "An abandoned same-period opportunity must not reappear and become unopenable")
 		assignment_world.assignments.erase(abandoned_id)
 
-	# Sponsor institution resolves to its place: a Uruk Epic review is not local in Nippur.
+	# A pending Uruk Epic review is visible as a remote obligation in Nippur,
+	# but its travel gate must prevent opening a verdict from the provincial desk.
 	var regional_board_world := WorldState.new()
 	regional_board_world.current_location_id = &"nippur"
 	regional_board_world.places[&"uruk"] = {"name": "Uruk", "parent": &""}
 	regional_board_world.places[&"nippur"] = {"name": "Nippur", "parent": &""}
 	regional_board_world.institutions[&"eanna_household"] = {"place_id": &"uruk", "name": "Eanna"}
 	regional_board_world.epics[&"great_canal_cut"] = {"active": true, "completed": false, "progress": 10, "progress_resource": &"canal_progress", "target": 100, "sponsor_institution": &"eanna_household", "stage": "survey", "review_cycle": 0}
-	var regional_board := AssignmentPipeline.generate_opportunities(regional_board_world, assignment_actor, &"path_civil")
-	var remote_review_found := false
+	var regional_board := AssignmentPipelineScript.generate_opportunities(regional_board_world, assignment_actor, &"path_civil")
+	var remote_review: Dictionary = {}
 	for candidate in regional_board:
-		if StringName(candidate.get("kind", "")) == &"project_review":
-			remote_review_found = true
-	_check(not remote_review_found, "Uruk Epic review must be hidden while the player is in Nippur")
+		if StringName(candidate.get("kind", "")) == &"project_review" and StringName(candidate.get("source_id", "")) == &"great_canal_cut":
+			remote_review = candidate
+	_check(not remote_review.is_empty(), "Pending Uruk Epic review should remain visible as a remote obligation in Nippur")
+	if not remote_review.is_empty():
+		_check(bool(remote_review.get("requires_travel", false)) and StringName(remote_review.get("place_id", "")) == &"uruk", "Remote Great Canal review must identify Uruk as its travel destination")
+		_check(String(remote_review.get("summary", "")).contains("[REQUIRES TRAVEL TO URUK]"), "Remote Great Canal review must explain its travel gate on the board")
+		_check(not AssignmentPipelineScript.begin(regional_board_world, remote_review, assignment_actor), "Remote Great Canal review must not begin while the player is in Nippur")
 
 	# A non-Uruk career docket uses residents at the current settlement as its speakers.
 	var local_docket_world := WorldState.new()
@@ -245,7 +259,7 @@ func _run() -> void:
 	review_cycle_world.epics[&"test_epic"] = {"active": true, "progress_resource": &"test_progress", "progress": 75, "stage": "survey", "last_reviewed_progress": 75, "last_reviewed_stage": "survey"}
 	review_cycle_world.reset_epic_for_new_shift(&"test_epic")
 	_check(int(review_cycle_world.epics[&"test_epic"].get("review_cycle", 0)) == 1 and not review_cycle_world.epics[&"test_epic"].has("last_reviewed_progress") and AssignmentPipeline._project_review_due(review_cycle_world, &"test_epic", review_cycle_world.epics[&"test_epic"], 0), "A new project shift should reset the review cooldown and make its first review eligible")
-	var martial_opportunities := AssignmentPipeline.generate_opportunities(assignment_world, assignment_actor, &"path_martial")
+	var martial_opportunities := AssignmentPipelineScript.generate_opportunities(assignment_world, assignment_actor, &"path_martial")
 	var martial_docket: Dictionary = {}
 	for opportunity in martial_opportunities:
 		if StringName(opportunity.get("kind", "")) == &"procedural_docket": martial_docket = opportunity
@@ -294,7 +308,7 @@ func _run() -> void:
 	var deferred_world := WorldState.new()
 	var deferred_actor := UrukSeeder.seed_campaign(deferred_world, 44004401)
 	var deferred_form: Dictionary = {}
-	for opportunity in AssignmentPipeline.generate_opportunities(deferred_world, deferred_actor):
+	for opportunity in AssignmentPipelineScript.generate_opportunities(deferred_world, deferred_actor):
 		if StringName(opportunity.get("kind", "")) == &"form":
 			deferred_form = opportunity
 			break
@@ -318,7 +332,7 @@ func _run() -> void:
 	_check(bool(ledger_result.get("success", false)) and assignment_world.cedar_desk_log.size() == 3 and String(assignment_world.cedar_desk_log.back().get("category", "")) == "ledger", "Every completed engagement should enter the persistent work log with its source category")
 	_check(String(assignment_world.cedar_desk_log.front().get("responsible_character_id", "")) == String(assignment_actor.id) and String(assignment_world.cedar_desk_log.front().get("employer_id", "")) == "ur_nanna" and String(assignment_world.cedar_desk_log.front().get("institution_id", "")) == "eanna_household", "Work log should retain the responsible scribe, employer, and institution")
 	_check(assignment_world.cases_settled == 3, "Completed world-driven engagements should enter the existing career settlement counters")
-	_check(registry.all_places().size() == 20, "DefinitionRegistry should load authored settlements, precincts, work areas, and administrative form locations")
+	_check(registry.all_places().size() == 21, "DefinitionRegistry should load authored settlements, precincts, work areas, and administrative form locations")
 	_check(registry.get_place(&"hacinebi") != null and registry.get_place(&"hacinebi").political_relation == &"foreign_enclave", "Typed place lookup should retain Hacinebi's autonomous local context")
 	var copper_vector := AssignmentGeneratorScript.get_geographic_vector(&"counterfeit_copper")
 	_check(copper_vector.origin_id == &"hacinebi" and copper_vector.destination_id == &"uruk" and copper_vector.commodity_id == &"copper", "Copper docket vector should use authored Hacinebi-to-Uruk geography")
@@ -391,8 +405,9 @@ func _run() -> void:
 	_check(registry.get_epic(&"great_canal_cut") != null and registry.all_epics().size() == 1, "Registry should index Epic definitions by ID and category")
 	_check(not FileAccess.get_file_as_string("res://systems/world_simulator.gd").contains("GREAT_CANAL_CUT"), "WorldSimulator must not preload a specific Epic ID")
 	_check(registry.has_definition(&"origin_side_reply"), "Registry should index the origin reply event")
+	_check(registry.get_event(&"epic_canal_dedication") != null, "Registry should index the Era I terminal dedication event")
 	_check(registry.get_definition(&"corrupt_grain_official") is EventTemplate, "Registry lookup should return the loaded event Resource")
-	_check(registry.get_definitions("events").size() == 13, "Registry should expose all thirteen event definitions by category")
+	_check(registry.get_definitions("events").size() == 14, "Registry should expose all fourteen event definitions by category, including the terminal canal dedication")
 	var prototype_events_are_era_independent := true
 	for prototype_id in [&"corrupt_grain_official", &"routine_tally_adjustment", &"origin_side_reply"]:
 		var prototype_event := registry.get_event(prototype_id)
@@ -403,7 +418,7 @@ func _run() -> void:
 	_check(registry.get_event(&"case_01_sealed_vessel") != null, "Registry should load Case 1")
 	_check(registry.get_era(&"uruk_storehouse") != null, "Registry should load the Uruk era")
 	_check(registry.get_definition(&"missing_definition") == null, "Unknown definition IDs should return null")
-	_check(registry.get_definition_ids("events").size() == 13, "Registry should list all thirteen event IDs")
+	_check(registry.get_definition_ids("events").size() == 14, "Registry should list all fourteen event IDs")
 	_check(registry.get_event(&"corrupt_grain_official") != null, "Typed event lookup should return an event")
 	_check(registry.get_era_for_year(1200) == registry.get_era(&"prototype_era"), "Registry should resolve the era covering a year")
 	_check(registry.get_era_for_year(99999) == null, "Unknown years should resolve to no era")
@@ -481,8 +496,8 @@ func _run() -> void:
 	_check(uruk_a.master_seed == 987654321, "Uruk seeder should retain the campaign seed")
 	_check(uruk_a.year == -3200 and uruk_a.period == 0, "Uruk campaign should begin at its era start")
 	_check(uruk_a.people.size() == 29, "Uruk seeder should retain 17 authored people and add 12 generated regional residents")
-	_check(uruk_a.places.size() == 20, "Uruk seed should establish all authored settlements, local work areas, and form locations")
-	_check(uruk_a.institutions.size() == 5 and uruk_a.institutions.has(&"nippur_shrine"), "Uruk seed should establish three local institutions plus the Nippur shrine ledger")
+	_check(uruk_a.places.size() == 21, "Uruk seed should establish all authored settlements, local work areas, and form locations")
+	_check(uruk_a.institutions.has(&"eanna_household") and uruk_a.institutions.has(&"nippur_shrine") and uruk_a.institutions.has(&"umma_granary") and uruk_a.institutions.has(&"umma_canal_bailiff"), "Uruk seed establishes core institutions across Uruk, Nippur, and Umma")
 	_check(uruk_a.social_groups.size() == 5, "Uruk seed should establish five working and household groups")
 	var seeded_tie_count := 0
 	for person in uruk_a.people.values():

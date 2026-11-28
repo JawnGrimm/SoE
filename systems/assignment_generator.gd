@@ -394,5 +394,12 @@ static func create_epic_summons() -> Dictionary:
 	}
 
 
+
+static func make_opinion_consequence(person: PersonEntity, delta: int, reason: String) -> Dictionary:
+	if person == null:
+		return {}
+	var title := String(person.office_id).replace("_", " ").capitalize() if person.office_id != &"" else "Official"
+	return {"type": "opinion", "target_name": person.display_name, "target_title": title, "delta": delta, "reason": reason}
+
 static func _choice(label: String, result: String, resource: StringName, amount: int, left_opinion: int, right_opinion: int, skill: String, xp: int, trait_name: String, epic_progress: int = 0, repair: bool = false) -> Dictionary:
 	return {"label": label, "result_title": "MARK MADE", "result_text": result, "effects": {"resource": resource, "resource_amount": amount, "opinion_left": left_opinion, "opinion_right": right_opinion, "skill": skill, "xp": xp, "trait": trait_name, "epic_progress": epic_progress, "repair_hazard": repair}}

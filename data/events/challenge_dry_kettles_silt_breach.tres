@@ -1,41 +1,43 @@
-[gd_resource type="Resource" script_class="EventTemplate" load_steps=13 format=3]
+[gd_resource type="Resource" script_class="EventTemplate" format=3 uid="uid://dedltoqhqachn"]
 
-[ext_resource type="Script" path="res://data/definitions/event_template.gd" id="1"]
-[ext_resource type="Script" path="res://data/definitions/event_outcome.gd" id="2"]
-[ext_resource type="Script" path="res://data/definitions/event_effect.gd" id="3"]
-[ext_resource type="Script" path="res://data/definitions/event_condition.gd" id="4"]
+[ext_resource type="Script" uid="uid://cu1doop675avl" path="res://data/definitions/event_template.gd" id="1"]
+[ext_resource type="Script" uid="uid://rftfpp5ciyrb" path="res://data/definitions/event_outcome.gd" id="2"]
+[ext_resource type="Script" uid="uid://c8yvb5uql0l22" path="res://data/definitions/event_effect.gd" id="3"]
+[ext_resource type="Script" uid="uid://dn3vosyim7ss3" path="res://data/definitions/event_condition.gd" id="4"]
 
 [sub_resource type="Resource" id="condition_severe"]
 script = ExtResource("4")
 condition_type = &"has_trait"
-target = "actor"
-parameters = {"trait_id": &"severe"}
+parameters = {
+"trait_id": &"severe"
+}
 
 [sub_resource type="Resource" id="condition_breach_pattern"]
 script = ExtResource("4")
 condition_type = &"flag_set"
-target = "actor"
-parameters = {"flags": Array[StringName]([&"thirsty_diggers", &"blood_on_the_quays"]), "scope": "world", "match": "any"}
+parameters = {
+"flags": Array[StringName]([&"thirsty_diggers", &"blood_on_the_quays"]),
+"match": "any",
+"scope": "world"
+}
 
 [sub_resource type="Resource" id="fx_1"]
 script = ExtResource("3")
 effect_type = &"modify_resource"
-parameters = {"resource": &"barley", "amount": -20, "scope": "institution", "institution_id": &"eanna_household"}
+parameters = {
+"amount": -20,
+"institution_id": &"eanna_household",
+"resource": &"barley",
+"scope": "institution"
+}
 
 [sub_resource type="Resource" id="fx_2"]
 script = ExtResource("3")
 effect_type = &"clear_flag"
-parameters = {"flag": &"thirsty_diggers", "scope": "world"}
-
-[sub_resource type="Resource" id="fx_3"]
-script = ExtResource("3")
-effect_type = &"set_flag"
-parameters = {"flag": &"thirsty_diggers", "scope": "world", "years": 1}
-
-[sub_resource type="Resource" id="fx_4"]
-script = ExtResource("3")
-effect_type = &"add_memory"
-parameters = {"memory_id": &"silt_breach_ignored", "text": "The apprentice concealed the diggers' ration shortage as inundation silt began to reclaim the canal cut.", "involved": [&"enlil_kisu", &"ur_nanna"]}
+parameters = {
+"flag": &"thirsty_diggers",
+"scope": "world"
+}
 
 [sub_resource type="Resource" id="outcome_1"]
 script = ExtResource("2")
@@ -43,6 +45,24 @@ label = "Issue emergency rations"
 title_override = "THE KETTLES ARE FILLED"
 description_override = "The storehouse releases barley for the crews. The ration account will be difficult to defend, but the diggers return to the cut."
 effects = Array[ExtResource("3")]([SubResource("fx_1"), SubResource("fx_2")])
+
+[sub_resource type="Resource" id="fx_3"]
+script = ExtResource("3")
+effect_type = &"set_flag"
+parameters = {
+"flag": &"thirsty_diggers",
+"scope": "world",
+"years": 1
+}
+
+[sub_resource type="Resource" id="fx_4"]
+script = ExtResource("3")
+effect_type = &"add_memory"
+parameters = {
+"involved": [&"enlil_kisu", &"ur_nanna"],
+"memory_id": &"silt_breach_ignored",
+"text": "The apprentice concealed the diggers' ration shortage as inundation silt began to reclaim the canal cut."
+}
 
 [sub_resource type="Resource" id="outcome_2"]
 script = ExtResource("2")

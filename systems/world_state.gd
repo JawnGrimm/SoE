@@ -17,6 +17,7 @@ var world_flags: Dictionary[StringName, int] = {}
 var routes: Dictionary[StringName, Dictionary] = {}
 var pending_forms: Array[Dictionary] = []
 var resolved_forms: Array[Dictionary] = []
+var last_period_deltas: Array[Dictionary] = []
 var event_history: Array[Dictionary] = []
 var character_event_history: Dictionary[StringName, Array] = {}
 var people: Dictionary[StringName, PersonEntity] = {}
@@ -75,6 +76,8 @@ func reset_epic_for_new_shift(epic_id: StringName, initial_stage: String = "") -
 	if epic_id == &"":
 		return
 	var epic_state: Dictionary = epics.get(epic_id, {})
+	if epic_id == &"great_canal_cut" and (bool(epic_state.get("dedicated", false)) or world_flags.has(&"canal_dedication_concluded")):
+		return
 	var resource_id := StringName(epic_state.get("progress_resource", ""))
 	if resource_id != &"":
 		stockpiles[resource_id] = 0
@@ -438,6 +441,8 @@ func enqueue_form(form: Dictionary) -> StringName:
 		_next_form_sequence += 1
 	stored_form["id"] = form_id
 	stored_form["status"] = String(stored_form.get("status", "pending"))
+	if not stored_form.has("created_period"):
+		stored_form["created_period"] = current_period_index()
 	if stored_form.has("due_period") and int(stored_form["due_period"]) < current_period_index():
 		stored_form["status"] = "overdue"
 	pending_forms.append(stored_form)

@@ -6,6 +6,7 @@ on:
       - main
       - "fix/**"
       - "feature/**"
+      - "feat/**"
   pull_request:
     branches:
       - main
@@ -66,6 +67,15 @@ jobs:
       - name: Launch cedar desk scene headlessly
         run: godot --headless --path . --quit-after 3
 
+      - name: Run Cedar Desk Overhaul regression tests
+        run: godot --headless --path . --script res://tests/test_cedar_desk_overhaul.gd
+
+      - name: Run canal dedication and career epilogue regression tests
+        run: godot --headless --path . --script res://tests/test_career_epilogue_and_climax.gd
+
+      - name: Run player consequence visibility regression tests
+        run: godot --headless --path . --script res://tests/test_consequence_visibility.gd
+
       - name: Run event and period integration tests
         run: godot --headless --path . --script res://tests/test_event_slice.gd
 
@@ -74,6 +84,9 @@ jobs:
 
       - name: Run three-location route network tests
         run: godot --headless --path . --script res://tests/test_route_network.gd
+
+      - name: Run evidence and compound-context regression tests
+        run: godot --headless --path . --script res://tests/test_evidence_and_compound_context.gd
 
       - name: Run Nippur travel circuit acceptance test
         run: godot --headless --path . --script res://tests/test_travel_circuit.gd
@@ -84,6 +97,9 @@ jobs:
       - name: Run periodic grain clerk agenda tests
         run: godot --headless --path . --script res://tests/test_grain_clerk_agenda.gd
 
+      - name: Run living office agenda and succession tests
+        run: godot --headless --path . --script res://tests/test_living_offices.gd
+
       - name: Run developer command router tests
         run: godot --headless --path . --script res://tests/test_dev_command_router.gd
 
@@ -92,3 +108,6 @@ jobs:
 
       - name: Run work queue grouping tests
         run: godot --headless --path . --script res://tests/test_work_queue_overlay.gd
+
+      - name: Run Epic and Challenge circuit regression tests
+        run: godot --headless --path . --script res://tests/test_epics_and_challenges_circuit.gd

@@ -240,7 +240,7 @@ func _make_place_marker(_index: int, is_current: bool) -> Texture2D:
 					image.set_pixel(x, y, Color("#f2dfb5"))
 	return ImageTexture.create_from_image(image)
 
-func _on_map_node_input(event: InputEvent, _path: NodePath, node_index: int, data: WorldmapNodeData) -> void:
+func _on_map_node_input(event: InputEvent, _path: NodePath, _node_index: int, data: WorldmapNodeData) -> void:
 	if not (event is InputEventMouseButton):
 		return
 	var mouse_event := event as InputEventMouseButton

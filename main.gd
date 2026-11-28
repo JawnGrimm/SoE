@@ -1,5 +1,12 @@
 extends Control
 
+const CompoundContextScript = preload("res://systems/compound_context.gd")
+const CareerEvaluatorScript = preload("res://systems/career_evaluator.gd")
+const CanalDedicationServiceScript = preload("res://systems/canal_dedication_service.gd")
+const MemorialTabletViewScript = preload("res://ui/memorial_tablet_view.gd")
+const CanalDedicationEvent: EventTemplate = preload("res://data/events/epic_canal_dedication.tres")
+const ConsequenceVisibilityScript = preload("res://systems/consequence_visibility.gd")
+
 const AssignmentGeneratorScript = preload("res://systems/assignment_generator.gd")
 const AssignmentNarratorScript = preload("res://systems/assignment_narrator.gd")
 const DevCommandRouterScript = preload("res://systems/dev_command_router.gd")
@@ -7,15 +14,17 @@ const RouteNetworkScript = preload("res://systems/route_network.gd")
 const TravelServiceScript = preload("res://systems/travel_service.gd")
 const RegionalSurveyMapScript = preload("res://components/regional_survey_map.gd")
 const WorkQueueOverlayScript = preload("res://ui/work_queue_overlay.gd")
-const CUNEIFORM_FONT = preload("res://assets/Noto_Sans_Cuneiform,Noto_Sans_Egyptian_Hieroglyphs/Noto_Sans_Cuneiform/NotoSansCuneiform-Regular.ttf")
+const CedarDeskHeaderScript = preload("res://ui/cedar_desk_header.gd")
+const ClayDocketPropScript = preload("res://ui/clay_docket_prop.gd")
+const ArchiveStackPropScript = preload("res://ui/archive_stack_prop.gd")
+const CedarDeskLayoutScript = preload("res://ui/cedar_desk_layout.gd")
+const CUNEIFORM_FONT = preload("res://assets/fonts/NotoSansCuneiform-Regular.ttf")
 const CAMPAIGN_SEED: int = 32003200
 const ROSTER_CAST: Array[StringName] = [&"shuruppak_ilu", &"utu_mansum", &"enlil_kisu", &"ur_nanna", &"nin_kasi", &"geme_inana", &"lu_nanshe"]
 const FACTION_LABELS := {
-	&"eanna_household": "🏛 Eanna Temple",
-	&"boatmens_guild": "⛵ Landing Boatmen & Guilds",
-	&"city_garrison": "🛡 City Garrison",
-	&"council_of_elders": "📜 Council of Elders",
-	&"agricultural_households": "🌾 Agricultural Households"
+	&"boatmens_guild": "⛵ Landing Boatmen",
+	&"weavers_guild": "🧵 Weaver Guild",
+	&"council_of_elders": "📜 City Elders"
 }
 
 class CylinderSealProp extends Control:
@@ -29,12 +38,46 @@ class CylinderSealProp extends Control:
 		draw_line(Vector2(18, 27), Vector2(43, 27), Color("#e0c28a"), 2.0)
 		draw_line(Vector2(18, 40), Vector2(43, 40), Color("#5b4228"), 2.0)
 
+class CanalJourneyTableau extends Control:
+	var route_type: StringName = &"river"
+
+	func _draw() -> void:
+		var w := size.x
+		var h := size.y
+		draw_rect(Rect2(Vector2.ZERO, size), Color("#d7bd8d"))
+		draw_circle(Vector2(w * 0.82, h * 0.22), 23.0, Color("#d99c4d"))
+		draw_rect(Rect2(0, h * 0.48, w, h * 0.52), Color("#87978a") if route_type == &"river" else Color("#b69a6b"))
+		draw_colored_polygon(PackedVector2Array([Vector2(0, h * 0.48), Vector2(w * 0.22, h * 0.37), Vector2(w * 0.46, h * 0.5), Vector2(w * 0.7, h * 0.39), Vector2(w, h * 0.48), Vector2(w, h * 0.6), Vector2(0, h * 0.6)]), Color("#9a895f"))
+		for reed_x in [w * 0.08, w * 0.15, w * 0.91, w * 0.96]:
+			draw_line(Vector2(reed_x, h * 0.76), Vector2(reed_x - 5.0, h * 0.35), Color("#52664b"), 3.0)
+			draw_line(Vector2(reed_x, h * 0.76), Vector2(reed_x + 7.0, h * 0.42), Color("#68734a"), 2.0)
+		if route_type == &"river":
+			draw_rect(Rect2(0, h * 0.64, w, h * 0.36), Color("#667f80"))
+			for wave_x in range(25, int(w), 78):
+				draw_line(Vector2(wave_x, h * 0.82), Vector2(wave_x + 36, h * 0.82), Color("#b7c2a8"), 1.5)
+			draw_colored_polygon(PackedVector2Array([Vector2(w * 0.34, h * 0.7), Vector2(w * 0.68, h * 0.7), Vector2(w * 0.61, h * 0.84), Vector2(w * 0.4, h * 0.84)]), Color("#5b3824"))
+			draw_line(Vector2(w * 0.51, h * 0.7), Vector2(w * 0.51, h * 0.28), Color("#4b3524"), 4.0)
+			draw_colored_polygon(PackedVector2Array([Vector2(w * 0.5, h * 0.31), Vector2(w * 0.5, h * 0.64), Vector2(w * 0.64, h * 0.64)]), Color("#e4d2a6"))
+			draw_circle(Vector2(w * 0.5, h * 0.62), 5.0, Color("#3d2a1c"))
+		else:
+			draw_colored_polygon(PackedVector2Array([Vector2(w * 0.34, h * 0.76), Vector2(w * 0.72, h * 0.76), Vector2(w * 0.64, h * 0.86), Vector2(w * 0.4, h * 0.86)]), Color("#65452c"))
+			draw_circle(Vector2(w * 0.43, h * 0.87), 10.0, Color("#3c2b1f"))
+			draw_circle(Vector2(w * 0.65, h * 0.87), 10.0, Color("#3c2b1f"))
+			draw_line(Vector2(w * 0.34, h * 0.75), Vector2(w * 0.7, h * 0.75), Color("#d6b783"), 4.0)
+
 var runner: EventRunner
 var scheduler: EventScheduler
 var world_simulator: WorldSimulator
 var route_network: RouteNetwork
 var travel_service: TravelService
 var survey_map: Variant
+var journey_overlay: Control
+var journey_tableau: CanalJourneyTableau
+var journey_heading: Label
+var journey_route_label: Label
+var journey_narrative: Label
+var journey_cost_label: Label
+var journey_disembark_button: Button
 var survey_button: Button
 var world: WorldState
 var actor: PersonEntity
@@ -51,6 +94,7 @@ var creation_catalog: Dictionary = {}
 var creation_selections := CharacterCreationSelections.new()
 var creation_screen: int = 0
 var phase := "case"
+var memorial_view: MemorialTabletView
 var last_opinion_deltas: Dictionary[StringName, int] = {}
 var active_left_speaker_id: StringName = &""
 var active_right_speaker_id: StringName = &""
@@ -61,6 +105,8 @@ var location_label: Label
 var case_heading: Label
 var dossier: RichTextLabel
 var prompt_label: Label
+var consequence_panel: PanelContainer
+var archive_notice_active := false
 var choices: VBoxContainer
 var stamp_history_row: HFlowContainer
 var dossier_label: Label
@@ -78,7 +124,11 @@ var last_stock_snapshot: Dictionary = {}
 var last_delta_period: int = -1
 var docket_overlay: PanelContainer
 var docket_motion_layer: Control
-var archive_prop: TextureButton
+var archive_prop: Control
+var cedar_header: CedarDeskHeader
+var clay_docket: ClayDocketProp
+var archive_stack: ArchiveStackProp
+var upper_workspace_control: VBoxContainer
 var stylus_prop: TextureRect
 var heirloom_label: Label
 var secret_toggle: Button
@@ -124,6 +174,8 @@ func _open_pause_menu() -> void:
 
 func _set_phase(next_phase: String) -> void:
 	phase = next_phase
+	if upper_workspace_control != null:
+		_set_evidence_visible(CedarDeskLayoutScript.evidence_visible(phase, survey_map != null and survey_map.visible))
 	MusicDirector.play_for_phase(phase)
 
 
@@ -146,20 +198,26 @@ func _build_interface() -> void:
 	var root := VBoxContainer.new()
 	root.add_theme_constant_override("separation", 4)
 	margin.add_child(root)
+	cedar_header = CedarDeskHeaderScript.new()
+	cedar_header.custom_minimum_size.y = 42
+	cedar_header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	root.add_child(cedar_header)
 	var header := HBoxContainer.new()
 	root.add_child(header)
 	var title := Label.new()
-	title.text = "SCRIBE OF ERAS  /  REGIONAL COMPOUND"
+	title.text = "SCRIBE OF ERAS  /  CEDAR DESK"
 	location_label = title
 	title.add_theme_font_size_override("font_size", 23)
 	title.add_theme_color_override("font_color", Color("#e5d2a8"))
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
 	year_label = Label.new()
+	year_label.visible = false
 	year_label.add_theme_font_size_override("font_size", 14)
 	year_label.add_theme_color_override("font_color", Color("#c4ad7c"))
 	header.add_child(year_label)
 	header_resource_label = Label.new()
+	header_resource_label.visible = false
 	header_resource_label.add_theme_font_size_override("font_size", 12)
 	header_resource_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	header_resource_label.add_theme_color_override("font_color", Color("#e5d2a8"))
@@ -167,7 +225,7 @@ func _build_interface() -> void:
 	root.add_child(header_resource_label)
 	work_queue_button = Button.new()
 	work_queue_button.text = "ARCHIVE / QUEUE"
-	work_queue_button.tooltip_text = "Open Works, Challenges, and Assignments. Keyboard: focus and press Enter."
+	work_queue_button.tooltip_text = "Open Epics, Challenges, and Assignments. Keyboard: focus and press Enter."
 	work_queue_button.custom_minimum_size = Vector2(142, 44)
 	work_queue_button.add_theme_font_size_override("font_size", 12)
 	work_queue_button.add_theme_stylebox_override("focus", _panel_style("#3a2b1d", "#f5e6d0"))
@@ -215,7 +273,7 @@ func _build_interface() -> void:
 	desk_caption.add_theme_color_override("font_color", Color("#a99570"))
 	desk_toolbar.add_child(desk_caption)
 	survey_button = Button.new()
-	survey_button.text = "UNROLL REGIONAL SURVEY"
+	survey_button.text = "UNROLL SURVEY MAP"
 	survey_button.tooltip_text = "Unroll the regional river-and-road survey on the cedar desk."
 	survey_button.add_theme_font_size_override("font_size", 12)
 	survey_button.add_theme_stylebox_override("normal", _panel_style("#3a2b1d", "#80653b"))
@@ -223,58 +281,72 @@ func _build_interface() -> void:
 	survey_button.pressed.connect(_toggle_regional_survey)
 	desk_toolbar.add_child(survey_button)
 	var upper_workspace := VBoxContainer.new()
+	upper_workspace_control = upper_workspace
 	upper_workspace.custom_minimum_size.y = 0
 	upper_workspace.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	# Evidence cards are fixed-height; the docket receives the remaining vertical space.
-	upper_workspace.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	upper_workspace.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	upper_workspace.size_flags_stretch_ratio = CedarDeskLayoutScript.UPPER_WORKSPACE_RATIO
 	upper_workspace.add_theme_constant_override("separation", 6)
 	desk_box.add_child(upper_workspace)
 	var evidence_row := HBoxContainer.new()
 	evidence_workspace = evidence_row
-	evidence_row.custom_minimum_size.y = 172
+	evidence_row.custom_minimum_size.y = 0
 	evidence_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	evidence_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	evidence_row.add_theme_constant_override("separation", 12)
 	upper_workspace.add_child(evidence_row)
 	evidence_left = _make_evidence_panel(evidence_row, "GRANARY TERRACES  /  TEMPLE", "Ur-Nanna", "The temple cellars are cold, dry, and exact. The gods demand honest measures.", &"ur_nanna")
 	evidence_right = _make_evidence_panel(evidence_row, "RIVER QUAYS  /  LANDING", "Enlil-kisu", "The river road is dangerous and hungry. We respect the scribe who knows what a boatman endures.", &"enlil_kisu")
+	var lower_workspace := HBoxContainer.new()
+	lower_workspace.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lower_workspace.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	lower_workspace.size_flags_stretch_ratio = CedarDeskLayoutScript.LOWER_WORKSPACE_RATIO
+	lower_workspace.add_theme_constant_override("separation", 8)
+	desk_box.add_child(lower_workspace)
 	docket_motion_layer = Control.new()
 	docket_motion_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	docket_motion_layer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	docket_motion_layer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	docket_motion_layer.custom_minimum_size.y = 256
-	desk_box.add_child(docket_motion_layer)
+	docket_motion_layer.size_flags_stretch_ratio = CedarDeskLayoutScript.ACTION_BOX_RATIO
+	lower_workspace.add_child(docket_motion_layer)
 	docket_overlay = PanelContainer.new()
 	docket_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	var tablet_style := StyleBoxTexture.new()
-	tablet_style.texture = load("res://assets/desk/clay_docket.png")
-	tablet_style.texture_margin_left = 96.0
-	tablet_style.texture_margin_right = 96.0
-	tablet_style.texture_margin_top = 82.0
-	tablet_style.texture_margin_bottom = 82.0
-	# Extend the clay surface beyond the control bounds so the visible tablet
-	# fills the docket bay instead of leaving a dark halo around the asset.
-	tablet_style.expand_margin_left = 14.0
-	tablet_style.expand_margin_right = 14.0
-	tablet_style.expand_margin_top = 12.0
-	tablet_style.expand_margin_bottom = 12.0
-	tablet_style.content_margin_left = 0.0
-	tablet_style.content_margin_right = 0.0
-	tablet_style.content_margin_top = 0.0
-	tablet_style.content_margin_bottom = 0.0
-	docket_overlay.add_theme_stylebox_override("panel", tablet_style)
+	var action_style := StyleBoxFlat.new()
+	action_style.bg_color = Color("#1E1913")
+	action_style.border_color = Color("#B88656")
+	action_style.set_border_width_all(2)
+	action_style.set_corner_radius_all(6)
+	action_style.content_margin_left = 16
+	action_style.content_margin_right = 16
+	action_style.content_margin_top = 12
+	action_style.content_margin_bottom = 12
+	docket_overlay.add_theme_stylebox_override("panel", action_style)
 	docket_motion_layer.add_child(docket_overlay)
+	clay_docket = ClayDocketPropScript.new()
+	clay_docket.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	clay_docket.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	clay_docket.size_flags_stretch_ratio = CedarDeskLayoutScript.CLAY_DOCKET_RATIO
+	clay_docket.impression_added.connect(_on_clay_impression_added)
+	lower_workspace.add_child(clay_docket)
+	archive_stack = ArchiveStackPropScript.new()
+	archive_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	archive_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	archive_stack.size_flags_stretch_ratio = CedarDeskLayoutScript.ARCHIVE_STACK_RATIO
+	archive_stack.pressed.connect(_toggle_work_queue)
+	lower_workspace.add_child(archive_stack)
 	survey_map = RegionalSurveyMapScript.new()
 	survey_map.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	survey_map.visible = false
 	survey_map.travel_requested.connect(_on_survey_travel_requested)
 	survey_map.close_requested.connect(_close_regional_survey)
 	docket_motion_layer.add_child(survey_map)
+	_build_journey_overlay()
 	var tablet_content := MarginContainer.new()
 	tablet_content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	tablet_content.add_theme_constant_override("margin_left", 74)
-	tablet_content.add_theme_constant_override("margin_right", 74)
-	tablet_content.add_theme_constant_override("margin_top", 48)
-	tablet_content.add_theme_constant_override("margin_bottom", 48)
+	tablet_content.add_theme_constant_override("margin_left", 18)
+	tablet_content.add_theme_constant_override("margin_right", 18)
+	tablet_content.add_theme_constant_override("margin_top", 14)
+	tablet_content.add_theme_constant_override("margin_bottom", 14)
 	docket_overlay.add_child(tablet_content)
 	var tablet_scroll := ScrollContainer.new()
 	tablet_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -306,12 +378,16 @@ func _build_interface() -> void:
 	_apply_incised_text(dossier)
 	dossier.visible = false
 	mat_box.add_child(dossier)
+	consequence_panel = PanelContainer.new()
+	consequence_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	consequence_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	mat_box.add_child(consequence_panel)
 	prompt_label = Label.new()
 	prompt_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	prompt_label.add_theme_font_size_override("font_size", 17)
 	prompt_label.custom_minimum_size.y = 22
 	_apply_incised_text(prompt_label)
-	mat_box.add_child(prompt_label)
+	consequence_panel.add_child(prompt_label)
 	stamp_history_row = HFlowContainer.new()
 	stamp_history_row.custom_minimum_size.y = 0
 	stamp_history_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -323,37 +399,7 @@ func _build_interface() -> void:
 	choices.add_theme_constant_override("separation", 5)
 	mat_box.add_child(choices)
 
-	var desk_props := HBoxContainer.new()
-	desk_props.custom_minimum_size.y = 42
-	desk_props.size_flags_vertical = Control.SIZE_SHRINK_END
-	desk_props.add_theme_constant_override("separation", 14)
-	desk_props.alignment = BoxContainer.ALIGNMENT_CENTER
-	root.add_child(desk_props)
-	archive_prop = TextureButton.new()
-	archive_prop.texture_normal = load("res://assets/desk/archive_stack.png")
-	archive_prop.texture_hover = archive_prop.texture_normal
-	archive_prop.texture_pressed = archive_prop.texture_normal
-	archive_prop.ignore_texture_size = true
-	archive_prop.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
-	archive_prop.custom_minimum_size = Vector2(82, 44)
-	archive_prop.focus_mode = Control.FOCUS_ALL
-	archive_prop.add_theme_stylebox_override("focus", _panel_style("#211a12", "#f5e6d0"))
-	archive_prop.tooltip_text = "Open the archive / work queue."
-	archive_prop.pressed.connect(_toggle_work_queue)
-	desk_props.add_child(archive_prop)
-	stylus_prop = TextureRect.new()
-	stylus_prop.texture = load("res://assets/desk/Ancient Wrapped Wooden Stylus.png")
-	stylus_prop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	stylus_prop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	stylus_prop.custom_minimum_size = Vector2(100, 40)
-	stylus_prop.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	stylus_prop.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	stylus_prop.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	desk_props.add_child(stylus_prop)
-	var seal_prop := CylinderSealProp.new()
-	seal_prop.custom_minimum_size = Vector2(52, 52)
-	seal_prop.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	desk_props.add_child(seal_prop)
+	# Clay docket and archive stack are now physical controls in the lower workspace.
 
 	var compound := PanelContainer.new()
 	compound.custom_minimum_size.x = 280
@@ -375,6 +421,11 @@ func _build_interface() -> void:
 	compound_title.add_theme_font_size_override("font_size", 17)
 	compound_title.add_theme_color_override("font_color", Color("#d6bd8b"))
 	compound_box.add_child(compound_title)
+	period_delta_label = Label.new()
+	period_delta_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	period_delta_label.add_theme_font_size_override("font_size", 12)
+	period_delta_label.add_theme_color_override("font_color", Color("#c4ad7c"))
+	compound_box.add_child(period_delta_label)
 	var stores_title := Label.new()
 	stores_title.text = "SCRIBE DOSSIER  /  IDENTITY & PURSE"
 	stores_title.add_theme_font_size_override("font_size", 11)
@@ -394,11 +445,6 @@ func _build_interface() -> void:
 	local_stock_label.add_theme_font_size_override("font_size", 13)
 	local_stock_label.add_theme_color_override("font_color", Color("#e5d2a8"))
 	compound_box.add_child(local_stock_label)
-	period_delta_label = Label.new()
-	period_delta_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	period_delta_label.add_theme_font_size_override("font_size", 12)
-	period_delta_label.add_theme_color_override("font_color", Color("#c4ad7c"))
-	compound_box.add_child(period_delta_label)
 	var roster_title := Label.new()
 	roster_title.text = "FACTION STANDINGS  /  OPINION OF YOU"
 	roster_title.add_theme_font_size_override("font_size", 11)
@@ -462,7 +508,7 @@ func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: Strin
 	var header := HBoxContainer.new()
 	box.add_child(header)
 	var portrait := TextureRect.new()
-	portrait.custom_minimum_size = Vector2(44, 44)
+	portrait.custom_minimum_size = Vector2(64, 64)
 	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	portrait.texture = _load_character_portrait(character_id)
@@ -471,7 +517,7 @@ func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: Strin
 	title.text = heading
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.add_theme_font_size_override("font_size", 13)
+	title.add_theme_font_size_override("font_size", 15)
 	title.add_theme_color_override("font_color", Color("#d6bd8b"))
 	header.add_child(title)
 	var speaker_label := Label.new()
@@ -483,7 +529,7 @@ func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: Strin
 	quote_label.text = "“%s”" % quote
 	quote_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	quote_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	quote_label.add_theme_font_size_override("font_size", 14)
+	quote_label.add_theme_font_size_override("font_size", 15)
 	quote_label.add_theme_color_override("font_color", Color("#e0d4bd"))
 	box.add_child(quote_label)
 	# Evidence can contain a complete resource ledger. Keep it inside the card's
@@ -496,7 +542,7 @@ func _make_evidence_panel(parent: HBoxContainer, heading: String, speaker: Strin
 	facts_label.custom_minimum_size.y = 0
 	facts_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	facts_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	facts_label.add_theme_font_size_override("normal_font_size", 12)
+	facts_label.add_theme_font_size_override("normal_font_size", 13)
 	facts_label.add_theme_color_override("default_color", Color("#c7ad7e"))
 	box.add_child(facts_label)
 	if heading.begins_with("GRANARY"):
@@ -525,7 +571,7 @@ func _load_character_portrait(character_id: StringName) -> Texture2D:
 		if source_texture != null:
 			var portrait_image := source_texture.get_image()
 			if portrait_image != null and not portrait_image.is_empty():
-				# Center-crop and downsample once for the 44px evidence badge.
+				# Center-crop and downsample once for the 64px evidence portrait.
 				var source_size := portrait_image.get_size()
 				var crop_size := mini(source_size.x, source_size.y)
 				var crop_origin := Vector2i(
@@ -760,6 +806,7 @@ func load_game() -> Dictionary:
 	return {"success": true}
 
 func _schedule_next_case() -> void:
+	archive_notice_active = false
 	_clear_stamp_history()
 	var current_player := world.get_player()
 	if current_player != null:
@@ -767,6 +814,9 @@ func _schedule_next_case() -> void:
 	context.actor = actor
 	context.year = world.year
 	current_era = Registry.get_era_for_year(world.year)
+	if CareerEvaluatorScript.is_terminal_failure(actor):
+		_show_memorial_tablet()
+		return
 	context.era = current_era
 	var active_era_id := current_era.id if current_era != null else &""
 	if route_network == null or route_network.era_id != active_era_id:
@@ -774,6 +824,10 @@ func _schedule_next_case() -> void:
 	if not world.world_flags.has(&"first_workday_mentor_seen"):
 		_show_first_workday_mentor()
 		return
+	if _canal_dedication_due():
+		_show_canal_dedication()
+		return
+	_show_archive_notices()
 	if world.epic_summon_pending and not world.epic_summon_issued:
 		active_event = null
 		procedural_assignment = AssignmentGeneratorScript.create_epic_summons()
@@ -793,20 +847,21 @@ func _schedule_next_case() -> void:
 	_refresh_compound()
 	assignment_opportunities = AssignmentPipeline.generate_opportunities(world, actor, selected_path)
 	if active_event != null:
+		var is_challenge := String(active_event.id).begins_with("challenge_")
 		assignment_opportunities.push_front({
 			"id": StringName("work_event_%s_%d" % [active_event.id, world.current_period_index()]),
-			"kind": &"event",
+			"kind": &"challenge" if is_challenge else &"event",
 			"source_id": active_event.id,
 			"title": active_event.title,
 			"summary": active_event.description,
-			"priority": 100
+			"priority": 90 if is_challenge else 100
 		})
 		while assignment_opportunities.size() > AssignmentPipeline.BOARD_SIZE:
 			var remove_index := -1
 			var lowest_priority := 2147483647
 			for candidate_index in range(1, assignment_opportunities.size()):
 				var candidate: Dictionary = assignment_opportunities[candidate_index]
-				if StringName(candidate.get("kind", "")) in [&"event", &"project_review"]:
+				if StringName(candidate.get("kind", "")) in [&"event", &"challenge", &"project_review"]:
 					continue
 				var candidate_priority := int(candidate.get("priority", 0))
 				if candidate_priority <= lowest_priority:
@@ -828,8 +883,14 @@ func _show_first_workday_mentor() -> void:
 	prompt_label.text = "The mentor sets a tablet before you. No time passes. No assignment is issued."
 	var mentor_id := creation_selections.get_answer(&"instruction_mentor")
 	var lines: Dictionary = creation_catalog.get("first_workday_mentor_lines", {})
-	dossier.text = String(lines.get(String(mentor_id), "The mentor places a blank tablet before you. “Make your mark.”"))
+	dossier.text = String(lines.get(String(mentor_id), "The mentor places a blank tablet before you. “Make your mark.”")) + "\n\n“Here is your tablet [Clay Docket]. Here is the dispatch stack from the daybook [Archive Stack]. When the boatmen bring claims, record what the clay proves, not what their tongues swear.”\n\nYour starting purse contains 2 silver. The reed stylus and cylinder seal are yours to use; the Cedar Desk is ready."
 	_add_choice("Take the reed / begin work", _finish_first_workday_mentor)
+	if choices.get_child_count() > 0:
+		var first_row := choices.get_child(0)
+		if first_row is HBoxContainer and first_row.get_child_count() > 1:
+			var first_button := first_row.get_child(1)
+			if first_button is Button:
+				first_button.grab_focus()
 
 func _finish_first_workday_mentor() -> void:
 	if phase != "first_workday_mentor":
@@ -1003,6 +1064,8 @@ func _confirm_character_creation() -> void:
 		_show_character_creation_screen(8)
 		return
 	selected_path = creation_selections.get_answer(&"professional_orientation")
+	world.world_flags[&"professional_orientation"] = int(selected_path.hash())
+	world.world_flags[&"career_start_year"] = world.year
 	world.local_path_dockets_settled = 0
 	world.epic_summon_pending = false
 	world.epic_summon_issued = false
@@ -1031,12 +1094,16 @@ func _active_docket_payload() -> Dictionary:
 		"choices": _authored_choices_payload()
 	}
 
+static func _is_outcome_disabled_for_actor(event_id: StringName, outcome: EventOutcome, personal_silver: int) -> bool:
+	return OutcomeAffordability.is_outcome_disabled_for_actor(event_id, outcome, personal_silver)
+
 func _authored_choices_payload() -> Array:
 	var result: Array = []
 	if active_event == null:
 		return result
 	for outcome in active_event.outcomes:
-		result.append({"label": outcome.label, "result_title": outcome.title_override, "result_text": outcome.description_override, "effects": outcome.effects})
+		var disabled := _is_outcome_disabled_for_actor(active_event.id, outcome, int(actor.resources.get(&"silver", 0)))
+		result.append({"label": outcome.label, "result_title": outcome.title_override, "result_text": outcome.description_override, "effects": outcome.effects, "disabled": disabled})
 	return result
 
 func _show_assignment_board() -> void:
@@ -1074,7 +1141,7 @@ func _select_assignment_opportunity(index: int) -> void:
 		AudioManager.play_docket_slide()
 		_show_case()
 		return
-	if StringName(opportunity.get("kind", "")) == &"event":
+	if StringName(opportunity.get("kind", "")) in [&"event", &"challenge"]:
 		active_event = Registry.get_event(StringName(opportunity.get("source_id", "")))
 		if active_event == null:
 			status_label.text = "EVENT COULD NOT BE OPENED / SOURCE MAY HAVE CHANGED"
@@ -1083,8 +1150,16 @@ func _select_assignment_opportunity(index: int) -> void:
 		_show_case()
 		return
 	active_event = null
+	if bool(opportunity.get("requires_travel", false)) and StringName(opportunity.get("kind", "")) == &"project_review":
+		status_label.text = "CAPITAL REVIEW / %s. [REQUIRES TRAVEL TO URUK] Open the regional survey map and book passage to convene the Stage Review." % String(opportunity.get("title", "Great Canal Cut"))
+		return
 	if not AssignmentPipeline.begin(world, opportunity, actor):
-		status_label.text = "WORK COULD NOT BE OPENED / SOURCE MAY HAVE CHANGED"
+		if bool(opportunity.get("requires_travel", false)):
+			var dispatch_place := StringName(opportunity.get("dispatch_destination_id", opportunity.get("place_id", "")))
+			var dispatch_place_name := String(world.places.get(dispatch_place, {}).get("name", dispatch_place))
+			status_label.text = "PROVINCIAL DISPATCH / TRAVEL TO %s TO ANSWER THE SUMMONS" % dispatch_place_name.to_upper()
+		else:
+			status_label.text = "WORK COULD NOT BE OPENED / SOURCE MAY HAVE CHANGED"
 		return
 	active_world_assignment_id = StringName(opportunity.get("id", ""))
 	latest_investigation_scene.clear()
@@ -1098,6 +1173,8 @@ func _show_world_engagement() -> void:
 		_show_assignment_board()
 		return
 	record = AssignmentNarratorScript.translate_record(record)
+	if clay_docket != null:
+		clay_docket.set_case_title(String(record.get("title", "Active case")))
 	_clear_choices()
 	_set_phase("world_engagement")
 	var actions: Dictionary = record.get("actions", {})
@@ -1147,6 +1224,18 @@ func _show_world_engagement() -> void:
 			&"hazard":
 				_add_choice("Allocate three labor and repair", _resolve_world_assignment.bind(&"repair"), world.get_resource(&"labor", "institution", "", &"eanna_household") < 3)
 				_add_choice("Record the loss and defer repair", _resolve_world_assignment.bind(&"defer"))
+			&"project_review":
+				var sponsor_id := StringName(record.get("sponsor_institution", record.get("source_data", {}).get("sponsor_institution", &"eanna_household")))
+				var has_emergency_stock := world.get_resource(&"barley", "institution", "", sponsor_id) >= 20 and world.get_resource(&"labor", "institution", "", sponsor_id) >= 2
+				_add_choice("Authorize emergency rations and advance the cut (20 barley, 2 labor)", _resolve_world_assignment.bind(&"epic_emergency"), not has_emergency_stock)
+				_add_choice("Halt work for audit; challenge the foreman's roll", _resolve_world_assignment.bind(&"epic_audit"))
+				_add_choice("Certify the milestone uninspected / accept crew estimates", _resolve_world_assignment.bind(&"epic_certify"))
+			&"pressure":
+				var pressure_institution_id := StringName(record.get("source_data", {}).get("institution_id", record.get("source_id", &"")))
+				var has_reserves := world.get_resource(&"barley", "institution", "", pressure_institution_id) >= 15 and world.get_resource(&"labor", "institution", "", pressure_institution_id) >= 15
+				_add_choice("Authorize emergency drawdown from temple reserves (15 barley, 15 labor)", _resolve_world_assignment.bind(&"pressure_drawdown"), not has_reserves)
+				_add_choice("Enforce strict rationing; reject extra requisitions", _resolve_world_assignment.bind(&"pressure_ration"))
+				_add_choice("Falsify tally balance to conceal the deficit", _resolve_world_assignment.bind(&"pressure_falsify"))
 			_:
 				_add_choice("File the verified account", _resolve_world_assignment.bind(&"record"))
 	_add_choice("Set this work aside", _abandon_world_assignment)
@@ -1160,6 +1249,8 @@ func _world_assignment_action(action_id: StringName) -> void:
 		status_label.text = String(result.get("message", "Action could not be recorded."))
 		return
 	AudioManager.play_stylus_mark()
+	if clay_docket != null:
+		clay_docket.stamp_inquiry(action_id)
 	if action_id == &"examine_records":
 		var record := AssignmentPipeline.get_record(world, active_world_assignment_id)
 		var evidence: Dictionary = result.get("evidence", {})
@@ -1202,7 +1293,10 @@ func _resolve_world_assignment(verdict: StringName) -> void:
 		return
 	active_world_assignment_id = &""
 	procedural_assignment.clear()
-	_show_procedural_result("ASSESSMENT SEALED", String(result.get("message", "The work is entered into the record.")))
+	if clay_docket != null:
+		clay_docket.seal_verdict()
+	_seal_clay_docket()
+	_show_procedural_result("ASSESSMENT SEALED", String(result.get("message", "The work is entered into the record.")), result.get("consequences", []))
 
 func _abandon_world_assignment() -> void:
 	if active_world_assignment_id == &"" or not world.assignments.has(active_world_assignment_id):
@@ -1225,6 +1319,11 @@ func _show_case() -> void:
 	_render_docket_payload(AssignmentNarratorScript.translate_payload(_active_docket_payload()))
 
 func _render_docket_payload(payload: Dictionary, callbacks: Array = []) -> void:
+	if clay_docket != null:
+		clay_docket.set_case_title(String(payload.get("title", "Active case")))
+	if consequence_panel != null:
+		consequence_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+		prompt_label.add_theme_color_override("font_color", Color("#d6bd8b"))
 	_set_evidence_visible(true)
 	case_heading.add_theme_font_size_override("font_size", 20)
 	case_heading.text = "𒂍  " + String(payload.get("title", "Docket")).to_upper()
@@ -1283,6 +1382,7 @@ func _resolve_choice(index: int) -> void:
 		if delta != 0:
 			last_opinion_deltas[person_id] = delta
 	_record_case_settlement(silver_before, traits_before)
+	_seal_clay_docket()
 	_show_result(active_event.outcomes[index])
 
 func _resolve_procedural_choice(_index: int, choice: Dictionary) -> void:
@@ -1292,11 +1392,20 @@ func _resolve_procedural_choice(_index: int, choice: Dictionary) -> void:
 	var right := world.get_person(StringName(pair_parts[1])) if pair_parts.size() > 1 else null
 	var silver_before := int(actor.resources.get(&"silver", 0))
 	var traits_before: Array[StringName] = actor.traits.duplicate()
+	var debt_before := int(actor.resources.get(&"debt", 0))
+	var exposure_before := int(actor.flags.get(&"audit_exposure", 0))
+	var skill_level_before := actor.skills.get_level(StringName(effects.get("skill", ""))) if StringName(effects.get("skill", "")) != &"" else 0
+	var opinion_before: Dictionary[StringName, int] = {}
+	for person_value in world.people.values():
+		if person_value != null and person_value.id != actor.id:
+			opinion_before[person_value.id] = person_value.get_opinion(actor.id)
+	var actor_flags_before: Dictionary = actor.flags.duplicate(true)
+	var world_flags_before: Dictionary = world.world_flags.duplicate(true)
 	last_opinion_deltas.clear()
 	var left_delta := int(effects.get("opinion_left", 0))
 	var right_delta := int(effects.get("opinion_right", 0))
 	var docket_kind := String(procedural_assignment.get("docket_kind", ""))
-	var opinion_reason := "Procedural docket: %s" % String(procedural_assignment.get("title", ""))
+	var opinion_reason := String(choice.get("opinion_reason", choice.get("result_text", "Procedural docket: %s" % String(procedural_assignment.get("title", "")))))
 	if docket_kind in ["local_path", "epic_summons"]:
 		_apply_faction_opinion(StringName(procedural_assignment.get("client_faction", "")), left_delta, opinion_reason)
 		_apply_faction_opinion(StringName(procedural_assignment.get("opposing_faction", "")), right_delta, opinion_reason)
@@ -1330,8 +1439,9 @@ func _resolve_procedural_choice(_index: int, choice: Dictionary) -> void:
 		if world.has_active_hazard(repair_place, repair_id):
 			world.repair_hazard(repair_place, repair_id)
 	var skill_id := StringName(effects.get("skill", ""))
+	var xp_amount := int(effects.get("xp", 0))
 	if skill_id != &"":
-		actor.skills.add_xp(skill_id, int(effects.get("xp", 0)))
+		actor.skills.add_xp(skill_id, xp_amount)
 	var trait_id := StringName(effects.get("trait", ""))
 	if trait_id != &"" and trait_id not in actor.traits:
 		actor.traits.append(trait_id)
@@ -1351,8 +1461,39 @@ func _resolve_procedural_choice(_index: int, choice: Dictionary) -> void:
 	if docket_kind == "local_path":
 		if world.record_local_path_docket():
 			result_text += " Three local docket seals have brought an emergency requisition from the canal administration."
+	var consequences: Array[Dictionary] = []
+	if skill_id != &"" and xp_amount > 0:
+		consequences.append({"type": "xp", "skill": skill_id, "delta": xp_amount})
+		var level_after := actor.skills.get_level(skill_id)
+		if level_after > skill_level_before:
+			consequences.append({"type": "level_up", "skill": skill_id, "new_level": level_after})
+	for person_value in world.people.values():
+		if person_value == null or person_value.id == actor.id:
+			continue
+		var opinion_change: int = person_value.get_opinion(actor.id) - int(opinion_before.get(person_value.id, person_value.get_opinion(actor.id)))
+		if opinion_change != 0:
+			consequences.append(AssignmentGeneratorScript.make_opinion_consequence(person_value, opinion_change, opinion_reason))
+	var silver_change := int(actor.resources.get(&"silver", 0)) - silver_before
+	if silver_change != 0:
+		consequences.append({"type": "silver", "delta": silver_change})
+	var debt_change := int(actor.resources.get(&"debt", 0)) - debt_before
+	if debt_change != 0:
+		consequences.append({"type": "debt", "delta": debt_change})
+	var exposure_change := int(actor.flags.get(&"audit_exposure", 0)) - exposure_before
+	if exposure_change != 0:
+		consequences.append({"type": "exposure", "delta": exposure_change})
+	for new_trait in actor.traits:
+		if new_trait not in traits_before:
+			consequences.append({"type": "trait", "name": String(new_trait).capitalize()})
+	for flag_key in actor.flags:
+		if not actor_flags_before.has(flag_key) or actor_flags_before[flag_key] != actor.flags[flag_key]:
+			consequences.append({"type": "flag", "name": String(flag_key)})
+	for flag_key in world.world_flags:
+		if not world_flags_before.has(flag_key) or world_flags_before[flag_key] != world.world_flags[flag_key]:
+			consequences.append({"type": "flag", "name": String(flag_key)})
+	_seal_clay_docket()
 	var result_title := String(choice.get("result_title", "MARK MADE"))
-	_show_procedural_result(result_title, result_text)
+	_show_procedural_result(result_title, result_text, consequences)
 
 func _record_case_settlement(silver_before: int, traits_before: Array[StringName]) -> void:
 	world.record_case_settlement(actor, silver_before, traits_before)
@@ -1367,6 +1508,9 @@ func _play_outcome_foley(index: int) -> void:
 			AudioManager.play_tablet_snap()
 
 func _show_result(outcome: EventOutcome) -> void:
+	if consequence_panel != null:
+		consequence_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+		prompt_label.add_theme_color_override("font_color", Color("#d6bd8b"))
 	last_resolved_outcome = outcome
 	_clear_choices()
 	_set_phase("result")
@@ -1391,9 +1535,15 @@ func _advance_period_once() -> bool:
 		return false
 	assignment_opportunities.clear()
 	active_world_assignment_id = &""
+	if clay_docket != null:
+		clay_docket.clear_impressions()
+		clay_docket.set_case_title("New period")
 	_clear_stamp_history()
 	world_simulator.advance_period(world)
 	last_opinion_deltas.clear()
+	if _canal_dedication_due():
+		_show_canal_dedication()
+		return false
 	if world.is_active_epic_complete() and not world.era_completion_started:
 		_show_era_completion()
 		return false
@@ -1548,7 +1698,7 @@ func _debug_resource_ids() -> Array[String]:
 	ids.sort()
 	return ids
 
-func _show_procedural_result(result_title: String, result_text: String) -> void:
+func _show_procedural_result(result_title: String, result_text: String, consequences: Array = []) -> void:
 	_clear_choices()
 	_set_phase("result")
 	case_heading.text = "𒂍  " + result_title.to_upper()
@@ -1556,9 +1706,88 @@ func _show_procedural_result(result_title: String, result_text: String) -> void:
 	dossier.text = ""
 	_set_evidence_facts("", "")
 	_set_evidence_tension(0, 0)
-	prompt_label.text = result_text
+	prompt_label.text = ConsequenceVisibilityScript.format_ledger(result_text, consequences) if not consequences.is_empty() else result_text
+	if consequence_panel != null:
+		if not consequences.is_empty():
+			var ledger_style := StyleBoxFlat.new()
+			ledger_style.bg_color = Color("#302519")
+			ledger_style.border_color = Color("#e0b85c")
+			ledger_style.set_border_width_all(2)
+			ledger_style.set_corner_radius_all(4)
+			ledger_style.content_margin_left = 16
+			ledger_style.content_margin_right = 16
+			ledger_style.content_margin_top = 12
+			ledger_style.content_margin_bottom = 12
+			consequence_panel.add_theme_stylebox_override("panel", ledger_style)
+			prompt_label.add_theme_color_override("font_color", Color("#fff0ce"))
+		else:
+			consequence_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+			prompt_label.add_theme_color_override("font_color", Color("#d6bd8b"))
 	_add_choice("End Period", _advance_period)
 	_refresh_compound()
+
+func _canal_dedication_due() -> bool:
+	return world != null and world.get_player() != null and CanalDedicationServiceScript.is_climax_due(world)
+
+
+func _show_canal_dedication() -> void:
+	if phase == "canal_dedication" or phase == "memorial":
+		return
+	CanalDedicationServiceScript.mark_climax_ready(world)
+	active_event = CanalDedicationEvent
+	procedural_assignment.clear()
+	_clear_stamp_history()
+	_clear_choices()
+	_set_phase("canal_dedication")
+	case_heading.text = CanalDedicationEvent.title.to_upper()
+	dossier.visible = true
+	dossier.text = CanalDedicationEvent.description
+	prompt_label.text = "The final act is yours. What shall the monument record?"
+	_set_evidence_facts("%s\n%s" % [CanalDedicationEvent.evidence_left_title, CanalDedicationEvent.evidence_left_quote], "%s\n%s" % [CanalDedicationEvent.evidence_right_title, CanalDedicationEvent.evidence_right_quote])
+	var choice_ids: Array[StringName] = [&"honor_crews", &"temple_only", &"personal_seal"]
+	for index in range(mini(choice_ids.size(), CanalDedicationEvent.outcomes.size())):
+		var outcome: EventOutcome = CanalDedicationEvent.outcomes[index]
+		var disabled := choice_ids[index] == &"personal_seal" and not CanalDedicationServiceScript.can_personal_seal(actor)
+		var choice_text := outcome.label + "\n" + outcome.description_override
+		if choice_ids[index] == &"personal_seal":
+			choice_text += "\nRequires Law 2 and Literacy 2."
+		_add_choice(choice_text, _conclude_canal_dedication.bind(choice_ids[index]), disabled)
+
+
+func _conclude_canal_dedication(choice: StringName) -> void:
+	if not CanalDedicationServiceScript.apply_choice(world, actor, choice):
+		return
+	_show_memorial_tablet()
+
+
+func _show_memorial_tablet() -> void:
+	if memorial_view != null and is_instance_valid(memorial_view):
+		memorial_view.queue_free()
+	var summary := CareerEvaluatorScript.evaluate(world, actor)
+	memorial_view = MemorialTabletViewScript.new()
+	memorial_view.return_to_title.connect(_return_to_title)
+	memorial_view.succession_requested.connect(_show_succession_preview)
+	memorial_view.restart_requested.connect(_restart_alpha)
+	add_child(memorial_view)
+	memorial_view.present(summary)
+	_set_phase("memorial")
+
+
+func _return_to_title() -> void:
+	get_tree().change_scene_to_file("res://scenes/menus/main_menu/main_menu.tscn")
+
+
+func _restart_alpha() -> void:
+	get_tree().change_scene_to_file("res://main.tscn")
+
+
+func _show_succession_preview() -> void:
+	var dialog := AcceptDialog.new()
+	dialog.title = "A Seal Passed Forward"
+	dialog.dialog_text = "The next scribe will inherit the world your records helped shape. Succession is preview-only in this alpha; return to the title screen to begin a new career."
+	add_child(dialog)
+	dialog.popup_centered()
+
 
 func _show_era_completion() -> void:
 	world.era_completion_started = true
@@ -1822,7 +2051,16 @@ func _refresh_faction_standings() -> void:
 	for child in roster_box.get_children():
 		roster_box.remove_child(child)
 		child.queue_free()
-	for faction_id in [&"eanna_household", &"boatmens_guild", &"city_garrison", &"council_of_elders", &"agricultural_households"]:
+	if world.current_location_id != &"uruk":
+		for official in CompoundContextScript.officials(world, _local_institution_ids()):
+			var official_line := Label.new()
+			official_line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			official_line.add_theme_font_size_override("font_size", 13)
+			var title := "Canal Bailiff" if official.id == &"character_0013" else ("Granary Clerk" if official.id == &"character_0012" else String(official.office_id).replace("_", " ").capitalize())
+			official_line.text = "%s\n%s / %s / Opinion %+d" % [official.display_name, title, String(official.office_id).replace("_", " ").capitalize(), official.get_opinion(actor.id)]
+			roster_box.add_child(official_line)
+		return
+	for faction_id in [&"boatmens_guild", &"weavers_guild", &"council_of_elders"]:
 		var standing := world.get_faction_standing(faction_id)
 		var line := RichTextLabel.new()
 		line.bbcode_enabled = true
@@ -1875,8 +2113,8 @@ func _open_regional_survey() -> void:
 	if not survey_map.configure(route_network, world, travel_allowed):
 		status_label.text = "SURVEY UNAVAILABLE / REGIONAL ROUTE DATA IS INCOMPLETE."
 		return
-	_set_evidence_visible(false)
 	survey_map.visible = true
+	_set_evidence_visible(false)
 	if work_queue_button != null:
 		work_queue_button.visible = false
 	docket_overlay.visible = false
@@ -1886,8 +2124,8 @@ func _open_regional_survey() -> void:
 func _close_regional_survey() -> void:
 	if survey_map == null:
 		return
-	_set_evidence_visible(phase != "character_creation")
 	survey_map.visible = false
+	_set_evidence_visible(CedarDeskLayoutScript.evidence_visible(phase, false))
 	if docket_overlay != null:
 		docket_overlay.visible = true
 	if survey_button != null:
@@ -1899,21 +2137,136 @@ func _close_regional_survey() -> void:
 func _on_survey_travel_requested(route_id: StringName, destination_id: StringName) -> void:
 	if phase in ["character_creation", "era_complete", "case", "world_engagement"] or travel_service == null or world == null:
 		return
-	var result := travel_service.travel(world, route_id, destination_id)
+	var traveler := world.get_player()
+	var result := travel_service.execute_selected_journey(world, traveler, destination_id, route_id)
 	if not bool(result.get("success", false)):
 		status_label.text = "DEPARTURE REFUSED / " + String(result.get("error", "Route unavailable")).to_upper()
 		return
 	_close_regional_survey()
+	_show_journey_vignette(result)
+
+
+func _build_journey_overlay() -> void:
+	journey_overlay = Control.new()
+	journey_overlay.name = "JourneyVignette"
+	journey_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	journey_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	journey_overlay.visible = false
+	add_child(journey_overlay)
+
+	var shade := ColorRect.new()
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	shade.color = Color(0.055, 0.04, 0.025, 0.94)
+	shade.mouse_filter = Control.MOUSE_FILTER_STOP
+	journey_overlay.add_child(shade)
+
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	journey_overlay.add_child(center)
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(700, 500)
+	var card_style := StyleBoxFlat.new()
+	card_style.bg_color = Color("#e4d0a6")
+	card_style.border_color = Color("#6d4d2d")
+	card_style.set_border_width_all(3)
+	card_style.set_corner_radius_all(5)
+	card_style.content_margin_left = 26
+	card_style.content_margin_right = 26
+	card_style.content_margin_top = 22
+	card_style.content_margin_bottom = 22
+	card.add_theme_stylebox_override("panel", card_style)
+	center.add_child(card)
+
+	var body := VBoxContainer.new()
+	body.add_theme_constant_override("separation", 12)
+	card.add_child(body)
+
+	journey_heading = Label.new()
+	journey_heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	journey_heading.add_theme_font_size_override("font_size", 23)
+	journey_heading.add_theme_color_override("font_color", Color("#382719"))
+	body.add_child(journey_heading)
+
+	journey_route_label = Label.new()
+	journey_route_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	journey_route_label.add_theme_font_size_override("font_size", 14)
+	journey_route_label.add_theme_color_override("font_color", Color("#725333"))
+	body.add_child(journey_route_label)
+
+	journey_tableau = CanalJourneyTableau.new()
+	journey_tableau.custom_minimum_size = Vector2(640, 170)
+	journey_tableau.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.add_child(journey_tableau)
+
+	journey_narrative = Label.new()
+	journey_narrative.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	journey_narrative.custom_minimum_size.y = 72
+	journey_narrative.add_theme_font_size_override("font_size", 15)
+	journey_narrative.add_theme_color_override("font_color", Color("#382719"))
+	body.add_child(journey_narrative)
+
+	journey_cost_label = Label.new()
+	journey_cost_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	journey_cost_label.add_theme_font_size_override("font_size", 14)
+	journey_cost_label.add_theme_color_override("font_color", Color("#5d432a"))
+	body.add_child(journey_cost_label)
+
+	journey_disembark_button = Button.new()
+	journey_disembark_button.custom_minimum_size = Vector2(320, 46)
+	journey_disembark_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	journey_disembark_button.add_theme_font_size_override("font_size", 14)
+	journey_disembark_button.add_theme_stylebox_override("focus", _panel_style("#3a2b1d", "#f5e6d0"))
+	journey_disembark_button.pressed.connect(_disembark_from_journey)
+	body.add_child(journey_disembark_button)
+
+
+func _show_journey_vignette(result: Dictionary) -> void:
+	if journey_overlay == null or world == null:
+		return
+	var origin_name := String(result.get("origin", result.get("origin_id", "Unknown")))
+	var destination_name := String(result.get("destination", result.get("destination_id", "Unknown")))
+	var route_name := String(result.get("route_name", "Regional passage"))
+	var route_type := StringName(result.get("route_type", ""))
+	var periods := int(result.get("elapsed_periods", result.get("transit_periods", 1)))
+	var fare_paid := int(result.get("fare_paid", 0))
+	var fare_due := int(result.get("fare_due", 1))
+	journey_heading.text = "EN ROUTE: %s  →  %s" % [origin_name.to_upper(), destination_name.to_upper()]
+	journey_route_label.text = "%s  ·  %d PERIOD%s IN TRANSIT" % [route_name, periods, "" if periods == 1 else "S"]
+	journey_tableau.route_type = route_type
+	journey_tableau.queue_redraw()
+	var last_shekel := fare_paid > 0 and int(world.get_player().resources.get(&"silver", 0)) == 0
+	var passage_text := ""
+	if fare_paid > 0:
+		passage_text = "You pay your last shekel of silver for passage." if last_shekel else "You pay one silver for passage."
+	else:
+		passage_text = "You have no silver for passage; the fee is carried as debt."
+	if route_type == &"river":
+		journey_narrative.text = "%s The reed barge slides between high bulrushes and dried silt embankments. Word from %s is that the local office has more trouble than its ledgers admit." % [passage_text, destination_name]
+	else:
+		journey_narrative.text = "%s The road runs between low fields and dried canal embankments. Word from %s is that the local office has more trouble than its ledgers admit." % [passage_text, destination_name]
+	if StringName(result.get("destination_id", "")) == &"umma":
+		journey_narrative.text += " Umma's bailiff has had three work crews walk off the levee."
+	var fare_summary := "-%d SILVER (PASSAGE FARE)" % fare_paid if fare_paid > 0 else "%d SILVER FARE DEFERRED / ROUTE DEBT RECORDED" % fare_due
+	journey_cost_label.text = "%s  ·  %s  ·  PERIOD %02d" % [fare_summary, CalendarFormatter.format_year(world.year), world.period + 1]
+	journey_disembark_button.text = "DISEMBARK AT %s OUTPOST" % destination_name.to_upper()
+	journey_overlay.visible = true
+	journey_disembark_button.grab_focus()
+
+
+func _disembark_from_journey() -> void:
+	if journey_overlay == null or not journey_overlay.visible or world == null:
+		return
+	journey_overlay.visible = false
 	active_event = null
 	procedural_assignment.clear()
 	assignment_opportunities.clear()
 	active_world_assignment_id = &""
+	actor = world.get_player()
 	context.year = world.year
 	current_era = Registry.get_era_for_year(world.year)
 	context.era = current_era
 	context.world = world
-	context.actor = world.get_player()
-	actor = world.get_player()
+	context.actor = actor
 	_refresh_compound()
 	_schedule_next_case()
 
@@ -1934,16 +2287,31 @@ func _on_queue_opportunity_selected(index: int) -> void:
 
 
 func _set_evidence_visible(is_visible: bool) -> void:
+	var map_open: bool = survey_map != null and survey_map.visible
+	var full_workspace: bool = phase == "character_creation" or map_open
+	
+	var visible_now := is_visible and CedarDeskLayoutScript.evidence_visible(phase, map_open)
+	if clay_docket != null:
+		clay_docket.visible = not full_workspace
+	if archive_stack != null:
+		archive_stack.visible = not full_workspace
+	if upper_workspace_control != null:
+		upper_workspace_control.visible = visible_now
 	if evidence_workspace != null:
-		evidence_workspace.visible = is_visible
+		evidence_workspace.visible = visible_now
 	if evidence_left != null:
-		evidence_left.visible = is_visible
+		evidence_left.visible = visible_now
 	if evidence_right != null:
-		evidence_right.visible = is_visible
+		evidence_right.visible = visible_now
 
 
 func _refresh_header_status() -> void:
-	if header_resource_label == null or actor == null:
+	if actor == null:
+		return
+	if cedar_header != null:
+		cedar_header.update_status(world, actor, current_era)
+	_refresh_archive_stack()
+	if header_resource_label == null:
 		return
 	var silver := int(actor.resources.get(&"silver", 0))
 	var bread := int(actor.resources.get(&"bread", 0))
@@ -1956,36 +2324,53 @@ func _refresh_header_status() -> void:
 	header_resource_label.text = "PURSE %d %s  ·  DEBT %d  ·  BREAD %d  ·  BEER %d  ·  %s" % [silver, currency.to_upper(), debt, bread, beer, audit_text]
 
 
+func _seal_clay_docket() -> void:
+	if clay_docket != null:
+		clay_docket.seal_verdict()
+
+func _on_clay_impression_added(_action_id: StringName, _glyph: String) -> void:
+	AudioManager.play_tablet_snap()
+
+func _refresh_archive_stack() -> void:
+	if archive_stack == null:
+		return
+	var urgent_kind := ""
+	for opportunity in assignment_opportunities:
+		var tags: Array = opportunity.get("tags", [])
+		var tag_text := ""
+		for tag in tags:
+			tag_text += " " + String(tag)
+		var text_value := String(opportunity.get("title", "")) + tag_text
+		if text_value.to_upper().contains("SUMMONS"):
+			urgent_kind = "SUMMONS"
+			break
+		if text_value.to_upper().contains("CHALLENGE"):
+			urgent_kind = "CHALLENGE"
+			break
+		if text_value.to_upper().contains("DISPATCH"):
+			urgent_kind = "DISPATCH"
+	archive_stack.set_queue_status(assignment_opportunities.size(), urgent_kind)
+	if work_queue_button != null:
+		work_queue_button.text = "OPEN WORK QUEUE (%d)" % assignment_opportunities.size() if phase == "opportunity_board" else "ARCHIVE / QUEUE"
+
 func _local_institution_ids() -> Array[StringName]:
-	var result: Array[StringName] = []
-	if world == null:
-		return result
-	for institution_value in world.institutions.keys():
-		var institution_id := StringName(institution_value)
-		var institution: Dictionary = world.institutions[institution_id]
-		var cursor := StringName(institution.get("place_id", ""))
-		var visited: Dictionary = {}
-		while cursor != &"" and not visited.has(cursor):
-			if cursor == world.current_location_id:
-				result.append(institution_id)
-				break
-			visited[cursor] = true
-			cursor = StringName(world.places.get(cursor, {}).get("parent", ""))
-	result.sort()
-	return result
+	return CompoundContextScript.institution_ids(world, world.current_location_id)
 
 
 func _refresh_local_stock_facts() -> void:
 	if local_stock_label == null or world == null:
 		return
 	var place_name := String(world.places.get(world.current_location_id, {}).get("name", world.current_location_id))
-	var lines := PackedStringArray(["LOCAL STORES / %s" % place_name.to_upper()])
+	var location_titles := {&"uruk": "EANNA TEMPLE COMPOUND", &"umma": "UMMA PROVINCIAL SEAT", &"nippur": "NIPPUR SHRINES"}
+	var lines := PackedStringArray([String(location_titles.get(world.current_location_id, "%s COMPOUND" % place_name.to_upper()))])
 	var institution_ids := _local_institution_ids()
 	if institution_ids.is_empty():
 		lines.append("No institution is registered at this location.")
 	for institution_id in institution_ids:
 		var institution: Dictionary = world.institutions.get(institution_id, {})
 		lines.append(String(institution.get("name", institution_id)))
+		if institution.has("resource_pressure"):
+			lines.append("  Current pressure: %d" % int(institution.get("resource_pressure", 0)))
 		var stocks: Dictionary = institution.get("stockpiles", {})
 		var stock_keys := stocks.keys()
 		stock_keys.sort()
@@ -2001,48 +2386,38 @@ func _refresh_local_stock_facts() -> void:
 		for member_value in institution.get("members", []):
 			var person := world.get_person(StringName(member_value))
 			if person != null and person.office_id != &"":
-				officials.append("%s (%s)" % [person.display_name, String(person.office_id).replace("_", " ")])
+				var opinion := person.get_opinion(actor.id) if actor != null else 0
+				var title := "Canal Bailiff" if person.id == &"character_0013" else ("Granary Clerk" if person.id == &"character_0012" else String(person.office_id).replace("_", " ").capitalize())
+				officials.append("%s — %s / %s / Opinion %+d" % [person.display_name, title, String(person.office_id).replace("_", " ").capitalize(), opinion])
 		lines.append("  Officials: " + (", ".join(officials) if not officials.is_empty() else "none recorded"))
 	local_stock_label.text = "\n".join(lines)
 
 
 func _update_period_delta_feed() -> void:
-	if world == null or actor == null or period_delta_label == null:
+	if world == null or period_delta_label == null:
 		return
-	var period_index := world.current_period_index()
-	if period_index != last_delta_period:
-		last_delta_period = period_index
-		period_delta_feed.clear()
-	var snapshot: Dictionary = {}
-	for institution_id in _local_institution_ids():
-		var institution: Dictionary = world.institutions.get(institution_id, {})
-		var stocks: Dictionary = institution.get("stockpiles", {})
-		for resource_value in stocks.keys():
-			var resource_id := StringName(resource_value)
-			snapshot["%s:%s" % [institution_id, resource_id]] = int(stocks[resource_id])
-	for resource_id in [&"silver", &"bread", &"beer"]:
-		snapshot["actor:%s" % resource_id] = int(actor.resources.get(resource_id, 0))
-	for faction_id in FACTION_LABELS.keys():
-		snapshot["faction:%s" % faction_id] = world.get_faction_standing(StringName(faction_id))
-	var active_epic_id := world.get_active_epic_id()
-	if active_epic_id != &"":
-		var epic_state: Dictionary = world.epics.get(active_epic_id, {})
-		snapshot["epic:%s" % active_epic_id] = int(epic_state.get("progress", world.get_resource(StringName(epic_state.get("progress_resource", "")))))
-	for key in snapshot.keys():
-		if last_stock_snapshot.has(key):
-			var delta := int(snapshot[key]) - int(last_stock_snapshot[key])
-			if delta != 0:
-				var direction := "+" if delta > 0 else ""
-				period_delta_feed.append("%s %s%d" % [String(key).replace(":", " / ").replace("_", " "), direction, delta])
-	last_stock_snapshot = snapshot
-	while period_delta_feed.size() > 6:
-		period_delta_feed.pop_front()
-	var body := "No resource changes recorded this period."
-	if not period_delta_feed.is_empty():
-		body = "\n".join(period_delta_feed)
-	period_delta_label.text = "PERIOD DELTAS\n" + body
+	var entries: Array[String] = []
+	for index in range(maxi(0, world.last_period_deltas.size() - 4), world.last_period_deltas.size()):
+		entries.append(String(world.last_period_deltas[index].get("text", "")))
+	period_delta_label.text = "SINCE LAST PERIOD\n" + ("\n".join(entries) if not entries.is_empty() else "No major changes recorded since last period.")
 
 
+func _show_archive_notices() -> void:
+	if world == null or status_label == null:
+		return
+	var notices := PackedStringArray()
+	for delta_value in world.last_period_deltas:
+		if not delta_value is Dictionary:
+			continue
+		var delta: Dictionary = delta_value
+		var category := StringName(delta.get("category", ""))
+		if category not in [&"audit", &"arrears"]:
+			continue
+		var detail := String(delta.get("text", "An archive adjustment was entered against your account."))
+		notices.append("ARCHIVE NOTICE FROM SHURUPPAK-ILU:\n%s" % detail)
+	archive_notice_active = not notices.is_empty()
+	if archive_notice_active:
+		status_label.text = "\n\n".join(notices)
 
 func _refresh_compound() -> void:
 	if world == null:
@@ -2081,16 +2456,24 @@ func _refresh_compound() -> void:
 			var epic_state: Dictionary = world.epics.get(epic_definition.id, {})
 			if epic_definition.era_id == current_era.id and bool(epic_state.get("active", false)):
 				active_epic = epic_definition
+				active_epic_id = epic_definition.id
 				break
 	var epic_title := active_epic.title if active_epic != null else "No active Epic"
 	var epic_progress := world.get_resource(active_epic.progress_resource) if active_epic != null else 0
 	var epic_target := active_epic.target if active_epic != null else 100
+	var epic_state: Dictionary = world.epics.get(active_epic_id, {}) if active_epic != null else {}
+	var courier_text := ConsequenceVisibilityScript.remote_courier_text(epic_state, epic_progress, epic_target) if world.current_location_id != &"uruk" and active_epic != null and active_epic_id == &"great_canal_cut" else ""
+	canal_label.visible = world.current_location_id == &"uruk" or not courier_text.is_empty()
+	if not courier_text.is_empty():
+		canal_label.text = courier_text
 	var filled := int(round(float(epic_progress) / maxf(1.0, float(epic_target)) * 10.0))
 	var bar_fill := clampi(filled, 0, 10)
-	if active_epic == null:
-		canal_label.text = "CANAL ADMINISTRATION / DORMANT\nNo summons has reached your desk. Local cases and regional work come first."
-	else:
-		canal_label.text = "ERA EPIC / BACKDROP\n%s\n[%s%s] %d / %d\nYour docket can move the project" % [epic_title.to_upper(), "=".repeat(bar_fill), "-".repeat(10 - bar_fill), epic_progress, epic_target]
+	if courier_text.is_empty():
+		if active_epic == null:
+			canal_label.text = "CANAL ADMINISTRATION / DORMANT\nNo summons has reached your desk. Local cases and regional work come first."
+		else:
+			canal_label.text = "ERA EPIC / BACKDROP\n%s\n[%s%s] %d / %d\nYour docket can move the project" % [epic_title.to_upper(), "=".repeat(bar_fill), "-".repeat(10 - bar_fill), epic_progress, epic_target]
 	_refresh_faction_standings()
 	year_label.text = CalendarFormatter.format_date(current_era, world.year, world.period)
-	status_label.text = "SEED %d  /  PERIOD %02d OF 12" % [world.master_seed, world.period + 1]
+	if not archive_notice_active:
+		status_label.text = "SEED %d  /  PERIOD %02d OF 12" % [world.master_seed, world.period + 1]

@@ -1,74 +1,101 @@
-[gd_resource type="Resource" script_class="EventTemplate" load_steps=36 format=3]
+[gd_resource type="Resource" script_class="EventTemplate" format=3 uid="uid://c34kmadr03a5x"]
 
-[ext_resource type="Script" path="res://data/definitions/event_template.gd" id="1"]
-[ext_resource type="Script" path="res://data/definitions/event_outcome.gd" id="2"]
-[ext_resource type="Script" path="res://data/definitions/event_effect.gd" id="3"]
-[ext_resource type="Script" path="res://data/definitions/event_condition.gd" id="4"]
+[ext_resource type="Script" uid="uid://cu1doop675avl" path="res://data/definitions/event_template.gd" id="1"]
+[ext_resource type="Script" uid="uid://rftfpp5ciyrb" path="res://data/definitions/event_outcome.gd" id="2"]
+[ext_resource type="Script" uid="uid://c8yvb5uql0l22" path="res://data/definitions/event_effect.gd" id="3"]
+[ext_resource type="Script" uid="uid://dn3vosyim7ss3" path="res://data/definitions/event_condition.gd" id="4"]
 
 [sub_resource type="Resource" id="condition_office"]
 script = ExtResource("4")
 condition_type = &"in_office"
-target = "actor"
-parameters = {"office_id": &"apprentice_scribe"}
-
-[sub_resource type="Resource" id="condition_consequence"]
-script = ExtResource("4")
-condition_type = &"flag_set"
-target = "actor"
-parameters = {"flag": &"canal_crew_slowdown", "scope": "world"}
-
-[sub_resource type="Resource" id="condition_personal_silver"]
-script = ExtResource("4")
-condition_type = &"resource_compare"
-target = "actor"
-parameters = {"resource": &"silver", "scope": "actor", "comparison": ">=", "value": 4}
-
-[sub_resource type="Resource" id="condition_period"]
-script = ExtResource("4")
-condition_type = &"period_in_range"
-target = "actor"
-parameters = {"min": 8, "max": 10}
+parameters = {
+"office_id": &"apprentice_scribe"
+}
 
 [sub_resource type="Resource" id="condition_year"]
 script = ExtResource("4")
 condition_type = &"year_in_range"
-target = "actor"
-parameters = {"min": -3200, "max": -3100}
+parameters = {
+"max": -3100,
+"min": -3200
+}
+
+[sub_resource type="Resource" id="condition_period"]
+script = ExtResource("4")
+condition_type = &"period_in_range"
+parameters = {
+"max": 10,
+"min": 8
+}
+
+[sub_resource type="Resource" id="condition_consequence"]
+script = ExtResource("4")
+condition_type = &"flag_set"
+parameters = {
+"flag": &"canal_crew_slowdown",
+"scope": "world"
+}
 
 [sub_resource type="Resource" id="fx_1"]
 script = ExtResource("3")
 effect_type = &"modify_resource"
-parameters = {"resource": &"silver", "amount": -4, "scope": "actor"}
+parameters = {
+"amount": -4,
+"resource": &"silver",
+"scope": "actor"
+}
 
 [sub_resource type="Resource" id="fx_2"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
-parameters = {"subject": &"enlil_kisu", "amount": 12, "reason": "Compensated crew out of personal silver"}
+parameters = {
+"amount": 12,
+"reason": "Compensated crew out of personal silver",
+"subject": &"enlil_kisu"
+}
 
 [sub_resource type="Resource" id="fx_3"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
-parameters = {"subject": &"ur_nanna", "amount": 4, "reason": "Resolved quayside strike without temple expense"}
+parameters = {
+"amount": 4,
+"reason": "Resolved quayside strike without temple expense",
+"subject": &"ur_nanna"
+}
 
 [sub_resource type="Resource" id="fx_4"]
 script = ExtResource("3")
 effect_type = &"modify_resource"
-parameters = {"resource": &"canal_progress", "amount": 25, "scope": "world"}
+parameters = {
+"amount": 25,
+"resource": &"canal_progress",
+"scope": "world"
+}
 
 [sub_resource type="Resource" id="fx_5"]
 script = ExtResource("3")
 effect_type = &"clear_flag"
-parameters = {"flag": &"canal_crew_slowdown", "scope": "world"}
+parameters = {
+"flag": &"canal_crew_slowdown",
+"scope": "world"
+}
 
 [sub_resource type="Resource" id="fx_6"]
 script = ExtResource("3")
 effect_type = &"add_memory"
-parameters = {"memory_id": &"paid_quayside_strike", "text": "Spent 4 shekels of personal silver to break Enlil-kisu's strike and save the canal works.", "involved": [&"enlil_kisu", &"ur_nanna"]}
+parameters = {
+"involved": [&"enlil_kisu", &"ur_nanna"],
+"memory_id": &"paid_quayside_strike",
+"text": "Spent 4 shekels of personal silver to break Enlil-kisu's strike and save the canal works."
+}
 
 [sub_resource type="Resource" id="fx_7"]
 script = ExtResource("3")
 effect_type = &"resolve_form"
-parameters = {"form_type": &"succession_claim", "disposition": "strike_settled_privately"}
+parameters = {
+"disposition": "strike_settled_privately",
+"form_type": &"succession_claim"
+}
 
 [sub_resource type="Resource" id="outcome_silver"]
 script = ExtResource("2")
@@ -80,42 +107,70 @@ effects = Array[ExtResource("3")]([SubResource("fx_1"), SubResource("fx_2"), Sub
 [sub_resource type="Resource" id="fx_8"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
-parameters = {"subject": &"enlil_kisu", "amount": 15, "reason": "Publicly rescinded unjust carrier penalty"}
+parameters = {
+"amount": 15,
+"reason": "Publicly rescinded unjust carrier penalty",
+"subject": &"enlil_kisu"
+}
 
 [sub_resource type="Resource" id="fx_9"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
-parameters = {"subject": &"shuruppak_ilu", "amount": -6, "reason": "Showed judicial inconsistency under pressure"}
+parameters = {
+"amount": -6,
+"reason": "Showed judicial inconsistency under pressure",
+"subject": &"shuruppak_ilu"
+}
 
 [sub_resource type="Resource" id="fx_10"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
-parameters = {"subject": &"utu_mansum", "amount": -5, "reason": "Undermined threshold tally authority"}
+parameters = {
+"amount": -5,
+"reason": "Undermined threshold tally authority",
+"subject": &"utu_mansum"
+}
 
 [sub_resource type="Resource" id="fx_11"]
 script = ExtResource("3")
 effect_type = &"modify_resource"
-parameters = {"resource": &"canal_progress", "amount": 20, "scope": "world"}
+parameters = {
+"amount": 20,
+"resource": &"canal_progress",
+"scope": "world"
+}
 
 [sub_resource type="Resource" id="fx_12"]
 script = ExtResource("3")
 effect_type = &"clear_flag"
-parameters = {"flag": &"canal_crew_slowdown", "scope": "world"}
+parameters = {
+"flag": &"canal_crew_slowdown",
+"scope": "world"
+}
 
 [sub_resource type="Resource" id="fx_13"]
 script = ExtResource("3")
 effect_type = &"add_trait"
-parameters = {"trait_id": &"pliable"}
+parameters = {
+"trait_id": &"pliable"
+}
 
 [sub_resource type="Resource" id="fx_14"]
 script = ExtResource("3")
 effect_type = &"add_memory"
-parameters = {"memory_id": &"rescinded_carrier_penalty", "text": "Publicly struck out the carrier penalty to restart the stalled canal transport.", "involved": [&"enlil_kisu", &"lu_nanshe", &"shuruppak_ilu"]}
+parameters = {
+"involved": [&"enlil_kisu", &"lu_nanshe", &"shuruppak_ilu"],
+"memory_id": &"rescinded_carrier_penalty",
+"text": "Publicly struck out the carrier penalty to restart the stalled canal transport."
+}
 
 [sub_resource type="Resource" id="fx_15"]
 script = ExtResource("3")
 effect_type = &"resolve_form"
-parameters = {"form_type": &"succession_claim", "disposition": "penalty_rescinded_publicly"}
+parameters = {
+"disposition": "penalty_rescinded_publicly",
+"form_type": &"succession_claim"
+}
 
 [sub_resource type="Resource" id="outcome_recant"]
 script = ExtResource("2")
@@ -127,47 +182,79 @@ effects = Array[ExtResource("3")]([SubResource("fx_8"), SubResource("fx_9"), Sub
 [sub_resource type="Resource" id="fx_16"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
-parameters = {"subject": &"enlil_kisu", "amount": -30, "reason": "Forced crew to labor at spearpoint"}
+parameters = {
+"amount": -30,
+"reason": "Forced crew to labor at spearpoint",
+"subject": &"enlil_kisu"
+}
 
 [sub_resource type="Resource" id="fx_17"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
-parameters = {"subject": &"ur_nanna", "amount": 5, "reason": "Brought stones to the wall by any means necessary"}
+parameters = {
+"amount": 5,
+"reason": "Brought stones to the wall by any means necessary",
+"subject": &"ur_nanna"
+}
 
 [sub_resource type="Resource" id="fx_18"]
 script = ExtResource("3")
 effect_type = &"change_opinion"
-parameters = {"subject": &"shuruppak_ilu", "amount": -5, "reason": "Used military force to resolve a clerical dispute"}
+parameters = {
+"amount": -5,
+"reason": "Used military force to resolve a clerical dispute",
+"subject": &"shuruppak_ilu"
+}
 
 [sub_resource type="Resource" id="fx_19"]
 script = ExtResource("3")
 effect_type = &"modify_resource"
-parameters = {"resource": &"canal_progress", "amount": 30, "scope": "world"}
+parameters = {
+"amount": 30,
+"resource": &"canal_progress",
+"scope": "world"
+}
 
 [sub_resource type="Resource" id="fx_20"]
 script = ExtResource("3")
 effect_type = &"clear_flag"
-parameters = {"flag": &"canal_crew_slowdown", "scope": "world"}
+parameters = {
+"flag": &"canal_crew_slowdown",
+"scope": "world"
+}
 
 [sub_resource type="Resource" id="fx_21"]
 script = ExtResource("3")
 effect_type = &"set_flag"
-parameters = {"flag": &"blood_on_the_quays", "scope": "world", "periods": 12}
+parameters = {
+"flag": &"blood_on_the_quays",
+"periods": 12,
+"scope": "world"
+}
 
 [sub_resource type="Resource" id="fx_22"]
 script = ExtResource("3")
 effect_type = &"add_trait"
-parameters = {"trait_id": &"severe"}
+parameters = {
+"trait_id": &"severe"
+}
 
 [sub_resource type="Resource" id="fx_23"]
 script = ExtResource("3")
 effect_type = &"add_memory"
-parameters = {"memory_id": &"conscripted_quayside_stoppage", "text": "Used temple guards to break the Enlil-kisu strike and force canal stone placement.", "involved": [&"enlil_kisu", &"ur_nanna"]}
+parameters = {
+"involved": [&"enlil_kisu", &"ur_nanna"],
+"memory_id": &"conscripted_quayside_stoppage",
+"text": "Used temple guards to break the Enlil-kisu strike and force canal stone placement."
+}
 
 [sub_resource type="Resource" id="fx_24"]
 script = ExtResource("3")
 effect_type = &"resolve_form"
-parameters = {"form_type": &"succession_claim", "disposition": "strike_broken_by_force"}
+parameters = {
+"disposition": "strike_broken_by_force",
+"form_type": &"succession_claim"
+}
 
 [sub_resource type="Resource" id="outcome_force"]
 script = ExtResource("2")
