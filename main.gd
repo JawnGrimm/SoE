@@ -938,6 +938,14 @@ func _creation_question(question_id: StringName) -> Dictionary:
 			return question
 	return {}
 
+func _creation_answer_complete_or_unavailable(question_id: StringName) -> bool:
+	if creation_selections.get_answer(question_id) != &"":
+		return true
+	var question := _creation_question(question_id)
+	# Some formative prompts are absent/empty in a particular intake catalog.
+	# Do not trap the player behind a required answer that the catalog cannot offer.
+	return question.is_empty() or question.get("answers", []).is_empty()
+
 func _creation_step_complete(screen: int) -> bool:
 	match screen:
 		1:
@@ -945,7 +953,7 @@ func _creation_step_complete(screen: int) -> bool:
 		2:
 			return creation_selections.get_answer(&"responsibility") != &""
 		3:
-			return creation_selections.get_answer(&"formative_experience") != &"" and creation_selections.get_answer(&"formative_vulnerability") != &""
+			return _creation_answer_complete_or_unavailable(&"formative_experience") and _creation_answer_complete_or_unavailable(&"formative_vulnerability")
 		4:
 			return creation_selections.get_answer(&"entry_into_scribal_work") != &""
 		5:
