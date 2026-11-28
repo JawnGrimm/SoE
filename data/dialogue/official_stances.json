@@ -6,5 +6,7 @@
 	"archive_keeper": "Do not make a patron's seal into evidence. Enter the source, and let the record name the responsible office.",
 	"trusted_complicit": "We have kept one another's accounts before. A clean seal now will be remembered in your favor.",
 	"hostile_exacting": "Do not ask me to soften a figure. Show the source and state plainly who carries the consequence.",
-	"general_office": "The office asks for a clear finding: certify what the source supports, or refer what it cannot explain."
+	"general_office": "The office asks for a clear finding: certify what the source supports, or refer what it cannot explain.",
+	"no_witness": "No witness is named in this docket; I cannot offer an account I did not see.",
+	"no_separate_demand": "No separate demand was entered by this office."
 }
